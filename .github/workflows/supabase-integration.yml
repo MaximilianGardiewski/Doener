@@ -76,6 +76,14 @@ jobs:
             --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
             >> "$GITHUB_ENV"
 
+      - name: Verify Realtime publication membership
+        run: |
+          published="$(docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select tablename from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' order by tablename")"
+          printf '%s\n' "$published"
+          for table in orders ordering_settings snoozes menu_products modifier_options; do
+            printf '%s\n' "$published" | grep -Fx "$table" >/dev/null || { echo "Missing from supabase_realtime: $table" >&2; exit 1; }
+          done
+
       - name: Import provisional Mcello menu
         run: node scripts/import-provisional-menu.mjs
 
@@ -95,7 +103,16 @@ jobs:
         run: node tests/notification-outbox.integration.mjs
 
       - name: Prove realtime and backoffice role boundaries
+        id: realtime_backoffice
         run: node tests/realtime-backoffice.integration.mjs
+
+      - name: Dump Realtime diagnostics on failure
+        if: failure() && steps.realtime_backoffice.outcome == 'failure'
+        run: |
+          echo '--- realtime container tail ---'
+          docker logs --tail 250 supabase_realtime_business-web-factory || true
+          echo '--- publication ---'
+          docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select pubname,schemaname,tablename from pg_publication_tables where pubname='supabase_realtime' order by tablename" || true
 
       - name: Stop local Supabase
         if: always()
