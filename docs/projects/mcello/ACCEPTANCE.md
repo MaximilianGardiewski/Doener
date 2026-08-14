@@ -26,6 +26,8 @@ Every item maps back to the binding Decision Ledger.
 - [ ] Cart persistence + revalidation (`D038`)
 - [ ] Minimal checkout data (`D018`, `D048`)
 - [ ] WhatsApp OTP primary + SMS fallback (`D003`)
+- [ ] Development OTP can run without external paid messaging (`D064`)
+- [ ] No paid messaging provider activated without explicit owner approval (`D064`)
 - [ ] Pay on site (`D004`)
 - [ ] Binding only on KDS acceptance (`D042`)
 - [ ] Edit/cancel pre-accept only (`D043`)
@@ -53,6 +55,12 @@ Every item maps back to the binding Decision Ledger.
 - [ ] Event/Special/Presse/News scheduling + pinning (`D032`)
 - [ ] Gallery categories + featured media (`D033`)
 - [ ] Server/database role enforcement (`D022`, `D023`)
+
+## Infrastructure / Portability
+- [ ] Local development backend runs using Supabase CLI/Docker without a managed paid project (`D063`)
+- [ ] Staging/production path is reproducible on self-hosted infrastructure from Git + migrations (`D063`)
+- [ ] V1 does not depend on Lovable or Vercel to build, run or deploy (`D063`)
+- [ ] Production self-host plan includes TLS, secrets, firewalling, backups, restore test and monitoring (`D063`)
 
 ## Prepared now
 - [ ] Payment provider boundary (`D004`)
