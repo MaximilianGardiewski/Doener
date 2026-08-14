@@ -158,6 +158,42 @@ test("closed or paused shop blocks submission after OTP", async () => {
   );
 });
 
+test("past preorder time is rejected before slot lookup", async () => {
+  let slotCalls = 0;
+  const setup = deps({
+    slots: { async getSlotCapacity() { slotCalls += 1; return { capacity: 6, acceptedOrderCount: 0 }; } },
+  });
+  await expectCode(
+    submitVerifiedPickupOrder(
+      { ...baseRequest, requestedPickupAt: "2026-08-14T17:45:00.000Z" },
+      setup.dependencies,
+      "2026-08-14T18:00:00.000Z",
+    ),
+    "INVALID_PICKUP_TIME",
+  );
+  assert.equal(slotCalls, 0);
+});
+
+test("future preorder must fall inside an orderable shop window", async () => {
+  const setup = deps({
+    shop: {
+      async getShopState(_locationId, at) {
+        return at === "2026-08-14T19:15:00.000Z"
+          ? { scheduledOpen: false, orderCutoffMinutes: 30 }
+          : { scheduledOpen: true, orderCutoffMinutes: 30 };
+      },
+    },
+  });
+  await expectCode(
+    submitVerifiedPickupOrder(
+      { ...baseRequest, requestedPickupAt: "2026-08-14T19:15:00.000Z" },
+      setup.dependencies,
+      "2026-08-14T18:00:00.000Z",
+    ),
+    "INVALID_PICKUP_TIME",
+  );
+});
+
 test("full preorder slot is rejected", async () => {
   const setup = deps({
     slots: { async getSlotCapacity() { return { capacity: 6, acceptedOrderCount: 6 }; } },
@@ -170,6 +206,25 @@ test("full preorder slot is rejected", async () => {
     ),
     "SLOT_FULL",
   );
+});
+
+test("preorder catalog and availability are evaluated at pickup time", async () => {
+  const seenTimes: string[] = [];
+  const setup = deps({
+    catalog: {
+      async getProduct(id, at) { seenTimes.push(`product:${at}`); return id === product.id ? product : null; },
+      async isProductAvailable(_id, at) { seenTimes.push(`availability:${at}`); return true; },
+    },
+  });
+  await submitVerifiedPickupOrder(
+    { ...baseRequest, requestedPickupAt: "2026-08-14T19:15:00.000Z" },
+    setup.dependencies,
+    "2026-08-14T18:00:00.000Z",
+  );
+  assert.deepEqual(seenTimes, [
+    "product:2026-08-14T19:15:00.000Z",
+    "availability:2026-08-14T19:15:00.000Z",
+  ]);
 });
 
 test("sold-out modifier is rejected server-side", async () => {
