@@ -202,7 +202,10 @@ function createSnoozeRealtimeProbe(accessToken) {
         const error = new Error(`Realtime join failed: ${JSON.stringify(message.payload)}`);
         rejectReady(error);
         rejectEvent(error);
+        return;
       }
+      const confirmed = message.payload?.response?.postgres_changes;
+      if (Array.isArray(confirmed) && confirmed.length > 0) resolveReady();
       return;
     }
     if (message.event === "system") {
