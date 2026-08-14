@@ -14,17 +14,23 @@ import {
   SupabaseOrderWriter,
   SupabasePublicOrderStatusReader,
 } from "../../packages/supabase-adapter/src/order-repository.ts";
+import { SupabaseKdsOperations } from "../../packages/supabase-adapter/src/kds.ts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../..");
 const publicDir = path.join(here, "public");
 const port = Number(process.env.PORT || 4173);
+const DEV_LOCATION_ID = "00000000-0000-4000-8000-000000000001";
 
 await loadLocalEnv(path.join(repoRoot, ".env.local"));
 
-const supabaseUrl = process.env.SUPABASE_URL || "http://127.0.0.1:54321";
+const supabaseUrl = (process.env.SUPABASE_URL || "http://127.0.0.1:54321").replace(/\/$/, "");
 const anonKey = process.env.SUPABASE_ANON_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const devStaffEmail = process.env.MCELLO_DEV_STAFF_EMAIL;
+const devStaffPassword = process.env.MCELLO_DEV_STAFF_PASSWORD;
+let staffSession = null;
+
 const devCodes = new Map();
 const otp = new DevOtpProvider({
   onCode(data) {
@@ -60,6 +66,16 @@ function publicRpc() {
   return new SupabaseRestRpcClient({ baseUrl: supabaseUrl, apiKey: anonKey });
 }
 
+async function staffRpc() {
+  const token = await getDevStaffAccessToken();
+  if (!anonKey || !token) return null;
+  return new SupabaseRestRpcClient({
+    baseUrl: supabaseUrl,
+    apiKey: anonKey,
+    authorizationToken: token,
+  });
+}
+
 function sendJson(res, status, data) {
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
@@ -77,11 +93,44 @@ async function readJson(req) {
   return raw ? JSON.parse(raw) : {};
 }
 
+async function getDevStaffAccessToken() {
+  if (!anonKey || !devStaffEmail || !devStaffPassword) return null;
+  if (staffSession && staffSession.expiresAt > Date.now() + 60_000) return staffSession.accessToken;
+
+  const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: anonKey, "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({ email: devStaffEmail, password: devStaffPassword }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.access_token) {
+    console.error("Local KDS staff login failed", data);
+    return null;
+  }
+  staffSession = {
+    accessToken: data.access_token,
+    expiresAt: Date.now() + Number(data.expires_in || 3600) * 1000,
+  };
+  return staffSession.accessToken;
+}
+
+async function staffRestGet(pathname) {
+  const token = await getDevStaffAccessToken();
+  if (!token || !anonKey) throw new Error("local staff is not configured");
+  const response = await fetch(`${supabaseUrl}${pathname}`, {
+    headers: { apikey: anonKey, authorization: `Bearer ${token}`, accept: "application/json" },
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(`staff REST failed ${response.status}: ${JSON.stringify(data)}`);
+  return data;
+}
+
 async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/health") {
     sendJson(res, 200, {
       ok: true,
       backend: serviceRoleKey && anonKey ? "local-supabase-ready" : "static-only",
+      localKdsStaff: Boolean(devStaffEmail && devStaffPassword),
     });
     return true;
   }
@@ -100,7 +149,7 @@ async function handleApi(req, res, url) {
     });
     sendJson(res, 200, {
       ...challenge,
-      // This server binds to 127.0.0.1 and is development-only.
+      // Development-only endpoint; server itself binds to 127.0.0.1.
       devCode: devCodes.get(challenge.challengeId),
     });
     return true;
@@ -185,6 +234,114 @@ async function handleApi(req, res, url) {
     return true;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/kds/orders") {
+    try {
+      const select = [
+        "id",
+        "order_number",
+        "state",
+        "customer_first_name",
+        "comment",
+        "requested_pickup_at",
+        "accepted_pickup_at",
+        "total_cents",
+        "submitted_at",
+        "order_items(product_name_snapshot,quantity,comment,order_item_options(group_name_snapshot,option_name_snapshot,price_delta_cents_snapshot))",
+      ].join(",");
+      const query = `/rest/v1/orders?location_id=eq.${DEV_LOCATION_ID}&state=in.(waiting_for_acceptance,scheduled,preparing,ready)&select=${encodeURIComponent(select)}&order=submitted_at.asc`;
+      const orders = await staffRestGet(query);
+      sendJson(res, 200, orders);
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 503, { error: "LOCAL_KDS_NOT_READY", hint: "Run the local Supabase setup script first." });
+    }
+    return true;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/kds/shop-state") {
+    const rpc = serviceRpc();
+    if (!rpc) {
+      sendJson(res, 503, { error: "LOCAL_SUPABASE_NOT_CONFIGURED" });
+      return true;
+    }
+    try {
+      const state = await new SupabaseShopStateReader(rpc).getShopState(DEV_LOCATION_ID, new Date().toISOString());
+      sendJson(res, 200, state);
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 500, { error: "SHOP_STATE_FAILED" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/kds/action") {
+    const rpc = await staffRpc();
+    if (!rpc) {
+      sendJson(res, 503, { error: "LOCAL_KDS_NOT_READY" });
+      return true;
+    }
+    const body = await readJson(req);
+    const orderId = String(body.orderId ?? "");
+    const action = String(body.action ?? "");
+    const kds = new SupabaseKdsOperations(rpc);
+    try {
+      let order;
+      if (action === "accept") {
+        const minutes = Number(body.minutes);
+        if (![15, 20, 30].includes(minutes)) throw new Error("invalid acceptance time");
+        order = await kds.accept(orderId, new Date(Date.now() + minutes * 60_000).toISOString());
+      } else if (action === "activate") {
+        order = await kds.activateScheduled(orderId);
+      } else if (action === "ready") {
+        order = await kds.markReady(orderId);
+      } else if (action === "complete") {
+        order = await kds.complete(orderId);
+      } else if (action === "delay") {
+        const minutes = Number(body.minutes);
+        if (!Number.isInteger(minutes) || minutes < 1 || minutes > 120) throw new Error("invalid delay");
+        order = await kds.delay(orderId, minutes);
+      } else if (action === "reject") {
+        const allowedReasons = new Set(["Zu viel los", "Artikel/Zutat ausverkauft", "Küche schließt"]);
+        const reason = String(body.reason ?? "");
+        if (!allowedReasons.has(reason)) throw new Error("invalid rejection reason");
+        order = await kds.reject(orderId, reason);
+      } else {
+        throw new Error("unknown KDS action");
+      }
+      sendJson(res, 200, order);
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 409, { error: "KDS_TRANSITION_REJECTED" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/kds/shop-override") {
+    const rpc = await staffRpc();
+    if (!rpc) {
+      sendJson(res, 503, { error: "LOCAL_KDS_NOT_READY" });
+      return true;
+    }
+    const body = await readJson(req);
+    const override = String(body.override ?? "");
+    if (!new Set(["auto", "force_open", "force_closed", "pause", "today_closed"]).has(override)) {
+      sendJson(res, 400, { error: "INVALID_OVERRIDE" });
+      return true;
+    }
+    try {
+      const result = await new SupabaseKdsOperations(rpc).setShopOverride(
+        DEV_LOCATION_ID,
+        override,
+        body.operatorMessage ? String(body.operatorMessage) : undefined,
+      );
+      sendJson(res, 200, result);
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 409, { error: "SHOP_OVERRIDE_REJECTED" });
+    }
+    return true;
+  }
+
   return false;
 }
 
@@ -220,6 +377,7 @@ http.createServer(async (req, res) => {
 }).listen(port, "127.0.0.1", () => {
   console.log(`Mcello prototype: http://127.0.0.1:${port}`);
   console.log(`Backend: ${serviceRoleKey && anonKey ? "local Supabase connected" : "static-only (run dev-supabase script)"}`);
+  console.log(`KDS: ${devStaffEmail && devStaffPassword ? "local staff session enabled" : "not configured"}`);
 });
 
 async function loadLocalEnv(file) {
