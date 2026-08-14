@@ -16,6 +16,8 @@ export interface OtpProvider {
   verifyOtp(input: {
     challengeId: string;
     code: string;
+    /** Must match the number the challenge was originally issued for. */
+    mobile: string;
   }): Promise<{ verified: boolean }>;
 }
 
