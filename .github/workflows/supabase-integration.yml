@@ -7,6 +7,8 @@ on:
       - "data/mcello/menu-seed.provisional.json"
       - "scripts/import-provisional-menu.mjs"
       - "scripts/bootstrap-local-staff.mjs"
+      - "scripts/dev-supabase.sh"
+      - "scripts/dev-supabase.ps1"
       - "apps/mcello/**"
       - "packages/supabase-adapter/**"
       - "packages/ordering/**"
@@ -26,6 +28,8 @@ on:
       - "data/mcello/menu-seed.provisional.json"
       - "scripts/import-provisional-menu.mjs"
       - "scripts/bootstrap-local-staff.mjs"
+      - "scripts/dev-supabase.sh"
+      - "scripts/dev-supabase.ps1"
       - "apps/mcello/**"
       - "packages/supabase-adapter/**"
       - "packages/ordering/**"
@@ -67,6 +71,20 @@ jobs:
 
       - name: Rebuild database from migrations and seed
         run: supabase db reset --local
+
+      - name: Restart Realtime after schema rebuild
+        run: |
+          # The local Realtime CDC poller caches publication table OIDs. A db
+          # reset rebuilds the schema/publication after Realtime has already
+          # started, so restart only Realtime to bind CDC to the migrated OIDs.
+          docker restart supabase_realtime_business-web-factory >/dev/null
+          for attempt in {1..30}; do
+            if [ "$(docker inspect -f '{{.State.Running}}' supabase_realtime_business-web-factory 2>/dev/null || true)" = "true" ]; then
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
 
       - name: Export local API credentials
         run: |
