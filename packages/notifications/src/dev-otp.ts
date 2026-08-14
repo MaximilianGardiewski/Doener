@@ -3,6 +3,7 @@ import type { OtpChallenge, OtpChannel, OtpProvider } from "./contracts.ts";
 
 type StoredChallenge = {
   code: string;
+  mobile: string;
   expiresAtMs: number;
 };
 
@@ -51,7 +52,7 @@ export class DevOtpProvider implements OtpProvider {
     const expiresAtMs = this.#now() + this.#ttlMs;
     const expiresAt = new Date(expiresAtMs).toISOString();
 
-    this.#challenges.set(challengeId, { code, expiresAtMs });
+    this.#challenges.set(challengeId, { code, mobile: input.mobile, expiresAtMs });
     this.#onCode?.({
       challengeId,
       code,
@@ -70,6 +71,7 @@ export class DevOtpProvider implements OtpProvider {
   async verifyOtp(input: {
     challengeId: string;
     code: string;
+    mobile: string;
   }): Promise<{ verified: boolean }> {
     const stored = this.#challenges.get(input.challengeId);
     if (!stored) return { verified: false };
@@ -79,7 +81,7 @@ export class DevOtpProvider implements OtpProvider {
       return { verified: false };
     }
 
-    const verified = stored.code === input.code;
+    const verified = stored.code === input.code && stored.mobile === input.mobile;
     if (verified) this.#challenges.delete(input.challengeId);
     return { verified };
   }
