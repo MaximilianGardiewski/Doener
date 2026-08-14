@@ -16,9 +16,11 @@
     .lane{background:#161613;border:1px solid rgba(255,255,255,.06);border-radius:24px;min-height:520px;padding:14px}
     .lane h2{font-size:24px;margin:5px 4px 14px;display:flex;justify-content:space-between;gap:8px}
     .lane-count{font-size:13px;color:var(--muted);font-family:system-ui,sans-serif;font-weight:500}
-    .order{border:1px solid var(--line);background:#20201b;border-radius:20px;padding:15px;margin-bottom:12px}
+    .order{border:1px solid var(--line);background:#20201b;border-radius:20px;padding:15px;margin-bottom:12px;transition:.2s ease}
     .order.alert{box-shadow:0 0 0 1px rgba(229,136,121,.28),0 0 35px rgba(229,136,121,.1)}
-    .order-head{display:flex;justify-content:space-between;gap:10px}
+    .order.urgent{border-color:rgba(239,174,163,.55);box-shadow:0 0 0 1px rgba(239,174,163,.35),0 0 44px rgba(229,136,121,.16)}
+    .urgent-copy{color:#efaea3!important;font-weight:700;display:block}
+    .order-head{display:flex;justify-content:space-between;gap:10px}.order-head>div:last-child{text-align:right}
     .order small{color:var(--muted)}
     .order ul{padding-left:19px;color:#ddd2c4;line-height:1.55}
     .order li small{display:block;margin-top:-2px}
@@ -33,16 +35,17 @@
   </style>
 </head>
 <body>
-  <div class="prototype-banner">Lokales KDS · echte lokale DB-Transitions · keine Produktionsbestellungen</div>
+  <div class="prototype-banner">Lokales KDS · authentifiziertes Multi-Device-Realtime · keine Produktionsbestellungen</div>
   <main class="kds-shell">
     <div class="kds-top">
       <h1>Mcello KDS</h1>
-      <span class="pill" id="syncState"><span class="status-dot" id="syncDot"></span> <span id="syncText">Verbinden …</span></span>
+      <span class="pill" id="syncState"><span class="status-dot offline" id="syncDot"></span> <span id="syncText">Verbinden …</span></span>
       <button class="pill" id="sound">Ton aktivieren</button>
       <button class="pill" id="rush">Rush/Pause</button>
+      <a class="pill" href="/ops.html">Betrieb</a>
       <a class="pill" href="/">Public Preview</a>
     </div>
-    <div class="notice">Lokaler Entwicklungsflow: Neu → Zeit bestätigen → In Zubereitung → Fertig → Abholbereit → Erledigt. Jede Aktion läuft über einen echten, lokal erzeugten Staff-Login und die zustandsgeprüften KDS-RPCs.</div>
+    <div class="notice">Neu → Zeit/Slot bestätigen → Zubereitung → Abholbereit → Erledigt. Änderungen werden per Datenbank-Realtime an alle offenen KDS-Geräte verteilt; ein langsamer Safety-Sync dient nur der Wiederherstellung nach Netzproblemen.</div>
     <div id="kdsError" class="kds-error" hidden></div>
     <div class="kds-grid" style="margin-top:18px">
       <section class="lane"><h2>Neu <span class="lane-count" id="incomingCount">0</span></h2><div id="incoming"></div></section>
