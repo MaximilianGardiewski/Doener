@@ -3,7 +3,11 @@ import { mapDbOrder } from "./order-repository.ts";
 import type { RpcClient } from "./rest-rpc.ts";
 
 export class SupabaseKdsOperations {
-  constructor(private readonly rpcClient: RpcClient) {}
+  private readonly rpcClient: RpcClient;
+
+  constructor(rpcClient: RpcClient) {
+    this.rpcClient = rpcClient;
+  }
 
   accept(orderId: string, acceptedPickupAt: string): Promise<Order> {
     return this.orderRpc("staff_accept_order", {
