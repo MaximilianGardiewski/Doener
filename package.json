@@ -11,7 +11,7 @@
     "test:schema": "node --test tests/*.test.mjs",
     "check": "npm run test:domain && npm run test:schema",
     "build:preview": "node scripts/build-preview.mjs",
-    "preview:mcello": "node apps/mcello/dev-server.mjs"
+    "preview:mcello": "node --experimental-strip-types apps/mcello/dev-server.mjs"
   },
   "engines": {
     "node": ">=22"
