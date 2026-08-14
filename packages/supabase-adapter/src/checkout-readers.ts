@@ -10,9 +10,10 @@ export class SupabaseCatalogReader implements CatalogReader {
     this.rpcClient = rpcClient;
   }
 
-  async getProduct(productId: string): Promise<MenuProduct | null> {
+  async getProduct(productId: string, at: string): Promise<MenuProduct | null> {
     return this.rpcClient.rpc<MenuProduct | null>("server_get_checkout_product", {
       _product_id: productId,
+      _at: at,
     });
   }
 
