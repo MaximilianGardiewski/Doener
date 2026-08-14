@@ -74,6 +74,7 @@ export function connectPostgresRealtime({
       socket.addEventListener("open", () => {
         reconnectAttempt = 0;
         joinRef = nextRef();
+        const postgresChanges = typeof changes === "function" ? changes(currentSession) : changes;
         send(
           topic,
           "phx_join",
@@ -81,7 +82,7 @@ export function connectPostgresRealtime({
             config: {
               broadcast: { ack: false, self: false },
               presence: { enabled: false },
-              postgres_changes: changes,
+              postgres_changes: postgresChanges,
               private: false,
             },
             access_token: currentSession.accessToken,
