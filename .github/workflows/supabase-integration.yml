@@ -17,6 +17,10 @@ on:
       - "packages/ordering/**"
       - "tests/supabase-local.integration.mjs"
 
+concurrency:
+  group: supabase-integration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
