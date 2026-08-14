@@ -103,8 +103,15 @@ export function connectPostgresRealtime({
         try { message = JSON.parse(event.data); } catch { return; }
 
         if (message.event === "phx_reply" && message.ref === joinRef) {
-          if (message.payload?.status === "ok") onStatus("connecting");
-          else onStatus("degraded", new Error(message.payload?.response?.reason || "Realtime join rejected"));
+          if (message.payload?.status !== "ok") {
+            onStatus("degraded", new Error(message.payload?.response?.reason || "Realtime join rejected"));
+            return;
+          }
+          const confirmed = message.payload?.response?.postgres_changes;
+          // Supabase's official JS client treats a successful join reply whose
+          // postgres_changes bindings match as subscribed. Newer servers may
+          // additionally emit a replication-ready `system` event.
+          onStatus(Array.isArray(confirmed) ? "subscribed" : "connecting");
           return;
         }
 
