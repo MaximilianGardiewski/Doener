@@ -14,6 +14,10 @@ export type OrderSource = "web" | "counter" | "table";
 
 export interface Order {
   id: string;
+  /** Random bearer token for the customer status endpoint. Never use order id as the public secret. */
+  publicToken?: string;
+  /** Human-friendly kitchen/customer number. */
+  orderNumber?: number;
   locationId: string;
   source: OrderSource;
   fulfillmentType: FulfillmentType;
