@@ -30,7 +30,7 @@ export interface CheckoutRequest {
 }
 
 export interface CatalogReader {
-  getProduct(productId: string): Promise<MenuProduct | null>;
+  getProduct(productId: string, at: string): Promise<MenuProduct | null>;
   isProductAvailable(productId: string, at: string): Promise<boolean>;
 }
 
@@ -85,6 +85,7 @@ export class CheckoutError extends Error {
     | "EMPTY_CART"
     | "OTP_FAILED"
     | "SHOP_NOT_ACCEPTING"
+    | "INVALID_PICKUP_TIME"
     | "PRODUCT_NOT_FOUND"
     | "PRODUCT_UNAVAILABLE"
     | "INVALID_CONFIGURATION"
@@ -96,6 +97,7 @@ export class CheckoutError extends Error {
       | "EMPTY_CART"
       | "OTP_FAILED"
       | "SHOP_NOT_ACCEPTING"
+      | "INVALID_PICKUP_TIME"
       | "PRODUCT_NOT_FOUND"
       | "PRODUCT_UNAVAILABLE"
       | "INVALID_CONFIGURATION"
@@ -155,7 +157,24 @@ export async function submitVerifiedPickupOrder(
     );
   }
 
+  const availabilityAt = request.requestedPickupAt ?? nowIso;
   if (request.requestedPickupAt) {
+    const pickupEpoch = Date.parse(request.requestedPickupAt);
+    const nowEpoch = Date.parse(nowIso);
+    if (!Number.isFinite(pickupEpoch) || pickupEpoch <= nowEpoch) {
+      throw new CheckoutError("INVALID_PICKUP_TIME", "Der gewünschte Abholzeitpunkt muss in der Zukunft liegen.");
+    }
+
+    const futureShop = resolveShopCapabilities(
+      await deps.shop.getShopState(request.locationId, request.requestedPickupAt),
+    );
+    if (!futureShop.canSubmitOrder) {
+      throw new CheckoutError(
+        "INVALID_PICKUP_TIME",
+        "Der gewünschte Abholzeitpunkt liegt außerhalb der verfügbaren Bestellzeit.",
+      );
+    }
+
     const slot = await deps.slots.getSlotCapacity(request.locationId, request.requestedPickupAt);
     if (!hasSlotCapacity(slot)) {
       throw new CheckoutError("SLOT_FULL", "Der gewünschte Abholslot ist ausgelastet.");
@@ -166,12 +185,12 @@ export async function submitVerifiedPickupOrder(
   const items: Parameters<OrderWriter["create"]>[0]["items"] = [];
 
   for (const line of request.cart) {
-    const product = await deps.catalog.getProduct(line.productId);
+    const product = await deps.catalog.getProduct(line.productId, availabilityAt);
     if (!product) {
       throw new CheckoutError("PRODUCT_NOT_FOUND", `Produkt ${line.productId} wurde nicht gefunden.`);
     }
-    if (product.soldOut || !(await deps.catalog.isProductAvailable(product.id, nowIso))) {
-      throw new CheckoutError("PRODUCT_UNAVAILABLE", `${product.name} ist aktuell nicht verfügbar.`);
+    if (product.soldOut || !(await deps.catalog.isProductAvailable(product.id, availabilityAt))) {
+      throw new CheckoutError("PRODUCT_UNAVAILABLE", `${product.name} ist zum Abholzeitpunkt nicht verfügbar.`);
     }
 
     const config = validateConfiguration(product, line.selections);
