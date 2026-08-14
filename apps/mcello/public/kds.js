@@ -1,3 +1,5 @@
+import { connectPostgresRealtime } from "./realtime-client.js";
+
 const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
 const lanes = ["incoming", "planned", "preparing", "ready"];
 const target = Object.fromEntries(lanes.map((lane) => [lane, document.querySelector(`#${lane}`)]));
@@ -7,6 +9,7 @@ let shopOverride = "auto";
 let soundEnabled = false;
 let audioContext = null;
 let alarmTimer = null;
+let alarmIntervalMs = null;
 
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>"']/g, (char) => ({
@@ -25,6 +28,16 @@ function formatClock(iso) {
   return new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
+function elapsedText(iso) {
+  if (!iso) return "";
+  const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function isUrgent(order) {
+  return order.lane === "incoming" && order.submittedAt && Date.now() - new Date(order.submittedAt).getTime() >= 4 * 60_000;
+}
+
 function normalize(raw) {
   return {
     id: raw.id,
@@ -33,6 +46,9 @@ function normalize(raw) {
     lane: stateToLane(raw.state),
     customer: raw.customer_first_name,
     comment: raw.comment,
+    requestedPickupAt: raw.requested_pickup_at,
+    acceptedPickupAt: raw.accepted_pickup_at,
+    submittedAt: raw.submitted_at,
     time: raw.accepted_pickup_at || raw.requested_pickup_at || raw.submitted_at,
     totalCents: raw.total_cents,
     items: (raw.order_items ?? []).map((item) => ({
@@ -45,17 +61,21 @@ function normalize(raw) {
 }
 
 function actions(order) {
-  if (order.lane === "incoming") return `
-    <div class="quick">
-      <button data-action="accept" data-id="${order.id}" data-minutes="15">15 Min</button>
-      <button data-action="accept" data-id="${order.id}" data-minutes="20">20 Min</button>
-      <button data-action="accept" data-id="${order.id}" data-minutes="30">30 Min</button>
-    </div>
-    <div class="quick">
-      <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Zu viel los">Zu viel los</button>
-      <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Artikel/Zutat ausverkauft">Ausverkauft</button>
-      <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Küche schließt">Küche schließt</button>
-    </div>`;
+  if (order.lane === "incoming") {
+    const accept = order.requestedPickupAt
+      ? `<div class="quick"><button data-action="accept-slot" data-id="${order.id}">Slot ${formatClock(order.requestedPickupAt)} bestätigen</button></div>`
+      : `<div class="quick">
+          <button data-action="accept" data-id="${order.id}" data-minutes="15">15 Min</button>
+          <button data-action="accept" data-id="${order.id}" data-minutes="20">20 Min</button>
+          <button data-action="accept" data-id="${order.id}" data-minutes="30">30 Min</button>
+        </div>`;
+    return `${accept}
+      <div class="quick">
+        <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Zu viel los">Zu viel los</button>
+        <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Artikel/Zutat ausverkauft">Ausverkauft</button>
+        <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Küche schließt">Küche schließt</button>
+      </div>`;
+  }
   if (order.lane === "planned") return `<div class="quick"><button data-action="activate" data-id="${order.id}">Jetzt aktivieren</button></div>`;
   if (order.lane === "preparing") return `
     <div class="quick">
@@ -74,15 +94,21 @@ function render() {
   for (const order of orders) {
     if (!order.lane || !target[order.lane]) continue;
     counts[order.lane] += 1;
+    const urgent = isUrgent(order);
     const el = document.createElement("article");
-    el.className = `order ${order.lane === "incoming" ? "alert" : ""}`;
+    el.dataset.orderId = order.id;
+    el.className = `order ${order.lane === "incoming" ? "alert" : ""}${urgent ? " urgent" : ""}`;
     const itemHtml = order.items.map((item) => {
       const options = item.options.length ? `<small>${item.options.map(escapeHtml).join(" · ")}</small>` : "";
       const comment = item.comment ? `<small>Wunsch: ${escapeHtml(item.comment)}</small>` : "";
       return `<li><strong>${item.quantity}×</strong> ${escapeHtml(item.name)}${options}${comment}</li>`;
     }).join("");
+    const preorder = order.requestedPickupAt ? `<small>Vorbestellung · Slot ${formatClock(order.requestedPickupAt)}</small>` : "";
+    const age = order.lane === "incoming"
+      ? `<small class="wait-age ${urgent ? "urgent-copy" : ""}" data-wait-since="${escapeHtml(order.submittedAt || "")}">${urgent ? "⚠ " : ""}wartet ${elapsedText(order.submittedAt)}</small>`
+      : "";
     el.innerHTML = `
-      <div class="order-head"><strong>#${order.number} · ${escapeHtml(order.customer)}</strong><small>${formatClock(order.time)}</small></div>
+      <div class="order-head"><div><strong>#${order.number} · ${escapeHtml(order.customer)}</strong>${preorder}</div><div><small>${formatClock(order.time)}</small>${age}</div></div>
       <ul>${itemHtml}</ul>
       ${order.comment ? `<p><small>Bestellhinweis: ${escapeHtml(order.comment)}</small></p>` : ""}
       <p><strong>${euro.format(order.totalCents / 100)}</strong></p>${actions(order)}`;
@@ -110,29 +136,33 @@ async function refresh() {
     const shop = await shopResponse.json();
     shopOverride = shop.override ?? "auto";
     document.querySelector("#rush").textContent = shopOverride === "pause" ? "Rush/Pause AKTIV" : "Rush/Pause";
-    setConnection(true);
+    document.querySelector("#kdsError").hidden = true;
     render();
   } catch {
-    setConnection(false);
     const error = document.querySelector("#kdsError");
     error.hidden = false;
-    error.textContent = "Lokales KDS ist noch nicht verbunden. Starte zuerst das Supabase-Setup-Skript und danach `npm run preview:mcello`.";
+    error.textContent = "KDS-Daten konnten nicht geladen werden. Realtime versucht automatisch neu zu verbinden.";
   } finally {
     refreshing = false;
   }
 }
 
-function setConnection(online) {
-  document.querySelector("#syncDot").classList.toggle("offline", !online);
-  document.querySelector("#syncText").textContent = online ? "Lokale DB · Sync 1 s" : "Offline";
-  if (online) document.querySelector("#kdsError").hidden = true;
+function setRealtimeStatus(status, error) {
+  const dot = document.querySelector("#syncDot");
+  const text = document.querySelector("#syncText");
+  const labels = {
+    connecting: "Realtime verbindet …",
+    subscribed: "Realtime · Multi-Device live",
+    reconnecting: "Realtime verbindet neu …",
+    degraded: "Realtime gestört · Safety-Sync aktiv",
+  };
+  dot.classList.toggle("offline", status !== "subscribed");
+  text.textContent = labels[status] || status;
+  if (error && status === "degraded") console.warn("Realtime degraded", error);
 }
 
 async function act(button) {
-  const body = {
-    orderId: button.dataset.id,
-    action: button.dataset.action,
-  };
+  const body = { orderId: button.dataset.id, action: button.dataset.action };
   if (button.dataset.minutes) body.minutes = Number(button.dataset.minutes);
   if (button.dataset.reason) body.reason = button.dataset.reason;
   button.disabled = true;
@@ -143,6 +173,8 @@ async function act(button) {
       body: JSON.stringify(body),
     });
     if (!response.ok) throw new Error("transition rejected");
+    // Realtime will fan this change out to every device. Refresh immediately on
+    // the acting device as a latency optimization, not as the sync mechanism.
     await refresh();
   } catch {
     const error = document.querySelector("#kdsError");
@@ -181,29 +213,62 @@ document.querySelector("#sound").addEventListener("click", async (event) => {
 });
 
 function syncAlarm() {
-  const hasIncoming = orders.some((order) => order.lane === "incoming");
-  if (!soundEnabled || !hasIncoming) {
+  const incoming = orders.filter((order) => order.lane === "incoming");
+  const urgent = incoming.some(isUrgent);
+  const desiredInterval = urgent ? 850 : 1800;
+  if (!soundEnabled || incoming.length === 0) {
     clearInterval(alarmTimer);
     alarmTimer = null;
+    alarmIntervalMs = null;
     return;
   }
-  if (alarmTimer) return;
-  beep();
-  alarmTimer = setInterval(beep, 1800);
+  if (alarmTimer && alarmIntervalMs === desiredInterval) return;
+  clearInterval(alarmTimer);
+  beep(urgent);
+  alarmIntervalMs = desiredInterval;
+  alarmTimer = setInterval(() => beep(urgent), desiredInterval);
 }
 
-function beep() {
+function beep(urgent = false) {
   if (!audioContext || audioContext.state !== "running") return;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
-  oscillator.frequency.value = 760;
+  oscillator.frequency.value = urgent ? 920 : 760;
   gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.015);
+  gain.gain.exponentialRampToValueAtTime(urgent ? 0.18 : 0.12, audioContext.currentTime + 0.015);
   gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.22);
   oscillator.connect(gain).connect(audioContext.destination);
   oscillator.start();
   oscillator.stop(audioContext.currentTime + 0.24);
 }
 
-refresh();
-setInterval(refresh, 1000);
+function updateElapsedUi() {
+  let alarmMayHaveChanged = false;
+  document.querySelectorAll("[data-wait-since]").forEach((element) => {
+    const iso = element.dataset.waitSince;
+    const urgent = iso && Date.now() - new Date(iso).getTime() >= 4 * 60_000;
+    const wasUrgent = element.classList.contains("urgent-copy");
+    element.classList.toggle("urgent-copy", urgent);
+    element.textContent = `${urgent ? "⚠ " : ""}wartet ${elapsedText(iso)}`;
+    element.closest(".order")?.classList.toggle("urgent", urgent);
+    if (urgent !== wasUrgent) alarmMayHaveChanged = true;
+  });
+  if (alarmMayHaveChanged) syncAlarm();
+}
+
+await refresh();
+connectPostgresRealtime({
+  sessionEndpoint: "/api/kds/realtime-session",
+  topic: "realtime:mcello-kds",
+  changes: (session) => [
+    { event: "*", schema: "public", table: "orders", filter: `location_id=eq.${session.locationId}` },
+    { event: "*", schema: "public", table: "ordering_settings", filter: `location_id=eq.${session.locationId}` },
+  ],
+  onChange: () => refresh(),
+  onStatus: setRealtimeStatus,
+  reconciliationMs: 30_000,
+});
+setInterval(updateElapsedUi, 1000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refresh();
+});
