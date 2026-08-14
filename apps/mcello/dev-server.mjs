@@ -135,6 +135,25 @@ async function handleApi(req, res, url) {
     return true;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/menu") {
+    const rpc = publicRpc();
+    if (!rpc) {
+      sendJson(res, 503, { error: "LOCAL_SUPABASE_NOT_CONFIGURED" });
+      return true;
+    }
+    try {
+      const menu = await rpc.rpc("get_public_menu", {
+        _location_id: DEV_LOCATION_ID,
+        _at: new Date().toISOString(),
+      });
+      sendJson(res, 200, menu);
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 503, { error: "MENU_BACKEND_UNAVAILABLE" });
+    }
+    return true;
+  }
+
   if (req.method === "POST" && url.pathname === "/api/dev/otp/start") {
     const body = await readJson(req);
     const mobile = String(body.mobile ?? "").trim();
