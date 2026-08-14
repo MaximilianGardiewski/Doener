@@ -1,6 +1,6 @@
 -- Atomic server-side order persistence + token-scoped customer status.
--- The checkout service revalidates OTP/shop/menu/slot state first, then calls
--- server_create_verified_order with a service-role credential.
+-- The checkout service revalidates OTP/shop/menu/slot state first. PostgreSQL
+-- independently rechecks product/modifier linkage and recomputes every price.
 
 alter table public.order_items
   add column if not exists unit_price_cents_snapshot integer,
@@ -30,9 +30,17 @@ declare
   computed_total integer := 0;
   item_quantity integer;
   item_unit_price integer;
+  item_db_unit_price integer;
   item_line_total integer;
+  selected_count integer;
+  selection_count integer;
+  distinct_selection_count integer;
+  option_count integer;
+  distinct_option_count integer;
+  availability_at timestamptz;
 begin
-  if coalesce(jsonb_array_length(_payload->'items'), 0) < 1 then
+  if jsonb_typeof(_payload->'items') <> 'array'
+     or coalesce(jsonb_array_length(_payload->'items'), 0) < 1 then
     raise exception 'order must contain at least one item' using errcode = 'check_violation';
   end if;
 
@@ -43,6 +51,8 @@ begin
   if coalesce(trim(_payload->>'mobile'), '') = '' then
     raise exception 'mobile required' using errcode = 'check_violation';
   end if;
+
+  availability_at := coalesce(nullif(_payload->>'requestedPickupAt', '')::timestamptz, now());
 
   insert into public.orders (
     location_id,
@@ -65,7 +75,7 @@ begin
     nullif(trim(_payload->>'comment'), ''),
     nullif(_payload->>'requestedPickupAt', '')::timestamptz,
     (_payload->>'totalCents')::integer,
-    coalesce(nullif(_payload->>'submittedAt', '')::timestamptz, now())
+    now()
   ) returning * into created_order;
 
   for item in select value from jsonb_array_elements(_payload->'items') loop
@@ -83,11 +93,51 @@ begin
     select * into product_row
     from public.menu_products
     where id = (item->>'productId')::uuid
-      and location_id = created_order.location_id;
+      and location_id = created_order.location_id
+      and status = 'published'
+      and orderable_online;
 
     if product_row.id is null then
-      raise exception 'product not found for location' using errcode = 'foreign_key_violation';
+      raise exception 'product not orderable for location' using errcode = 'foreign_key_violation';
     end if;
+
+    if exists (
+      select 1 from public.snoozes s
+      where s.product_id = product_row.id and s.until_at > availability_at
+    ) then
+      raise exception 'product is snoozed for pickup time' using errcode = 'check_violation';
+    end if;
+
+    if jsonb_typeof(coalesce(item->'selections', '[]'::jsonb)) <> 'array' then
+      raise exception 'selections must be an array' using errcode = 'check_violation';
+    end if;
+
+    select jsonb_array_length(coalesce(item->'selections', '[]'::jsonb)) into selection_count;
+    select count(distinct value->>'groupId')::integer
+      into distinct_selection_count
+      from jsonb_array_elements(coalesce(item->'selections', '[]'::jsonb));
+    if selection_count <> distinct_selection_count then
+      raise exception 'duplicate modifier groups are not allowed' using errcode = 'check_violation';
+    end if;
+
+    -- Every required linked group must be represented. The count for each
+    -- represented group is validated below.
+    if exists (
+      select 1
+      from public.product_modifier_groups pmg
+      join public.modifier_groups g on g.id = pmg.group_id
+      where pmg.product_id = product_row.id
+        and g.min_selections > 0
+        and not exists (
+          select 1
+          from jsonb_array_elements(coalesce(item->'selections', '[]'::jsonb)) s
+          where (s.value->>'groupId')::uuid = g.id
+        )
+    ) then
+      raise exception 'required modifier group missing' using errcode = 'check_violation';
+    end if;
+
+    item_db_unit_price := product_row.base_price_cents;
 
     insert into public.order_items (
       order_id,
@@ -102,7 +152,7 @@ begin
     ) values (
       created_order.id,
       product_row.id,
-      coalesce(nullif(item->>'productNameSnapshot',''), product_row.name),
+      product_row.name,
       product_row.base_price_cents,
       item_unit_price,
       item_line_total,
@@ -124,15 +174,42 @@ begin
         raise exception 'modifier group not linked to product' using errcode = 'check_violation';
       end if;
 
+      if jsonb_typeof(coalesce(selection->'optionIds', '[]'::jsonb)) <> 'array' then
+        raise exception 'modifier option ids must be an array' using errcode = 'check_violation';
+      end if;
+
+      option_count := jsonb_array_length(coalesce(selection->'optionIds', '[]'::jsonb));
+      select count(distinct value)::integer into distinct_option_count
+      from jsonb_array_elements_text(coalesce(selection->'optionIds', '[]'::jsonb));
+
+      if option_count <> distinct_option_count then
+        raise exception 'duplicate modifier options are not allowed' using errcode = 'check_violation';
+      end if;
+      if option_count < group_row.min_selections or option_count > group_row.max_selections then
+        raise exception 'modifier selection count out of bounds' using errcode = 'check_violation';
+      end if;
+
+      selected_count := 0;
       for option_id_text in select jsonb_array_elements_text(coalesce(selection->'optionIds','[]'::jsonb)) loop
         select * into option_row
         from public.modifier_options
         where id = option_id_text::uuid
-          and group_id = group_row.id;
+          and group_id = group_row.id
+          and active;
 
         if option_row.id is null then
           raise exception 'modifier option not found in group' using errcode = 'check_violation';
         end if;
+
+        if exists (
+          select 1 from public.snoozes s
+          where s.modifier_option_id = option_row.id and s.until_at > availability_at
+        ) then
+          raise exception 'modifier option is snoozed for pickup time' using errcode = 'check_violation';
+        end if;
+
+        item_db_unit_price := item_db_unit_price + option_row.price_delta_cents;
+        selected_count := selected_count + 1;
 
         insert into public.order_item_options (
           order_item_id,
@@ -146,13 +223,21 @@ begin
           option_row.price_delta_cents
         );
       end loop;
+
+      if selected_count <> option_count then
+        raise exception 'modifier selection mismatch' using errcode = 'check_violation';
+      end if;
     end loop;
 
-    computed_total := computed_total + item_line_total;
+    if item_unit_price <> item_db_unit_price then
+      raise exception 'unit price does not match current catalog' using errcode = 'check_violation';
+    end if;
+
+    computed_total := computed_total + (item_db_unit_price * item_quantity);
   end loop;
 
   if computed_total <> created_order.total_cents then
-    raise exception 'order total does not match line totals' using errcode = 'check_violation';
+    raise exception 'order total does not match current catalog' using errcode = 'check_violation';
   end if;
 
   insert into public.order_events(order_id, event_type, metadata)
