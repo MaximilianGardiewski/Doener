@@ -48,6 +48,33 @@ test("sold-out option cannot be selected", () => {
   assert.match(result.errors.join(" "), /ausverkauft/);
 });
 
+test("unknown modifier group is rejected", () => {
+  const result = validateConfiguration(product, [
+    { groupId: "unknown", optionIds: ["whatever"] },
+    { groupId: "sauce", optionIds: ["garlic"] },
+  ]);
+  assert.equal(result.valid, false);
+  assert.match(result.errors.join(" "), /Unbekannte Auswahlgruppe/);
+});
+
+test("duplicate modifier group is rejected", () => {
+  const result = validateConfiguration(product, [
+    { groupId: "sauce", optionIds: ["garlic"] },
+    { groupId: "sauce", optionIds: ["garlic"] },
+  ]);
+  assert.equal(result.valid, false);
+  assert.match(result.errors.join(" "), /Gruppe doppelt/);
+});
+
+test("duplicate modifier option is rejected", () => {
+  const result = validateConfiguration(product, [
+    { groupId: "sauce", optionIds: ["garlic"] },
+    { groupId: "extras", optionIds: ["cheese", "cheese"] },
+  ]);
+  assert.equal(result.valid, false);
+  assert.match(result.errors.join(" "), /Option doppelt/);
+});
+
 test("configured price includes explicit extras", () => {
   const price = calculateConfiguredPriceCents(product, [
     { groupId: "sauce", optionIds: ["garlic"] },
