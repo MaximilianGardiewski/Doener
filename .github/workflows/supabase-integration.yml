@@ -11,6 +11,7 @@ on:
       - "packages/notifications/**"
       - "tests/supabase-local.integration.mjs"
       - "tests/provisional-menu.integration.mjs"
+      - "tests/scheduling.integration.mjs"
       - "tests/slot-capacity.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -25,6 +26,7 @@ on:
       - "packages/notifications/**"
       - "tests/supabase-local.integration.mjs"
       - "tests/provisional-menu.integration.mjs"
+      - "tests/scheduling.integration.mjs"
       - "tests/slot-capacity.integration.mjs"
 
 concurrency:
@@ -74,6 +76,9 @@ jobs:
 
       - name: Run real PostgREST/RPC order flow
         run: node tests/supabase-local.integration.mjs
+
+      - name: Prove slots timeout and scheduled activation
+        run: node tests/scheduling.integration.mjs
 
       - name: Prove atomic pickup-slot capacity
         run: node tests/slot-capacity.integration.mjs
