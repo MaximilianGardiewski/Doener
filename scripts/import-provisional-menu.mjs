@@ -5,7 +5,8 @@ import path from "node:path";
 const LOCATION_ID = "00000000-0000-4000-8000-000000000001";
 const SOURCE_NOTE_PREFIX = "provisional:user-supplied-menu-card-images";
 
-const env = parseEnv(await readFile(path.resolve(".env.local"), "utf8"));
+const fileEnv = await readOptionalEnv(path.resolve(".env.local"));
+const env = { ...fileEnv, ...process.env };
 const baseUrl = required("SUPABASE_URL").replace(/\/$/, "");
 const serviceRoleKey = required("SUPABASE_SERVICE_ROLE_KEY");
 const seed = JSON.parse(await readFile(path.resolve("data/mcello/menu-seed.provisional.json"), "utf8"));
@@ -135,6 +136,14 @@ function slugify(value) {
     .slice(0, 72) || "produkt";
 }
 
+async function readOptionalEnv(file) {
+  try {
+    return parseEnv(await readFile(file, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
 function parseEnv(raw) {
   const result = {};
   for (const line of raw.split(/\r?\n/)) {
@@ -151,7 +160,9 @@ function parseEnv(raw) {
 }
 
 function required(name) {
-  const value = env[name];
-  if (!value) throw new Error(`${name} is missing from .env.local`);
+  const raw = env[name];
+  if (!raw) throw new Error(`${name} is missing from environment/.env.local`);
+  const value = String(raw).trim();
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) return value.slice(1, -1);
   return value;
 }
