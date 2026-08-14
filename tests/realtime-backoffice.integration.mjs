@@ -8,6 +8,7 @@ function envValue(name) {
   return value;
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const baseUrl = envValue("SUPABASE_URL")?.replace(/\/$/, "");
 const anonKey = envValue("SUPABASE_ANON_KEY");
 const serviceRoleKey = envValue("SUPABASE_SERVICE_ROLE_KEY");
@@ -54,6 +55,12 @@ assert.equal(operational.response.ok, true, JSON.stringify(operational.data));
 assert.ok(Array.isArray(operational.data.products));
 assert.ok(Array.isArray(operational.data.modifierGroups));
 
+const directSnoozeRead = await request(
+  `/rest/v1/snoozes?location_id=eq.${locationId}&select=id,location_id,product_id,modifier_option_id,until_at`,
+  { bearer: staffToken },
+);
+assert.equal(directSnoozeRead.response.ok, true, `staff must have direct SELECT for Realtime RLS: ${JSON.stringify(directSnoozeRead.data)}`);
+
 const staffAdminAttempt = await rpc("admin_save_menu_product", {
   _id: null,
   _location_id: locationId,
@@ -94,6 +101,10 @@ assert.equal(adminCatalog.data.products.some((product) => product.id === created
 
 const realtime = createSnoozeRealtimeProbe(staffToken);
 await realtime.ready;
+// Older local Realtime builds acknowledge the Phoenix join before the CDC
+// subscription worker has fully registered. The actual event assertion below
+// remains mandatory; this grace period only removes that handshake race.
+await sleep(1000);
 const untilAt = new Date(Date.now() + 60 * 60_000).toISOString();
 const snoozed = await rpc("staff_snooze_product", {
   _product_id: productId,
@@ -155,6 +166,7 @@ function createSnoozeRealtimeProbe(accessToken) {
   let rejectEvent;
   const ready = new Promise((resolve, reject) => { resolveReady = resolve; rejectReady = reject; });
   const event = new Promise((resolve, reject) => { resolveEvent = resolve; rejectEvent = reject; });
+  const messageHistory = [];
 
   const parsed = new URL(baseUrl);
   parsed.protocol = parsed.protocol === "https:" ? "wss:" : "ws:";
@@ -164,10 +176,18 @@ function createSnoozeRealtimeProbe(accessToken) {
   const joinRef = "1";
   const timer = setTimeout(() => {
     socket.close();
-    const error = new Error("timed out waiting for Realtime postgres_changes event");
+    const compact = messageHistory.slice(-12).map((entry) => ({
+      event: entry.event,
+      topic: entry.topic,
+      status: entry.payload?.status,
+      response: entry.payload?.response,
+      extension: entry.payload?.extension,
+      message: entry.payload?.message,
+    }));
+    const error = new Error(`timed out waiting for Realtime postgres_changes event; messages=${JSON.stringify(compact)}`);
     rejectReady(error);
     rejectEvent(error);
-  }, 12_000);
+  }, 15_000);
 
   socket.addEventListener("open", () => {
     socket.send(JSON.stringify({
@@ -195,6 +215,7 @@ function createSnoozeRealtimeProbe(accessToken) {
   socket.addEventListener("message", (messageEvent) => {
     let message;
     try { message = JSON.parse(messageEvent.data); } catch { return; }
+    messageHistory.push(message);
     if (message.event === "phx_reply" && message.ref === joinRef) {
       if (message.payload?.status !== "ok") {
         clearTimeout(timer);
@@ -230,7 +251,7 @@ function createSnoozeRealtimeProbe(accessToken) {
 
   socket.addEventListener("error", () => {
     clearTimeout(timer);
-    const error = new Error("Realtime websocket error");
+    const error = new Error(`Realtime websocket error; messages=${JSON.stringify(messageHistory.slice(-12))}`);
     rejectReady(error);
     rejectEvent(error);
   });
