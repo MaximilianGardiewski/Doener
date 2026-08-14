@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "canonical": true,
+  "skills": [
+    {
+      "name": "business-website-discovery-interviewer",
+      "description": "Conduct a one-question-at-a-time discovery interview for a business website or app, turn every confirmed answer into a binding implementation decision, and finish with an implementation-ready brief, decision ledger, reuse plan, feature scope, design direction, and open-facts checklist.",
+      "path": "skills/business-website-discovery-interviewer/SKILL.md"
+    },
+    {
+      "name": "business-web-cms-builder",
+      "description": "Research an existing business and rebuild its public website as a modern, maintainable CMS-backed web presence with editable recurring content, role-based administration, design review, migration, SEO, accessibility, and deployment readiness.",
+      "path": "skills/business-web-cms-builder/SKILL.md"
+    },
+    {
+      "name": "cms-v1-accelerator",
+      "description": "Rapidly scaffold a production-oriented CMS-backed business website V1 with reusable modules, role boundaries, recurring content, media, forms, and a vertical-slice-first implementation strategy.",
+      "path": "skills/cms-v1-accelerator/SKILL.md"
+    },
+    {
+      "name": "legacy-web-migration-engineer",
+      "description": "Audit an existing website and migrate its routes, content, forms, SEO signals, media, and recurring workflows into a modern application without breaking important URLs or inventing unsupported content.",
+      "path": "skills/legacy-web-migration-engineer/SKILL.md"
+    },
+    {
+      "name": "multi-page-business-site-architect",
+      "description": "Convert business websites that are overly home-page-centric or one-page-like into clear route-based multi-page information architectures with compact home teasers, dedicated landing pages, strong navigation, and SEO-safe content separation.",
+      "path": "skills/multi-page-business-site-architect/SKILL.md"
+    },
+    {
+      "name": "public-content-integrity-auditor",
+      "description": "Audit public website copy, metadata, structured data, images, alt text, and generated placeholders against available evidence so unsupported claims, fake authenticity signals, and misleading media descriptions are removed before release.",
+      "path": "skills/public-content-integrity-auditor/SKILL.md"
+    },
+    {
+      "name": "responsive-route-qa-engineer",
+      "description": "Run repeatable provider-neutral quality assurance across public web routes with build, typecheck, lint, Playwright, desktop/mobile route smoke tests, H1 validation, overflow checks, console-error checks, sticky-UI overlap checks, and precise reporting.",
+      "path": "skills/responsive-route-qa-engineer/SKILL.md"
+    },
+    {
+      "name": "supabase-rls-security-auditor",
+      "description": "Audit and harden Supabase/PostgreSQL authentication, roles, RLS, functions, storage policies, public publishing rules, and privileged server access for CMS and SaaS applications.",
+      "path": "skills/supabase-rls-security-auditor/SKILL.md"
+    },
+    {
+      "name": "web-app-portability-architect",
+      "description": "Design and harden web applications so they remain portable across builders, AI coding tools, hosting providers, databases, and deployment platforms, with a clear path away from vendor-specific runtimes.",
+      "path": "skills/web-app-portability-architect/SKILL.md"
+    },
+    {
+      "name": "web-release-launch-engineer",
+      "description": "Prepare, verify, release, migrate, and roll back production websites and CMS applications with build checks, backups, DNS planning, SEO cutover, smoke tests, and post-launch validation.",
+      "path": "skills/web-release-launch-engineer/SKILL.md"
+    }
+  ]
+}
