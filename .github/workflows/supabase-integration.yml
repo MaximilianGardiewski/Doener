@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "supabase/**"
+      - "data/mcello/menu-seed.provisional.json"
+      - "scripts/import-provisional-menu.mjs"
       - "packages/supabase-adapter/**"
       - "packages/ordering/**"
       - "tests/supabase-local.integration.mjs"
@@ -13,6 +15,8 @@ on:
       - main
     paths:
       - "supabase/**"
+      - "data/mcello/menu-seed.provisional.json"
+      - "scripts/import-provisional-menu.mjs"
       - "packages/supabase-adapter/**"
       - "packages/ordering/**"
       - "tests/supabase-local.integration.mjs"
@@ -55,6 +59,9 @@ jobs:
             --override-name auth.anon_key=SUPABASE_ANON_KEY \
             --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
             >> "$GITHUB_ENV"
+
+      - name: Import provisional Mcello menu
+        run: node scripts/import-provisional-menu.mjs
 
       - name: Run real PostgREST/RPC order flow
         run: node tests/supabase-local.integration.mjs
