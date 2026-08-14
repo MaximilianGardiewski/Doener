@@ -1,0 +1,220 @@
+import { resolveShopCapabilities, type ShopStatusInput } from "../../core/src/shop-status.ts";
+import {
+  calculateConfiguredPriceCents,
+  validateConfiguration,
+  type MenuProduct,
+  type ProductSelection,
+} from "../../menu-engine/src/model.ts";
+import type { OtpProvider, OrderNotificationProvider } from "../../notifications/src/contracts.ts";
+import { hasSlotCapacity } from "./capacity.ts";
+import type { Order } from "./model.ts";
+
+export interface CheckoutCartLine {
+  productId: string;
+  quantity: number;
+  selections: ProductSelection[];
+  comment?: string;
+  /** Client value is informational only. The server must never trust it. */
+  clientPriceCents?: number;
+}
+
+export interface CheckoutRequest {
+  locationId: string;
+  firstName: string;
+  mobile: string;
+  comment?: string;
+  requestedPickupAt?: string | null;
+  otpChallengeId: string;
+  otpCode: string;
+  cart: CheckoutCartLine[];
+}
+
+export interface CatalogReader {
+  getProduct(productId: string): Promise<MenuProduct | null>;
+  isProductAvailable(productId: string, at: string): Promise<boolean>;
+}
+
+export interface ShopStateReader {
+  getShopState(locationId: string, at: string): Promise<ShopStatusInput>;
+}
+
+export interface SlotReader {
+  getSlotCapacity(locationId: string, pickupAt: string): Promise<{
+    capacity: number;
+    acceptedOrderCount: number;
+  }>;
+}
+
+export interface OrderWriter {
+  create(input: {
+    locationId: string;
+    source: "web";
+    fulfillmentType: "pickup";
+    state: "waiting_for_acceptance";
+    customerFirstName: string;
+    mobile: string;
+    comment?: string;
+    requestedPickupAt?: string | null;
+    totalCents: number;
+    submittedAt: string;
+    items: Array<{
+      productId: string;
+      productNameSnapshot: string;
+      quantity: number;
+      unitPriceCentsSnapshot: number;
+      lineTotalCents: number;
+      selections: ProductSelection[];
+      comment?: string;
+    }>;
+  }): Promise<Order>;
+}
+
+export interface CheckoutDependencies {
+  otp: OtpProvider;
+  catalog: CatalogReader;
+  shop: ShopStateReader;
+  slots: SlotReader;
+  orders: OrderWriter;
+  notifications?: OrderNotificationProvider;
+  statusUrlFor(order: Order): string;
+}
+
+export class CheckoutError extends Error {
+  readonly code:
+    | "INVALID_CUSTOMER"
+    | "EMPTY_CART"
+    | "OTP_FAILED"
+    | "SHOP_NOT_ACCEPTING"
+    | "PRODUCT_NOT_FOUND"
+    | "PRODUCT_UNAVAILABLE"
+    | "INVALID_CONFIGURATION"
+    | "SLOT_FULL";
+
+  constructor(
+    code:
+      | "INVALID_CUSTOMER"
+      | "EMPTY_CART"
+      | "OTP_FAILED"
+      | "SHOP_NOT_ACCEPTING"
+      | "PRODUCT_NOT_FOUND"
+      | "PRODUCT_UNAVAILABLE"
+      | "INVALID_CONFIGURATION"
+      | "SLOT_FULL",
+    message: string,
+  ) {
+    super(message);
+    this.name = "CheckoutError";
+    this.code = code;
+  }
+}
+
+function normalizeName(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function normalizeMobile(value: string): string {
+  return value.replace(/[\s()-]/g, "").trim();
+}
+
+function validateCustomer(firstName: string, mobile: string): void {
+  if (firstName.length < 1 || firstName.length > 80) {
+    throw new CheckoutError("INVALID_CUSTOMER", "Vorname ist erforderlich.");
+  }
+  if (!/^\+?[0-9]{7,18}$/.test(mobile)) {
+    throw new CheckoutError("INVALID_CUSTOMER", "Mobilnummer ist ungültig.");
+  }
+}
+
+export async function submitVerifiedPickupOrder(
+  request: CheckoutRequest,
+  deps: CheckoutDependencies,
+  nowIso = new Date().toISOString(),
+): Promise<Order> {
+  const firstName = normalizeName(request.firstName);
+  const mobile = normalizeMobile(request.mobile);
+  validateCustomer(firstName, mobile);
+
+  if (request.cart.length === 0 || request.cart.some((line) => line.quantity < 1 || line.quantity > 99)) {
+    throw new CheckoutError("EMPTY_CART", "Warenkorb ist leer oder ungültig.");
+  }
+
+  const otp = await deps.otp.verifyOtp({
+    challengeId: request.otpChallengeId,
+    code: request.otpCode,
+  });
+  if (!otp.verified) {
+    throw new CheckoutError("OTP_FAILED", "OTP-Verifikation fehlgeschlagen.");
+  }
+
+  const shopInput = await deps.shop.getShopState(request.locationId, nowIso);
+  const shop = resolveShopCapabilities(shopInput);
+  if (!shop.canSubmitOrder) {
+    throw new CheckoutError(
+      "SHOP_NOT_ACCEPTING",
+      `Online-Bestellungen sind aktuell nicht möglich (${shop.reason}).`,
+    );
+  }
+
+  if (request.requestedPickupAt) {
+    const slot = await deps.slots.getSlotCapacity(request.locationId, request.requestedPickupAt);
+    if (!hasSlotCapacity(slot)) {
+      throw new CheckoutError("SLOT_FULL", "Der gewünschte Abholslot ist ausgelastet.");
+    }
+  }
+
+  let totalCents = 0;
+  const items: Parameters<OrderWriter["create"]>[0]["items"] = [];
+
+  for (const line of request.cart) {
+    const product = await deps.catalog.getProduct(line.productId);
+    if (!product) {
+      throw new CheckoutError("PRODUCT_NOT_FOUND", `Produkt ${line.productId} wurde nicht gefunden.`);
+    }
+    if (product.soldOut || !(await deps.catalog.isProductAvailable(product.id, nowIso))) {
+      throw new CheckoutError("PRODUCT_UNAVAILABLE", `${product.name} ist aktuell nicht verfügbar.`);
+    }
+
+    const config = validateConfiguration(product, line.selections);
+    if (!config.valid) {
+      throw new CheckoutError("INVALID_CONFIGURATION", config.errors.join(" "));
+    }
+
+    const unitPriceCents = calculateConfiguredPriceCents(product, line.selections);
+    const lineTotalCents = unitPriceCents * line.quantity;
+    totalCents += lineTotalCents;
+    items.push({
+      productId: product.id,
+      productNameSnapshot: product.name,
+      quantity: line.quantity,
+      unitPriceCentsSnapshot: unitPriceCents,
+      lineTotalCents,
+      selections: line.selections,
+      comment: line.comment?.trim() || undefined,
+    });
+  }
+
+  const order = await deps.orders.create({
+    locationId: request.locationId,
+    source: "web",
+    fulfillmentType: "pickup",
+    state: "waiting_for_acceptance",
+    customerFirstName: firstName,
+    mobile,
+    comment: request.comment?.trim() || undefined,
+    requestedPickupAt: request.requestedPickupAt ?? null,
+    totalCents,
+    submittedAt: nowIso,
+    items,
+  });
+
+  if (deps.notifications) {
+    await deps.notifications.sendOrderNotification({
+      kind: "received",
+      mobile,
+      orderId: order.id,
+      statusUrl: deps.statusUrlFor(order),
+    }).catch(() => undefined);
+  }
+
+  return order;
+}
