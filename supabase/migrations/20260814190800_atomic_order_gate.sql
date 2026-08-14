@@ -61,7 +61,6 @@ declare
   slot_start timestamptz;
   slot_end timestamptz;
   slot_seconds integer;
-  slot_index integer;
   occupied integer;
 begin
   if new.source <> 'web'::public.order_source
@@ -104,13 +103,15 @@ begin
 
   slot_start := new.requested_pickup_at;
   slot_end := slot_start + make_interval(mins => settings.slot_minutes);
-  slot_index := floor(extract(epoch from slot_start) / slot_seconds)::integer;
 
-  -- Serialize all inserts for the same location+slot. A concurrent request must
-  -- wait, then recount committed orders before it can claim the final capacity.
+  -- Serialize all inserts for exactly the same location+slot with one bigint
+  -- advisory key. hashtextextended returns bigint, avoiding the narrower int4
+  -- key/casting path while remaining deterministic within PostgreSQL.
   perform pg_advisory_xact_lock(
-    hashtext('business_web_factory:pickup_slot:' || new.location_id::text),
-    slot_index
+    hashtextextended(
+      'business_web_factory:pickup_slot:' || new.location_id::text || ':' || slot_start::text,
+      0
+    )
   );
 
   select count(*)::integer into occupied
