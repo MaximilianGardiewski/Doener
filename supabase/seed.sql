@@ -44,7 +44,7 @@ insert into public.menu_categories (
   'DEV Testkategorie',
   1,
   'published',
-  true
+  false
 ) on conflict (id) do nothing;
 
 insert into public.menu_products (
