@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello Admin — Speisekarte</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .admin-shell{width:min(calc(100% - 24px),1280px);margin:auto;padding:24px 0 90px}.admin-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:20px 0}.admin-top h1{font-size:42px;margin-right:auto}
+    .status-dot{width:9px;height:9px;background:var(--green);border-radius:50%;display:inline-block}.status-dot.offline{background:#b96e62}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0}.toolbar input,.toolbar select,.admin-form input,.admin-form textarea,.admin-form select{background:#171714;color:#f3eadf;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}.toolbar input{min-width:240px;flex:1}.admin-form textarea{min-height:80px;resize:vertical}
+    .admin-grid{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}.panel{background:#161613;border:1px solid rgba(255,255,255,.07);border-radius:24px;padding:16px}.panel h2{margin:4px 0 14px}.category-card,.product-card{border:1px solid rgba(255,255,255,.07);background:#20201b;border-radius:18px;margin:10px 0;padding:12px}.product-card summary{cursor:pointer;display:flex;gap:10px;align-items:center;justify-content:space-between;list-style:none}.product-card summary::-webkit-details-marker{display:none}.admin-form{display:grid;gap:10px;margin-top:12px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.checks{display:flex;gap:14px;flex-wrap:wrap}.checks label{display:flex;gap:7px;align-items:center}.actions{display:flex;gap:8px;flex-wrap:wrap}.admin-btn{border:1px solid var(--line);background:#29251c;color:var(--gold-2);border-radius:11px;padding:9px 12px;cursor:pointer}.admin-btn.primary{background:var(--gold);color:#15120d;border-color:transparent}.admin-btn.danger{color:#efaea3}.admin-btn.good{color:#b9dc8c}.admin-btn:disabled{opacity:.45;cursor:wait}.badge{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}.message{min-height:24px;color:var(--muted)}
+    @media(max-width:900px){.admin-grid{grid-template-columns:1fr}.admin-top h1{font-size:34px}.form-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">Lokaler Adminbereich · strukturelle Änderungen nur mit Admin-Rolle</div>
+  <main class="admin-shell">
+    <div class="admin-top">
+      <h1>Mcello Admin</h1>
+      <span class="pill"><span class="status-dot offline" id="adminDot"></span> <span id="adminSync">Verbinden …</span></span>
+      <a class="pill" href="/ops.html">Betrieb</a>
+      <a class="pill" href="/kds.html">KDS</a>
+      <a class="pill" href="/">Public</a>
+    </div>
+    <div class="notice">Inhaberbereich: Kategorien, Produkte, Preise, Veröffentlichung und Online-Bestellbarkeit. Alle Seed-Werte bleiben bis zur echten Freigabe als vorläufig gekennzeichnet.</div>
+    <p class="message" id="adminMessage"></p>
+    <div class="toolbar">
+      <input id="productSearch" type="search" placeholder="Gericht suchen …" />
+      <select id="categoryFilter"><option value="">Alle Kategorien</option></select>
+      <button class="admin-btn" id="newCategory">+ Kategorie</button>
+      <button class="admin-btn primary" id="newProduct">+ Produkt</button>
+      <button class="admin-btn" id="reloadAdmin">Neu laden</button>
+    </div>
+    <div class="admin-grid">
+      <section class="panel"><h2>Kategorien</h2><div id="categoryAdmin"></div></section>
+      <section class="panel"><h2>Produkte</h2><div id="productAdmin"></div></section>
+    </div>
+  </main>
+  <script type="module" src="/admin.js"></script>
+</body>
+</html>
