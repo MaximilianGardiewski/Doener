@@ -9,6 +9,7 @@ on:
       - "packages/supabase-adapter/**"
       - "packages/ordering/**"
       - "tests/supabase-local.integration.mjs"
+      - "tests/provisional-menu.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       - "packages/supabase-adapter/**"
       - "packages/ordering/**"
       - "tests/supabase-local.integration.mjs"
+      - "tests/provisional-menu.integration.mjs"
 
 concurrency:
   group: supabase-integration-${{ github.event.pull_request.number || github.ref }}
@@ -62,6 +64,9 @@ jobs:
 
       - name: Import provisional Mcello menu
         run: node scripts/import-provisional-menu.mjs
+
+      - name: Verify provisional menu safety
+        run: node tests/provisional-menu.integration.mjs
 
       - name: Run real PostgREST/RPC order flow
         run: node tests/supabase-local.integration.mjs
