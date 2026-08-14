@@ -1,7 +1,7 @@
 -- Narrow server-only read RPCs used by the checkout orchestrator.
 -- They keep database-specific availability/opening-hour logic out of the domain package.
 
-create or replace function public.server_get_checkout_product(_product_id uuid)
+create or replace function public.server_get_checkout_product(_product_id uuid, _at timestamptz)
 returns jsonb
 language sql
 stable
@@ -17,7 +17,7 @@ as $$
     'bestseller', p.bestseller,
     'soldOut', exists (
       select 1 from public.snoozes s
-      where s.product_id = p.id and s.until_at > now()
+      where s.product_id = p.id and s.until_at > _at
     ),
     'dietaryTags', to_jsonb(p.dietary_tags),
     'ownerConfirmed', p.owner_confirmed,
@@ -38,7 +38,7 @@ as $$
                 'defaultSelected', o.default_selected,
                 'soldOut', exists (
                   select 1 from public.snoozes s
-                  where s.modifier_option_id = o.id and s.until_at > now()
+                  where s.modifier_option_id = o.id and s.until_at > _at
                 )
               ) order by o.sort, o.id
             )
@@ -229,12 +229,12 @@ begin
 end;
 $$;
 
-revoke all on function public.server_get_checkout_product(uuid) from public, anon, authenticated;
+revoke all on function public.server_get_checkout_product(uuid,timestamptz) from public, anon, authenticated;
 revoke all on function public.server_is_product_available(uuid,timestamptz) from public, anon, authenticated;
 revoke all on function public.server_get_shop_state(uuid,timestamptz) from public, anon, authenticated;
 revoke all on function public.server_get_slot_capacity(uuid,timestamptz) from public, anon, authenticated;
 
-grant execute on function public.server_get_checkout_product(uuid) to service_role;
+grant execute on function public.server_get_checkout_product(uuid,timestamptz) to service_role;
 grant execute on function public.server_is_product_available(uuid,timestamptz) to service_role;
 grant execute on function public.server_get_shop_state(uuid,timestamptz) to service_role;
 grant execute on function public.server_get_slot_capacity(uuid,timestamptz) to service_role;
