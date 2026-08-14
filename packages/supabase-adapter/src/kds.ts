@@ -16,6 +16,10 @@ export class SupabaseKdsOperations {
     });
   }
 
+  acceptRequestedSlot(orderId: string): Promise<Order> {
+    return this.orderRpc("staff_accept_requested_slot", { _order_id: orderId });
+  }
+
   activateScheduled(orderId: string): Promise<Order> {
     return this.orderRpc("staff_activate_scheduled_order", { _order_id: orderId });
   }
