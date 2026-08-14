@@ -71,3 +71,5 @@ Status semantics:
 | D060 | Public PWA | Public Mcello experience is installable PWA while remaining fully usable in browser. | `IMPLEMENT_V1` |
 | D061 | Future Loyalty | Favorites/reorder/push/loyalty may use the PWA foundation later. | `LATER_OPTION` |
 | D062 | Scope Rule | Every confirmed interview decision is binding according to its explicit V1/prepared/later status. | `IMPLEMENT_V1` |
+| D063 | Infrastructure Cost | Development and deployment must introduce no mandatory new monthly SaaS cost. Use local Supabase via Docker for development and a self-hosted Supabase/app deployment on already-available infrastructure for staging/production. GitHub is source of truth; Vercel/Lovable are optional clients only. | `IMPLEMENT_V1` |
+| D064 | External Messaging Spend | No paid SMS/WhatsApp provider may be silently enabled. Keep the binding WhatsApp-primary/SMS-fallback contracts and use a local OTP provider in development; production messaging provider activation requires explicit owner approval of unavoidable carrier/provider charges. | `IMPLEMENT_V1` |
