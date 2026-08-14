@@ -19,6 +19,9 @@ $envOutput = npx --yes supabase@latest status -o env `
   --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY
 $envOutput | Set-Content -Encoding utf8 '.env.local'
 
+Write-Host 'Importing provisional Mcello menu (owner confirmation remains required)...'
+node scripts/import-provisional-menu.mjs
+
 Write-Host 'Preparing random local-only KDS staff credentials...'
 node scripts/bootstrap-local-staff.mjs
 
