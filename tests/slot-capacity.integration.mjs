@@ -81,7 +81,11 @@ try {
   assert.match(JSON.stringify(failures[0].data), /pickup slot capacity exhausted/i);
 
   winningOrder = Array.isArray(successes[0].data) ? successes[0].data[0] : successes[0].data;
-  assert.equal(winningOrder.requested_pickup_at, pickupAt);
+  assert.equal(
+    Date.parse(winningOrder.requested_pickup_at),
+    Date.parse(pickupAt),
+    "database may serialize timestamptz differently, but the pickup instant must match exactly",
+  );
 
   const slotState = await rpc("server_get_slot_capacity", {
     _location_id: locationId,
