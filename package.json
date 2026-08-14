@@ -9,10 +9,10 @@
   "scripts": {
     "test:domain": "node --experimental-strip-types --test packages/*/test/*.test.ts",
     "test:schema": "node --test tests/*.test.mjs",
-    "check:static": "node --check apps/mcello/public/app.js && node --check apps/mcello/public/kds.js && node --check apps/mcello/public/status.js && node --check apps/mcello/dev-server.mjs && node --check scripts/import-provisional-menu.mjs && node --check scripts/bootstrap-local-staff.mjs",
+    "check:static": "node --check apps/mcello/public/app.js && node --check apps/mcello/public/kds.js && node --check apps/mcello/public/status.js && node --check apps/mcello/server.mjs && node --check scripts/import-provisional-menu.mjs && node --check scripts/bootstrap-local-staff.mjs",
     "check": "npm run test:domain && npm run test:schema && npm run check:static",
     "build:preview": "node scripts/build-preview.mjs",
-    "preview:mcello": "node --experimental-strip-types apps/mcello/dev-server.mjs"
+    "preview:mcello": "node --experimental-strip-types apps/mcello/server.mjs"
   },
   "engines": {
     "node": ">=22"
