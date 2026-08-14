@@ -55,7 +55,11 @@ export function mapDbOrder(row: DbOrder): Order {
 }
 
 export class SupabaseOrderWriter implements OrderWriter {
-  constructor(private readonly rpcClient: RpcClient) {}
+  private readonly rpcClient: RpcClient;
+
+  constructor(rpcClient: RpcClient) {
+    this.rpcClient = rpcClient;
+  }
 
   async create(input: Parameters<OrderWriter["create"]>[0]): Promise<Order> {
     const response = await this.rpcClient.rpc<DbOrder | DbOrder[]>("server_create_verified_order", {
@@ -97,7 +101,11 @@ export interface PublicOrderStatus {
 }
 
 export class SupabasePublicOrderStatusReader {
-  constructor(private readonly rpcClient: RpcClient) {}
+  private readonly rpcClient: RpcClient;
+
+  constructor(rpcClient: RpcClient) {
+    this.rpcClient = rpcClient;
+  }
 
   async get(publicToken: string): Promise<PublicOrderStatus | null> {
     const data = await this.rpcClient.rpc<PublicOrderStatus | null>("get_public_order_status", {
