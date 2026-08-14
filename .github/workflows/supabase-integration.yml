@@ -6,6 +6,8 @@ on:
       - "supabase/**"
       - "data/mcello/menu-seed.provisional.json"
       - "scripts/import-provisional-menu.mjs"
+      - "scripts/bootstrap-local-staff.mjs"
+      - "apps/mcello/**"
       - "packages/supabase-adapter/**"
       - "packages/ordering/**"
       - "packages/notifications/**"
@@ -13,6 +15,8 @@ on:
       - "tests/provisional-menu.integration.mjs"
       - "tests/scheduling.integration.mjs"
       - "tests/slot-capacity.integration.mjs"
+      - "tests/notification-outbox.integration.mjs"
+      - "tests/realtime-backoffice.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
     branches:
@@ -21,6 +25,8 @@ on:
       - "supabase/**"
       - "data/mcello/menu-seed.provisional.json"
       - "scripts/import-provisional-menu.mjs"
+      - "scripts/bootstrap-local-staff.mjs"
+      - "apps/mcello/**"
       - "packages/supabase-adapter/**"
       - "packages/ordering/**"
       - "packages/notifications/**"
@@ -28,6 +34,8 @@ on:
       - "tests/provisional-menu.integration.mjs"
       - "tests/scheduling.integration.mjs"
       - "tests/slot-capacity.integration.mjs"
+      - "tests/notification-outbox.integration.mjs"
+      - "tests/realtime-backoffice.integration.mjs"
 
 concurrency:
   group: supabase-integration-${{ github.event.pull_request.number || github.ref }}
@@ -82,6 +90,12 @@ jobs:
 
       - name: Prove atomic pickup-slot capacity
         run: node tests/slot-capacity.integration.mjs
+
+      - name: Prove notification outbox lifecycle
+        run: node tests/notification-outbox.integration.mjs
+
+      - name: Prove realtime and backoffice role boundaries
+        run: node tests/realtime-backoffice.integration.mjs
 
       - name: Stop local Supabase
         if: always()
