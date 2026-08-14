@@ -32,7 +32,10 @@ const anonKey = optionalEnv("SUPABASE_ANON_KEY");
 const serviceRoleKey = optionalEnv("SUPABASE_SERVICE_ROLE_KEY");
 const devStaffEmail = optionalEnv("MCELLO_DEV_STAFF_EMAIL");
 const devStaffPassword = optionalEnv("MCELLO_DEV_STAFF_PASSWORD");
+const devAdminEmail = optionalEnv("MCELLO_DEV_ADMIN_EMAIL");
+const devAdminPassword = optionalEnv("MCELLO_DEV_ADMIN_PASSWORD");
 let staffSession = null;
+let adminSession = null;
 let maintenanceRunning = false;
 
 const devCodes = new Map();
@@ -70,14 +73,21 @@ function publicRpc() {
   return new SupabaseRestRpcClient({ baseUrl: supabaseUrl, apiKey: anonKey });
 }
 
-async function staffRpc() {
-  const token = await getDevStaffAccessToken();
-  if (!anonKey || !token) return null;
+function rpcWithAccessToken(accessToken) {
+  if (!anonKey || !accessToken) return null;
   return new SupabaseRestRpcClient({
     baseUrl: supabaseUrl,
     apiKey: anonKey,
-    authorizationToken: token,
+    authorizationToken: accessToken,
   });
+}
+
+async function staffRpc() {
+  return rpcWithAccessToken((await getDevSession("staff"))?.accessToken);
+}
+
+async function adminRpc() {
+  return rpcWithAccessToken((await getDevSession("admin"))?.accessToken);
 }
 
 function sendJson(res, status, data) {
@@ -97,9 +107,13 @@ async function readJson(req) {
   return raw ? JSON.parse(raw) : {};
 }
 
-async function getDevStaffAccessToken() {
-  if (!anonKey || !devStaffEmail || !devStaffPassword) return null;
-  if (staffSession && staffSession.expiresAt > Date.now() + 60_000) return staffSession.accessToken;
+async function getDevSession(role) {
+  const isAdmin = role === "admin";
+  const email = isAdmin ? devAdminEmail : devStaffEmail;
+  const password = isAdmin ? devAdminPassword : devStaffPassword;
+  const cached = isAdmin ? adminSession : staffSession;
+  if (!anonKey || !email || !password) return null;
+  if (cached && cached.expiresAt > Date.now() + 60_000) return cached;
 
   const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
     method: "POST",
@@ -108,34 +122,58 @@ async function getDevStaffAccessToken() {
       "content-type": "application/json",
       accept: "application/json",
     },
-    body: JSON.stringify({ email: devStaffEmail, password: devStaffPassword }),
+    body: JSON.stringify({ email, password }),
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.access_token) {
-    console.error("Local KDS staff login failed", data);
+    console.error(`Local ${role} login failed`, data);
     return null;
   }
 
-  staffSession = {
+  const next = {
     accessToken: data.access_token,
     expiresAt: Date.now() + Number(data.expires_in || 3600) * 1000,
   };
-  return staffSession.accessToken;
+  if (isAdmin) adminSession = next;
+  else staffSession = next;
+  return next;
 }
 
 async function staffRestGet(pathname) {
-  const token = await getDevStaffAccessToken();
-  if (!token || !anonKey) throw new Error("local staff is not configured");
+  const session = await getDevSession("staff");
+  if (!session || !anonKey) throw new Error("local staff is not configured");
   const response = await fetch(`${supabaseUrl}${pathname}`, {
     headers: {
       apikey: anonKey,
-      authorization: `Bearer ${token}`,
+      authorization: `Bearer ${session.accessToken}`,
       accept: "application/json",
     },
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(`staff REST failed ${response.status}: ${JSON.stringify(data)}`);
   return data;
+}
+
+function buildRealtimeWebsocketUrl() {
+  if (!anonKey) return null;
+  const parsed = new URL(supabaseUrl);
+  parsed.protocol = parsed.protocol === "https:" ? "wss:" : "ws:";
+  parsed.pathname = "/realtime/v1/websocket";
+  parsed.search = new URLSearchParams({ apikey: anonKey, vsn: "1.0.0" }).toString();
+  return parsed.toString();
+}
+
+async function realtimeSession(role) {
+  const session = await getDevSession(role);
+  const websocketUrl = buildRealtimeWebsocketUrl();
+  if (!session || !websocketUrl) return null;
+  return {
+    websocketUrl,
+    accessToken: session.accessToken,
+    expiresAt: session.expiresAt,
+    locationId: DEV_LOCATION_ID,
+    role,
+  };
 }
 
 async function runMaintenance() {
@@ -160,13 +198,42 @@ async function runMaintenance() {
   }
 }
 
+function validSnoozeUntil(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime()) || date.getTime() <= Date.now()) return null;
+  if (date.getTime() > Date.now() + 7 * 24 * 60 * 60_000) return null;
+  return date.toISOString();
+}
+
+async function mutateSnooze(rpc, body, undo = false) {
+  const type = String(body.type ?? "");
+  const id = String(body.id ?? "");
+  if (!id || !new Set(["product", "modifier"]).has(type)) throw new Error("invalid snooze target");
+
+  if (undo) {
+    return rpc.rpc(type === "product" ? "staff_unsnooze_product" : "staff_unsnooze_modifier_option", {
+      [type === "product" ? "_product_id" : "_option_id"]: id,
+    });
+  }
+
+  const untilAt = validSnoozeUntil(body.untilAt);
+  if (!untilAt) throw new Error("invalid snooze end");
+  return rpc.rpc(type === "product" ? "staff_snooze_product" : "staff_snooze_modifier_option", {
+    [type === "product" ? "_product_id" : "_option_id"]: id,
+    _until_at: untilAt,
+    _reason: body.reason ? String(body.reason) : "Heute ausverkauft",
+  });
+}
+
 async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/health") {
     sendJson(res, 200, {
       ok: true,
       backend: serviceRoleKey && anonKey ? "local-supabase-ready" : "static-only",
       localKdsStaff: Boolean(devStaffEmail && devStaffPassword),
+      localAdmin: Boolean(devAdminEmail && devAdminPassword),
       maintenanceWorker: Boolean(serviceRoleKey),
+      realtime: Boolean(anonKey),
     });
     return true;
   }
@@ -292,6 +359,13 @@ async function handleApi(req, res, url) {
     return true;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/kds/realtime-session") {
+    const session = await realtimeSession("staff");
+    if (!session) sendJson(res, 503, { error: "LOCAL_KDS_NOT_READY" });
+    else sendJson(res, 200, session);
+    return true;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/kds/orders") {
     try {
       const select = [
@@ -404,6 +478,142 @@ async function handleApi(req, res, url) {
     return true;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/ops/realtime-session") {
+    const session = await realtimeSession("staff");
+    if (!session) sendJson(res, 503, { error: "LOCAL_STAFF_NOT_READY" });
+    else sendJson(res, 200, session);
+    return true;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/ops/catalog") {
+    const rpc = await staffRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_STAFF_NOT_READY" }), true;
+    try {
+      sendJson(res, 200, await rpc.rpc("staff_get_operational_catalog", { _location_id: DEV_LOCATION_ID }));
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 500, { error: "OPS_CATALOG_FAILED" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/ops/snooze") {
+    const rpc = await staffRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_STAFF_NOT_READY" }), true;
+    try {
+      sendJson(res, 200, await mutateSnooze(rpc, await readJson(req), false));
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 409, { error: "SNOOZE_REJECTED" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/ops/unsnooze") {
+    const rpc = await staffRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_STAFF_NOT_READY" }), true;
+    try {
+      sendJson(res, 200, await mutateSnooze(rpc, await readJson(req), true));
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 409, { error: "UNSNOOZE_REJECTED" });
+    }
+    return true;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/realtime-session") {
+    const session = await realtimeSession("admin");
+    if (!session) sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" });
+    else sendJson(res, 200, session);
+    return true;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/catalog") {
+    const rpc = await adminRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" }), true;
+    try {
+      sendJson(res, 200, await rpc.rpc("admin_get_catalog", { _location_id: DEV_LOCATION_ID }));
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 500, { error: "ADMIN_CATALOG_FAILED" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/admin/category/save") {
+    const rpc = await adminRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" }), true;
+    const body = await readJson(req);
+    try {
+      const saved = await rpc.rpc("admin_save_menu_category", {
+        _id: body.id || null,
+        _location_id: DEV_LOCATION_ID,
+        _slug: String(body.slug ?? ""),
+        _name: String(body.name ?? ""),
+        _description: String(body.description ?? ""),
+        _sort: Number(body.sort ?? 100),
+        _status: String(body.status ?? "draft"),
+        _visible: Boolean(body.visible),
+      });
+      sendJson(res, 200, saved);
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 409, { error: "CATEGORY_SAVE_REJECTED" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/admin/product/save") {
+    const rpc = await adminRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" }), true;
+    const body = await readJson(req);
+    try {
+      const saved = await rpc.rpc("admin_save_menu_product", {
+        _id: body.id || null,
+        _location_id: DEV_LOCATION_ID,
+        _category_id: String(body.categoryId ?? ""),
+        _slug: String(body.slug ?? ""),
+        _name: String(body.name ?? ""),
+        _description: String(body.description ?? ""),
+        _base_price_cents: Number(body.basePriceCents),
+        _sort: Number(body.sort ?? 100),
+        _status: String(body.status ?? "draft"),
+        _bestseller: Boolean(body.bestseller),
+        _orderable_online: Boolean(body.orderableOnline),
+        _owner_confirmed: Boolean(body.ownerConfirmed),
+      });
+      sendJson(res, 200, saved);
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 409, { error: "PRODUCT_SAVE_REJECTED" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/admin/snooze") {
+    const rpc = await adminRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" }), true;
+    try {
+      sendJson(res, 200, await mutateSnooze(rpc, await readJson(req), false));
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 409, { error: "SNOOZE_REJECTED" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/admin/unsnooze") {
+    const rpc = await adminRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" }), true;
+    try {
+      sendJson(res, 200, await mutateSnooze(rpc, await readJson(req), true));
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 409, { error: "UNSNOOZE_REJECTED" });
+    }
+    return true;
+  }
+
   if (req.method === "POST" && url.pathname === "/api/dev/maintenance") {
     await runMaintenance();
     sendJson(res, 202, { ok: true });
@@ -455,6 +665,7 @@ server.listen(port, "127.0.0.1", () => {
   console.log(`Mcello local runtime: http://127.0.0.1:${port}`);
   console.log(`Backend: ${serviceRoleKey && anonKey ? "local Supabase connected" : "static-only"}`);
   console.log(`KDS: ${devStaffEmail && devStaffPassword ? "local staff session enabled" : "not configured"}`);
+  console.log(`Admin: ${devAdminEmail && devAdminPassword ? "local admin session enabled" : "not configured"}`);
 });
 
 const maintenanceTimer = setInterval(runMaintenance, 10_000);
