@@ -92,7 +92,8 @@ const adminCatalog = await rpc("admin_get_catalog", { _location_id: locationId }
 assert.equal(adminCatalog.response.ok, true, JSON.stringify(adminCatalog.data));
 assert.equal(adminCatalog.data.products.some((product) => product.id === createdProduct.id), true);
 
-const realtimeEvent = waitForSnoozeRealtime(staffToken);
+const realtime = createSnoozeRealtimeProbe(staffToken);
+await realtime.ready;
 const untilAt = new Date(Date.now() + 60 * 60_000).toISOString();
 const snoozed = await rpc("staff_snooze_product", {
   _product_id: productId,
@@ -100,7 +101,7 @@ const snoozed = await rpc("staff_snooze_product", {
   _reason: "Realtime integration test",
 }, staffToken);
 assert.equal(snoozed.response.ok, true, JSON.stringify(snoozed.data));
-const pushed = await realtimeEvent;
+const pushed = await realtime.event;
 assert.equal(pushed.eventType, "INSERT");
 assert.equal(pushed.record.location_id, locationId);
 assert.equal(pushed.record.product_id, productId);
@@ -147,68 +148,80 @@ console.log("Realtime + backoffice integration passed:", {
   adminScope: "structural catalog save",
 });
 
-function waitForSnoozeRealtime(accessToken) {
-  return new Promise((resolve, reject) => {
-    const parsed = new URL(baseUrl);
-    parsed.protocol = parsed.protocol === "https:" ? "wss:" : "ws:";
-    parsed.pathname = "/realtime/v1/websocket";
-    parsed.search = new URLSearchParams({ apikey: anonKey, vsn: "1.0.0" }).toString();
-    const socket = new WebSocket(parsed.toString());
-    const joinRef = "1";
-    const timer = setTimeout(() => {
-      socket.close();
-      reject(new Error("timed out waiting for Realtime postgres_changes event"));
-    }, 12_000);
+function createSnoozeRealtimeProbe(accessToken) {
+  let resolveReady;
+  let rejectReady;
+  let resolveEvent;
+  let rejectEvent;
+  const ready = new Promise((resolve, reject) => { resolveReady = resolve; rejectReady = reject; });
+  const event = new Promise((resolve, reject) => { resolveEvent = resolve; rejectEvent = reject; });
 
-    socket.addEventListener("open", () => {
-      socket.send(JSON.stringify({
-        topic: "realtime:integration-snoozes",
-        event: "phx_join",
-        payload: {
-          config: {
-            broadcast: { ack: false, self: false },
-            presence: { enabled: false },
-            postgres_changes: [{
-              event: "*",
-              schema: "public",
-              table: "snoozes",
-              filter: `location_id=eq.${locationId}`,
-            }],
-            private: false,
-          },
-          access_token: accessToken,
+  const parsed = new URL(baseUrl);
+  parsed.protocol = parsed.protocol === "https:" ? "wss:" : "ws:";
+  parsed.pathname = "/realtime/v1/websocket";
+  parsed.search = new URLSearchParams({ apikey: anonKey, vsn: "1.0.0" }).toString();
+  const socket = new WebSocket(parsed.toString());
+  const joinRef = "1";
+  const timer = setTimeout(() => {
+    socket.close();
+    const error = new Error("timed out waiting for Realtime postgres_changes event");
+    rejectReady(error);
+    rejectEvent(error);
+  }, 12_000);
+
+  socket.addEventListener("open", () => {
+    socket.send(JSON.stringify({
+      topic: "realtime:integration-snoozes",
+      event: "phx_join",
+      payload: {
+        config: {
+          broadcast: { ack: false, self: false },
+          presence: { enabled: false },
+          postgres_changes: [{
+            event: "*",
+            schema: "public",
+            table: "snoozes",
+            filter: `location_id=eq.${locationId}`,
+          }],
+          private: false,
         },
-        ref: joinRef,
-        join_ref: joinRef,
-      }));
-    });
+        access_token: accessToken,
+      },
+      ref: joinRef,
+      join_ref: joinRef,
+    }));
+  });
 
-    socket.addEventListener("message", (event) => {
-      let message;
-      try { message = JSON.parse(event.data); } catch { return; }
-      if (message.event === "phx_reply" && message.ref === joinRef) {
-        if (message.payload?.status !== "ok") {
-          clearTimeout(timer);
-          socket.close();
-          reject(new Error(`Realtime join failed: ${JSON.stringify(message.payload)}`));
-          return;
-        }
-        // Signal the outer sequence that the subscription is live before the
-        // mutation is issued. The promise remains pending for the actual event.
+  socket.addEventListener("message", (messageEvent) => {
+    let message;
+    try { message = JSON.parse(messageEvent.data); } catch { return; }
+    if (message.event === "phx_reply" && message.ref === joinRef) {
+      if (message.payload?.status !== "ok") {
+        clearTimeout(timer);
+        socket.close();
+        const error = new Error(`Realtime join failed: ${JSON.stringify(message.payload)}`);
+        rejectReady(error);
+        rejectEvent(error);
         return;
       }
-      if (message.event !== "postgres_changes") return;
-      const data = message.payload?.data ?? message.payload;
-      const record = data.record ?? data.new ?? {};
-      if (record.product_id !== productId) return;
-      clearTimeout(timer);
-      socket.close();
-      resolve({ eventType: data.type || data.eventType || data.event || "INSERT", record });
-    });
-
-    socket.addEventListener("error", () => {
-      clearTimeout(timer);
-      reject(new Error("Realtime websocket error"));
-    });
+      resolveReady();
+      return;
+    }
+    if (message.event !== "postgres_changes") return;
+    const data = message.payload?.data ?? message.payload;
+    const record = data.record ?? data.new ?? {};
+    if (record.product_id !== productId) return;
+    clearTimeout(timer);
+    socket.close();
+    resolveEvent({ eventType: data.type || data.eventType || data.event || "INSERT", record });
   });
+
+  socket.addEventListener("error", () => {
+    clearTimeout(timer);
+    const error = new Error("Realtime websocket error");
+    rejectReady(error);
+    rejectEvent(error);
+  });
+
+  return { ready, event };
 }
