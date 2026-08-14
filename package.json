@@ -8,9 +8,10 @@
   ],
   "scripts": {
     "test:domain": "node --experimental-strip-types --test packages/*/test/*.test.ts",
-    "preview:mcello": "node apps/mcello/dev-server.mjs",
+    "test:schema": "node --test tests/*.test.mjs",
     "check": "npm run test:domain && npm run test:schema",
-    "test:schema": "node --test tests/*.test.mjs"
+    "build:preview": "node scripts/build-preview.mjs",
+    "preview:mcello": "node apps/mcello/dev-server.mjs"
   },
   "engines": {
     "node": ">=22"
