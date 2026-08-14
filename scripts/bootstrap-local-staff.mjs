@@ -8,7 +8,10 @@ const env = parseEnv(rawEnv);
 const baseUrl = required("SUPABASE_URL").replace(/\/$/, "");
 const anonKey = required("SUPABASE_ANON_KEY");
 const serviceRoleKey = required("SUPABASE_SERVICE_ROLE_KEY");
+
+const adminEmail = "dev-bootstrap-admin@mcello.local";
 const staffEmail = "dev-kds-staff@mcello.local";
+const adminPassword = `Local-${randomBytes(18).toString("base64url")}!`;
 const staffPassword = `Local-${randomBytes(18).toString("base64url")}!`;
 
 async function api(pathname, { method = "GET", body, apiKey = serviceRoleKey, bearer = serviceRoleKey } = {}) {
@@ -27,59 +30,66 @@ async function api(pathname, { method = "GET", body, apiKey = serviceRoleKey, be
   return data;
 }
 
+async function ensureUser(users, email, password) {
+  let user = users.find((candidate) => candidate.email === email);
+  if (!user) {
+    user = await api("/auth/v1/admin/users", {
+      method: "POST",
+      body: { email, password, email_confirm: true },
+    });
+  } else {
+    user = await api(`/auth/v1/admin/users/${encodeURIComponent(user.id)}`, {
+      method: "PUT",
+      body: { password, email_confirm: true },
+    });
+  }
+  return user;
+}
+
+async function ensureRole(userId, role) {
+  const existing = await api(
+    `/rest/v1/user_roles?user_id=eq.${encodeURIComponent(userId)}&role=eq.${encodeURIComponent(role)}&select=id`,
+  );
+  if (!Array.isArray(existing) || existing.length === 0) {
+    await api("/rest/v1/user_roles", {
+      method: "POST",
+      body: { user_id: userId, role },
+    });
+  }
+}
+
+async function verifyPasswordLogin(email, password) {
+  const login = await api("/auth/v1/token?grant_type=password", {
+    method: "POST",
+    apiKey: anonKey,
+    bearer: null,
+    body: { email, password },
+  });
+  if (!login?.access_token) throw new Error(`Local login verification failed for ${email}`);
+}
+
 const usersResponse = await api("/auth/v1/admin/users?page=1&per_page=100");
 const users = Array.isArray(usersResponse) ? usersResponse : (usersResponse.users ?? []);
 
-if (users.length === 0) {
-  await api("/auth/v1/admin/users", {
-    method: "POST",
-    body: {
-      email: "dev-bootstrap-admin@mcello.local",
-      password: `Local-${randomBytes(18).toString("base64url")}!`,
-      email_confirm: true,
-    },
-  });
-}
+// Development-only identities. Passwords are regenerated and persisted only in
+// ignored .env.local; no fixed credentials or production accounts enter Git.
+const admin = await ensureUser(users, adminEmail, adminPassword);
+await ensureRole(admin.id, "admin");
 
-let staff = users.find((user) => user.email === staffEmail);
-if (!staff) {
-  staff = await api("/auth/v1/admin/users", {
-    method: "POST",
-    body: { email: staffEmail, password: staffPassword, email_confirm: true },
-  });
-} else {
-  staff = await api(`/auth/v1/admin/users/${encodeURIComponent(staff.id)}`, {
-    method: "PUT",
-    body: { password: staffPassword, email_confirm: true },
-  });
-}
+const staff = await ensureUser(users, staffEmail, staffPassword);
+await ensureRole(staff.id, "staff");
 
-const existingRole = await api(
-  `/rest/v1/user_roles?user_id=eq.${encodeURIComponent(staff.id)}&role=eq.staff&select=id`,
-);
-if (!Array.isArray(existingRole) || existingRole.length === 0) {
-  await api("/rest/v1/user_roles", {
-    method: "POST",
-    body: { user_id: staff.id, role: "staff" },
-  });
-}
-
-// Prove the generated credentials before persisting them. Password login uses
-// the public API key only; the service-role bearer must never be attached here.
-const login = await api("/auth/v1/token?grant_type=password", {
-  method: "POST",
-  apiKey: anonKey,
-  bearer: null,
-  body: { email: staffEmail, password: staffPassword },
-});
-if (!login?.access_token) throw new Error("Local staff login verification failed");
+await verifyPasswordLogin(adminEmail, adminPassword);
+await verifyPasswordLogin(staffEmail, staffPassword);
 
 const nextEnv = upsertEnv(rawEnv, {
+  MCELLO_DEV_ADMIN_EMAIL: adminEmail,
+  MCELLO_DEV_ADMIN_PASSWORD: adminPassword,
   MCELLO_DEV_STAFF_EMAIL: staffEmail,
   MCELLO_DEV_STAFF_PASSWORD: staffPassword,
 });
 await writeFile(envPath, nextEnv, "utf8");
-console.log("Local-only KDS staff account prepared. Credentials are stored only in ignored .env.local.");
+console.log("Local-only Mcello admin + KDS staff accounts prepared. Credentials exist only in ignored .env.local.");
 
 function parseEnv(raw) {
   const result = {};
