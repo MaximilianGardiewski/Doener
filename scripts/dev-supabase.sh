@@ -18,6 +18,9 @@ $SUPABASE status -o env \
   --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
   > .env.local
 
+echo 'Importing provisional Mcello menu (owner confirmation remains required)...'
+node scripts/import-provisional-menu.mjs
+
 echo 'Preparing random local-only KDS staff credentials...'
 node scripts/bootstrap-local-staff.mjs
 
