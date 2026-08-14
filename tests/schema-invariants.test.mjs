@@ -31,3 +31,29 @@ test("anonymous clients have no direct order policy", () => {
 test("bootstrap status is not exposed to anonymous users", () => {
   assert.doesNotMatch(sql, /grant execute on function public\.is_bootstrap_open\(\) to anon/i);
 });
+
+test("broad staff order updates are revoked in the hardening migration", async () => {
+  const hardening = await readFile(
+    new URL("../supabase/migrations/20260814190400_order_operation_rpcs.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(hardening, /drop policy if exists "staff update orders" on public\.orders/i);
+  assert.match(hardening, /revoke update on public\.orders from authenticated/i);
+  assert.match(hardening, /staff_accept_order/);
+  assert.match(hardening, /staff_mark_order_ready/);
+  assert.match(hardening, /staff_complete_order/);
+  assert.match(hardening, /staff_reject_order/);
+  assert.match(hardening, /staff_delay_order/);
+});
+
+test("staff shop override RPC cannot edit structural ordering settings", async () => {
+  const hardening = await readFile(
+    new URL("../supabase/migrations/20260814190400_order_operation_rpcs.sql", import.meta.url),
+    "utf8",
+  );
+  const fn = hardening.match(/create or replace function public\.staff_set_shop_override[\s\S]*?\$\$;/i)?.[0] ?? "";
+  assert.match(fn, /set override = _override/);
+  assert.doesNotMatch(fn, /slot_capacity\s*=/i);
+  assert.doesNotMatch(fn, /order_cutoff_minutes\s*=/i);
+  assert.doesNotMatch(fn, /preparation_lead_minutes\s*=/i);
+});
