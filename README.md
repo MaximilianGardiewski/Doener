@@ -16,7 +16,7 @@ Phase 0 / erster Slice:
 ## Start
 
 ```bash
-npm run test:domain
+npm run check
 npm run preview:mcello
 ```
 
