@@ -18,7 +18,11 @@ $SUPABASE status -o env \
   --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
   > .env.local
 
+echo 'Preparing random local-only KDS staff credentials...'
+node scripts/bootstrap-local-staff.mjs
+
 echo ''
 echo 'Local Mcello backend is ready.'
 echo 'Start the app with: npm run preview:mcello'
 echo 'Open: http://127.0.0.1:4173'
+echo 'Stop Supabase after development with: npx --yes supabase@latest stop'
