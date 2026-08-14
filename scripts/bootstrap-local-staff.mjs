@@ -64,11 +64,12 @@ if (!Array.isArray(existingRole) || existingRole.length === 0) {
   });
 }
 
-// Prove the generated credentials before persisting them.
+// Prove the generated credentials before persisting them. Password login uses
+// the public API key only; the service-role bearer must never be attached here.
 const login = await api("/auth/v1/token?grant_type=password", {
   method: "POST",
   apiKey: anonKey,
-  bearer: undefined,
+  bearer: null,
   body: { email: staffEmail, password: staffPassword },
 });
 if (!login?.access_token) throw new Error("Local staff login verification failed");
