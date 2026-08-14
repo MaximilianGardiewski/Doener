@@ -1,8 +1,18 @@
 import assert from "node:assert/strict";
 
-const url = process.env.SUPABASE_URL;
-const anonKey = process.env.SUPABASE_ANON_KEY;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+function envValue(name) {
+  const raw = process.env[name];
+  if (!raw) return undefined;
+  const trimmed = raw.trim();
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+}
+
+const url = envValue("SUPABASE_URL");
+const anonKey = envValue("SUPABASE_ANON_KEY");
+const serviceRoleKey = envValue("SUPABASE_SERVICE_ROLE_KEY");
 
 if (!url || !anonKey || !serviceRoleKey) {
   throw new Error("SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY are required");
