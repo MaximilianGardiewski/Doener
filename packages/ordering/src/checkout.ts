@@ -143,6 +143,7 @@ export async function submitVerifiedPickupOrder(
   const otp = await deps.otp.verifyOtp({
     challengeId: request.otpChallengeId,
     code: request.otpCode,
+    mobile,
   });
   if (!otp.verified) {
     throw new CheckoutError("OTP_FAILED", "OTP-Verifikation fehlgeschlagen.");
