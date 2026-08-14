@@ -155,27 +155,28 @@ begin
       where s.location_id = loc.id and s.day = local_day and s.closed
     ) then
       scheduled_open := false;
+      close_time := null;
     else
-      select true, min(s.closes_at)
-      into scheduled_open, close_time
+      select min(s.closes_at)
+      into close_time
       from public.special_opening_hours s
       where s.location_id = loc.id
         and s.day = local_day
         and not s.closed
         and s.opens_at <= local_time
         and s.closes_at > local_time;
-      scheduled_open := coalesce(scheduled_open, false);
+      scheduled_open := close_time is not null;
     end if;
   else
-    select true, min(h.closes_at)
-    into scheduled_open, close_time
+    select min(h.closes_at)
+    into close_time
     from public.opening_hours h
     where h.location_id = loc.id
       and h.weekday = iso_weekday
       and not h.closed
       and h.opens_at <= local_time
       and h.closes_at > local_time;
-    scheduled_open := coalesce(scheduled_open, false);
+    scheduled_open := close_time is not null;
   end if;
 
   if scheduled_open and close_time is not null then
