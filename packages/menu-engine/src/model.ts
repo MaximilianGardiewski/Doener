@@ -54,9 +54,28 @@ export function validateConfiguration(
   selections: readonly ProductSelection[],
 ): ConfigurationValidation {
   const errors: string[] = [];
+  const groups = product.modifierGroups ?? [];
+  const knownGroups = new Map(groups.map((group) => [group.id, group]));
+  const seenGroups = new Set<string>();
+
+  for (const selection of selections) {
+    if (!knownGroups.has(selection.groupId)) {
+      errors.push(`Unbekannte Auswahlgruppe ${selection.groupId}`);
+      continue;
+    }
+    if (seenGroups.has(selection.groupId)) {
+      errors.push(`${knownGroups.get(selection.groupId)?.name}: Gruppe doppelt übermittelt`);
+    }
+    seenGroups.add(selection.groupId);
+
+    if (new Set(selection.optionIds).size !== selection.optionIds.length) {
+      errors.push(`${knownGroups.get(selection.groupId)?.name}: Option doppelt übermittelt`);
+    }
+  }
+
   const byGroup = new Map(selections.map((selection) => [selection.groupId, selection]));
 
-  for (const group of product.modifierGroups ?? []) {
+  for (const group of groups) {
     const selection = byGroup.get(group.id);
     const optionIds = selection?.optionIds ?? [];
 
