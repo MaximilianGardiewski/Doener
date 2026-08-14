@@ -175,7 +175,7 @@ function createSnoozeRealtimeProbe(accessToken) {
       event: "phx_join",
       payload: {
         config: {
-          broadcast: { ack: false, self: false },
+          broadcast: { ack: false, self: false, replication_ready: true },
           presence: { enabled: false },
           postgres_changes: [{
             event: "*",
@@ -202,9 +202,18 @@ function createSnoozeRealtimeProbe(accessToken) {
         const error = new Error(`Realtime join failed: ${JSON.stringify(message.payload)}`);
         rejectReady(error);
         rejectEvent(error);
-        return;
       }
-      resolveReady();
+      return;
+    }
+    if (message.event === "system") {
+      if (message.payload?.status === "ok") resolveReady();
+      else {
+        clearTimeout(timer);
+        socket.close();
+        const error = new Error(`Realtime system error: ${JSON.stringify(message.payload)}`);
+        rejectReady(error);
+        rejectEvent(error);
+      }
       return;
     }
     if (message.event !== "postgres_changes") return;
