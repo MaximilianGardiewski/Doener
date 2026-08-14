@@ -19,6 +19,7 @@ on:
       - "tests/slot-capacity.integration.mjs"
       - "tests/notification-outbox.integration.mjs"
       - "tests/realtime-backoffice.integration.mjs"
+      - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
     branches:
@@ -40,6 +41,7 @@ on:
       - "tests/slot-capacity.integration.mjs"
       - "tests/notification-outbox.integration.mjs"
       - "tests/realtime-backoffice.integration.mjs"
+      - "tests/realtime-ready.integration.mjs"
 
 concurrency:
   group: supabase-integration-${{ github.event.pull_request.number || github.ref }}
@@ -148,9 +150,9 @@ jobs:
       - name: Prove notification outbox lifecycle
         run: node tests/notification-outbox.integration.mjs
 
-      - name: Prove realtime and backoffice role boundaries
+      - name: Prove realtime readiness and backoffice role boundaries
         id: realtime_backoffice
-        run: node tests/realtime-backoffice.integration.mjs
+        run: node tests/realtime-ready.integration.mjs
 
       - name: Dump Realtime diagnostics on failure
         if: failure() && steps.realtime_backoffice.outcome == 'failure'
@@ -159,6 +161,8 @@ jobs:
           docker logs --tail 300 supabase_realtime_business-web-factory || true
           echo '--- publication ---'
           docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select pubname,schemaname,tablename from pg_publication_tables where pubname='supabase_realtime' order by tablename" || true
+          echo '--- realtime subscription rows ---'
+          docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select count(*), coalesce(string_agg(distinct entity::text, ','),'') from realtime.subscription" || true
           echo '--- replication slots after failed subscriber test ---'
           docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select slot_name,plugin,slot_type,database,active,restart_lsn,confirmed_flush_lsn from pg_replication_slots order by slot_name" || true
           echo '--- active replication senders ---'
