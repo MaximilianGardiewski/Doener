@@ -26,8 +26,54 @@ async function rpc(name, args, apiKey, bearerToken) {
   return { response, data };
 }
 
+const locationId = "00000000-0000-4000-8000-000000000001";
+const productId = "00000000-0000-4000-8000-000000000100";
+const groupId = "00000000-0000-4000-8000-000000000200";
+const optionId = "00000000-0000-4000-8000-000000000202";
+const nowIso = new Date().toISOString();
+
+const productResult = await rpc(
+  "server_get_checkout_product",
+  { _product_id: productId, _at: nowIso },
+  serviceRoleKey,
+  serviceRoleKey,
+);
+assert.equal(productResult.response.ok, true, JSON.stringify(productResult.data));
+assert.equal(productResult.data.name, "DEV – Konfigurierbares Testgericht");
+assert.equal(productResult.data.basePriceCents, 800);
+assert.equal(productResult.data.modifierGroups[0].options.length, 2);
+
+const availabilityResult = await rpc(
+  "server_is_product_available",
+  { _product_id: productId, _at: nowIso },
+  serviceRoleKey,
+  serviceRoleKey,
+);
+assert.equal(availabilityResult.response.ok, true, JSON.stringify(availabilityResult.data));
+assert.equal(availabilityResult.data, true);
+
+const shopResult = await rpc(
+  "server_get_shop_state",
+  { _location_id: locationId, _at: nowIso },
+  serviceRoleKey,
+  serviceRoleKey,
+);
+assert.equal(shopResult.response.ok, true, JSON.stringify(shopResult.data));
+assert.equal(shopResult.data.override, "force_open");
+assert.equal(shopResult.data.orderCutoffMinutes, 30);
+
+const slotResult = await rpc(
+  "server_get_slot_capacity",
+  { _location_id: locationId, _pickup_at: new Date(Date.now() + 60 * 60_000).toISOString() },
+  serviceRoleKey,
+  serviceRoleKey,
+);
+assert.equal(slotResult.response.ok, true, JSON.stringify(slotResult.data));
+assert.equal(slotResult.data.capacity, 6);
+assert.equal(slotResult.data.acceptedOrderCount, 0);
+
 const payload = {
-  locationId: "00000000-0000-4000-8000-000000000001",
+  locationId,
   source: "web",
   fulfillmentType: "pickup",
   state: "waiting_for_acceptance",
@@ -35,17 +81,14 @@ const payload = {
   mobile: "+491700000000",
   requestedPickupAt: null,
   totalCents: 900,
-  submittedAt: new Date().toISOString(),
+  submittedAt: nowIso,
   items: [{
-    productId: "00000000-0000-4000-8000-000000000100",
+    productId,
     productNameSnapshot: "DEV – Konfigurierbares Testgericht",
     quantity: 1,
     unitPriceCentsSnapshot: 900,
     lineTotalCents: 900,
-    selections: [{
-      groupId: "00000000-0000-4000-8000-000000000200",
-      optionIds: ["00000000-0000-4000-8000-000000000202"],
-    }],
+    selections: [{ groupId, optionIds: [optionId] }],
   }],
 };
 
