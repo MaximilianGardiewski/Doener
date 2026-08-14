@@ -19,6 +19,8 @@ export function connectPostgresRealtime({
   let joinRef = null;
   let reconnectAttempt = 0;
   let currentSession = null;
+  let channelJoined = false;
+  let postgresReady = false;
 
   const nextRef = () => String(++ref);
 
@@ -99,6 +101,8 @@ export function connectPostgresRealtime({
     try {
       currentSession = await fetchSession();
       socket = new WebSocket(currentSession.websocketUrl);
+      channelJoined = false;
+      postgresReady = false;
       onStatus("connecting");
 
       socket.addEventListener("open", () => {
@@ -137,19 +141,35 @@ export function connectPostgresRealtime({
             onStatus("degraded", new Error(message.payload?.response?.reason || "Realtime join rejected"));
             return;
           }
+
           const confirmed = message.payload?.response?.postgres_changes;
-          onStatus(Array.isArray(confirmed) ? "subscribed" : "connecting");
+          channelJoined = Array.isArray(confirmed);
+          // A successful Phoenix join only proves that the channel accepted the
+          // subscription request. The legacy Postgres Changes manager persists
+          // the actual DB subscription asynchronously. Do not report "live"
+          // until Realtime explicitly confirms that PostgreSQL is subscribed.
+          onStatus("connecting");
           return;
         }
 
         if (message.event === "system") {
-          if (message.payload?.status === "ok") onStatus("subscribed");
-          else onStatus("degraded", new Error(message.payload?.message || "Realtime subscription degraded"));
+          if (message.payload?.status !== "ok") {
+            onStatus("degraded", new Error(message.payload?.message || "Realtime subscription degraded"));
+            return;
+          }
+
+          if (message.payload?.extension === "postgres_changes") {
+            postgresReady = true;
+            onStatus("subscribed");
+          } else if (!postgresReady) {
+            onStatus("connecting");
+          }
           return;
         }
 
         const change = normalizePostgresChange(message);
         if (change) {
+          postgresReady = true;
           onStatus("subscribed");
           onChange(change);
           return;
@@ -162,6 +182,8 @@ export function connectPostgresRealtime({
 
       socket.addEventListener("close", () => {
         stopTimers();
+        channelJoined = false;
+        postgresReady = false;
         if (stopped) return;
         onStatus("reconnecting");
         const delays = [1000, 2000, 5000, 10_000];
@@ -189,7 +211,7 @@ export function connectPostgresRealtime({
     clearTimeout(reconnectTimer);
     clearInterval(reconciliationTimer);
     stopTimers();
-    if (socket?.readyState === WebSocket.OPEN) {
+    if (socket?.readyState === WebSocket.OPEN && channelJoined) {
       send(topic, "phx_leave", {}, nextRef(), joinRef);
     }
     socket?.close();
