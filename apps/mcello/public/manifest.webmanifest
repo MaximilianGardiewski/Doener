@@ -1,0 +1,9 @@
+{
+  "name": "Mcello — Preview",
+  "short_name": "Mcello",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#171715",
+  "description": "Vendor-neutral Mcello showcase PWA prototype."
+}

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+coverage/
+.playwright/
+
+# source evidence kept outside public runtime repo
+apps/mcello/public/media/menu-card-*.jpg

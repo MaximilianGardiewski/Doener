@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello KDS — Preview</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .kds-shell{width:min(calc(100% - 24px),1500px);margin:auto;padding:24px 0 70px}
+    .kds-top{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:20px 0}
+    .kds-top h1{font-size:46px;max-width:none;margin-right:auto}
+    .status-dot{width:10px;height:10px;background:var(--green);border-radius:50%;display:inline-block;box-shadow:0 0 18px rgba(135,189,71,.6)}
+    .kds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
+    .lane{background:#161613;border:1px solid rgba(255,255,255,.06);border-radius:24px;min-height:520px;padding:14px}
+    .lane h2{font-size:24px;margin:5px 4px 14px}
+    .order{border:1px solid var(--line);background:#20201b;border-radius:20px;padding:15px;margin-bottom:12px}
+    .order.alert{box-shadow:0 0 0 1px rgba(229,136,121,.25),0 0 35px rgba(229,136,121,.08)}
+    .order-head{display:flex;justify-content:space-between;gap:10px}
+    .order small{color:var(--muted)}
+    .order ul{padding-left:19px;color:#ddd2c4;line-height:1.6}
+    .quick{display:flex;gap:7px;flex-wrap:wrap}
+    .quick button{border:1px solid var(--line);background:#29251c;color:var(--gold-2);border-radius:10px;padding:9px 10px}
+    @media(max-width:1000px){.kds-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.kds-grid{grid-template-columns:1fr}.kds-top h1{font-size:36px}}
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">KDS Entwicklungsprototyp · keine Live-Bestellungen</div>
+  <main class="kds-shell">
+    <div class="kds-top">
+      <h1>Mcello KDS</h1>
+      <span class="pill"><span class="status-dot"></span> Live Sync vorgesehen</span>
+      <button class="pill" id="rush">Rush/Pause</button>
+      <button class="primary">+20 Min global</button>
+      <a class="pill" href="/">Public Preview</a>
+    </div>
+    <div class="notice">Workflow gemäß Decision Ledger: Neu → per Zeitbutton direkt in Zubereitung → Fertig → Erledigt. Geplante Bestellungen bleiben separat, bis ihr Vorlauf erreicht ist.</div>
+    <div class="kds-grid" style="margin-top:18px">
+      <section class="lane"><h2>Neu</h2><div id="incoming"></div></section>
+      <section class="lane"><h2>Geplant</h2><div id="planned"></div></section>
+      <section class="lane"><h2>In Zubereitung</h2><div id="preparing"></div></section>
+      <section class="lane"><h2>Abholbereit</h2><div id="ready"></div></section>
+    </div>
+  </main>
+  <script type="module" src="/kds.js"></script>
+</body>
+</html>
