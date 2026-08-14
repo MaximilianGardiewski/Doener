@@ -64,6 +64,36 @@ export function connectPostgresRealtime({
     }, delay);
   }
 
+  function normalizePostgresChange(message) {
+    const wireEvent = String(message.event || "").toLowerCase();
+
+    if (wireEvent === "postgres_changes") {
+      const data = message.payload?.data ?? message.payload ?? {};
+      return {
+        type: String(data.type || data.eventType || data.event || "").toUpperCase() || null,
+        schema: data.schema ?? message.payload?.schema ?? null,
+        table: data.table ?? message.payload?.table ?? null,
+        record: data.record ?? data.new ?? {},
+        oldRecord: data.old_record ?? data.old ?? {},
+        raw: message.payload,
+      };
+    }
+
+    if (["insert", "update", "delete"].includes(wireEvent)) {
+      const payload = message.payload ?? {};
+      return {
+        type: wireEvent.toUpperCase(),
+        schema: payload.schema ?? null,
+        table: payload.table ?? null,
+        record: payload.record ?? payload.new ?? {},
+        oldRecord: payload.old_record ?? payload.old ?? {},
+        raw: payload,
+      };
+    }
+
+    return null;
+  }
+
   async function connect() {
     if (stopped) return;
     try {
@@ -108,9 +138,6 @@ export function connectPostgresRealtime({
             return;
           }
           const confirmed = message.payload?.response?.postgres_changes;
-          // Supabase's official JS client treats a successful join reply whose
-          // postgres_changes bindings match as subscribed. Newer servers may
-          // additionally emit a replication-ready `system` event.
           onStatus(Array.isArray(confirmed) ? "subscribed" : "connecting");
           return;
         }
@@ -121,9 +148,10 @@ export function connectPostgresRealtime({
           return;
         }
 
-        if (message.event === "postgres_changes") {
+        const change = normalizePostgresChange(message);
+        if (change) {
           onStatus("subscribed");
-          onChange(message.payload);
+          onChange(change);
           return;
         }
 
