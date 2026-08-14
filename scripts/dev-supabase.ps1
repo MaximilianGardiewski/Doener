@@ -4,17 +4,22 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
   throw 'Docker is required. Install/start Docker Desktop or another Docker-compatible runtime first.'
 }
 
-if (-not (Test-Path 'supabase/config.toml')) {
-  Write-Host 'Initializing local Supabase configuration...'
-  npx supabase init
-}
-
 Write-Host 'Starting local Supabase stack...'
-npx supabase start
+npx --yes supabase@latest start
 
 Write-Host ''
-Write-Host 'Applying repository migrations to the local database...'
-npx supabase db reset --local --no-seed
+Write-Host 'Applying repository migrations and development seed...'
+npx --yes supabase@latest db reset --local
 
 Write-Host ''
-Write-Host 'Local backend is ready. Run `npx supabase status` for URLs and local publishable keys.'
+Write-Host 'Writing local API credentials to ignored .env.local...'
+$envOutput = npx --yes supabase@latest status -o env `
+  --override-name api.url=SUPABASE_URL `
+  --override-name auth.anon_key=SUPABASE_ANON_KEY `
+  --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY
+$envOutput | Set-Content -Encoding utf8 '.env.local'
+
+Write-Host ''
+Write-Host 'Local Mcello backend is ready.'
+Write-Host 'Start the app with: npm run preview:mcello'
+Write-Host 'Open: http://127.0.0.1:4173'
