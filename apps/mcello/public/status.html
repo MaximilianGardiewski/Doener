@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#171715" />
-  <title>Mcello Bestellstatus — Preview</title>
+  <title>Mcello Bestellstatus</title>
   <link rel="stylesheet" href="/styles.css" />
   <style>
     .status-wrap{width:min(calc(100% - 24px),780px);margin:60px auto 120px}
     .status-card{background:#171714;border:1px solid var(--line);border-radius:32px;padding:28px;box-shadow:var(--shadow)}
-    .status-card h1{font-size:56px;max-width:none}
+    .status-card h1{font-size:clamp(38px,8vw,56px);max-width:none}
     .progress-track{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:30px 0}
     .step{padding:14px;border-radius:16px;background:#22221e;color:var(--muted);text-align:center}
     .step.done{background:#252417;color:#dbe9c6;border:1px solid rgba(135,189,71,.22)}
@@ -17,34 +17,47 @@
     .eta{font-family:Georgia,serif;font-size:42px;margin:20px 0 4px}
     .countdown{color:var(--gold-2);font-size:18px}
     .order-summary{margin-top:25px;padding:18px;border:1px solid rgba(255,255,255,.06);border-radius:20px;background:#1e1e1a}
+    .status-items{display:grid;gap:12px;margin-top:14px}
+    .status-item{display:flex;justify-content:space-between;gap:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06)}
+    .status-item small{display:block;color:var(--muted);margin-top:5px}
+    .error-box{border:1px solid rgba(215,169,76,.25);border-radius:18px;padding:18px;background:#241e14;color:#f0d59a}
+    .hidden{display:none!important}
+    @media(max-width:620px){.progress-track{grid-template-columns:1fr}.status-wrap{margin-top:34px}.status-card{padding:20px;border-radius:24px}}
   </style>
 </head>
 <body>
-  <div class="prototype-banner">Live-Status Entwicklungsprototyp</div>
+  <div class="prototype-banner">Lokaler End-to-End-Entwicklungsstand</div>
   <main class="status-wrap">
-    <a class="pill" href="/">← Zurück</a>
-    <section class="status-card" style="margin-top:18px">
-      <div class="tag">Bestellung #184</div>
-      <h1>In Zubereitung</h1>
-      <div class="progress-track">
-        <div class="step done">✓ Eingegangen</div>
-        <div class="step active">🔥 In Zubereitung</div>
-        <div class="step">Abholbereit</div>
+    <a class="pill" href="/">← Zur Speisekarte</a>
+    <section class="status-card" style="margin-top:18px" aria-live="polite">
+      <div id="statusError" class="error-box hidden"></div>
+      <div id="statusContent">
+        <div class="tag" id="orderNumber">Bestellung wird geladen …</div>
+        <h1 id="statusTitle">Status laden</h1>
+        <p id="statusMessage" style="color:var(--muted)">Wir laden den aktuellen Stand deiner Bestellung.</p>
+        <div class="progress-track" id="progressTrack">
+          <div class="step" data-step="received">Eingegangen</div>
+          <div class="step" data-step="preparing">In Zubereitung</div>
+          <div class="step" data-step="ready">Abholbereit</div>
+        </div>
+        <div id="etaBlock" class="hidden">
+          <p style="color:var(--muted)">Voraussichtlich abholbereit um</p>
+          <div class="eta" id="eta">–</div>
+          <div class="countdown" id="countdown"></div>
+        </div>
+        <div class="order-summary">
+          <strong>Deine Bestellung</strong>
+          <div id="statusItems" class="status-items"></div>
+          <div class="price-row" style="margin-top:18px"><span>Gesamt</span><strong id="statusTotal">–</strong></div>
+        </div>
+        <div class="hero-actions" style="margin-top:22px">
+          <button class="pill hidden" id="cancelOrder">Bestellung stornieren</button>
+          <button class="pill" id="refreshStatus">Status aktualisieren</button>
+        </div>
+        <p class="notice" style="margin-top:22px">Der Statuslink enthält einen zufälligen Bestell-Token. Private Kontaktdaten und interne Kücheninformationen werden hier nicht ausgeliefert.</p>
       </div>
-      <p style="color:var(--muted)">Voraussichtlich abholbereit um</p>
-      <div class="eta">18:35 Uhr</div>
-      <div class="countdown" id="countdown">noch ca. 17 Minuten</div>
-      <div class="order-summary">
-        <strong>Deine Bestellung</strong>
-        <p>Drehspieß im Fladenbrot · Ayran</p>
-        <p style="color:var(--muted)">Abholung: Bahnhofstraße 7, Bad Krozingen</p>
-      </div>
-      <div class="hero-actions" style="margin-top:22px">
-        <a class="primary" href="https://www.google.com/maps/search/?api=1&query=Bahnhofstraße+7+Bad+Krozingen">Route zu Mcello</a>
-        <button class="pill">Bei Mcello anrufen</button>
-      </div>
-      <p class="notice" style="margin-top:22px">Im V1 wird dieser Status über einen sicheren Order-Token geöffnet. WhatsApp sendet den Link und die finale „Abholbereit“-Benachrichtigung; SMS dient als Fallback.</p>
     </section>
   </main>
+  <script src="/status.js" defer></script>
 </body>
 </html>
