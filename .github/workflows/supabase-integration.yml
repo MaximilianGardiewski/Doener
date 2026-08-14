@@ -74,9 +74,8 @@ jobs:
 
       - name: Restart Realtime after schema rebuild
         run: |
-          # The local Realtime CDC poller caches publication table OIDs. A db
-          # reset rebuilds the schema/publication after Realtime has already
-          # started, so restart only Realtime to bind CDC to the migrated OIDs.
+          # Realtime can start before db reset rebuilds publication objects. A
+          # local restart is cheap and removes stale schema/OID state.
           docker restart supabase_realtime_business-web-factory >/dev/null
           for attempt in {1..30}; do
             if [ "$(docker inspect -f '{{.State.Running}}' supabase_realtime_business-web-factory 2>/dev/null || true)" = "true" ]; then
@@ -101,6 +100,46 @@ jobs:
           for table in orders ordering_settings snoozes menu_products modifier_options; do
             printf '%s\n' "$published" | grep -Fx "$table" >/dev/null || { echo "Missing from supabase_realtime: $table" >&2; exit 1; }
           done
+
+      - name: Inspect Realtime tenant CDC extension
+        run: |
+          echo '--- Realtime non-secret container config ---'
+          docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' supabase_realtime_business-web-factory \
+            | grep -E '^(DB_HOST|DB_PORT|DB_NAME|DB_USER|SEED_SELF_HOST|SLOT_NAME_SUFFIX|TENANT_ID|ERL_AFLAGS)=' \
+            || true
+
+          echo '--- metadata databases containing Realtime extensions ---'
+          databases="$(docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select datname from pg_database where datallowconn and not datistemplate order by datname")"
+          found=0
+          while IFS= read -r db; do
+            [ -n "$db" ] || continue
+            has_extensions="$(docker exec supabase_db_business-web-factory psql -U postgres -d "$db" -Atc "select case when to_regclass('public.extensions') is null then 0 else 1 end" 2>/dev/null || echo 0)"
+            if [ "$has_extensions" = "1" ]; then
+              found=1
+              echo "database=$db"
+              docker exec supabase_db_business-web-factory psql -U postgres -d "$db" -Atc "
+                select
+                  tenant_external_id,
+                  type,
+                  coalesce(settings->>'publication',''),
+                  coalesce(settings->>'slot_name',''),
+                  coalesce(settings->>'db_name',''),
+                  coalesce(settings->>'db_host','')
+                from public.extensions
+                order by tenant_external_id,type
+              " || true
+            fi
+          done <<< "$databases"
+          if [ "$found" = "0" ]; then
+            echo 'No public.extensions metadata table found in local Postgres databases.'
+          fi
+
+          echo '--- logical replication slots before subscriber test ---'
+          docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "
+            select slot_name||'|'||plugin||'|'||slot_type||'|'||coalesce(database,'')||'|'||active
+            from pg_replication_slots
+            order by slot_name
+          "
 
       - name: Import provisional Mcello menu
         run: node scripts/import-provisional-menu.mjs
@@ -128,9 +167,13 @@ jobs:
         if: failure() && steps.realtime_backoffice.outcome == 'failure'
         run: |
           echo '--- realtime container tail ---'
-          docker logs --tail 250 supabase_realtime_business-web-factory || true
+          docker logs --tail 300 supabase_realtime_business-web-factory || true
           echo '--- publication ---'
           docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select pubname,schemaname,tablename from pg_publication_tables where pubname='supabase_realtime' order by tablename" || true
+          echo '--- replication slots after failed subscriber test ---'
+          docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select slot_name,plugin,slot_type,database,active,restart_lsn,confirmed_flush_lsn from pg_replication_slots order by slot_name" || true
+          echo '--- active replication senders ---'
+          docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select application_name,state,sent_lsn,write_lsn,flush_lsn,replay_lsn from pg_stat_replication order by application_name" || true
 
       - name: Stop local Supabase
         if: always()
