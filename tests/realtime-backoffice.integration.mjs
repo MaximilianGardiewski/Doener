@@ -101,9 +101,6 @@ assert.equal(adminCatalog.data.products.some((product) => product.id === created
 
 const realtime = createSnoozeRealtimeProbe(staffToken);
 await realtime.ready;
-// Older local Realtime builds acknowledge the Phoenix join before the CDC
-// subscription worker has fully registered. The actual event assertion below
-// remains mandatory; this grace period only removes that handshake race.
 await sleep(1000);
 const untilAt = new Date(Date.now() + 60 * 60_000).toISOString();
 const snoozed = await rpc("staff_snooze_product", {
@@ -112,6 +109,14 @@ const snoozed = await rpc("staff_snooze_product", {
   _reason: "Realtime integration test",
 }, staffToken);
 assert.equal(snoozed.response.ok, true, JSON.stringify(snoozed.data));
+
+const visibleAfterInsert = await request(
+  `/rest/v1/snoozes?location_id=eq.${locationId}&product_id=eq.${productId}&select=id,location_id,product_id,until_at`,
+  { bearer: staffToken },
+);
+assert.equal(visibleAfterInsert.response.ok, true, JSON.stringify(visibleAfterInsert.data));
+assert.equal(visibleAfterInsert.data.length, 1, "staff JWT must see the inserted snooze through RLS after the RPC");
+
 const pushed = await realtime.event;
 assert.equal(pushed.eventType, "INSERT");
 assert.equal(pushed.record.location_id, locationId);
@@ -154,10 +159,29 @@ const cleanup = await request(`/rest/v1/menu_products?id=eq.${createdProduct.id}
 assert.equal(cleanup.response.ok, true, JSON.stringify(cleanup.data));
 
 console.log("Realtime + backoffice integration passed:", {
-  realtime: "staff JWT -> postgres_changes push",
+  realtime: "staff JWT -> pushed database change",
   staffScope: "operational snooze only",
   adminScope: "structural catalog save",
 });
+
+function normalizeWireChange(message) {
+  const wireEvent = String(message.event || "").toLowerCase();
+  if (wireEvent === "postgres_changes") {
+    const data = message.payload?.data ?? message.payload ?? {};
+    return {
+      eventType: String(data.type || data.eventType || data.event || "INSERT").toUpperCase(),
+      record: data.record ?? data.new ?? {},
+    };
+  }
+  if (["insert", "update", "delete"].includes(wireEvent)) {
+    const payload = message.payload ?? {};
+    return {
+      eventType: wireEvent.toUpperCase(),
+      record: payload.record ?? payload.new ?? {},
+    };
+  }
+  return null;
+}
 
 function createSnoozeRealtimeProbe(accessToken) {
   let resolveReady;
@@ -176,15 +200,17 @@ function createSnoozeRealtimeProbe(accessToken) {
   const joinRef = "1";
   const timer = setTimeout(() => {
     socket.close();
-    const compact = messageHistory.slice(-12).map((entry) => ({
+    const compact = messageHistory.slice(-16).map((entry) => ({
       event: entry.event,
       topic: entry.topic,
       status: entry.payload?.status,
       response: entry.payload?.response,
       extension: entry.payload?.extension,
       message: entry.payload?.message,
+      table: entry.payload?.table ?? entry.payload?.data?.table,
+      type: entry.payload?.type ?? entry.payload?.data?.type,
     }));
-    const error = new Error(`timed out waiting for Realtime postgres_changes event; messages=${JSON.stringify(compact)}`);
+    const error = new Error(`timed out waiting for Realtime database change; messages=${JSON.stringify(compact)}`);
     rejectReady(error);
     rejectEvent(error);
   }, 15_000);
@@ -216,6 +242,7 @@ function createSnoozeRealtimeProbe(accessToken) {
     let message;
     try { message = JSON.parse(messageEvent.data); } catch { return; }
     messageHistory.push(message);
+
     if (message.event === "phx_reply" && message.ref === joinRef) {
       if (message.payload?.status !== "ok") {
         clearTimeout(timer);
@@ -229,6 +256,7 @@ function createSnoozeRealtimeProbe(accessToken) {
       if (Array.isArray(confirmed) && confirmed.length > 0) resolveReady();
       return;
     }
+
     if (message.event === "system") {
       if (message.payload?.status === "ok") resolveReady();
       else {
@@ -240,18 +268,17 @@ function createSnoozeRealtimeProbe(accessToken) {
       }
       return;
     }
-    if (message.event !== "postgres_changes") return;
-    const data = message.payload?.data ?? message.payload;
-    const record = data.record ?? data.new ?? {};
-    if (record.product_id !== productId) return;
+
+    const change = normalizeWireChange(message);
+    if (!change || change.record.product_id !== productId) return;
     clearTimeout(timer);
     socket.close();
-    resolveEvent({ eventType: data.type || data.eventType || data.event || "INSERT", record });
+    resolveEvent(change);
   });
 
   socket.addEventListener("error", () => {
     clearTimeout(timer);
-    const error = new Error(`Realtime websocket error; messages=${JSON.stringify(messageHistory.slice(-12))}`);
+    const error = new Error(`Realtime websocket error; messages=${JSON.stringify(messageHistory.slice(-16))}`);
     rejectReady(error);
     rejectEvent(error);
   });
