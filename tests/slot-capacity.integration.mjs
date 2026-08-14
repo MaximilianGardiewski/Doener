@@ -67,15 +67,21 @@ function payload(firstName) {
   };
 }
 
-let first;
+let winningOrder;
 try {
-  const firstResult = await rpc("server_create_verified_order", { _payload: payload("Slot First") });
-  assert.equal(firstResult.response.ok, true, JSON.stringify(firstResult.data));
-  first = Array.isArray(firstResult.data) ? firstResult.data[0] : firstResult.data;
+  const results = await Promise.all([
+    rpc("server_create_verified_order", { _payload: payload("Slot Racer A") }),
+    rpc("server_create_verified_order", { _payload: payload("Slot Racer B") }),
+  ]);
 
-  const secondResult = await rpc("server_create_verified_order", { _payload: payload("Slot Second") });
-  assert.equal(secondResult.response.ok, false, "second order must not overbook the full slot");
-  assert.match(JSON.stringify(secondResult.data), /pickup slot capacity exhausted/i);
+  const successes = results.filter((result) => result.response.ok);
+  const failures = results.filter((result) => !result.response.ok);
+  assert.equal(successes.length, 1, "exactly one concurrent request may claim the final slot");
+  assert.equal(failures.length, 1, "exactly one concurrent request must lose the slot race");
+  assert.match(JSON.stringify(failures[0].data), /pickup slot capacity exhausted/i);
+
+  winningOrder = Array.isArray(successes[0].data) ? successes[0].data[0] : successes[0].data;
+  assert.equal(winningOrder.requested_pickup_at, pickupAt);
 
   const slotState = await rpc("server_get_slot_capacity", {
     _location_id: locationId,
@@ -85,10 +91,10 @@ try {
   assert.equal(slotState.data.capacity, 1);
   assert.equal(slotState.data.acceptedOrderCount, 1);
 } finally {
-  if (first?.public_token) {
+  if (winningOrder?.public_token) {
     await rpc(
       "customer_cancel_pending_order",
-      { _public_token: first.public_token },
+      { _public_token: winningOrder.public_token },
       anonKey,
       null,
     );
@@ -99,4 +105,4 @@ try {
   });
 }
 
-console.log("Atomic slot capacity guard passed:", { pickupAt, capacity: 1 });
+console.log("Atomic concurrent slot capacity guard passed:", { pickupAt, capacity: 1 });
