@@ -80,7 +80,7 @@ export function connectPostgresRealtime({
           "phx_join",
           {
             config: {
-              broadcast: { ack: false, self: false },
+              broadcast: { ack: false, self: false, replication_ready: true },
               presence: { enabled: false },
               postgres_changes: postgresChanges,
               private: false,
@@ -103,7 +103,7 @@ export function connectPostgresRealtime({
         try { message = JSON.parse(event.data); } catch { return; }
 
         if (message.event === "phx_reply" && message.ref === joinRef) {
-          if (message.payload?.status === "ok") onStatus("subscribed");
+          if (message.payload?.status === "ok") onStatus("connecting");
           else onStatus("degraded", new Error(message.payload?.response?.reason || "Realtime join rejected"));
           return;
         }
@@ -115,6 +115,7 @@ export function connectPostgresRealtime({
         }
 
         if (message.event === "postgres_changes") {
+          onStatus("subscribed");
           onChange(message.payload);
           return;
         }
