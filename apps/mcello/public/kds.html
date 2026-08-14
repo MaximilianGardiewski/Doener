@@ -4,43 +4,51 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#171715" />
-  <title>Mcello KDS — Preview</title>
+  <title>Mcello KDS — Local Development</title>
   <link rel="stylesheet" href="/styles.css" />
   <style>
     .kds-shell{width:min(calc(100% - 24px),1500px);margin:auto;padding:24px 0 70px}
     .kds-top{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:20px 0}
     .kds-top h1{font-size:46px;max-width:none;margin-right:auto}
     .status-dot{width:10px;height:10px;background:var(--green);border-radius:50%;display:inline-block;box-shadow:0 0 18px rgba(135,189,71,.6)}
+    .status-dot.offline{background:#b96e62;box-shadow:none}
     .kds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
     .lane{background:#161613;border:1px solid rgba(255,255,255,.06);border-radius:24px;min-height:520px;padding:14px}
-    .lane h2{font-size:24px;margin:5px 4px 14px}
+    .lane h2{font-size:24px;margin:5px 4px 14px;display:flex;justify-content:space-between;gap:8px}
+    .lane-count{font-size:13px;color:var(--muted);font-family:system-ui,sans-serif;font-weight:500}
     .order{border:1px solid var(--line);background:#20201b;border-radius:20px;padding:15px;margin-bottom:12px}
-    .order.alert{box-shadow:0 0 0 1px rgba(229,136,121,.25),0 0 35px rgba(229,136,121,.08)}
+    .order.alert{box-shadow:0 0 0 1px rgba(229,136,121,.28),0 0 35px rgba(229,136,121,.1)}
     .order-head{display:flex;justify-content:space-between;gap:10px}
     .order small{color:var(--muted)}
-    .order ul{padding-left:19px;color:#ddd2c4;line-height:1.6}
-    .quick{display:flex;gap:7px;flex-wrap:wrap}
-    .quick button{border:1px solid var(--line);background:#29251c;color:var(--gold-2);border-radius:10px;padding:9px 10px}
+    .order ul{padding-left:19px;color:#ddd2c4;line-height:1.55}
+    .order li small{display:block;margin-top:-2px}
+    .quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+    .quick button{border:1px solid var(--line);background:#29251c;color:var(--gold-2);border-radius:10px;padding:9px 10px;cursor:pointer}
+    .quick button.danger{color:#efaea3;border-color:rgba(229,136,121,.22)}
+    .quick button:disabled{opacity:.45;cursor:wait}
+    .empty{color:var(--muted);padding:18px 6px}
+    .kds-error{margin:14px 0;padding:14px 16px;border:1px solid rgba(229,136,121,.25);background:#251b19;border-radius:16px;color:#efb6ad}
     @media(max-width:1000px){.kds-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:600px){.kds-grid{grid-template-columns:1fr}.kds-top h1{font-size:36px}}
   </style>
 </head>
 <body>
-  <div class="prototype-banner">KDS Entwicklungsprototyp · keine Live-Bestellungen</div>
+  <div class="prototype-banner">Lokales KDS · echte lokale DB-Transitions · keine Produktionsbestellungen</div>
   <main class="kds-shell">
     <div class="kds-top">
       <h1>Mcello KDS</h1>
-      <span class="pill"><span class="status-dot"></span> Live Sync vorgesehen</span>
+      <span class="pill" id="syncState"><span class="status-dot" id="syncDot"></span> <span id="syncText">Verbinden …</span></span>
+      <button class="pill" id="sound">Ton aktivieren</button>
       <button class="pill" id="rush">Rush/Pause</button>
-      <button class="primary">+20 Min global</button>
       <a class="pill" href="/">Public Preview</a>
     </div>
-    <div class="notice">Workflow gemäß Decision Ledger: Neu → per Zeitbutton direkt in Zubereitung → Fertig → Erledigt. Geplante Bestellungen bleiben separat, bis ihr Vorlauf erreicht ist.</div>
+    <div class="notice">Lokaler Entwicklungsflow: Neu → Zeit bestätigen → In Zubereitung → Fertig → Abholbereit → Erledigt. Jede Aktion läuft über einen echten, lokal erzeugten Staff-Login und die zustandsgeprüften KDS-RPCs.</div>
+    <div id="kdsError" class="kds-error" hidden></div>
     <div class="kds-grid" style="margin-top:18px">
-      <section class="lane"><h2>Neu</h2><div id="incoming"></div></section>
-      <section class="lane"><h2>Geplant</h2><div id="planned"></div></section>
-      <section class="lane"><h2>In Zubereitung</h2><div id="preparing"></div></section>
-      <section class="lane"><h2>Abholbereit</h2><div id="ready"></div></section>
+      <section class="lane"><h2>Neu <span class="lane-count" id="incomingCount">0</span></h2><div id="incoming"></div></section>
+      <section class="lane"><h2>Geplant <span class="lane-count" id="plannedCount">0</span></h2><div id="planned"></div></section>
+      <section class="lane"><h2>In Zubereitung <span class="lane-count" id="preparingCount">0</span></h2><div id="preparing"></div></section>
+      <section class="lane"><h2>Abholbereit <span class="lane-count" id="readyCount">0</span></h2><div id="ready"></div></section>
     </div>
   </main>
   <script type="module" src="/kds.js"></script>
