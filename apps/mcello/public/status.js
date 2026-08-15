@@ -40,7 +40,8 @@ function countdownText(iso) {
 function progressRank(state) {
   if (state === "waiting_for_acceptance") return 0;
   if (state === "scheduled" || state === "preparing") return 1;
-  if (state === "ready" || state === "completed") return 2;
+  if (state === "ready") return 2;
+  if (state === "completed") return 3;
   return -1;
 }
 
