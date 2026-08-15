@@ -98,6 +98,7 @@ function deps(overrides: Partial<CheckoutDependencies> = {}) {
           requestedPickupAt: input.requestedPickupAt,
           submittedAt: input.submittedAt,
           totalCents: input.totalCents,
+          payment: input.payment,
         } satisfies Order;
       },
     },
@@ -124,6 +125,9 @@ test("verified pickup order is created pending staff acceptance", async () => {
   );
   assert.equal(order.state, "waiting_for_acceptance");
   assert.equal(order.totalCents, 1900);
+  assert.equal(order.payment?.mode, "pay_on_site");
+  assert.equal(order.payment?.method, "cash_or_card");
+  assert.equal(setup.getCreatedInput()?.payment.status, "due_on_site");
   assert.equal(setup.getCreatedInput()?.items[0]?.unitPriceCentsSnapshot, 950);
 });
 
@@ -132,6 +136,19 @@ test("client-provided price is ignored", async () => {
   await submitVerifiedPickupOrder(baseRequest, setup.dependencies, "2026-08-14T18:00:00.000Z");
   assert.equal(setup.getCreatedInput()?.totalCents, 1900);
   assert.notEqual(setup.getCreatedInput()?.totalCents, 2);
+});
+
+test("client cannot switch checkout to online payment in V1", async () => {
+  const setup = deps();
+  await expectCode(
+    submitVerifiedPickupOrder(
+      { ...baseRequest, paymentMode: "online" },
+      setup.dependencies,
+      "2026-08-14T18:00:00.000Z",
+    ),
+    "PAYMENT_NOT_AVAILABLE",
+  );
+  assert.equal(setup.getCreatedInput(), undefined);
 });
 
 test("invalid OTP prevents order creation", async () => {
