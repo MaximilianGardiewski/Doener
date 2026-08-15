@@ -118,7 +118,7 @@ function schedulePoll() {
 
 $("#editOrder").addEventListener("click", () => {
   if (!token || current?.editable !== true || current?.state !== "waiting_for_acceptance") return;
-  location.href = `/?edit=${encodeURIComponent(token)}`;
+  location.href = `/edit-order.html?token=${encodeURIComponent(token)}`;
 });
 
 $("#refreshStatus").addEventListener("click", () => {
