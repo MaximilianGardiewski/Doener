@@ -40,6 +40,7 @@ Status:
 | D060 | `VERIFIED` | `apps/mcello/public/manifest.webmanifest`, `apps/mcello/public/sw.js`, `apps/mcello/public/icons/pwa-192.png`, `apps/mcello/public/icons/pwa-512.png`, `tests/pwa-installability.test.mjs` | Vollständiger Install-Contract mit echten 192/512-PNGs und maskable-safe Preview-Icon. Service Worker hält nur den öffentlichen App-Shell offline; API/REST/Auth/Storage, Mutationen, KDS und Statusdaten bleiben fail-closed/network-only. Das Preview-`M` ist kein freigegebenes finales Mcello-Logo. |
 | D030 | `VERIFIED` | `apps/mcello/public/index.html`, `tests/public-navigation.test.mjs`, `tests/public-navigation.browser.mjs`, `.github/workflows/ci.yml` | Desktop und Mobile bieten dieselben sechs bindenden Public-Ziele sowie einen betonten direkten Order-CTA. Mobile nutzt eine zugängliche native Navigation mit Escape-/Focus-Verhalten und Skip-Link. Chromium rendert 1440×1000 und 390×844 in CI und beweist Sichtbarkeit, Navigation, CTA-Ziel und fehlenden horizontalen Overflow. |
 | D058 | `VERIFIED` | `apps/mcello/public/motion.css`, `apps/mcello/public/motion.js`, `tests/showcase-motion.test.mjs`, `tests/showcase-motion.browser.mjs`, `.github/workflows/ci.yml` | Zurückhaltende Reveal-/Hover-Motion nutzt nur Opacity/Transform und keine Endlosschleifen oder layout-treibenden Übergänge. Chromium beweist normale Progressive-Reveals sowie einen vollständig sichtbaren/statischen `prefers-reduced-motion: reduce`-Pfad; PWA-Shell cached den Motion-Layer mit. |
+| D024 (homepage composition) | `VERIFIED` | `apps/mcello/public/index.html`, `apps/mcello/public/homepage-composition.js`, `apps/mcello/public/public-content.js`, `tests/homepage-composition.test.mjs`, `tests/homepage-composition.browser.mjs` | Hero, Kategorie-Highlights/Quick-Order, Sticky Order-CTA, Community/News/Events und Story/Team-Slot sind als zusammenhängender Public-Flow abgenommen. Highlights sind deterministisch und behaupten keine Popularität; einfache Produkte delegieren an den bestehenden Cart-Pfad, konfigurierbare an den bestehenden Konfigurator. Der Team-Slot bleibt ohne erfundene Namen/Biografie. Reale Mcello-Medien und persönliche Story bleiben D025/D026. |
 | D063 (local backend) | `VERIFIED` | `supabase/config.toml`, `.github/workflows/supabase-integration.yml`, lokale Dev-Skripte | Vollständiger Backend-Rebuild läuft mit Supabase CLI/Docker ohne Managed-Supabase-Projekt. |
 | D063 (no Lovable/Vercel runtime dependency) | `VERIFIED` | Root `package.json`, `apps/*`, GitHub Actions | Build, Tests und lokale Runtime funktionieren aus Git/Node/Supabase; Lovable/Vercel sind keine notwendige Runtime. |
 | D063 (self-host release path) | `VERIFIED` | `infra/selfhost/Dockerfile`, `infra/selfhost/container-entrypoint.mjs`, `infra/selfhost/compose.app.yml`, `infra/selfhost/preflight.sh`, `infra/selfhost/apply-migrations.sh`, `.github/workflows/selfhost-release.yml`, `.github/workflows/selfhost-db-drill.yml` | Git baut einen non-root/read-only App-Container hinter Host-Loopback; Preflight erzwingt HTTPS/Secrets/sauberen Git-Stand. Der isolierte DB-Drill baut alle Migrationen neu und beweist den direkten `supabase db push --db-url ... --dry-run` Self-host-Pfad. |
@@ -62,7 +63,7 @@ Status:
 Diese Punkte werden nicht durch Backend-Fortschritt voreilig geschlossen:
 
 - D001/D029 — finales Modern-Warm-Premium Designsystem
-- D024/D025/D026 — finale Venue-/Story-/Community-Inszenierung mit echten Mcello-Fakten/Medien
+- D025/D026 — echte Mcello-Medien/Bildrechte und persönliche Owner-/Team-Story aus bestätigten First-Party-Inhalten
 - D015/D017 — Pickup-Adresse, Route und Call erst mit bestätigten first-party Kontaktdaten
 - D036 ist technisch verifiziert, aber der **Go-live** bleibt trotzdem durch `owner_confirmed=false` der provisional Inhalte blockiert
 
@@ -84,4 +85,5 @@ Nach dieser Reconciliation sollen keine bereits vorhandenen Features erneut geba
 1. D003/D016 — erst nach expliziter Freigabe eines unvermeidbaren Messaging-Providers/Carrier-Kosten Production-Transport aktivieren.
 2. D015/D017 — bestätigte Adresse/Telefonnummer einpflegen, danach Status-Route/Call vervollständigen.
 3. D020/D007/D008 — Admin-/Menu-Gesamtabnahme nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
-4. Public/Design/Media-Abnahme mit echten Mcello-Medien und owner-bestätigtem Menü.
+4. D001 — technisches Modern-Warm-Premium Designsystem kann unabhängig gehärtet werden; D029 Recognition bleibt bis zum freigegebenen Original-Logo offen.
+5. D025/D026 — echte Mcello-Medien und persönliche Story erst nach First-Party-Freigabe.
