@@ -20,6 +20,7 @@ test("gallery publishes only rights-confirmed media with useful alt text", () =>
 
 test("gallery storage remains private and admin-scoped", () => {
   assert.match(bootstrap, /public: false/);
+  assert.match(bootstrap, /error\?\.code === "NoSuchBucket"/);
   assert.match(migration, /create policy "mcello media admin insert"/);
   assert.match(migration, /create policy "mcello media admin select"/);
   assert.match(migration, /create policy "mcello media admin update"/);

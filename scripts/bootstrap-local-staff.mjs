@@ -70,6 +70,16 @@ async function verifyPasswordLogin(email, password) {
 
 async function ensurePrivateMediaBucket() {
   const bucketId = "mcello-media";
+  const createBucket = () => api("/storage/v1/bucket", {
+    method: "POST",
+    body: {
+      id: bucketId,
+      name: bucketId,
+      public: false,
+      file_size_limit: 10 * 1024 * 1024,
+      allowed_mime_types: ["image/jpeg", "image/png", "image/webp", "image/avif"],
+    },
+  });
   const response = await fetch(`${baseUrl}/storage/v1/bucket/${bucketId}`, {
     headers: {
       apikey: serviceRoleKey,
@@ -78,22 +88,14 @@ async function ensurePrivateMediaBucket() {
     },
   });
 
-  if (response.status === 404) {
-    await api("/storage/v1/bucket", {
-      method: "POST",
-      body: {
-        id: bucketId,
-        name: bucketId,
-        public: false,
-        file_size_limit: 10 * 1024 * 1024,
-        allowed_mime_types: ["image/jpeg", "image/png", "image/webp", "image/avif"],
-      },
-    });
-    return;
-  }
-
   if (!response.ok) {
     const body = await response.text();
+    let error = null;
+    try { error = JSON.parse(body); } catch { /* retain raw body below */ }
+    if (response.status === 404 || error?.statusCode === "404" || error?.code === "NoSuchBucket") {
+      await createBucket();
+      return;
+    }
     throw new Error(`GET /storage/v1/bucket/${bucketId} failed (${response.status}): ${body}`);
   }
 
