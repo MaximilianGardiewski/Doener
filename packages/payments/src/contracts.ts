@@ -12,7 +12,8 @@ export interface PaymentSnapshot {
 }
 
 export interface PreparePaymentInput {
-  requestedMode?: PaymentMode;
+  /** Raw external input is accepted as string so the policy validates runtime payloads fail-closed. */
+  requestedMode?: PaymentMode | string;
   amountCents: number;
   currency?: string;
 }
@@ -34,10 +35,18 @@ export interface OnlinePaymentProvider {
 }
 
 export class PaymentBoundaryError extends Error {
-  readonly code: "ONLINE_PAYMENT_DISABLED" | "INVALID_PAYMENT_AMOUNT" | "UNSUPPORTED_CURRENCY";
+  readonly code:
+    | "ONLINE_PAYMENT_DISABLED"
+    | "UNSUPPORTED_PAYMENT_MODE"
+    | "INVALID_PAYMENT_AMOUNT"
+    | "UNSUPPORTED_CURRENCY";
 
   constructor(
-    code: "ONLINE_PAYMENT_DISABLED" | "INVALID_PAYMENT_AMOUNT" | "UNSUPPORTED_CURRENCY",
+    code:
+      | "ONLINE_PAYMENT_DISABLED"
+      | "UNSUPPORTED_PAYMENT_MODE"
+      | "INVALID_PAYMENT_AMOUNT"
+      | "UNSUPPORTED_CURRENCY",
     message: string,
   ) {
     super(message);
@@ -57,6 +66,12 @@ export class PayOnSiteOnlyPaymentPolicy implements PaymentPolicy {
       throw new PaymentBoundaryError(
         "ONLINE_PAYMENT_DISABLED",
         "Online-Zahlung ist in Mcello V1 nicht verfügbar.",
+      );
+    }
+    if (input.requestedMode !== undefined && input.requestedMode !== "pay_on_site") {
+      throw new PaymentBoundaryError(
+        "UNSUPPORTED_PAYMENT_MODE",
+        "Die angeforderte Zahlungsart wird nicht unterstützt.",
       );
     }
     if (!Number.isSafeInteger(input.amountCents) || input.amountCents < 0) {
