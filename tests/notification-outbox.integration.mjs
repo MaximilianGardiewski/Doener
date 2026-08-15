@@ -44,7 +44,7 @@ async function serviceRpc(name, args) {
 
 async function outboxFor(orderId) {
   const result = await request(
-    `/rest/v1/order_notification_outbox?order_id=eq.${orderId}&select=id,kind,preferred_channel,fallback_channel,status,attempt_count,last_error&order=created_at.asc`,
+    `/rest/v1/order_notification_outbox?order_id=eq.${orderId}&select=id,kind,preferred_channel,fallback_channel,status,attempt_count,last_error,payload&order=created_at.asc`,
     { apiKey: serviceRoleKey, bearer: serviceRoleKey },
   );
   assert.equal(result.response.ok, true, JSON.stringify(result.data));
@@ -114,22 +114,28 @@ assert.equal(claimed.data[0].attempt_count, 1);
 const sent = await serviceRpc("server_mark_notification_sent", { _id: jobs[0].id });
 assert.equal(sent.response.ok, true, JSON.stringify(sent.data));
 
-const acceptedAt = new Date(Date.now() + 20 * 60_000).toISOString();
+const acceptedPickupAt = new Date(Date.now() + 20 * 60_000).toISOString();
 const accepted = await rpc(
   "staff_accept_order",
-  { _order_id: order.id, _accepted_pickup_at: acceptedAt },
+  { _order_id: order.id, _accepted_pickup_at: acceptedPickupAt },
   anonKey,
   staffToken,
 );
 assert.equal(accepted.response.ok, true, JSON.stringify(accepted.data));
 
+// D056 custom delay: use a non-preset value and prove ETA + customer update job.
+const customDelayMinutes = 23;
 const delayed = await rpc(
   "staff_delay_order",
-  { _order_id: order.id, _minutes: 5 },
+  { _order_id: order.id, _minutes: customDelayMinutes },
   anonKey,
   staffToken,
 );
 assert.equal(delayed.response.ok, true, JSON.stringify(delayed.data));
+const delayedOrder = Array.isArray(delayed.data) ? delayed.data[0] : delayed.data;
+const expectedDelayedPickupAt = new Date(Date.parse(acceptedPickupAt) + customDelayMinutes * 60_000).toISOString();
+assert.equal(new Date(delayedOrder.accepted_pickup_at).toISOString(), expectedDelayedPickupAt);
+
 const ready = await rpc("staff_mark_order_ready", { _order_id: order.id }, anonKey, staffToken);
 assert.equal(ready.response.ok, true, JSON.stringify(ready.data));
 const completed = await rpc("staff_complete_order", { _order_id: order.id }, anonKey, staffToken);
@@ -138,6 +144,11 @@ assert.equal(completed.response.ok, true, JSON.stringify(completed.data));
 jobs = await outboxFor(order.id);
 assert.deepEqual(jobs.map((job) => job.kind), ["received", "accepted", "delayed", "ready"]);
 assert.equal(jobs.some((job) => job.kind === "completed"), false);
+const delayedJob = jobs.find((job) => job.kind === "delayed");
+assert.ok(delayedJob, "custom delay must enqueue a customer update");
+assert.equal(delayedJob.preferred_channel, "whatsapp");
+assert.equal(delayedJob.fallback_channel, "sms");
+assert.equal(new Date(delayedJob.payload.acceptedPickupAt).toISOString(), expectedDelayedPickupAt);
 
 const cancelledOrder = await createOrder("Outbox Cancel");
 const cancelled = await rpc("customer_cancel_pending_order", { _public_token: cancelledOrder.public_token });
@@ -155,7 +166,8 @@ assert.equal(rejected.response.ok, true, JSON.stringify(rejected.data));
 assert.deepEqual((await outboxFor(rejectedOrder.id)).map((job) => job.kind), ["received", "rejected"]);
 
 console.log("Notification outbox lifecycle passed:", {
-  customerFlow: ["received", "accepted", "delayed", "ready"],
+  customerFlow: ["received", "accepted", `delayed+${customDelayMinutes}`, "ready"],
+  customDelayedPickupAt: expectedDelayedPickupAt,
   cancelFlow: ["received", "cancelled"],
   rejectFlow: ["received", "rejected"],
   channelPolicy: "whatsapp -> sms",
