@@ -67,7 +67,7 @@ assert.equal(Number(productResult.data.effortWeight), 1.75);
 const payload = {
   locationId,
   source: "table",
-  fulfillmentType: "pickup",
+  fulfillmentType: "delivery",
   state: "waiting_for_acceptance",
   customerFirstName: "Prepared Boundaries",
   mobile: "+491700000098",
@@ -104,6 +104,33 @@ const sourceMutation = await request(`/rest/v1/orders?id=eq.${created.id}`, {
   body: { source: "counter" },
 });
 assert.equal(sourceMutation.response.ok, false, "order origin must stay immutable even for service-role writes");
+
+// D006: the reusable enum knows delivery, but current Mcello persistence remains pickup-only.
+assert.equal(created.fulfillment, "pickup");
+
+const fulfillmentMutation = await request(`/rest/v1/orders?id=eq.${created.id}`, {
+  method: "PATCH",
+  apiKey: serviceRoleKey,
+  bearerToken: serviceRoleKey,
+  body: { fulfillment: "delivery" },
+});
+assert.equal(fulfillmentMutation.response.ok, false, "order fulfillment must stay pickup and immutable in V1");
+
+const directDeliveryInsert = await request("/rest/v1/orders", {
+  method: "POST",
+  apiKey: serviceRoleKey,
+  bearerToken: serviceRoleKey,
+  body: {
+    location_id: locationId,
+    source: "web",
+    fulfillment: "delivery",
+    state: "waiting_for_acceptance",
+    customer_first_name: "Direct Delivery",
+    mobile: "+491700000097",
+    total_cents: 0,
+  },
+});
+assert.equal(directDeliveryInsert.response.ok, false, "database constraint must reject direct V1 delivery inserts");
 
 const itemResult = await request(
   `/rest/v1/order_items?order_id=eq.${created.id}&select=id,effort_weight_snapshot`,

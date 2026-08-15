@@ -14,7 +14,12 @@ import {
   type PaymentSnapshot,
 } from "../../payments/src/contracts.ts";
 import { hasSlotCapacity } from "./capacity.ts";
-import type { Order } from "./model.ts";
+import {
+  FulfillmentBoundaryError,
+  PickupOnlyFulfillmentPolicy,
+  type FulfillmentPolicy,
+} from "./fulfillment.ts";
+import type { FulfillmentType, Order } from "./model.ts";
 
 export interface CheckoutCartLine {
   productId: string;
@@ -31,6 +36,8 @@ export interface CheckoutRequest {
   mobile: string;
   comment?: string;
   requestedPickupAt?: string | null;
+  /** Optional future-facing preference. Mcello V1 accepts pickup only. */
+  fulfillmentType?: FulfillmentType;
   /** Optional client preference. Mcello V1 accepts only pay_on_site. */
   paymentMode?: PaymentMode;
   otpChallengeId: string;
@@ -58,7 +65,7 @@ export interface OrderWriter {
   create(input: {
     locationId: string;
     source: "web";
-    fulfillmentType: "pickup";
+    fulfillmentType: FulfillmentType;
     state: "waiting_for_acceptance";
     customerFirstName: string;
     mobile: string;
@@ -87,6 +94,7 @@ export interface CheckoutDependencies {
   shop: ShopStateReader;
   slots: SlotReader;
   orders: OrderWriter;
+  fulfillment?: FulfillmentPolicy;
   payments?: PaymentPolicy;
   notifications?: OrderNotificationProvider;
   statusUrlFor(order: Order): string;
@@ -96,6 +104,7 @@ export class CheckoutError extends Error {
   readonly code:
     | "INVALID_CUSTOMER"
     | "EMPTY_CART"
+    | "FULFILLMENT_NOT_AVAILABLE"
     | "OTP_FAILED"
     | "SHOP_NOT_ACCEPTING"
     | "INVALID_PICKUP_TIME"
@@ -109,6 +118,7 @@ export class CheckoutError extends Error {
     code:
       | "INVALID_CUSTOMER"
       | "EMPTY_CART"
+      | "FULFILLMENT_NOT_AVAILABLE"
       | "OTP_FAILED"
       | "SHOP_NOT_ACCEPTING"
       | "INVALID_PICKUP_TIME"
@@ -153,6 +163,18 @@ export async function submitVerifiedPickupOrder(
 
   if (request.cart.length === 0 || request.cart.some((line) => line.quantity < 1 || line.quantity > 99)) {
     throw new CheckoutError("EMPTY_CART", "Warenkorb ist leer oder ungültig.");
+  }
+
+  let fulfillment;
+  try {
+    fulfillment = await (deps.fulfillment ?? new PickupOnlyFulfillmentPolicy()).prepare({
+      requestedType: request.fulfillmentType,
+    });
+  } catch (error) {
+    if (error instanceof FulfillmentBoundaryError) {
+      throw new CheckoutError("FULFILLMENT_NOT_AVAILABLE", error.message);
+    }
+    throw error;
   }
 
   const otp = await deps.otp.verifyOtp({
@@ -246,7 +268,7 @@ export async function submitVerifiedPickupOrder(
   const order = await deps.orders.create({
     locationId: request.locationId,
     source: "web",
-    fulfillmentType: "pickup",
+    fulfillmentType: fulfillment.type,
     state: "waiting_for_acceptance",
     customerFirstName: firstName,
     mobile,

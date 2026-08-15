@@ -4,10 +4,9 @@ Stand: 2026-08-15
 
 Diese Roadmap ist eine Arbeitsreihenfolge. Bindend bleibt das Decision Ledger. Ein offener Acceptance-Haken bedeutet nicht automatisch, dass keinerlei Code existiert; vorhandene Implementierung muss zuerst gegen Tests und Decision Ledger abgeglichen werden, bevor der Haken geändert wird.
 
-## P0 — Payment Boundary abgeschlossen
+## P0 — Abgeschlossene PREPARE_NOW-Grenzen
 
-**D004 Payment Boundary**
-
+### D004 Payment Boundary
 - [x] provider-neutrales `packages/payments`
 - [x] V1-Policy: nur `pay_on_site`
 - [x] Checkout/Order Payment-Snapshot
@@ -19,28 +18,41 @@ Diese Roadmap ist eine Arbeitsreihenfolge. Bindend bleibt das Decision Ledger. E
 - [x] PR #7 gemerged in `bootstrap/business-web-factory`
 - [x] kein Production-Deploy durchgeführt
 
-## P1 — PREPARE_NOW-Grenzen
+### D027 Order Source Boundary
+- [x] `web | counter | table` in Domain und PostgreSQL
+- [x] Mcello V1 Checkout persistiert selbst `web`
+- [x] Order-Ursprung nach Insert unveränderlich
+- [x] Manipulations-/Boundary-Test
+- [x] keine Counter-/Table-UI vorgezogen
+- [x] PR #8 gemerged; Merge-Commit `5cc56c3678310a1928c82180f46e2c5fa0a854da`
 
-1. **D006 Delivery Boundary — nächster offener Architekturbaustein**
-   - vorhandenen `pickup | delivery` Fulfillment-Contract beibehalten
-   - Delivery-Zone/PLZ/Radius-Contract vorbereiten
-   - DB darf V1-Delivery weiterhin nicht versehentlich aktivieren
-   - Tests für V1-Sperre + spätere Erweiterbarkeit
+### D040 Capacity Effort Boundary
+- [x] optionales `menu_products.effort_weight`
+- [x] `MenuProduct.effortWeight` und Order-Item-Snapshot
+- [x] PostgreSQL setzt/versiegelt `effort_weight_snapshot` aus dem echten Produkt
+- [x] V1-Kapazität bleibt strikt count-basiert
+- [x] vollständiger Supabase-Integrationsnachweis
+- [x] bestehender Allergen-/Label-Vertrag nach Regressionstest erhalten
+- [x] PR #8 gemerged
 
-2. **D027 Order Source Boundary — umgesetzt, PR/CI ausstehend**
-   - `web | counter | table` ist in Domain und PostgreSQL vorhanden
-   - Mcello V1 Checkout besitzt keinen Source-Selector und persistiert selbst `web`
-   - Manipulations-/Boundary-Test ergänzt
-   - keine Counter-/Table-UI vorgezogen
+## P1 — D006 Delivery Boundary
 
-3. **D040 Capacity Effort Boundary — umgesetzt, PR/CI ausstehend**
-   - optionales `menu_products.effort_weight` bleibt Future-Metadatum
-   - `MenuProduct.effortWeight` und Order-Item-Snapshot ergänzt
-   - PostgreSQL setzt `effort_weight_snapshot` aus dem echten Produkt statt aus Clientdaten
-   - V1-Kapazität bleibt strikt count-basiert
-   - echter Supabase-Integrationstest ergänzt
+Aktueller Baustein auf `agent/mcello-delivery-boundary`:
 
-Nach Merge von D027/D040 bleibt unter den `PREPARE_NOW_IMPLEMENT_LATER`-Architekturgrenzen als nächster klarer Ausbaupunkt D006 Delivery.
+- [x] vorhandenen `pickup | delivery` Fulfillment-Contract beibehalten
+- [x] provider-neutraler `DeliveryZoneResolver`
+- [x] PLZ- und Radius-Zonen als Future-Contracts vorbereitet
+- [x] `PickupOnlyFulfillmentPolicy` für Mcello V1
+- [x] manipuliertes `fulfillmentType: delivery` scheitert vor OTP/Persistenz
+- [x] PostgreSQL-Constraint verhindert V1-Delivery auch bei privilegiertem Direktzugriff
+- [x] Fulfillment einer Bestellung ist nach Erstellung unveränderlich
+- [x] keine Delivery-UI und keine erfundenen Gebühren/Mindestwerte/Provider eingebaut
+- [x] Domain-/Struktur-/Supabase-Integrationstests ergänzt
+- [ ] CI vollständig grün
+- [ ] PR Review / Merge
+- [ ] kein Production-Deploy
+
+Nach D006 sind die ausdrücklich als `PREPARE_NOW_IMPLEMENT_LATER` markierten Plattformgrenzen D004, D006, D027, D040, D047/D050 und D057 architektonisch vorbereitet. Danach liegt der Schwerpunkt auf evidenzbasierter V1-Acceptance-Reconciliation statt weiteren Future-Features.
 
 ## P2 — Acceptance-Reconciliation für vorhandene V1-Funktionalität
 
