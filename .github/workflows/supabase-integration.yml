@@ -18,6 +18,7 @@ on:
       - "tests/scheduling.integration.mjs"
       - "tests/slot-capacity.integration.mjs"
       - "tests/notification-outbox.integration.mjs"
+      - "tests/notification-outbox-lease.integration.mjs"
       - "tests/modifier-backoffice.integration.mjs"
       - "tests/allergen-labels.integration.mjs"
       - "tests/ordering-schedule.integration.mjs"
@@ -43,6 +44,7 @@ on:
       - "tests/scheduling.integration.mjs"
       - "tests/slot-capacity.integration.mjs"
       - "tests/notification-outbox.integration.mjs"
+      - "tests/notification-outbox-lease.integration.mjs"
       - "tests/modifier-backoffice.integration.mjs"
       - "tests/allergen-labels.integration.mjs"
       - "tests/ordering-schedule.integration.mjs"
@@ -147,6 +149,9 @@ jobs:
 
       - name: Prove notification outbox lifecycle
         run: node tests/notification-outbox.integration.mjs
+
+      - name: Prove notification outbox lease recovery and concurrent claims
+        run: node tests/notification-outbox-lease.integration.mjs
 
       - name: Prove modifier backoffice and role boundary
         run: node tests/modifier-backoffice.integration.mjs
