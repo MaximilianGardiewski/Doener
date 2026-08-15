@@ -8,6 +8,7 @@ on:
       - "supabase/migrations/**"
       - "infra/selfhost/**"
       - "tests/selfhost-release.test.mjs"
+      - "tests/messaging-spend-boundary.test.mjs"
       - ".github/workflows/selfhost-release.yml"
       - "package.json"
   push:
@@ -19,6 +20,7 @@ on:
       - "supabase/migrations/**"
       - "infra/selfhost/**"
       - "tests/selfhost-release.test.mjs"
+      - "tests/messaging-spend-boundary.test.mjs"
       - ".github/workflows/selfhost-release.yml"
       - "package.json"
 
@@ -44,7 +46,7 @@ jobs:
       - name: Build Mcello app image from Git
         run: docker build -f infra/selfhost/Dockerfile -t mcello-app:${GITHUB_SHA} .
 
-      - name: Run container read-only and verify liveness
+      - name: Run container read-only and verify liveness and messaging fail-closed boundary
         run: |
           docker run -d --name mcello-app-release-smoke \
             --read-only \
@@ -67,6 +69,24 @@ jobs:
           curl --fail --silent http://127.0.0.1:4174/ >/dev/null
           test "$(docker inspect -f '{{.Config.User}}' mcello-app-release-smoke)" = "node"
           test "$(docker inspect -f '{{.HostConfig.ReadonlyRootfs}}' mcello-app-release-smoke)" = "true"
+
+          dev_otp_status="$(curl --silent --output /tmp/mcello-dev-otp.json --write-out '%{http_code}' \
+            -X POST http://127.0.0.1:4174/api/dev/otp/start \
+            -H 'content-type: application/json' \
+            --data '{"mobile":"+491701234567"}')"
+          test "$dev_otp_status" = "404"
+          grep -F 'DEVELOPMENT_ENDPOINT_DISABLED' /tmp/mcello-dev-otp.json >/dev/null
+          if grep -F 'devCode' /tmp/mcello-dev-otp.json >/dev/null; then
+            echo 'Production gateway leaked a development OTP code' >&2
+            exit 1
+          fi
+
+          checkout_status="$(curl --silent --output /tmp/mcello-checkout.json --write-out '%{http_code}' \
+            -X POST http://127.0.0.1:4174/api/checkout \
+            -H 'content-type: application/json' \
+            --data '{}')"
+          test "$checkout_status" = "503"
+          grep -F 'PRODUCTION_MESSAGING_NOT_CONFIGURED' /tmp/mcello-checkout.json >/dev/null
 
       - name: Validate production compose and preflight contract
         run: |
