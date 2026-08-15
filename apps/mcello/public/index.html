@@ -19,6 +19,19 @@
     .checkout-box{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}.checkout-message{margin-top:12px;padding:12px 14px;border-radius:14px;background:#20201b;color:var(--muted);font-size:14px}.checkout-message.error{color:#efb0a5;background:#291c19}.checkout-message.success{color:#cce8b0;background:#1e281b}
     .dev-code{margin-top:10px;padding:10px 12px;border:1px dashed rgba(215,169,76,.35);border-radius:12px;color:var(--gold-2);font-family:ui-monospace,monospace}
     .hidden{display:none!important}
+    .skip-link{position:fixed;left:16px;top:8px;z-index:250;transform:translateY(-180%);padding:10px 14px;border-radius:999px;background:var(--gold-2);color:#18130a;font-weight:800;box-shadow:var(--shadow)}
+    .skip-link:focus{transform:none}
+    .mobile-nav{display:none;position:relative}
+    .mobile-nav summary{list-style:none;user-select:none}
+    .mobile-nav summary::-webkit-details-marker{display:none}
+    .mobile-nav[open] summary{border-color:rgba(215,169,76,.55);color:var(--gold-2)}
+    .mobile-nav-panel{position:absolute;right:0;top:calc(100% + 12px);width:min(340px,calc(100vw - 22px));max-height:calc(100vh - 120px);overflow:auto;padding:10px;border:1px solid var(--line);border-radius:22px;background:rgba(21,21,19,.98);box-shadow:var(--shadow)}
+    .mobile-nav-panel a{display:block;padding:12px 14px;border-radius:13px;color:#ddd3c5}
+    .mobile-nav-panel a:hover{background:rgba(255,255,255,.05);color:var(--gold-2)}
+    .mobile-nav-panel .mobile-order-cta{text-align:center;margin-top:7px;color:#18130a}
+    .nav-links a:focus-visible,.mobile-nav summary:focus-visible,.mobile-nav-panel a:focus-visible,.header-order-cta:focus-visible,.skip-link:focus-visible{outline:3px solid var(--gold-2);outline-offset:3px}
+    @media(max-width:900px){.mobile-nav{display:block}.header-order-cta{margin-left:auto}}
+    @media(max-width:620px){.nav{gap:8px}.header-order-cta{padding:10px 12px;font-size:13px}.mobile-nav summary{padding:10px 12px}.brand strong{font-size:16px}}
   </style>
 </head>
 <body>
@@ -114,6 +127,17 @@
     </div>
   </aside>
 
+  <script type="module">
+    const mobileNav = document.querySelector("#mobileNav");
+    mobileNav?.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => mobileNav.removeAttribute("open"));
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !mobileNav?.open) return;
+      mobileNav.removeAttribute("open");
+      mobileNav.querySelector("summary")?.focus();
+    });
+  </script>
   <script type="module" src="/app.js"></script>
   <script type="module" src="/public-content.js"></script>
 </body>
