@@ -109,6 +109,7 @@ export interface PublicOrderStatus {
   id: string;
   orderNumber: number;
   state: OrderState;
+  editable?: boolean;
   customerFirstName: string;
   requestedPickupAt?: string | null;
   acceptedPickupAt?: string | null;
@@ -131,19 +132,8 @@ export interface PendingOrderEditItem {
   selections: ProductSelection[];
 }
 
-/** Server-only context. Do not forward orderId/locationId to the browser. */
+/** Privacy-minimal service-RPC result that is safe for the application to forward to the token holder. */
 export interface PendingOrderEditContext {
-  orderId: string;
-  orderNumber: number;
-  state: "waiting_for_acceptance";
-  locationId: string;
-  customerFirstName: string;
-  comment?: string | null;
-  requestedPickupAt?: string | null;
-  items: PendingOrderEditItem[];
-}
-
-export interface PublicPendingOrderEditDraft {
   orderNumber: number;
   state: "waiting_for_acceptance";
   customerFirstName: string;
