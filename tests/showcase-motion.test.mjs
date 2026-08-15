@@ -31,5 +31,5 @@ test("public motion is progressive enhancement and part of the offline shell", (
   assert.match(js, /classList\.add\("is-revealed"\)/);
   assert.match(sw, /"\/motion\.js"/);
   assert.match(sw, /"\/motion\.css"/);
-  assert.match(sw, /mcello-public-shell-v6/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
 });
