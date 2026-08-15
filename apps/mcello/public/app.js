@@ -509,7 +509,6 @@ async function refreshMenuSnapshot(at = null) {
       ? previousCategory
       : null;
     if (!state.categoryId) setInitialCategory();
-    reconcileCartWithMenu();
     renderRail();
     renderMenu();
     renderCart();
