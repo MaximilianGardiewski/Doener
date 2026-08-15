@@ -80,6 +80,32 @@ A future online implementation plugs into the `OnlinePaymentProvider` contract
 and requires an explicit database migration that replaces the V1 constraint.
 No concrete provider, SDK, checkout URL or paid service is part of V1.
 
+## Order-source boundary
+
+The reusable order model and PostgreSQL enum intentionally recognize `web`,
+`counter` and `table`. Mcello V1 exposes only the customer web ordering flow:
+`CheckoutRequest` has no source selector and the checkout service writes
+`source: web` itself. Even an extra client payload field therefore cannot turn a
+public checkout into a counter/table order.
+
+Counter/table remain prepared future origins for a dedicated authenticated
+operational interface. They do not require a second order state machine or new
+order tables when implemented later.
+
+## Capacity-effort boundary
+
+V1 slot admission remains deliberately simple: 15-minute slots compare
+`acceptedOrderCount` with the configured numeric slot capacity. Optional
+`effortWeight` metadata is not consulted by that decision.
+
+The product domain now carries the optional weight, checkout passes it as
+prepared metadata, and PostgreSQL snapshots the authoritative product
+`effort_weight` into `order_items.effort_weight_snapshot` at insert time. The
+trigger overwrites any client/application-provided snapshot value, so historical
+orders retain the actual configured weight at order time. A later weighted
+capacity policy can therefore aggregate durable snapshots without changing the
+V1 algorithm today.
+
 ## Lebtig reuse candidates
 - profiles + explicit role rows
 - bootstrap admin invariant
@@ -108,4 +134,4 @@ ready -> completed
 Acceptance is the binding boundary.
 
 ## V1/future boundaries
-V1 exposes pickup only and pay-on-site only. Fulfillment/payment contracts are designed for later delivery/online payment. Mcello UI is single-location while domain entities retain and enforce `locationId`.
+V1 exposes pickup only, web-origin customer ordering and pay-on-site only. Delivery, counter/table entry, weighted capacity and online payment are prepared through stable contracts/data boundaries but remain inactive until later decisions explicitly enable them. Mcello UI is single-location while domain entities retain and enforce `locationId`.

@@ -30,6 +30,7 @@ on:
       - "tests/analytics-events.integration.mjs"
       - "tests/location-boundary.integration.mjs"
       - "tests/payment-boundary.integration.mjs"
+      - "tests/prepared-order-boundaries.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -63,6 +64,7 @@ on:
       - "tests/analytics-events.integration.mjs"
       - "tests/location-boundary.integration.mjs"
       - "tests/payment-boundary.integration.mjs"
+      - "tests/prepared-order-boundaries.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
 
 concurrency:
@@ -166,6 +168,9 @@ jobs:
 
       - name: Prove pay-on-site payment boundary
         run: node tests/payment-boundary.integration.mjs
+
+      - name: Prove prepared order-source and effort-weight boundaries
+        run: node tests/prepared-order-boundaries.integration.mjs
 
       - name: Run real PostgREST/RPC order flow
         run: node tests/supabase-local.integration.mjs

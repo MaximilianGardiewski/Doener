@@ -37,6 +37,11 @@ export interface MenuProduct {
   modifierGroups?: ModifierGroup[];
   ownerConfirmed?: boolean;
   sourceNote?: string;
+  /**
+   * Optional kitchen-effort metadata reserved for a future weighted-capacity
+   * policy. Mcello V1 slot admission remains count-based.
+   */
+  effortWeight?: number;
 }
 
 export interface ProductSelection {
