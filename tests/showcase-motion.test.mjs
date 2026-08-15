@@ -26,7 +26,7 @@ test("D058 obeys the user's reduced-motion preference", () => {
 });
 
 test("public motion is progressive enhancement and part of the offline shell", () => {
-  assert.match(publicContent, /^import "\.\/motion\.js";/);
+  assert.match(publicContent, /import "\.\/motion\.js";/);
   assert.match(js, /IntersectionObserver/);
   assert.match(js, /classList\.add\("is-revealed"\)/);
   assert.match(sw, /"\/motion\.js"/);

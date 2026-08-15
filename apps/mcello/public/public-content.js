@@ -1,3 +1,4 @@
+import "./public-copy.js";
 import "./motion.js";
 import "./homepage-composition.js";
 
@@ -58,7 +59,7 @@ function renderEditorial(posts = []) {
   const target = document.querySelector("#newsStack");
   if (!target) return;
   if (!posts.length) {
-    target.innerHTML = '<div class="notice">Aktuell sind keine veröffentlichten Meldungen hinterlegt.</div>';
+    target.innerHTML = '<div class="notice">Gerade nichts Neues veröffentlicht — sobald bei Mcello etwas ansteht, findest du es hier.</div>';
     return;
   }
 
@@ -69,7 +70,7 @@ function renderEditorial(posts = []) {
     return `<article class="news-card">
       <div>
         <div class="tag">${esc(kindLabel(post.kind))}</div>
-        ${eventTime ? `<small>${eventTime}</small>` : `<small>${post.pinned ? "Highlight" : "Veröffentlicht"}</small>`}
+        ${eventTime ? `<small>${eventTime}</small>` : `<small>${post.pinned ? "Highlight" : "Neu bei Mcello"}</small>`}
       </div>
       <div>
         ${post.pinned ? '<div class="tag">Highlight</div>' : ""}
@@ -84,7 +85,7 @@ function renderGallery(items = []) {
   const target = document.querySelector("#galleryGrid");
   if (!target) return;
   if (!items.length) {
-    target.innerHTML = '<div class="notice">Noch keine freigegebenen Originalmedien hinterlegt.</div>';
+    target.innerHTML = '<div class="notice">Noch keine freigegebenen Fotos — hier bleibt es lieber ehrlich als künstlich gefüllt.</div>';
     return;
   }
 

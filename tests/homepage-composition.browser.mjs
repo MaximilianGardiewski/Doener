@@ -38,9 +38,15 @@ try {
 
   await desktop.locator("#ueber").scrollIntoViewIfNeeded();
   assert.equal(await desktop.locator("#homepageTeamStory").isVisible(), true, "story/team slot must be present");
+  const teamCopy = (await desktop.locator("#homepageTeamStory").textContent()) || "";
   assert.match(
-    (await desktop.locator("#homepageTeamStory").textContent()) || "",
-    /ohne erfundene Namen oder Biografie/,
+    teamCopy,
+    /Sobald Namen, Geschichten und Fotos von Mcello bestätigt und freigegeben sind/,
+    "story/team slot must require confirmed first-party identity content",
+  );
+  assert.match(
+    teamCopy,
+    /erfinden wir lieber nichts dazu/,
     "story/team placeholder must remain first-party safe",
   );
 

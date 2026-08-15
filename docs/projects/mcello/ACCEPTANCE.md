@@ -10,6 +10,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Homepage hero, highlight/quick-order, community/news/events, story/team (`D024`)
 - [x] Installable browser-compatible PWA (`D060`)
 - [x] Showcase-grade motion without harming usability (`D058`)
+- [x] Public copy tone: premium/quiet + warm/personal with restrained street-food moments (`D059`)
 
 ## Menu/Configurator
 - [ ] Structured categories/products/variants/modifier groups (`D007`, `D008`, `D020`)

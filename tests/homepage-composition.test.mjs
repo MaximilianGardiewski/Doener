@@ -53,8 +53,8 @@ test("quick order delegates to the existing category product configurator and ca
 });
 
 test("story team slot refuses invented identity claims", () => {
-  assert.match(module, /bestätigten First-Party-Inhalten/);
-  assert.match(module, /ohne erfundene Namen oder Biografie/);
+  assert.match(module, /Sobald Namen, Geschichten und Fotos von Mcello bestätigt und freigegeben sind/);
+  assert.match(module, /erfinden wir lieber nichts dazu/);
 });
 
 test("homepage composition is part of public module graph and offline shell", () => {

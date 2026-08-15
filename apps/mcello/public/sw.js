@@ -4,6 +4,7 @@ const APP_SHELL = [
   "/styles.css",
   "/app.js",
   "/public-content.js",
+  "/public-copy.js",
   "/homepage-composition.js",
   "/motion.js",
   "/motion.css",
