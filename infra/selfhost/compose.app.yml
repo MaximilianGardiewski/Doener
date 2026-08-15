@@ -1,0 +1,24 @@
+services:
+  mcello-app:
+    image: ${MCELLO_APP_IMAGE:-mcello-app:local}
+    build:
+      context: ../..
+      dockerfile: infra/selfhost/Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-bookworm-slim}
+    env_file:
+      - ${MCELLO_APP_ENV_FILE:-./app.env}
+    environment:
+      NODE_ENV: production
+      PORT: "4173"
+    ports:
+      - "127.0.0.1:${MCELLO_APP_HOST_PORT:-4173}:4173"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 20s
