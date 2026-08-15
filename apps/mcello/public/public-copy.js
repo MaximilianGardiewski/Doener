@@ -5,8 +5,10 @@ const PUBLIC_COPY = {
   storyVenue: "Mcello soll sich online genauso unkompliziert anfühlen wie vor Ort: stöbern, auswählen, bestellen — oder einfach entdecken, was gerade los ist.",
   storySelection: "Was Mcello besonders macht, erzählen und zeigen wir hier mit bestätigten Inhalten statt mit erfundenen Werbeversprechen.",
   newsIntro: "Was bei Mcello ansteht, landet hier: Neues, Specials, Events und alles, wofür es sich lohnt vorbeizuschauen.",
+  newsEmpty: "Gerade nichts Neues veröffentlicht — sobald bei Mcello etwas ansteht, findest du es hier.",
   galleryTitle: "Momente aus Mcello.",
   galleryIntro: "Food, Lokal, Team und Events — hier erscheinen ausschließlich freigegebene Originalfotos.",
+  galleryEmpty: "Noch keine freigegebenen Fotos — hier bleibt es lieber ehrlich als künstlich gefüllt.",
   contactTitle: "Komm vorbei.",
   contactIntro: "Adresse, Telefon, WhatsApp und Öffnungszeiten erscheinen hier, sobald die final bestätigten Kontaktdaten hinterlegt sind.",
   contactCard: "Adresse und direkte Kontaktwege werden hier veröffentlicht, sobald sie final bestätigt sind.",
@@ -24,8 +26,10 @@ function installPublicCopyTone() {
   setText("#ueber .story-card:first-child .story-copy p", PUBLIC_COPY.storyVenue);
   setText("#ueber .story-card:nth-child(2) .story-copy p", PUBLIC_COPY.storySelection);
   setText("#aktuelles .section-head > p", PUBLIC_COPY.newsIntro);
+  setText("#newsStack .notice", PUBLIC_COPY.newsEmpty);
   setText("#galerie .section-head h2", PUBLIC_COPY.galleryTitle);
   setText("#galerie .section-head > p", PUBLIC_COPY.galleryIntro);
+  setText("#galleryGrid .notice", PUBLIC_COPY.galleryEmpty);
   setText("#kontakt .section-head h2", PUBLIC_COPY.contactTitle);
   setText("#kontakt .section-head > p", PUBLIC_COPY.contactIntro);
   setText("#kontakt .story-card > p", PUBLIC_COPY.contactCard);
