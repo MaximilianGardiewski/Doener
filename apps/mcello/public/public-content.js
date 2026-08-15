@@ -1,3 +1,5 @@
+import "./motion.js";
+
 const knownSections = new Map([
   ["hero", "start"],
   ["quick_order", "bestellen"],
