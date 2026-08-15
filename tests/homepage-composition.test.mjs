@@ -20,7 +20,7 @@ test("D024 homepage keeps hero community story and sticky order composition", ()
     assert.equal(html.includes(marker), true, `missing ${marker}`);
   }
   for (const marker of [
-    'id="homepageQuickOrder"',
+    'panel.id = "homepageQuickOrder"',
     'Highlights & Schnellbestellung',
     'id="homepageTeamStory"',
     'Menschen hinter Mcello',
