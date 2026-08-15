@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { DevOtpProvider } from "../../packages/notifications/src/dev-otp.ts";
+import { LocationScopeError, SingleLocationContext } from "../../packages/core/src/location-context.ts";
 import {
   parseOrderAnalyticsContext,
   parsePublicAnalyticsEvent,
@@ -28,9 +29,14 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../..");
 const publicDir = path.join(here, "public");
 const port = Number(process.env.PORT || 4173);
-const DEV_LOCATION_ID = "00000000-0000-4000-8000-000000000001";
+const DEFAULT_MCELLO_LOCATION_ID = "00000000-0000-4000-8000-000000000001";
 
 await loadLocalEnv(path.join(repoRoot, ".env.local"));
+
+const locationContext = new SingleLocationContext(
+  optionalEnv("MCELLO_LOCATION_ID") || DEFAULT_MCELLO_LOCATION_ID,
+);
+const LOCATION_ID = locationContext.locationId;
 
 const supabaseUrl = stripQuotes(process.env.SUPABASE_URL || "http://127.0.0.1:54321").replace(/\/$/, "");
 const anonKey = optionalEnv("SUPABASE_ANON_KEY");
@@ -178,7 +184,7 @@ async function realtimeSession(role) {
     websocketUrl,
     accessToken: session.accessToken,
     expiresAt: session.expiresAt,
-    locationId: DEV_LOCATION_ID,
+    locationId: LOCATION_ID,
     role,
   };
 }
@@ -285,6 +291,7 @@ async function handleApi(req, res, url) {
       localAdmin: Boolean(devAdminEmail && devAdminPassword),
       maintenanceWorker: Boolean(serviceRoleKey),
       realtime: Boolean(anonKey),
+      locationId: LOCATION_ID,
     });
     return true;
   }
@@ -294,7 +301,7 @@ async function handleApi(req, res, url) {
     if (!rpc) return sendUnavailable(res), true;
     try {
       const event = parsePublicAnalyticsEvent(await readJson(req));
-      if (event.locationId !== DEV_LOCATION_ID) {
+      if (event.locationId !== LOCATION_ID) {
         sendJson(res, 400, { error: "INVALID_ANALYTICS_LOCATION" });
         return true;
       }
@@ -372,11 +379,11 @@ async function handleApi(req, res, url) {
     try {
       const [menu, crossSells] = await Promise.all([
         rpc.rpc("get_public_menu", {
-          _location_id: DEV_LOCATION_ID,
+          _location_id: LOCATION_ID,
           _at: at,
         }),
         rpc.rpc("get_public_cross_sells", {
-          _location_id: DEV_LOCATION_ID,
+          _location_id: LOCATION_ID,
         }),
       ]);
       sendJson(res, 200, { ...menu, ...crossSells });
@@ -393,7 +400,7 @@ async function handleApi(req, res, url) {
     const days = Math.max(1, Math.min(Number(url.searchParams.get("days") || 7), 14));
     try {
       const snapshot = await new SupabasePickupSlotReader(rpc).getAvailable(
-        DEV_LOCATION_ID,
+        LOCATION_ID,
         new Date().toISOString(),
         days,
       );
@@ -428,6 +435,16 @@ async function handleApi(req, res, url) {
     const rpc = serviceRpc();
     if (!rpc) return sendUnavailable(res), true;
     const body = await readJson(req);
+    let checkoutLocationId;
+    try {
+      checkoutLocationId = locationContext.resolve(body.locationId);
+    } catch (error) {
+      if (error instanceof LocationScopeError) {
+        sendJson(res, 400, { error: error.code });
+        return true;
+      }
+      throw error;
+    }
     let analyticsContext = null;
     if (body.analytics != null) {
       try {
@@ -437,7 +454,7 @@ async function handleApi(req, res, url) {
       }
     }
     try {
-      const order = await submitVerifiedPickupOrder(body, {
+      const order = await submitVerifiedPickupOrder({ ...body, locationId: checkoutLocationId }, {
         otp,
         catalog: new SupabaseCatalogReader(rpc),
         shop: new SupabaseShopStateReader(rpc),
@@ -450,7 +467,7 @@ async function handleApi(req, res, url) {
       });
       if (analyticsContext) {
         await new SupabaseAnalyticsRecorder(rpc)
-          .recordOrderSubmitted(DEV_LOCATION_ID, order.id, analyticsContext)
+          .recordOrderSubmitted(LOCATION_ID, order.id, analyticsContext)
           .catch((error) => console.warn(
             "Order analytics event was not recorded",
             error instanceof Error ? error.message : "unknown error",
@@ -529,7 +546,7 @@ async function handleApi(req, res, url) {
         "submitted_at",
         "order_items(product_name_snapshot,quantity,comment,order_item_options(group_name_snapshot,option_name_snapshot,price_delta_cents_snapshot))",
       ].join(",");
-      const query = `/rest/v1/orders?location_id=eq.${DEV_LOCATION_ID}&state=in.(waiting_for_acceptance,scheduled,preparing,ready)&select=${encodeURIComponent(select)}&order=submitted_at.asc`;
+      const query = `/rest/v1/orders?location_id=eq.${LOCATION_ID}&state=in.(waiting_for_acceptance,scheduled,preparing,ready)&select=${encodeURIComponent(select)}&order=submitted_at.asc`;
       sendJson(res, 200, await staffRestGet(query));
     } catch (error) {
       console.error(error);
@@ -545,7 +562,7 @@ async function handleApi(req, res, url) {
       sendJson(
         res,
         200,
-        await new SupabaseShopStateReader(rpc).getShopState(DEV_LOCATION_ID, new Date().toISOString()),
+        await new SupabaseShopStateReader(rpc).getShopState(LOCATION_ID, new Date().toISOString()),
       );
     } catch (error) {
       console.error(error);
@@ -615,7 +632,7 @@ async function handleApi(req, res, url) {
         res,
         200,
         await new SupabaseKdsOperations(rpc).setShopOverride(
-          DEV_LOCATION_ID,
+          LOCATION_ID,
           override,
           body.operatorMessage ? String(body.operatorMessage) : undefined,
         ),
@@ -638,7 +655,7 @@ async function handleApi(req, res, url) {
     const rpc = await staffRpc();
     if (!rpc) return sendJson(res, 503, { error: "LOCAL_STAFF_NOT_READY" }), true;
     try {
-      sendJson(res, 200, await rpc.rpc("staff_get_operational_catalog", { _location_id: DEV_LOCATION_ID }));
+      sendJson(res, 200, await rpc.rpc("staff_get_operational_catalog", { _location_id: LOCATION_ID }));
     } catch (error) {
       console.error(error);
       sendJson(res, 500, { error: "OPS_CATALOG_FAILED" });
@@ -681,7 +698,7 @@ async function handleApi(req, res, url) {
     const rpc = await adminRpc();
     if (!rpc) return sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" }), true;
     try {
-      sendJson(res, 200, await rpc.rpc("admin_get_catalog", { _location_id: DEV_LOCATION_ID }));
+      sendJson(res, 200, await rpc.rpc("admin_get_catalog", { _location_id: LOCATION_ID }));
     } catch (error) {
       console.error(error);
       sendJson(res, 500, { error: "ADMIN_CATALOG_FAILED" });
@@ -696,7 +713,7 @@ async function handleApi(req, res, url) {
     try {
       const saved = await rpc.rpc("admin_save_menu_category", {
         _id: body.id || null,
-        _location_id: DEV_LOCATION_ID,
+        _location_id: LOCATION_ID,
         _slug: String(body.slug ?? ""),
         _name: String(body.name ?? ""),
         _description: String(body.description ?? ""),
@@ -719,7 +736,7 @@ async function handleApi(req, res, url) {
     try {
       const saved = await rpc.rpc("admin_save_menu_product", {
         _id: body.id || null,
-        _location_id: DEV_LOCATION_ID,
+        _location_id: LOCATION_ID,
         _category_id: String(body.categoryId ?? ""),
         _slug: String(body.slug ?? ""),
         _name: String(body.name ?? ""),

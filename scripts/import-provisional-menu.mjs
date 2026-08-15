@@ -2,11 +2,20 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-const LOCATION_ID = "00000000-0000-4000-8000-000000000001";
+const DEFAULT_MCELLO_LOCATION_ID = "00000000-0000-4000-8000-000000000001";
 const SOURCE_NOTE_PREFIX = "provisional:user-supplied-menu-card-images";
 
 const fileEnv = await readOptionalEnv(path.resolve(".env.local"));
 const env = { ...fileEnv, ...process.env };
+const LOCATION_ID = String(env.MCELLO_LOCATION_ID || DEFAULT_MCELLO_LOCATION_ID).trim();
+if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(LOCATION_ID)) {
+  throw new Error("MCELLO_LOCATION_ID must be a UUID");
+}
+const MENU_SEED_NAMESPACE = String(
+  env.MCELLO_MENU_SEED_NAMESPACE
+    || (LOCATION_ID === DEFAULT_MCELLO_LOCATION_ID ? "mcello" : `mcello:${LOCATION_ID}`),
+).trim();
+if (!MENU_SEED_NAMESPACE) throw new Error("MCELLO_MENU_SEED_NAMESPACE must not be empty");
 const baseUrl = required("SUPABASE_URL").replace(/\/$/, "");
 const serviceRoleKey = required("SUPABASE_SERVICE_ROLE_KEY");
 const seed = JSON.parse(await readFile(path.resolve("data/mcello/menu-seed.provisional.json"), "utf8"));
@@ -19,7 +28,7 @@ if (!Array.isArray(seed.categories) || !Array.isArray(seed.items)) {
 }
 
 const categories = seed.categories.map(([slug, name, sort]) => ({
-  id: stableUuid(`mcello:category:${slug}`),
+  id: stableUuid(`${MENU_SEED_NAMESPACE}:category:${slug}`),
   location_id: LOCATION_ID,
   slug,
   name,
@@ -42,7 +51,7 @@ seed.items.forEach((entry, index) => {
   if (!categoryId) throw new Error(`Unknown category ${categorySlug} for ${sourceId}`);
   if (!Number.isInteger(basePriceCents) || basePriceCents < 0) throw new Error(`Invalid price for ${sourceId}`);
 
-  const productId = stableUuid(`mcello:product:${sourceId}`);
+  const productId = stableUuid(`${MENU_SEED_NAMESPACE}:product:${sourceId}`);
   products.push({
     id: productId,
     location_id: LOCATION_ID,
@@ -62,7 +71,7 @@ seed.items.forEach((entry, index) => {
   });
 
   if (Array.isArray(variants) && variants.length > 0) {
-    const groupId = stableUuid(`mcello:variant-group:${sourceId}`);
+    const groupId = stableUuid(`${MENU_SEED_NAMESPACE}:variant-group:${sourceId}`);
     groups.push({
       id: groupId,
       location_id: LOCATION_ID,
@@ -76,7 +85,7 @@ seed.items.forEach((entry, index) => {
     variants.forEach(([label, priceCents], variantIndex) => {
       if (!Number.isInteger(priceCents) || priceCents < 0) throw new Error(`Invalid variant price for ${sourceId}: ${label}`);
       options.push({
-        id: stableUuid(`mcello:variant-option:${sourceId}:${label}`),
+        id: stableUuid(`${MENU_SEED_NAMESPACE}:variant-option:${sourceId}:${label}`),
         group_id: groupId,
         name: label,
         price_delta_cents: priceCents - basePriceCents,

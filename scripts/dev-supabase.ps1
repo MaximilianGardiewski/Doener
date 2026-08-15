@@ -29,6 +29,13 @@ $envOutput = npx --yes supabase@latest status -o env `
   --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY
 $envOutput | Set-Content -Encoding utf8 '.env.local'
 
+$mcelloLocationId = if ($env:MCELLO_LOCATION_ID) { $env:MCELLO_LOCATION_ID } else { '00000000-0000-4000-8000-000000000001' }
+$mcelloMenuSeedNamespace = if ($env:MCELLO_MENU_SEED_NAMESPACE) { $env:MCELLO_MENU_SEED_NAMESPACE } else { 'mcello' }
+Add-Content -Encoding utf8 '.env.local' "MCELLO_LOCATION_ID=$mcelloLocationId"
+Add-Content -Encoding utf8 '.env.local' "MCELLO_MENU_SEED_NAMESPACE=$mcelloMenuSeedNamespace"
+$env:MCELLO_LOCATION_ID = $mcelloLocationId
+$env:MCELLO_MENU_SEED_NAMESPACE = $mcelloMenuSeedNamespace
+
 Write-Host 'Importing provisional Mcello menu (owner confirmation remains required)...'
 node scripts/import-provisional-menu.mjs
 

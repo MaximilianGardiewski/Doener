@@ -46,6 +46,22 @@ structural writes remain admin-only and are transactionally saved with the
 product editor. No recommendation rows are inferred or seeded from provisional
 Mcello data.
 
+## Location boundary
+
+Mcello V1 intentionally exposes one location per application instance. The
+provider-neutral `SingleLocationContext` resolves that location from server
+configuration and rejects a different location supplied by a checkout client.
+Public menu, slots, analytics, KDS and admin routes all use the same resolved
+boundary; the browser has no location selector.
+
+Every reusable domain contract continues to carry `locationId`. PostgreSQL
+keeps location ownership immutable and enforces same-location linkage for
+categories/products, modifiers, availability, snoozes, recommendations,
+analytics, media/gallery/editorial content and order products, including
+privileged service writes that bypass RLS. A future multi-location shell can
+therefore replace the single-location resolver without changing the core entity
+and persistence contracts.
+
 ## Lebtig reuse candidates
 - profiles + explicit role rows
 - bootstrap admin invariant
@@ -74,4 +90,4 @@ ready -> completed
 Acceptance is the binding boundary.
 
 ## V1/future boundaries
-V1 exposes pickup only and pay-on-site only. Fulfillment/payment contracts are designed for later delivery/online payment. Mcello UI is single-location while domain entities retain `locationId`.
+V1 exposes pickup only and pay-on-site only. Fulfillment/payment contracts are designed for later delivery/online payment. Mcello UI is single-location while domain entities retain and enforce `locationId`.

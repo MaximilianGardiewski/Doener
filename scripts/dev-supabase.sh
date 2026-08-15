@@ -28,6 +28,12 @@ $SUPABASE status -o env \
   --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
   > .env.local
 
+MCELLO_LOCATION_ID="${MCELLO_LOCATION_ID:-00000000-0000-4000-8000-000000000001}"
+MCELLO_MENU_SEED_NAMESPACE="${MCELLO_MENU_SEED_NAMESPACE:-mcello}"
+printf 'MCELLO_LOCATION_ID=%s\nMCELLO_MENU_SEED_NAMESPACE=%s\n' \
+  "$MCELLO_LOCATION_ID" "$MCELLO_MENU_SEED_NAMESPACE" >> .env.local
+export MCELLO_LOCATION_ID MCELLO_MENU_SEED_NAMESPACE
+
 echo 'Importing provisional Mcello menu (owner confirmation remains required)...'
 node scripts/import-provisional-menu.mjs
 
