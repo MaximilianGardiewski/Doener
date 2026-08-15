@@ -1,3 +1,5 @@
+import type { PaymentSnapshot } from "../../payments/src/contracts.ts";
+
 export type OrderState =
   | "draft"
   | "awaiting_verification"
@@ -36,6 +38,7 @@ export interface Order {
   cancelledAt?: string | null;
   rejectionReason?: string | null;
   totalCents: number;
+  payment?: PaymentSnapshot;
 }
 
 export interface OrderEvent {
