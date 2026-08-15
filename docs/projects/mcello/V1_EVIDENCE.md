@@ -39,6 +39,7 @@ Status:
 | D064 (Development OTP) | `VERIFIED` | `packages/notifications/src/dev-otp.ts`, `apps/mcello/server.mjs` | Development-OTP sendet keine externe Nachricht und braucht keinen bezahlten Provider; Startpfad fordert WhatsApp primär/SMS Fallback an. |
 | D060 | `VERIFIED` | `apps/mcello/public/manifest.webmanifest`, `apps/mcello/public/sw.js`, `apps/mcello/public/icons/pwa-192.png`, `apps/mcello/public/icons/pwa-512.png`, `tests/pwa-installability.test.mjs` | Vollständiger Install-Contract mit echten 192/512-PNGs und maskable-safe Preview-Icon. Service Worker hält nur den öffentlichen App-Shell offline; API/REST/Auth/Storage, Mutationen, KDS und Statusdaten bleiben fail-closed/network-only. Das Preview-`M` ist kein freigegebenes finales Mcello-Logo. |
 | D030 | `VERIFIED` | `apps/mcello/public/index.html`, `tests/public-navigation.test.mjs`, `tests/public-navigation.browser.mjs`, `.github/workflows/ci.yml` | Desktop und Mobile bieten dieselben sechs bindenden Public-Ziele sowie einen betonten direkten Order-CTA. Mobile nutzt eine zugängliche native Navigation mit Escape-/Focus-Verhalten und Skip-Link. Chromium rendert 1440×1000 und 390×844 in CI und beweist Sichtbarkeit, Navigation, CTA-Ziel und fehlenden horizontalen Overflow. |
+| D058 | `VERIFIED` | `apps/mcello/public/motion.css`, `apps/mcello/public/motion.js`, `tests/showcase-motion.test.mjs`, `tests/showcase-motion.browser.mjs`, `.github/workflows/ci.yml` | Zurückhaltende Reveal-/Hover-Motion nutzt nur Opacity/Transform und keine Endlosschleifen oder layout-treibenden Übergänge. Chromium beweist normale Progressive-Reveals sowie einen vollständig sichtbaren/statischen `prefers-reduced-motion: reduce`-Pfad; PWA-Shell cached den Motion-Layer mit. |
 | D063 (local backend) | `VERIFIED` | `supabase/config.toml`, `.github/workflows/supabase-integration.yml`, lokale Dev-Skripte | Vollständiger Backend-Rebuild läuft mit Supabase CLI/Docker ohne Managed-Supabase-Projekt. |
 | D063 (no Lovable/Vercel runtime dependency) | `VERIFIED` | Root `package.json`, `apps/*`, GitHub Actions | Build, Tests und lokale Runtime funktionieren aus Git/Node/Supabase; Lovable/Vercel sind keine notwendige Runtime. |
 
@@ -60,7 +61,6 @@ Diese Punkte werden nicht durch Backend-Fortschritt voreilig geschlossen:
 
 - D001/D029 — finales Modern-Warm-Premium Designsystem
 - D024/D025/D026 — finale Venue-/Story-/Community-Inszenierung mit echten Mcello-Fakten/Medien
-- D058 — Showcase-Motion
 - D015/D017 — Pickup-Adresse, Route und Call erst mit bestätigten first-party Kontaktdaten
 - D036 ist technisch verifiziert, aber der **Go-live** bleibt trotzdem durch `owner_confirmed=false` der provisional Inhalte blockiert
 - D063 — produktiver Self-Host-Plan mit TLS, Secrets, Firewall, Backup/Restore und Monitoring bleibt Release-Hardening
