@@ -33,6 +33,13 @@ test("online payment is rejected in V1", async () => {
   );
 });
 
+test("unknown runtime payment modes are rejected instead of silently defaulting", async () => {
+  await assert.rejects(
+    policy.prepare({ requestedMode: "crypto", amountCents: 1900 }),
+    (error: unknown) => error instanceof PaymentBoundaryError && error.code === "UNSUPPORTED_PAYMENT_MODE",
+  );
+});
+
 test("invalid amounts and unsupported currencies fail closed", async () => {
   await assert.rejects(
     policy.prepare({ amountCents: -1 }),
