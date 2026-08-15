@@ -87,6 +87,16 @@ try {
   }, staffToken);
   assert.equal(staffSettingsAttempt.response.ok, false, "staff must not structurally change capacity/cutoff settings");
 
+  const directStaffSettingsWrite = await request(
+    `/rest/v1/ordering_settings?location_id=eq.${locationId}`,
+    {
+      method: "PATCH",
+      bearer: staffToken,
+      body: { slot_capacity: 999 },
+    },
+  );
+  assert.equal(directStaffSettingsWrite.response.ok, false, "staff must not bypass RPC boundaries with direct table updates");
+
   const weeklyRows = [
     { weekday: 1, opensAt: null, closesAt: null, closed: true, sort: 0 },
     { weekday: 2, opensAt: "10:00", closesAt: "22:00", closed: false, sort: 10 },
@@ -124,6 +134,15 @@ try {
     _delivery_enabled: false,
   }, adminToken);
   assert.equal(settingsSave.response.ok, true, JSON.stringify(settingsSave.data));
+
+  // Local seed uses force_open so checkout/KDS tests work without claiming real
+  // Mcello hours. Schedule/cutoff assertions must explicitly exercise auto mode.
+  const autoMode = await rpc("staff_set_shop_override", {
+    _location_id: locationId,
+    _override: "auto",
+    _operator_message: null,
+  }, staffToken);
+  assert.equal(autoMode.response.ok, true, JSON.stringify(autoMode.data));
 
   const midday = "2030-01-01T12:00:00+01:00"; // Tuesday in Europe/Berlin.
   const beforeCutoff = "2030-01-01T21:20:00+01:00";
@@ -245,16 +264,11 @@ try {
     timedProductWindow: "18:00-20:00",
     staffPause: true,
     staffForceOpenDenied: true,
+    directStaffSettingsWriteDenied: true,
   });
 } finally {
   if (ruleId) await rpc("admin_delete_availability_rule", { _id: ruleId }, adminToken).catch(() => {});
   if (specialId) await rpc("admin_delete_special_opening_hour", { _id: specialId }, adminToken).catch(() => {});
-
-  await rpc("staff_set_shop_override", {
-    _location_id: locationId,
-    _override: "auto",
-    _operator_message: null,
-  }, staffToken).catch(() => {});
 
   await rpc("admin_replace_weekly_opening_hours", {
     _location_id: locationId,
@@ -273,5 +287,17 @@ try {
       _pickup_enabled: initialSettings.pickupEnabled,
       _delivery_enabled: initialSettings.deliveryEnabled,
     }, adminToken).catch(() => {});
+
+    // Restore the exact pre-test operational state, including development-only
+    // force_open if the seed had it. service_role is used only by this local test.
+    await request(`/rest/v1/ordering_settings?location_id=eq.${locationId}`, {
+      method: "PATCH",
+      apiKey: serviceRoleKey,
+      bearer: serviceRoleKey,
+      body: {
+        override: initialSettings.override,
+        operator_message: initialSettings.operatorMessage,
+      },
+    }).catch(() => {});
   }
 }
