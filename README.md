@@ -11,6 +11,7 @@ Phase 0 / erster Slice:
 - Gemeinsame Domain-Module werden nur dort extrahiert, wo echte Wiederverwendung sinnvoll ist.
 - Die vendor-neutralen Skills liegen unter `skills/`.
 - Der Mcello-Frontend-Slice ist als ausführbare Zero-Dependency-PWA unter `apps/mcello/` vorhanden.
+- Der Admin-Slice verwaltet Speisekarte, Allergene, Bestellzeiten sowie zeitgesteuerte redaktionelle Inhalte und die kontrollierte Startseiten-Reihenfolge.
 - Domain-Logik liegt unter `packages/` und hat Node-Tests.
 
 ## Start

@@ -51,8 +51,8 @@ Every item maps back to the binding Decision Ledger.
 ## CMS/Roles
 - [ ] Admin full catalog/content control (`D020`)
 - [ ] Staff operational-only role (`D021`)
-- [ ] Safe homepage section ordering/toggling (`D031`)
-- [ ] Event/Special/Presse/News scheduling + pinning (`D032`)
+- [x] Safe homepage section ordering/toggling (`D031`)
+- [x] Event/Special/Presse/News scheduling + pinning (`D032`)
 - [ ] Gallery categories + featured media (`D033`)
 - [ ] Server/database role enforcement (`D022`, `D023`)
 

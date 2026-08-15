@@ -23,6 +23,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../..");
 const publicDir = path.join(here, "public");
 const port = Number(process.env.PORT || 4173);
+const host = process.env.HOST || "127.0.0.1";
 const DEV_LOCATION_ID = "00000000-0000-4000-8000-000000000001";
 
 await loadLocalEnv(path.join(repoRoot, ".env.local"));
@@ -265,6 +266,22 @@ async function handleApi(req, res, url) {
     } catch (error) {
       console.error(error);
       sendJson(res, 503, { error: "MENU_BACKEND_UNAVAILABLE" });
+    }
+    return true;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/homepage") {
+    const rpc = publicRpc();
+    if (!rpc) return sendUnavailable(res), true;
+    try {
+      const content = await rpc.rpc("get_public_homepage", {
+        _location_id: DEV_LOCATION_ID,
+        _at: new Date().toISOString(),
+      });
+      sendJson(res, 200, content);
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 503, { error: "HOMEPAGE_BACKEND_UNAVAILABLE" });
     }
     return true;
   }
@@ -555,6 +572,61 @@ async function handleApi(req, res, url) {
     return true;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/admin/content") {
+    const rpc = await adminRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" }), true;
+    try {
+      sendJson(res, 200, await rpc.rpc("admin_get_content", { _location_id: DEV_LOCATION_ID }));
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 500, { error: "ADMIN_CONTENT_FAILED" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/admin/content/post/save") {
+    const rpc = await adminRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" }), true;
+    const body = await readJson(req);
+    try {
+      const saved = await rpc.rpc("admin_save_editorial_post", {
+        _id: body.id || null,
+        _location_id: DEV_LOCATION_ID,
+        _slug: String(body.slug ?? ""),
+        _kind: String(body.kind ?? "news"),
+        _title: String(body.title ?? ""),
+        _teaser: String(body.teaser ?? ""),
+        _content: String(body.content ?? ""),
+        _status: String(body.status ?? "draft"),
+        _pinned: Boolean(body.pinned),
+        _visible_from: body.visibleFrom || null,
+        _visible_until: body.visibleUntil || null,
+      });
+      sendJson(res, 200, saved);
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 409, { error: "EDITORIAL_SAVE_REJECTED" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/admin/content/sections/save") {
+    const rpc = await adminRpc();
+    if (!rpc) return sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" }), true;
+    const body = await readJson(req);
+    try {
+      const sections = Array.isArray(body.sections) ? body.sections : [];
+      sendJson(res, 200, await rpc.rpc("admin_save_homepage_sections", {
+        _location_id: DEV_LOCATION_ID,
+        _sections: sections,
+      }));
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 409, { error: "HOMEPAGE_SECTIONS_SAVE_REJECTED" });
+    }
+    return true;
+  }
+
   if (req.method === "POST" && url.pathname === "/api/admin/category/save") {
     const rpc = await adminRpc();
     if (!rpc) return sendJson(res, 503, { error: "LOCAL_ADMIN_NOT_READY" }), true;
@@ -676,8 +748,8 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`Mcello local runtime: http://127.0.0.1:${port}`);
+server.listen(port, host, () => {
+  console.log(`Mcello local runtime: http://${host}:${port}`);
   console.log(`Backend: ${serviceRoleKey && anonKey ? "local Supabase connected" : "static-only"}`);
   console.log(`KDS: ${devStaffEmail && devStaffPassword ? "local staff session enabled" : "not configured"}`);
   console.log(`Admin: ${devAdminEmail && devAdminPassword ? "local admin session enabled" : "not configured"}`);

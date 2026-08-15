@@ -18,6 +18,7 @@ const state = {
   slotMinutes: 15,
   shopState: null,
   menuAt: null,
+  homepage: null,
 };
 
 const rail = $("#categoryRail");
@@ -30,6 +31,66 @@ function esc(value = "") {
   return String(value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
   })[char]);
+}
+
+const editorialKindLabels = {
+  news: "News",
+  event: "Event",
+  special: "Special",
+  press: "Presse",
+};
+
+async function loadHomepageContent() {
+  try {
+    const response = await fetch("/api/homepage", { cache: "no-store" });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data && Array.isArray(data.sections) && Array.isArray(data.posts) ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function applyHomepageContent(snapshot) {
+  if (!snapshot) return;
+  state.homepage = snapshot;
+  const main = document.querySelector("main");
+  const controlled = [...document.querySelectorAll("[data-home-section]")];
+  const byKey = new Map(controlled.map((section) => [section.dataset.homeSection, section]));
+  const enabledKeys = new Set(snapshot.sections.map((section) => section.key));
+  enabledKeys.add("hero");
+  enabledKeys.add("quick_order");
+
+  controlled.forEach((section) => {
+    section.hidden = !enabledKeys.has(section.dataset.homeSection);
+  });
+  [...snapshot.sections]
+    .sort((a, b) => Number(a.sort) - Number(b.sort) || String(a.key).localeCompare(String(b.key)))
+    .forEach((section) => {
+      const element = byKey.get(section.key);
+      if (element) main.append(element);
+    });
+
+  document.querySelectorAll('.nav-links a[href^="#"]').forEach((link) => {
+    const target = document.querySelector(link.getAttribute("href"));
+    link.hidden = Boolean(target?.dataset.homeSection) && target.hidden;
+  });
+
+  const newsStack = $("#newsStack");
+  if (!newsStack) return;
+  if (!snapshot.posts.length) {
+    newsStack.innerHTML = '<div class="cms-empty"><strong>Aktuell keine veröffentlichten Beiträge.</strong><span>Neue Inhalte erscheinen nach der Freigabe automatisch hier.</span></div>';
+    return;
+  }
+  newsStack.innerHTML = snapshot.posts.slice(0, 6).map((post) => `
+    <article class="news-card">
+      <img src="${media}" alt="" />
+      <div>
+        <div class="tag">${esc(editorialKindLabels[post.kind] || "Aktuelles")}${post.pinned ? " · Highlight" : ""}</div>
+        <h3>${esc(post.title)}</h3>
+        <p>${esc(post.teaser || post.content || "")}</p>
+      </div>
+    </article>`).join("");
 }
 
 function loadCart() {
@@ -730,7 +791,11 @@ function setInitialCategory() {
 
 async function init() {
   installSlotSelector();
-  const [catalog, backendReady] = await Promise.all([loadMenu(), checkBackend()]);
+  const [catalog, backendReady, homepage] = await Promise.all([
+    loadMenu(),
+    checkBackend(),
+    loadHomepageContent(),
+  ]);
   state.locationId = catalog.locationId;
   state.categories = catalog.categories;
   state.items = catalog.items;
@@ -741,6 +806,7 @@ async function init() {
   renderRail();
   renderMenu();
   renderCart();
+  applyHomepageContent(homepage);
 
   $("#menuSourceText").textContent = catalog.source === "database"
     ? "Lokale DB-Speisekarte: 97 transkribierte Positionen bleiben bis zur Inhaber-Freigabe ausdrücklich vorläufig. Bei Vorbestellungen wird die Produkt- und Zutatenverfügbarkeit für den gewählten Abholslot neu ausgewertet."

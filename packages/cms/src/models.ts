@@ -33,6 +33,37 @@ export interface HomepageSection {
   position: number;
 }
 
+export const homepageSectionKinds = [
+  "hero",
+  "quick_order",
+  "story_team",
+  "news_events",
+  "gallery",
+  "contact",
+] as const;
+
+export type HomepageSectionKind = (typeof homepageSectionKinds)[number];
+
+const requiredHomepageSections = new Set<HomepageSectionKind>(["hero", "quick_order"]);
+
+export function normalizeHomepageSections(
+  sections: readonly HomepageSection[],
+): HomepageSection[] {
+  const byKind = new Map(sections.map((section) => [section.kind, section]));
+
+  return homepageSectionKinds
+    .map((kind, index) => {
+      const existing = byKind.get(kind);
+      return {
+        id: existing?.id ?? kind,
+        kind,
+        enabled: requiredHomepageSections.has(kind) ? true : existing?.enabled !== false,
+        position: Number.isFinite(existing?.position) ? Number(existing?.position) : (index + 1) * 10,
+      } satisfies HomepageSection;
+    })
+    .sort((a, b) => a.position - b.position || a.kind.localeCompare(b.kind));
+}
+
 export function visibleEditorialPosts(
   posts: readonly EditorialPost[],
   nowIso: string,
