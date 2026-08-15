@@ -25,6 +25,8 @@ test("D027 keeps reusable web/counter/table source contract while Mcello checkou
   assert.match(checkout, /source: "web";/);
   assert.doesNotMatch(checkout, /request\.source/);
   assert.match(contractMigration, /counter\/table remain future sources/i);
+  assert.match(contractMigration, /prevent_order_source_reassignment/i);
+  assert.match(contractMigration, /before update of source on public\.orders/i);
 });
 
 test("D040 exposes optional effort metadata but leaves V1 admission count-based", () => {
@@ -37,9 +39,11 @@ test("D040 exposes optional effort metadata but leaves V1 admission count-based"
   assert.match(contractMigration, /'effortWeight', p\.effort_weight/);
 });
 
-test("database owns the persisted effort snapshot instead of trusting checkout payload", () => {
+test("database owns and freezes the persisted effort snapshot", () => {
   assert.match(effortMigration, /select effort_weight into new\.effort_weight_snapshot/i);
   assert.match(effortMigration, /from public\.menu_products/i);
   assert.match(effortMigration, /check \(effort_weight is null or effort_weight > 0\)/i);
   assert.match(effortMigration, /check \(effort_weight_snapshot is null or effort_weight_snapshot > 0\)/i);
+  assert.match(effortMigration, /prevent_effort_snapshot_reassignment/i);
+  assert.match(effortMigration, /before update of effort_weight_snapshot on public\.order_items/i);
 });
