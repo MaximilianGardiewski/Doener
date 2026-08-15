@@ -4,8 +4,10 @@ import { readFile } from "node:fs/promises";
 
 const model = await readFile(new URL("../packages/ordering/src/model.ts", import.meta.url), "utf8");
 const checkout = await readFile(new URL("../packages/ordering/src/checkout.ts", import.meta.url), "utf8");
+const fulfillment = await readFile(new URL("../packages/ordering/src/fulfillment.ts", import.meta.url), "utf8");
 const capacity = await readFile(new URL("../packages/ordering/src/capacity.ts", import.meta.url), "utf8");
 const menuModel = await readFile(new URL("../packages/menu-engine/src/model.ts", import.meta.url), "utf8");
+const publicApp = await readFile(new URL("../apps/mcello/public/app.js", import.meta.url), "utf8");
 const coreMigration = await readFile(
   new URL("../supabase/migrations/20260814190100_platform_core_part1.sql", import.meta.url),
   "utf8",
@@ -18,6 +20,10 @@ const contractMigration = await readFile(
   new URL("../supabase/migrations/20260815023600_checkout_effort_contract.sql", import.meta.url),
   "utf8",
 );
+const deliveryMigration = await readFile(
+  new URL("../supabase/migrations/20260815024500_delivery_boundary.sql", import.meta.url),
+  "utf8",
+);
 
 test("D027 keeps reusable web/counter/table source contract while Mcello checkout stays web-only", () => {
   assert.match(model, /export type OrderSource = "web" \| "counter" \| "table"/);
@@ -27,6 +33,19 @@ test("D027 keeps reusable web/counter/table source contract while Mcello checkou
   assert.match(contractMigration, /counter\/table remain future/i);
   assert.match(contractMigration, /prevent_order_source_reassignment/i);
   assert.match(contractMigration, /before update of source on public\.orders/i);
+});
+
+test("D006 prepares delivery zones while Mcello V1 remains pickup-only", () => {
+  assert.match(model, /export type FulfillmentType = "pickup" \| "delivery"/);
+  assert.match(fulfillment, /interface DeliveryZoneResolver/);
+  assert.match(fulfillment, /kind: "postal_code"/);
+  assert.match(fulfillment, /kind: "radius"/);
+  assert.match(fulfillment, /class PickupOnlyFulfillmentPolicy/);
+  assert.match(checkout, /requestedType: request\.fulfillmentType/);
+  assert.match(deliveryMigration, /orders_v1_pickup_only/i);
+  assert.match(deliveryMigration, /check \(fulfillment = 'pickup'\)/i);
+  assert.match(deliveryMigration, /prevent_fulfillment_reassignment/i);
+  assert.doesNotMatch(publicApp, /fulfillmentType/);
 });
 
 test("D040 exposes optional effort metadata but leaves V1 admission count-based", () => {
