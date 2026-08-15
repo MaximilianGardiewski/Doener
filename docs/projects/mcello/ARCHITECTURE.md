@@ -80,6 +80,26 @@ A future online implementation plugs into the `OnlinePaymentProvider` contract
 and requires an explicit database migration that replaces the V1 constraint.
 No concrete provider, SDK, checkout URL or paid service is part of V1.
 
+## Fulfillment / delivery boundary
+
+The reusable order model and PostgreSQL enum already recognize `pickup` and
+`delivery`. `packages/ordering/src/fulfillment.ts` now owns the provider-neutral
+future delivery boundary: `DeliveryZoneResolver` accepts a location plus a
+destination and can later resolve either postal-code (`postal_code`) or geometric
+radius (`radius`) zone rules. No map provider, delivery marketplace, fee model,
+minimum order or unsupported business detail is assumed today.
+
+Mcello V1 uses `PickupOnlyFulfillmentPolicy`. The public checkout has no delivery
+UI, and an explicit/tampered `fulfillmentType: delivery` fails before OTP,
+catalog or persistence work. PostgreSQL independently enforces
+`orders_v1_pickup_only`, while the persisted fulfillment value is immutable even
+for privileged service-role updates. The existing server order RPC also remains
+pickup-owned instead of trusting its payload.
+
+A future delivery release can replace the application policy, connect a concrete
+zone resolver/configuration model and deliberately migrate the V1 database
+constraint without rewriting the order state machine.
+
 ## Order-source boundary
 
 The reusable order model and PostgreSQL enum intentionally recognize `web`,
