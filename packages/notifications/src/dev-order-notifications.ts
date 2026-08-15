@@ -5,6 +5,7 @@ export interface DevNotificationRecord {
   mobile: string;
   orderId: string;
   statusUrl: string;
+  idempotencyKey: string;
   messageData?: Record<string, string | number>;
 }
 
