@@ -15,7 +15,7 @@ trap cleanup EXIT
 
 cleanup
 
-docker exec "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<SQL
+docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<SQL
 create schema $SCHEMA;
 create table $SCHEMA.restore_probe (
   id integer primary key,
