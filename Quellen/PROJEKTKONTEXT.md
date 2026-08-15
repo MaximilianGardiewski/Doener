@@ -58,7 +58,7 @@ Die vollständige Wahrheit steht in `docs/projects/mcello/DECISIONS.md`. Besonde
 
 - Analytics-/Recommendation-Datenbasis (`D047`, `D050`)
 - Location Boundary (`D057`)
-- Payment Provider Boundary (`D004`, auf `agent/mcello-payment-boundary` bis Merge)
+- Payment Provider Boundary (`D004`)
 
 Für jede weitere PREPARE_NOW-Entscheidung gilt: Contract + Datenmodell/Boundary + Tests jetzt; sichtbare Future-Funktion erst später.
 
