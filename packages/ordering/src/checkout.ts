@@ -6,6 +6,13 @@ import {
   type ProductSelection,
 } from "../../menu-engine/src/model.ts";
 import type { OtpProvider, OrderNotificationProvider } from "../../notifications/src/contracts.ts";
+import {
+  PayOnSiteOnlyPaymentPolicy,
+  PaymentBoundaryError,
+  type PaymentMode,
+  type PaymentPolicy,
+  type PaymentSnapshot,
+} from "../../payments/src/contracts.ts";
 import { hasSlotCapacity } from "./capacity.ts";
 import type { Order } from "./model.ts";
 
@@ -24,6 +31,8 @@ export interface CheckoutRequest {
   mobile: string;
   comment?: string;
   requestedPickupAt?: string | null;
+  /** Optional client preference. Mcello V1 accepts only pay_on_site. */
+  paymentMode?: PaymentMode;
   otpChallengeId: string;
   otpCode: string;
   cart: CheckoutCartLine[];
@@ -57,6 +66,7 @@ export interface OrderWriter {
     requestedPickupAt?: string | null;
     totalCents: number;
     submittedAt: string;
+    payment: PaymentSnapshot;
     items: Array<{
       productId: string;
       productNameSnapshot: string;
@@ -75,6 +85,7 @@ export interface CheckoutDependencies {
   shop: ShopStateReader;
   slots: SlotReader;
   orders: OrderWriter;
+  payments?: PaymentPolicy;
   notifications?: OrderNotificationProvider;
   statusUrlFor(order: Order): string;
 }
@@ -89,7 +100,8 @@ export class CheckoutError extends Error {
     | "PRODUCT_NOT_FOUND"
     | "PRODUCT_UNAVAILABLE"
     | "INVALID_CONFIGURATION"
-    | "SLOT_FULL";
+    | "SLOT_FULL"
+    | "PAYMENT_NOT_AVAILABLE";
 
   constructor(
     code:
@@ -101,7 +113,8 @@ export class CheckoutError extends Error {
       | "PRODUCT_NOT_FOUND"
       | "PRODUCT_UNAVAILABLE"
       | "INVALID_CONFIGURATION"
-      | "SLOT_FULL",
+      | "SLOT_FULL"
+      | "PAYMENT_NOT_AVAILABLE",
     message: string,
   ) {
     super(message);
@@ -213,6 +226,20 @@ export async function submitVerifiedPickupOrder(
     });
   }
 
+  let payment: PaymentSnapshot;
+  try {
+    payment = await (deps.payments ?? new PayOnSiteOnlyPaymentPolicy()).prepare({
+      requestedMode: request.paymentMode,
+      amountCents: totalCents,
+      currency: "EUR",
+    });
+  } catch (error) {
+    if (error instanceof PaymentBoundaryError) {
+      throw new CheckoutError("PAYMENT_NOT_AVAILABLE", error.message);
+    }
+    throw error;
+  }
+
   const order = await deps.orders.create({
     locationId: request.locationId,
     source: "web",
@@ -224,6 +251,7 @@ export async function submitVerifiedPickupOrder(
     requestedPickupAt: request.requestedPickupAt ?? null,
     totalCents,
     submittedAt: nowIso,
+    payment,
     items,
   });
 
