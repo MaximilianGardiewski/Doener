@@ -56,6 +56,18 @@
       </section>
 
       <section class="panel">
+        <h2>Rush-Puffer</h2>
+        <form class="form" id="rushSettingsForm">
+          <label>Zusätzliche Minuten für ASAP im Rush-Modus
+            <input name="rushExtraMinutes" type="number" min="5" max="60" step="1" required value="10" />
+          </label>
+          <p class="muted">Nur Admin-Konfiguration. Wenn Mitarbeiter „Rush“ aktivieren, bleiben Online-Bestellungen offen; bei neuen ASAP-Bestellungen addiert der Server diesen Puffer auf die 15/20/30-Minuten-KDS-Zeitbuttons. Vorbestell-Slots bleiben unverändert.</p>
+          <button class="btn primary" type="submit">Rush-Puffer speichern</button>
+          <p class="message" id="rushSettingsMessage"></p>
+        </form>
+      </section>
+
+      <section class="panel">
         <h2>Sondertage</h2>
         <form class="form" id="specialForm">
           <input name="day" type="date" required />
@@ -94,5 +106,6 @@
     </div>
   </main>
   <script type="module" src="/schedule.js"></script>
+  <script type="module" src="/rush-settings.js"></script>
 </body>
 </html>
