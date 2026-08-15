@@ -40,7 +40,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Ready + completed states (`D010`)
 - [ ] Rush/pause and item/ingredient snooze (`D012`, `D013`)
 - [x] Planned future lane + configurable activation lead (`D055`)
-- [ ] +5/+10/+15/custom delay + customer update (`D056`)
+- [x] +5/+10/+15/custom delay + customer update (`D056`)
 
 ## Customer status
 - [ ] Live status/order summary/pickup location (`D015`)

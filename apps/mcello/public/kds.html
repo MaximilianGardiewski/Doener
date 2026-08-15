@@ -24,10 +24,14 @@
     .order small{color:var(--muted)}
     .order ul{padding-left:19px;color:#ddd2c4;line-height:1.55}
     .order li small{display:block;margin-top:-2px}
-    .quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+    .quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;align-items:center}
     .quick button{border:1px solid var(--line);background:#29251c;color:var(--gold-2);border-radius:10px;padding:9px 10px;cursor:pointer}
     .quick button.danger{color:#efaea3;border-color:rgba(229,136,121,.22)}
     .quick button:disabled{opacity:.45;cursor:wait}
+    .custom-delay{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.06);background:#181815;border-radius:12px;padding:4px 4px 4px 9px}
+    .custom-delay span{font-size:12px;color:var(--muted)}
+    .custom-delay input{width:62px;border:1px solid var(--line);background:#10100e;color:#fff;border-radius:8px;padding:7px 6px;font:inherit;text-align:center}
+    .custom-delay input:focus{outline:2px solid rgba(215,169,76,.4);outline-offset:1px}
     .empty{color:var(--muted);padding:18px 6px}
     .kds-error{margin:14px 0;padding:14px 16px;border:1px solid rgba(229,136,121,.25);background:#251b19;border-radius:16px;color:#efb6ad}
     @media(max-width:1000px){.kds-grid{grid-template-columns:1fr 1fr}}

@@ -83,6 +83,11 @@ function actions(order) {
       <button data-action="delay" data-id="${order.id}" data-minutes="5">+5</button>
       <button data-action="delay" data-id="${order.id}" data-minutes="10">+10</button>
       <button data-action="delay" data-id="${order.id}" data-minutes="15">+15</button>
+      <label class="custom-delay">
+        <span>Individuell</span>
+        <input type="number" min="1" max="120" step="1" value="20" inputmode="numeric" data-custom-delay-input aria-label="Individuelle Verzögerung in Minuten" />
+        <button data-action="delay" data-custom-delay="true" data-id="${order.id}">+ Min</button>
+      </label>
     </div>`;
   return `<div class="quick"><button data-action="complete" data-id="${order.id}">Erledigt</button></div>`;
 }
@@ -161,9 +166,28 @@ function setRealtimeStatus(status, error) {
   if (error && status === "degraded") console.warn("Realtime degraded", error);
 }
 
+function customDelayMinutes(button) {
+  const input = button.closest(".order")?.querySelector("[data-custom-delay-input]");
+  const minutes = Number(input?.value);
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 120) {
+    const error = document.querySelector("#kdsError");
+    error.hidden = false;
+    error.textContent = "Individuelle Verzögerung muss zwischen 1 und 120 Minuten liegen.";
+    input?.focus();
+    return null;
+  }
+  return minutes;
+}
+
 async function act(button) {
   const body = { orderId: button.dataset.id, action: button.dataset.action };
-  if (button.dataset.minutes) body.minutes = Number(button.dataset.minutes);
+  if (button.dataset.customDelay === "true") {
+    const minutes = customDelayMinutes(button);
+    if (minutes == null) return;
+    body.minutes = minutes;
+  } else if (button.dataset.minutes) {
+    body.minutes = Number(button.dataset.minutes);
+  }
   if (button.dataset.reason) body.reason = button.dataset.reason;
   button.disabled = true;
   try {
