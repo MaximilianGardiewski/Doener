@@ -26,6 +26,12 @@ test("cart is preflighted and repriced before otp while backend and database rem
   assert.match(app, /if \(!await prepareCartForCheckout\(requestedPickupAt\)\) return/);
 });
 
+test("slot-scoped menu refresh does not silently delete cart rows that become unavailable", () => {
+  const refreshBody = app.slice(app.indexOf("async function refreshMenuSnapshot"), app.indexOf("async function prepareCartForCheckout"));
+  assert.doesNotMatch(refreshBody, /reconcileCartWithMenu\(/);
+  assert.match(app, /ist für den gewählten Abholzeitpunkt nicht verfügbar/);
+});
+
 test("staff HTTP surface no longer advertises force-open", () => {
   assert.match(server, /new Set\(\["auto", "force_closed", "pause", "today_closed"\]\)/);
 });
