@@ -20,6 +20,7 @@ on:
       - "tests/notification-outbox.integration.mjs"
       - "tests/modifier-backoffice.integration.mjs"
       - "tests/allergen-labels.integration.mjs"
+      - "tests/ordering-schedule.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -43,6 +44,7 @@ on:
       - "tests/notification-outbox.integration.mjs"
       - "tests/modifier-backoffice.integration.mjs"
       - "tests/allergen-labels.integration.mjs"
+      - "tests/ordering-schedule.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
 
 concurrency:
@@ -97,9 +99,9 @@ jobs:
 
       - name: Verify Realtime publication membership
         run: |
-          published="$(docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select tablename from pg_publication_tables where pubname='supabase_realtime' and schemaname in ('public') order by tablename")"
+          published="$(docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select tablename from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' order by tablename")"
           printf '%s\n' "$published"
-          for table in orders ordering_settings snoozes menu_products modifier_groups modifier_options product_modifier_groups allergens product_allergens modifier_option_allergens; do
+          for table in orders ordering_settings snoozes menu_products modifier_groups modifier_options product_modifier_groups allergens product_allergens modifier_option_allergens opening_hours special_opening_hours availability_rules; do
             printf '%s\n' "$published" | grep -Fx "$table" >/dev/null || { echo "Missing from supabase_realtime: $table" >&2; exit 1; }
           done
 
@@ -113,13 +115,8 @@ jobs:
           echo '--- _realtime tenant metadata ---'
           if [ "$(docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select case when to_regclass('_realtime.extensions') is null then 0 else 1 end")" = "1" ]; then
             docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "
-              select
-                tenant_external_id,
-                type,
-                coalesce(settings->>'publication',''),
-                coalesce(settings->>'slot_name','')
-              from _realtime.extensions
-              order by tenant_external_id,type
+              select tenant_external_id, type, coalesce(settings->>'publication',''), coalesce(settings->>'slot_name','')
+              from _realtime.extensions order by tenant_external_id,type
             "
           else
             echo '_realtime.extensions not found'
@@ -128,8 +125,7 @@ jobs:
           echo '--- logical replication slots before subscriber test ---'
           docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "
             select slot_name||'|'||plugin||'|'||slot_type||'|'||coalesce(database,'')||'|'||active
-            from pg_replication_slots
-            order by slot_name
+            from pg_replication_slots order by slot_name
           "
 
       - name: Import provisional Mcello menu
@@ -151,12 +147,14 @@ jobs:
         run: node tests/notification-outbox.integration.mjs
 
       - name: Prove modifier backoffice and role boundary
-        id: modifier_backoffice
         run: node tests/modifier-backoffice.integration.mjs
 
       - name: Prove structured allergen and dietary label flow
-        id: allergen_labels
         run: node tests/allergen-labels.integration.mjs
+
+      - name: Prove opening hours cutoff overrides and timed availability
+        id: ordering_schedule
+        run: node tests/ordering-schedule.integration.mjs
 
       - name: Prove realtime readiness and backoffice role boundaries
         id: realtime_backoffice
@@ -173,8 +171,6 @@ jobs:
           docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select count(*), coalesce(string_agg(distinct entity::text, ','),'') from realtime.subscription" || true
           echo '--- replication slots after failed subscriber test ---'
           docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select slot_name,plugin,slot_type,database,active,restart_lsn,confirmed_flush_lsn from pg_replication_slots order by slot_name" || true
-          echo '--- active replication senders ---'
-          docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select application_name,state,sent_lsn,write_lsn,flush_lsn,replay_lsn from pg_stat_replication order by application_name" || true
 
       - name: Stop local Supabase
         if: always()
