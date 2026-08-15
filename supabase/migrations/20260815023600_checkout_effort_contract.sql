@@ -5,7 +5,28 @@
 comment on type public.order_source is
   'Reusable order-origin contract: web now; counter/table reserved for later interfaces.';
 comment on column public.orders.source is
-  'Current Mcello public checkout creates web orders; counter/table remain future sources.';
+  'Current Mcello public checkout creates web orders; counter/table remain future immutable origins.';
+
+create or replace function public.prevent_order_source_reassignment()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.source is distinct from old.source then
+    raise exception 'order source is immutable'
+      using errcode = 'check_violation';
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function public.prevent_order_source_reassignment() from public, anon, authenticated;
+
+drop trigger if exists orders_prevent_source_reassignment on public.orders;
+create trigger orders_prevent_source_reassignment
+before update of source on public.orders
+for each row execute function public.prevent_order_source_reassignment();
 
 create or replace function public.server_get_checkout_product(_product_id uuid, _at timestamptz)
 returns jsonb
