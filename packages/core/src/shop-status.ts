@@ -1,5 +1,6 @@
 export type ShopOverride =
   | "auto"
+  | "rush"
   | "force_open"
   | "force_closed"
   | "pause"
@@ -7,6 +8,7 @@ export type ShopOverride =
 
 export type ShopStatus =
   | "open"
+  | "rush"
   | "closed"
   | "paused"
   | "order_cutoff";
@@ -14,6 +16,7 @@ export type ShopStatus =
 export interface ShopStatusInput {
   scheduledOpen: boolean;
   override?: ShopOverride;
+  rushExtraMinutes?: number;
   minutesUntilScheduledClose?: number | null;
   orderCutoffMinutes: number;
   operatorMessage?: string | null;
@@ -27,11 +30,13 @@ export interface ShopCapabilities {
   canSubmitOrder: boolean;
   reason:
     | "open"
+    | "rush"
     | "scheduled_closed"
     | "forced_closed"
     | "today_closed"
     | "paused"
     | "order_cutoff";
+  rushExtraMinutes?: number;
   operatorMessage?: string | null;
 }
 
@@ -92,6 +97,7 @@ export function resolveShopCapabilities(
   }
 
   if (
+    override !== "force_open" &&
     input.minutesUntilScheduledClose != null &&
     input.minutesUntilScheduledClose <= input.orderCutoffMinutes
   ) {
@@ -102,6 +108,19 @@ export function resolveShopCapabilities(
       canBuildCart: true,
       canSubmitOrder: false,
       reason: "order_cutoff",
+      operatorMessage: input.operatorMessage,
+    };
+  }
+
+  if (override === "rush") {
+    return {
+      status: "rush",
+      canBrowse: true,
+      canConfigure: true,
+      canBuildCart: true,
+      canSubmitOrder: true,
+      reason: "rush",
+      rushExtraMinutes: input.rushExtraMinutes ?? 0,
       operatorMessage: input.operatorMessage,
     };
   }
