@@ -112,7 +112,7 @@ jobs:
             --override-name auth.anon_key=SUPABASE_ANON_KEY \
             --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
             > .env.local
-          node scripts/bootstrap-local-staff.mjs
+          MCELLO_MEDIA_BUCKET_ONLY=1 node scripts/bootstrap-local-staff.mjs
 
       - name: Verify Realtime publication membership
         run: |

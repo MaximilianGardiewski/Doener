@@ -109,10 +109,15 @@ async function ensurePrivateMediaBucket() {
   });
 }
 
+await ensurePrivateMediaBucket();
+
+if (process.env.MCELLO_MEDIA_BUCKET_ONLY === "1") {
+  console.log("Private Mcello media bucket prepared without changing local operator accounts.");
+  process.exit(0);
+}
+
 const usersResponse = await api("/auth/v1/admin/users?page=1&per_page=100");
 const users = Array.isArray(usersResponse) ? usersResponse : (usersResponse.users ?? []);
-
-await ensurePrivateMediaBucket();
 
 // Development-only identities. Passwords are regenerated and persisted only in
 // ignored .env.local; no fixed credentials or production accounts enter Git.
