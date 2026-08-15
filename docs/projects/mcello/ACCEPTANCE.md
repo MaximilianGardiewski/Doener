@@ -22,6 +22,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Curated/rule-based cross-sells (`D046`)
 
 ## Ordering
+- [x] Own independent first-party ordering core; no third-party marketplace required (`D002`)
 - [x] Pickup ASAP + preorder slots (`D005`, `D009`)
 - [x] 15-minute slot capacity (`D039`)
 - [ ] Closed/paused/cutoff browse/configure/cart but no submit (`D037`, `D044`, `D052`)
@@ -56,9 +57,12 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Safe homepage section ordering/toggling (`D031`)
 - [x] Event/Special/Presse/News scheduling + pinning (`D032`)
 - [x] Gallery categories + featured media (`D033`)
-- [x] Server/database role enforcement (`D022`, `D023`)
+- [x] Server/database role enforcement for admin/staff boundaries (`D020`, `D021`)
 
 ## Infrastructure / Portability
+- [x] Reuse documented Lebtig foundations through shared packages without app-to-app coupling (`D022`)
+- [x] Shared core remains reusable / Product-D-ready through workspace package boundaries (`D023`)
+- [x] Binding Decision Ledger coverage/status discipline is enforced in CI (`D062`)
 - [x] Local development backend runs using Supabase CLI/Docker without a managed paid project (`D063`)
 - [x] Staging/production path is reproducible on self-hosted infrastructure from Git + migrations (`D063`)
 - [x] V1 does not depend on Lovable or Vercel to build, run or deploy (`D063`)
