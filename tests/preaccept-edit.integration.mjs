@@ -40,7 +40,9 @@ async function request(path, { method = "GET", apiKey = anonKey, bearer, body } 
   return { response, data };
 }
 
-async function rpc(name, args, { apiKey = serviceRoleKey, bearer = serviceRoleKey } = {}) {
+async function rpc(name, args, auth) {
+  const apiKey = auth?.apiKey ?? serviceRoleKey;
+  const bearer = auth && Object.hasOwn(auth, "bearer") ? auth.bearer : serviceRoleKey;
   return request(`/rest/v1/rpc/${name}`, { method: "POST", apiKey, bearer, body: args });
 }
 
@@ -153,7 +155,11 @@ assert.equal(before.payment_method, "cash_or_card");
 assert.equal(before.payment_status, "due_on_site");
 assert.equal((await receivedOutbox(created.id)).payload.totalCents, 900, "received outbox must freeze authoritative total");
 
-const publicBefore = await rpc("get_public_order_status", { _public_token: created.public_token }, { apiKey: anonKey, bearer: undefined });
+const publicBefore = await rpc(
+  "get_public_order_status",
+  { _public_token: created.public_token },
+  { apiKey: anonKey, bearer: null },
+);
 assert.equal(publicBefore.response.ok, true, JSON.stringify(publicBefore.data));
 assert.equal(publicBefore.data.editable, true);
 assert.equal(Object.hasOwn(publicBefore.data, "mobile"), false);
@@ -162,7 +168,7 @@ assert.equal(JSON.stringify(publicBefore.data).includes(productId), false, "publ
 const anonymousEditContext = await rpc(
   "server_get_pending_order_edit_context",
   { _public_token: created.public_token },
-  { apiKey: anonKey, bearer: undefined },
+  { apiKey: anonKey, bearer: null },
 );
 assert.equal(anonymousEditContext.response.ok, false, "raw edit reconstruction must stay service-role only");
 
@@ -265,7 +271,7 @@ for (let index = 0; index < 6; index += 1) {
     requestedPickupAt: fullSlot,
     optionId: mildOptionId,
   }));
-  assert.equal(filler.requested_pickup_at, fullSlot);
+  assert.equal(new Date(filler.requested_pickup_at).toISOString(), new Date(fullSlot).toISOString());
 }
 
 const fullSlotEdit = await rpc("server_replace_pending_order", {
@@ -295,7 +301,11 @@ const accepted = await rpc(
 );
 assert.equal(accepted.response.ok, true, JSON.stringify(accepted.data));
 
-const publicAfterAccept = await rpc("get_public_order_status", { _public_token: created.public_token }, { apiKey: anonKey, bearer: undefined });
+const publicAfterAccept = await rpc(
+  "get_public_order_status",
+  { _public_token: created.public_token },
+  { apiKey: anonKey, bearer: null },
+);
 assert.equal(publicAfterAccept.response.ok, true, JSON.stringify(publicAfterAccept.data));
 assert.equal(publicAfterAccept.data.editable, false);
 
