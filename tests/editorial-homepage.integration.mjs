@@ -168,7 +168,11 @@ try {
   assert.deepEqual(publicSnapshot.data.homepageSections.map((row) => row.sectionKey), ["hero", "contact"]);
   assert.equal(publicSnapshot.data.editorialPosts[0].id, news.id, "pinned visible post should lead the public editorial snapshot");
   assert.equal(publicSnapshot.data.editorialPosts.some((post) => post.id === event.id), true, "future event may be promoted before it occurs");
-  assert.equal(publicSnapshot.data.editorialPosts.find((post) => post.id === event.id)?.eventStartsAt, futureEvent);
+  assert.equal(
+    new Date(publicSnapshot.data.editorialPosts.find((post) => post.id === event.id)?.eventStartsAt).toISOString(),
+    new Date(futureEvent).toISOString(),
+    "equivalent timestamptz values must compare independently of PostgREST offset formatting",
+  );
   assert.equal(publicSnapshot.data.editorialPosts.some((post) => post.id === futurePost.id), false, "future publication window must stay hidden");
 
   const menuSnapshot = await rpc("get_public_menu", { _location_id: locationId, _at: new Date().toISOString() });

@@ -53,7 +53,7 @@ Every item maps back to the binding Decision Ledger.
 - [ ] Staff operational-only role (`D021`)
 - [ ] Safe homepage section ordering/toggling (`D031`)
 - [ ] Event/Special/Presse/News scheduling + pinning (`D032`)
-- [ ] Gallery categories + featured media (`D033`)
+- [x] Gallery categories + featured media (`D033`)
 - [ ] Server/database role enforcement (`D022`, `D023`)
 
 ## Infrastructure / Portability

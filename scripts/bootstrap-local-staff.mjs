@@ -68,6 +68,54 @@ async function verifyPasswordLogin(email, password) {
   if (!login?.access_token) throw new Error(`Local login verification failed for ${email}`);
 }
 
+async function ensurePrivateMediaBucket() {
+  const bucketId = "mcello-media";
+  const createBucket = () => api("/storage/v1/bucket", {
+    method: "POST",
+    body: {
+      id: bucketId,
+      name: bucketId,
+      public: false,
+      file_size_limit: 10 * 1024 * 1024,
+      allowed_mime_types: ["image/jpeg", "image/png", "image/webp", "image/avif"],
+    },
+  });
+  const response = await fetch(`${baseUrl}/storage/v1/bucket/${bucketId}`, {
+    headers: {
+      apikey: serviceRoleKey,
+      authorization: `Bearer ${serviceRoleKey}`,
+      accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    let error = null;
+    try { error = JSON.parse(body); } catch { /* retain raw body below */ }
+    if (response.status === 404 || error?.statusCode === "404" || error?.code === "NoSuchBucket") {
+      await createBucket();
+      return;
+    }
+    throw new Error(`GET /storage/v1/bucket/${bucketId} failed (${response.status}): ${body}`);
+  }
+
+  await api(`/storage/v1/bucket/${bucketId}`, {
+    method: "PUT",
+    body: {
+      public: false,
+      file_size_limit: 10 * 1024 * 1024,
+      allowed_mime_types: ["image/jpeg", "image/png", "image/webp", "image/avif"],
+    },
+  });
+}
+
+await ensurePrivateMediaBucket();
+
+if (process.env.MCELLO_MEDIA_BUCKET_ONLY === "1") {
+  console.log("Private Mcello media bucket prepared without changing local operator accounts.");
+  process.exit(0);
+}
+
 const usersResponse = await api("/auth/v1/admin/users?page=1&per_page=100");
 const users = Array.isArray(usersResponse) ? usersResponse : (usersResponse.users ?? []);
 
@@ -89,7 +137,7 @@ const nextEnv = upsertEnv(rawEnv, {
   MCELLO_DEV_STAFF_PASSWORD: staffPassword,
 });
 await writeFile(envPath, nextEnv, "utf8");
-console.log("Local-only Mcello admin + KDS staff accounts prepared. Credentials exist only in ignored .env.local.");
+console.log("Local-only Mcello admin, KDS staff and private media bucket prepared. Credentials exist only in ignored .env.local.");
 
 function parseEnv(raw) {
   const result = {};
