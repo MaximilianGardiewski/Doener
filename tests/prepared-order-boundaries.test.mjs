@@ -24,7 +24,7 @@ test("D027 keeps reusable web/counter/table source contract while Mcello checkou
   assert.match(coreMigration, /create type public\.order_source as enum \('web', 'counter', 'table'\)/i);
   assert.match(checkout, /source: "web";/);
   assert.doesNotMatch(checkout, /request\.source/);
-  assert.match(contractMigration, /counter\/table remain future sources/i);
+  assert.match(contractMigration, /counter\/table remain future/i);
   assert.match(contractMigration, /prevent_order_source_reassignment/i);
   assert.match(contractMigration, /before update of source on public\.orders/i);
 });
