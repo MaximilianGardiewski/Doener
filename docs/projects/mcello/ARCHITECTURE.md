@@ -34,6 +34,18 @@ through `/api/media/:id`, which re-checks the published metadata before streamin
 the private object. This keeps storage-provider paths out of public content data
 and preserves a portable application-owned media contract.
 
+## Recommendation boundary
+V1 recommendations are deterministic business configuration, not profiling.
+`product_cross_sells` stores owner-curated product pairs. Location-scoped
+`cross_sell_rules` can react to a product category or to an explicitly selected
+modifier option and target one product or a category. The public contract emits
+only rules whose trigger and target still resolve to published catalog data;
+availability and sold-out state continue to come from the current menu snapshot.
+The browser resolves the same contract in the configurator and cart, while all
+structural writes remain admin-only and are transactionally saved with the
+product editor. No recommendation rows are inferred or seeded from provisional
+Mcello data.
+
 ## Lebtig reuse candidates
 - profiles + explicit role rows
 - bootstrap admin invariant

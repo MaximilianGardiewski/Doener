@@ -25,6 +25,7 @@ on:
       - "tests/timed-product-db-gate.integration.mjs"
       - "tests/editorial-homepage.integration.mjs"
       - "tests/gallery-media.integration.mjs"
+      - "tests/cross-sell-recommendations.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -53,6 +54,7 @@ on:
       - "tests/timed-product-db-gate.integration.mjs"
       - "tests/editorial-homepage.integration.mjs"
       - "tests/gallery-media.integration.mjs"
+      - "tests/cross-sell-recommendations.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
 
 concurrency:
@@ -184,6 +186,9 @@ jobs:
 
       - name: Prove private gallery media and publication rights boundary
         run: node tests/gallery-media.integration.mjs
+
+      - name: Prove curated and rule-based cross-sell boundaries
+        run: node tests/cross-sell-recommendations.integration.mjs
 
       - name: Prove realtime readiness and backoffice role boundaries
         id: realtime_backoffice

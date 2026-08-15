@@ -70,6 +70,7 @@
         <p id="modalDescription"></p>
         <div id="productAvailability"></div>
         <div id="modifierGroups"></div>
+        <section class="recommendation-box hidden" id="productRecommendations" aria-live="polite"></section>
         <div class="option-box"><strong>Besonderer Wunsch</strong><textarea id="specialRequest" rows="3" style="width:100%;margin-top:12px;background:#11110f;color:white;border:1px solid var(--line);border-radius:14px;padding:12px" placeholder="V1: Freitext erlaubt"></textarea></div>
         <div class="modal-footer"><button class="pill" data-close-modal>Abbrechen</button><button class="primary" id="addToCart">In den Warenkorb</button></div>
       </div>
@@ -79,6 +80,7 @@
   <aside class="cart-drawer" id="cartDrawer">
     <div class="cart-head"><h2>Warenkorb</h2><button class="pill" data-close-cart>Schließen</button></div>
     <div class="cart-items" id="cartItems"></div>
+    <section class="cart-recommendations hidden" id="cartRecommendations" aria-live="polite"></section>
     <div class="cart-total"><span>Gesamt</span><strong id="cartTotal">0,00 €</strong></div>
     <div class="checkout-box">
       <div class="tag">Lokaler Test-Checkout</div>
