@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello — Bestellung ändern</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .edit-wrap{width:min(calc(100% - 24px),900px);margin:42px auto 120px}
+    .edit-card{background:#171714;border:1px solid var(--line);border-radius:28px;padding:24px;box-shadow:var(--shadow);margin-top:16px}
+    .edit-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+    .edit-head h1{font-size:clamp(34px,7vw,54px);max-width:none;margin:8px 0}
+    .edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:grid;gap:7px}.field>span{font-size:13px;color:var(--muted)}
+    .field input,.field select,.field textarea{width:100%;background:#11110f;color:#fff;border:1px solid var(--line);border-radius:13px;padding:11px;font:inherit}
+    .edit-items{display:grid;gap:14px;margin-top:18px}.edit-item{border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:16px;background:#1e1e1a}
+    .edit-item-head{display:flex;justify-content:space-between;gap:14px;align-items:start}.edit-item h3{margin:0}.edit-item .price{color:var(--gold-2)}
+    .modifier-group{margin-top:14px;padding:13px;border:1px solid rgba(255,255,255,.06);border-radius:15px}.modifier-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}.modifier-head small{color:var(--muted)}
+    .modifier-options{display:grid;gap:7px}.modifier-option{display:flex;gap:9px;align-items:center;background:#24231e;border-radius:11px;padding:9px 10px}.modifier-option span:last-child{margin-left:auto;color:var(--gold-2)}.modifier-option:has(input:disabled){opacity:.45}
+    .qty-row{display:grid;grid-template-columns:130px 1fr;gap:12px;margin-top:14px}.unavailable{border-color:rgba(229,136,121,.35);background:#251b19}.warning{color:#efb6ad}.edit-message{margin-top:16px;padding:13px 14px;border-radius:14px;background:#20201b;color:var(--muted)}.edit-message.error{background:#291c19;color:#efb0a5}.edit-message.success{background:#1e281b;color:#cce8b0}
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:20px}.actions .primary{margin-left:auto}.hidden{display:none!important}
+    @media(max-width:680px){.edit-grid,.qty-row{grid-template-columns:1fr}.edit-card{padding:18px}.actions .primary{margin-left:0;width:100%}}
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">Bestellung ändern · nur vor Mcello-Annahme</div>
+  <main class="edit-wrap">
+    <a class="pill" id="backToStatus" href="/status.html">← Bestellstatus</a>
+    <section class="edit-card">
+      <div id="editError" class="edit-message error hidden"></div>
+      <div id="editContent" class="hidden">
+        <div class="edit-head">
+          <div><div class="tag" id="orderTag">Bestellung</div><h1>Bestellung ändern</h1><p style="color:var(--muted)">Positionen, Optionen, Mengen, Hinweise und Abholslot sind editierbar. Name, Mobilnummer, Zahlung und Abholung bleiben unverändert.</p></div>
+          <div class="pill" id="customerName"></div>
+        </div>
+
+        <div class="edit-grid" style="margin-top:18px">
+          <label class="field"><span>Abholung</span><select id="pickupMode"><option value="asap">So schnell wie möglich</option><option value="later">Für später</option></select></label>
+          <label class="field hidden" id="pickupAtField"><span>Verfügbarer Abholslot</span><select id="pickupAt"><option>Slots werden geladen …</option></select></label>
+        </div>
+        <label class="field" style="margin-top:14px"><span>Bestellhinweis</span><textarea id="orderComment" maxlength="1000" rows="2" placeholder="Optionaler Hinweis für die gesamte Bestellung"></textarea></label>
+
+        <section style="margin-top:26px">
+          <div class="section-head"><div><div class="kicker">Positionen</div><h2 style="font-size:30px">Deine Auswahl</h2></div></div>
+          <div id="editItems" class="edit-items"></div>
+          <div class="edit-grid" style="margin-top:16px">
+            <label class="field"><span>Produkt hinzufügen</span><select id="addProduct"><option value="">Produkt wählen …</option></select></label>
+            <div class="actions" style="margin-top:20px"><button class="pill" id="addProductButton">Hinzufügen</button></div>
+          </div>
+        </section>
+
+        <div class="price-row" style="margin-top:22px"><span>Aktueller Richtwert</span><strong id="editTotal">–</strong></div>
+        <p class="notice">Der angezeigte Betrag ist nur Vorschau. Beim Speichern prüft und berechnet der Server Produkt, Optionen, Verfügbarkeit, Öffnungszeit, Slot und Preis vollständig neu.</p>
+        <div id="editMessage" class="edit-message">Änderungen sind nur möglich, solange Mcello die Bestellung noch nicht angenommen hat.</div>
+        <div class="actions"><a class="pill" id="cancelEdit" href="/status.html">Abbrechen</a><button class="primary" id="saveEdit">Änderungen speichern</button></div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/edit-order.js"></script>
+</body>
+</html>
