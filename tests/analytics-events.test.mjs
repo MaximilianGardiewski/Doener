@@ -28,7 +28,7 @@ test("recording RPC rejects unsupported fields and is service-role only", () => 
 test("public events pass through the server and have a pseudonymous rate limit", () => {
   assert.match(server, /url\.pathname === "\/api\/analytics\/events"/);
   assert.match(server, /consumeAnalyticsQuota\(event\.anonymousSessionId\)/);
-  assert.match(server, /event\.locationId !== DEV_LOCATION_ID/);
+  assert.match(server, /event\.locationId !== LOCATION_ID/);
   assert.match(client, /analyticsSessionId: createUuid\(\)/);
   assert.doesNotMatch(client, /ANALYTICS_SESSION_KEY|localStorage\.setItem\([^\n]*analytics/i);
   assert.doesNotMatch(client.match(/function emitAnalytics[\s\S]*?\n\}/)?.[0] ?? "", /mobile|firstName|comment|email/i);
@@ -37,5 +37,5 @@ test("public events pass through the server and have a pseudonymous rate limit",
 test("order submission is linked server-side and analytics cannot block checkout", () => {
   assert.match(server, /parseOrderAnalyticsContext\(body\.analytics\)/);
   assert.match(server, /Analytics is best-effort and must never block a valid order/);
-  assert.match(server, /recordOrderSubmitted\(DEV_LOCATION_ID, order\.id, analyticsContext\)/);
+  assert.match(server, /recordOrderSubmitted\(LOCATION_ID, order\.id, analyticsContext\)/);
 });

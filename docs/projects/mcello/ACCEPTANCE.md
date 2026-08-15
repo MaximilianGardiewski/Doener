@@ -68,4 +68,4 @@ Every item maps back to the binding Decision Ledger.
 - [ ] Future web/counter/table order source contract (`D027`)
 - [ ] Future effort-weight capacity field (`D040`)
 - [x] Analytics/recommendation event data (`D047`, `D050`)
-- [ ] Location boundary while Mcello UI stays single-location (`D057`)
+- [x] Location boundary while Mcello UI stays single-location (`D057`)
