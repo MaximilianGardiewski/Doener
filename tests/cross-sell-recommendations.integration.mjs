@@ -49,7 +49,12 @@ const staffToken = await signIn("kds-staff@mcello.local", "LocalOnly-Staff-2026!
 const catalogResult = await rpc("admin_get_catalog", { _location_id: locationId }, adminToken);
 assert.equal(catalogResult.response.ok, true, JSON.stringify(catalogResult.data));
 
-const publishedProducts = (catalogResult.data.products || []).filter((product) => product.status === "published");
+const publicCategoryIds = new Set((catalogResult.data.categories || [])
+  .filter((category) => category.status === "published" && category.visible !== false)
+  .map((category) => category.id));
+const publishedProducts = (catalogResult.data.products || []).filter((product) => (
+  product.status === "published" && publicCategoryIds.has(product.categoryId)
+));
 assert.ok(publishedProducts.length >= 2, "provisional import must provide two published products");
 const sourceProduct = publishedProducts.find((product) => (product.modifierGroupIds || []).length > 0);
 assert.ok(sourceProduct, "provisional catalog needs a published configurable product");
