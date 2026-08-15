@@ -28,6 +28,7 @@
     .quick button{border:1px solid var(--line);background:#29251c;color:var(--gold-2);border-radius:10px;padding:9px 10px;cursor:pointer}
     .quick button.danger{color:#efaea3;border-color:rgba(229,136,121,.22)}
     .quick button:disabled{opacity:.45;cursor:wait}
+    .mode-active{background:var(--gold)!important;color:#15120d!important;border-color:transparent!important}
     .custom-delay{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.06);background:#181815;border-radius:12px;padding:4px 4px 4px 9px}
     .custom-delay span{font-size:12px;color:var(--muted)}
     .custom-delay input{width:62px;border:1px solid var(--line);background:#10100e;color:#fff;border-radius:8px;padding:7px 6px;font:inherit;text-align:center}
@@ -45,11 +46,12 @@
       <h1>Mcello KDS</h1>
       <span class="pill" id="syncState"><span class="status-dot offline" id="syncDot"></span> <span id="syncText">Verbinden …</span></span>
       <button class="pill" id="sound">Ton aktivieren</button>
-      <button class="pill" id="rush">Rush/Pause</button>
+      <button class="pill" id="rush">Rush</button>
+      <button class="pill" id="pause">Pause</button>
       <a class="pill" href="/ops.html">Betrieb</a>
       <a class="pill" href="/">Public Preview</a>
     </div>
-    <div class="notice">Neu → Zeit/Slot bestätigen → Zubereitung → Abholbereit → Erledigt. Änderungen werden per Datenbank-Realtime an alle offenen KDS-Geräte verteilt; ein langsamer Safety-Sync dient nur der Wiederherstellung nach Netzproblemen.</div>
+    <div class="notice">Neu → Zeit/Slot bestätigen → Zubereitung → Abholbereit → Erledigt. <strong>Rush</strong> lässt Online-Bestellungen offen und verlängert nur neue ASAP-Zeitversprechen um den Admin-Puffer; <strong>Pause</strong> blockiert neue Online-Bestellungen. Vorbestell-Slots bleiben exakt bestehen.</div>
     <div id="kdsError" class="kds-error" hidden></div>
     <div class="kds-grid" style="margin-top:18px">
       <section class="lane"><h2>Neu <span class="lane-count" id="incomingCount">0</span></h2><div id="incoming"></div></section>
