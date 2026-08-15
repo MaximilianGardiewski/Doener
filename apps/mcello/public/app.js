@@ -347,7 +347,9 @@ async function loadShopState({ quiet = false } = {}) {
     const accepting = shopAcceptsOrders();
     if (wasAccepting && !accepting) resetOtp();
     updateCheckoutControls();
-    if (!quiet || !accepting) setCheckoutMessage(shopStatusCopy(), accepting ? "success" : "");
+    if (!quiet || wasAccepting !== accepting || !accepting) {
+      setCheckoutMessage(shopStatusCopy(), accepting ? "success" : "");
+    }
     return accepting;
   } catch (error) {
     state.shopState = null;
@@ -534,7 +536,8 @@ async function submitOrder() {
     setCheckoutMessage(`Testbestellung #${data.orderNumber} wurde lokal angelegt.`, "success");
     if (data.statusUrl) location.href = data.statusUrl;
   } catch (error) {
-    setCheckoutMessage(error.message, "error");
+    resetOtp();
+    setCheckoutMessage(`${error.message} Bitte die Mobilnummer erneut verifizieren.`, "error");
   } finally {
     updateCheckoutControls();
   }
