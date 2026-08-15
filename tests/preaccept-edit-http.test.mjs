@@ -16,6 +16,14 @@ function requireTokens(source, tokens) {
   for (const token of tokens) assert.equal(source.includes(token), true, `missing marker: ${token}`);
 }
 
+function editRouteSource() {
+  const start = server.indexOf('if (req.method === "GET" && url.pathname === "/api/order-edit")');
+  const end = server.indexOf('if (req.method === "GET" && url.pathname === "/api/kds/realtime-session")', start);
+  assert.notEqual(start, -1, "GET edit route must exist");
+  assert.notEqual(end, -1, "edit route boundary must be discoverable");
+  return server.slice(start, end);
+}
+
 test("status exposes edit navigation only while public status says editable", () => {
   requireTokens(statusHtml, ['id="editOrder"', 'Bestellung ändern']);
   requireTokens(statusJs, [
@@ -52,17 +60,18 @@ test("dedicated editor contains only mutable customer order fields", () => {
   }
 });
 
-test("server routes edit through service-role-only RPCs and never accepts identity fields", () => {
-  requireTokens(server, [
+test("server routes edit through service-role-only RPCs and never consumes identity fields in edit routes", () => {
+  const editRoutes = editRouteSource();
+  requireTokens(editRoutes, [
     'url.pathname === "/api/order-edit"',
     'server_get_pending_order_edit_context',
     'server_replace_pending_order',
     'serviceRpc()',
   ]);
-  assert.equal(server.includes('body.mobile'), false, "edit route must not consume mobile");
-  assert.equal(server.includes('body.paymentMode'), false, "edit route must not consume payment mode");
-  assert.equal(server.includes('body.fulfillmentType'), false, "edit route must not consume fulfillment");
-  assert.equal(server.includes('body.source'), false, "edit route must not consume source");
+  for (const forbidden of ['body.mobile', 'body.paymentMode', 'body.fulfillmentType', 'body.source']) {
+    assert.equal(editRoutes.includes(forbidden), false, `edit route must not consume ${forbidden}`);
+  }
+  requireTokens(server, ['preferredChannel: "whatsapp"', 'fallbackChannel: "sms"']);
 });
 
 test("database edit context is privacy-minimal and V1-scoped", () => {
