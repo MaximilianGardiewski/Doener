@@ -24,6 +24,7 @@ const groupId = "00000000-0000-4000-8000-000000000200";
 const mildOptionId = "00000000-0000-4000-8000-000000000201";
 const extraOptionId = "00000000-0000-4000-8000-000000000202";
 const invalidProductId = "00000000-0000-4000-8000-000000000999";
+const createdOrderIds = [];
 
 async function request(path, { method = "GET", apiKey = anonKey, bearer, body } = {}) {
   const headers = { apikey: apiKey, accept: "application/json" };
@@ -124,13 +125,40 @@ function payloadFor({ firstName, mobile, requestedPickupAt = null, optionId = ex
 async function createVerified(payload) {
   const result = await rpc("server_create_verified_order", { _payload: payload });
   assert.equal(result.response.ok, true, JSON.stringify(result.data));
-  return Array.isArray(result.data) ? result.data[0] : result.data;
+  const created = Array.isArray(result.data) ? result.data[0] : result.data;
+  createdOrderIds.push(created.id);
+  return created;
 }
 
 function alignedFutureSlot(minutes = 90, slotMinutes = 15) {
   const slotMs = slotMinutes * 60_000;
   const target = Date.now() + minutes * 60_000;
   return new Date(Math.ceil(target / slotMs) * slotMs).toISOString();
+}
+
+async function cleanupCreatedOrders() {
+  assert.ok(createdOrderIds.length > 0, "integration cleanup expects tracked D043 orders");
+  const filter = createdOrderIds.join(",");
+  const deleted = await request(`/rest/v1/orders?id=in.(${filter})`, {
+    method: "DELETE",
+    apiKey: serviceRoleKey,
+    bearer: serviceRoleKey,
+  });
+  assert.equal(deleted.response.ok, true, `cleanup orders: ${JSON.stringify(deleted.data)}`);
+
+  const remaining = await request(`/rest/v1/orders?id=in.(${filter})&select=id`, {
+    apiKey: serviceRoleKey,
+    bearer: serviceRoleKey,
+  });
+  assert.equal(remaining.response.ok, true, JSON.stringify(remaining.data));
+  assert.deepEqual(remaining.data, [], "D043 integration orders must not pollute later workflow slices");
+
+  const outbox = await request(`/rest/v1/order_notification_outbox?order_id=in.(${filter})&select=id`, {
+    apiKey: serviceRoleKey,
+    bearer: serviceRoleKey,
+  });
+  assert.equal(outbox.response.ok, true, JSON.stringify(outbox.data));
+  assert.deepEqual(outbox.data, [], "D043 notification jobs must cascade away with test orders");
 }
 
 const staffEmail = "preaccept-edit-staff@mcello.local";
@@ -324,6 +352,8 @@ assert.equal(rowAfterRejectedEdit.total_cents, 1600);
 assert.equal(rowAfterRejectedEdit.comment, "Neu gespeichert");
 assert.equal(rowAfterRejectedEdit.state, "preparing");
 
+await cleanupCreatedOrders();
+
 console.log("Pre-accept edit boundary passed:", {
   orderNumber: after.order_number,
   totalBefore: before.total_cents,
@@ -333,4 +363,5 @@ console.log("Pre-accept edit boundary passed:", {
   invalidProductRollback: true,
   fullSlotRollback: true,
   editAfterAcceptanceRejected: true,
+  testFixturesCleaned: true,
 });
