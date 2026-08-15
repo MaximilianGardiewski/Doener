@@ -39,6 +39,12 @@ test("D040 exposes optional effort metadata but leaves V1 admission count-based"
   assert.match(contractMigration, /'effortWeight', p\.effort_weight/);
 });
 
+test("D040 extension preserves the existing structured allergen checkout contract", () => {
+  assert.match(contractMigration, /'allergens', coalesce\(\(/i);
+  assert.match(contractMigration, /from public\.product_allergens pa/i);
+  assert.match(contractMigration, /from public\.modifier_option_allergens moa/i);
+});
+
 test("database owns and freezes the persisted effort snapshot", () => {
   assert.match(effortMigration, /select effort_weight into new\.effort_weight_snapshot/i);
   assert.match(effortMigration, /from public\.menu_products/i);
