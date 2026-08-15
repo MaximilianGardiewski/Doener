@@ -33,7 +33,7 @@ function dateLabel(iso) {
 }
 
 function applyHomepage(snapshot) {
-  if (!snapshot.homepageConfigured) return;
+  if (!snapshot?.homepageConfigured) return;
   const main = document.querySelector("main");
   if (!main) return;
 
@@ -69,7 +69,7 @@ function renderEditorial(posts = []) {
         ${eventTime ? `<small>${eventTime}</small>` : `<small>${post.pinned ? "Highlight" : "Veröffentlicht"}</small>`}
       </div>
       <div>
-        <div class="tag">${post.pinned ? "Highlight" : ""}</div>
+        ${post.pinned ? '<div class="tag">Highlight</div>' : ""}
         <h3>${esc(post.title)}</h3>
         <p>${esc(post.teaser || post.content || "")}</p>
       </div>
@@ -79,9 +79,11 @@ function renderEditorial(posts = []) {
 
 async function loadPublicContent() {
   try {
-    const response = await fetch("/api/content", { cache: "no-store" });
+    const response = await fetch("/api/menu", { cache: "no-store" });
     if (!response.ok) throw new Error("content backend unavailable");
-    const snapshot = await response.json();
+    const menuSnapshot = await response.json();
+    const snapshot = menuSnapshot.content;
+    if (!snapshot) throw new Error("content snapshot unavailable");
     applyHomepage(snapshot);
     renderEditorial(snapshot.editorialPosts || []);
   } catch {
