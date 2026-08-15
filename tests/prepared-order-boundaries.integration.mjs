@@ -94,15 +94,31 @@ const createdResult = await rpc(
 assert.equal(createdResult.response.ok, true, JSON.stringify(createdResult.data));
 const created = Array.isArray(createdResult.data) ? createdResult.data[0] : createdResult.data;
 
-// D027: the reusable enum knows future origins, but public/server checkout remains web-only.
+// D027: the reusable enum knows future origins, but current checkout remains web-only.
 assert.equal(created.source, "web");
 
+const sourceMutation = await request(`/rest/v1/orders?id=eq.${created.id}`, {
+  method: "PATCH",
+  apiKey: serviceRoleKey,
+  bearerToken: serviceRoleKey,
+  body: { source: "counter" },
+});
+assert.equal(sourceMutation.response.ok, false, "order origin must stay immutable even for service-role writes");
+
 const itemResult = await request(
-  `/rest/v1/order_items?order_id=eq.${created.id}&select=effort_weight_snapshot`,
+  `/rest/v1/order_items?order_id=eq.${created.id}&select=id,effort_weight_snapshot`,
   { apiKey: serviceRoleKey, bearerToken: serviceRoleKey },
 );
 assert.equal(itemResult.response.ok, true, JSON.stringify(itemResult.data));
 assert.equal(Number(itemResult.data[0].effort_weight_snapshot), 1.75);
+
+const snapshotMutation = await request(`/rest/v1/order_items?id=eq.${itemResult.data[0].id}`, {
+  method: "PATCH",
+  apiKey: serviceRoleKey,
+  bearerToken: serviceRoleKey,
+  body: { effort_weight_snapshot: 7.25 },
+});
+assert.equal(snapshotMutation.response.ok, false, "persisted effort snapshot must be immutable");
 
 // D040: snapshot is database-owned and survives later product-weight changes.
 const changeEffort = await request(`/rest/v1/menu_products?id=eq.${productId}`, {
@@ -128,9 +144,10 @@ const invalidEffort = await request(`/rest/v1/menu_products?id=eq.${productId}`,
 });
 assert.equal(invalidEffort.response.ok, false, "zero effort weight must fail the positive metadata constraint");
 
-await request(`/rest/v1/menu_products?id=eq.${productId}`, {
+const cleanup = await request(`/rest/v1/menu_products?id=eq.${productId}`, {
   method: "PATCH",
   apiKey: serviceRoleKey,
   bearerToken: serviceRoleKey,
   body: { effort_weight: null },
 });
+assert.equal(cleanup.response.ok, true, JSON.stringify(cleanup.data));
