@@ -19,6 +19,7 @@ on:
       - "tests/slot-capacity.integration.mjs"
       - "tests/notification-outbox.integration.mjs"
       - "tests/modifier-backoffice.integration.mjs"
+      - "tests/allergen-labels.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -41,6 +42,7 @@ on:
       - "tests/slot-capacity.integration.mjs"
       - "tests/notification-outbox.integration.mjs"
       - "tests/modifier-backoffice.integration.mjs"
+      - "tests/allergen-labels.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
 
 concurrency:
@@ -95,9 +97,9 @@ jobs:
 
       - name: Verify Realtime publication membership
         run: |
-          published="$(docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select tablename from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' order by tablename")"
+          published="$(docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select tablename from pg_publication_tables where pubname='supabase_realtime' and schemaname in ('public') order by tablename")"
           printf '%s\n' "$published"
-          for table in orders ordering_settings snoozes menu_products modifier_groups modifier_options product_modifier_groups; do
+          for table in orders ordering_settings snoozes menu_products modifier_groups modifier_options product_modifier_groups allergens product_allergens modifier_option_allergens; do
             printf '%s\n' "$published" | grep -Fx "$table" >/dev/null || { echo "Missing from supabase_realtime: $table" >&2; exit 1; }
           done
 
@@ -151,6 +153,10 @@ jobs:
       - name: Prove modifier backoffice and role boundary
         id: modifier_backoffice
         run: node tests/modifier-backoffice.integration.mjs
+
+      - name: Prove structured allergen and dietary label flow
+        id: allergen_labels
+        run: node tests/allergen-labels.integration.mjs
 
       - name: Prove realtime readiness and backoffice role boundaries
         id: realtime_backoffice
