@@ -1,0 +1,82 @@
+name: Self-host Release
+
+on:
+  pull_request:
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "supabase/migrations/**"
+      - "infra/selfhost/**"
+      - "tests/selfhost-release.test.mjs"
+      - ".github/workflows/selfhost-release.yml"
+      - "package.json"
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "supabase/migrations/**"
+      - "infra/selfhost/**"
+      - "tests/selfhost-release.test.mjs"
+      - ".github/workflows/selfhost-release.yml"
+      - "package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  app-container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check release shell syntax
+        run: |
+          bash -n infra/selfhost/preflight.sh
+          bash -n infra/selfhost/apply-migrations.sh
+          bash -n infra/selfhost/backup-db.sh
+          bash -n infra/selfhost/restore-drill.sh
+          bash -n infra/selfhost/healthcheck.sh
+
+      - name: Build Mcello app image from Git
+        run: docker build -f infra/selfhost/Dockerfile -t mcello-app:${GITHUB_SHA} .
+
+      - name: Run container read-only and verify liveness
+        run: |
+          docker run -d --name mcello-app-release-smoke \
+            --read-only \
+            --tmpfs /tmp:size=64m \
+            --cap-drop ALL \
+            --security-opt no-new-privileges:true \
+            -p 127.0.0.1:4174:4173 \
+            mcello-app:${GITHUB_SHA}
+          trap 'docker rm -f mcello-app-release-smoke >/dev/null 2>&1 || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4174/api/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4174/api/health
+          curl --fail --silent http://127.0.0.1:4174/ >/dev/null
+          test "$(docker inspect -f '{{.Config.User}}' mcello-app-release-smoke)" = "node"
+          test "$(docker inspect -f '{{.HostConfig.ReadonlyRootfs}}' mcello-app-release-smoke)" = "true"
+
+      - name: Validate production compose and preflight contract
+        run: |
+          cat > /tmp/mcello-app.env <<'EOF'
+          NODE_ENV=production
+          PUBLIC_SITE_URL=https://mcello.ci.example
+          SUPABASE_URL=https://supabase.ci.example
+          SUPABASE_ANON_KEY=ci-anon-key-000000000000000000000000000000000000000000000000
+          SUPABASE_SERVICE_ROLE_KEY=ci-service-role-key-000000000000000000000000000000000000000000
+          MCELLO_LOCATION_ID=00000000-0000-4000-8000-000000000001
+          OTP_TTL_SECONDS=300
+          EOF
+          MCELLO_APP_ENV_FILE=/tmp/mcello-app.env \
+            docker compose -f infra/selfhost/compose.app.yml config > /tmp/mcello-compose.rendered.yml
+          grep -F '127.0.0.1' /tmp/mcello-compose.rendered.yml >/dev/null
+          grep -F 'read_only: true' /tmp/mcello-compose.rendered.yml >/dev/null
+          bash infra/selfhost/preflight.sh /tmp/mcello-app.env
