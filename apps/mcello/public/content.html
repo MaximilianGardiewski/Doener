@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello Admin — Inhalte & Homepage</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .cms-shell{width:min(calc(100% - 24px),1240px);margin:auto;padding:24px 0 90px}.cms-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:20px 0}.cms-top h1{font-size:42px;margin-right:auto}.cms-grid{display:grid;grid-template-columns:420px 1fr;gap:18px;align-items:start}.panel{background:#161613;border:1px solid rgba(255,255,255,.07);border-radius:24px;padding:18px}.panel h2{margin:4px 0 14px}.cms-form{display:grid;gap:10px}.cms-form input,.cms-form textarea,.cms-form select{width:100%;background:#171714;color:#f3eadf;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}.cms-form textarea{min-height:92px;resize:vertical}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.checks{display:flex;gap:14px;flex-wrap:wrap}.checks label{display:flex;gap:7px;align-items:center}.cms-btn{border:1px solid var(--line);background:#29251c;color:var(--gold-2);border-radius:11px;padding:9px 12px;cursor:pointer}.cms-btn.primary{background:var(--gold);color:#15120d;border-color:transparent}.cms-btn.danger{color:#efaea3}.cms-btn:disabled{opacity:.45}.actions{display:flex;gap:8px;flex-wrap:wrap}.message{min-height:24px;color:var(--muted)}.section-row,.post-card{border:1px solid rgba(255,255,255,.07);background:#20201b;border-radius:16px;padding:12px;margin:10px 0}.section-row{display:grid;grid-template-columns:1fr 90px auto;gap:10px;align-items:center}.section-row small,.help{color:var(--muted);font-size:13px;line-height:1.45}.post-card summary{cursor:pointer;display:flex;justify-content:space-between;gap:12px;list-style:none}.post-card summary::-webkit-details-marker{display:none}.badge{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}
+    @media(max-width:900px){.cms-grid{grid-template-columns:1fr}.cms-top h1{font-size:34px}.form-row,.section-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">Lokaler Adminbereich · Editorial & Homepage · keine erfundenen Mcello-Inhalte</div>
+  <main class="cms-shell">
+    <div class="cms-top">
+      <h1>Inhalte & Homepage</h1>
+      <a class="pill" href="/admin.html">Speisekarte</a>
+      <a class="pill" href="/schedule.html">Zeiten</a>
+      <a class="pill" href="/labels.html">Allergene & Tags</a>
+      <a class="pill" href="/">Public</a>
+    </div>
+    <div class="notice">Publikationszeit und Eventzeit sind getrennt. So kann ein Event früh angekündigt werden, ohne sein tatsächliches Datum mit der Veröffentlichungssteuerung zu vermischen. Medien/Galerie folgen in einem eigenen freigabefähigen Layer.</div>
+    <p class="message" id="contentMessage"></p>
+    <div class="cms-grid">
+      <section class="panel">
+        <h2>Homepage-Module</h2>
+        <p class="help">Kontrollierte Module können ein-/ausgeschaltet und über Sortierwerte neu angeordnet werden. Fehlende Konfiguration bedeutet weiterhin den sicheren Standardaufbau.</p>
+        <div id="sectionAdmin"></div>
+        <button class="cms-btn primary" id="saveSections" type="button">Homepage speichern</button>
+      </section>
+      <section class="panel">
+        <div style="display:flex;gap:12px;align-items:center"><h2 style="margin-right:auto">Aktuelles & Events</h2><button class="cms-btn primary" id="newPost" type="button">+ Beitrag</button></div>
+        <p class="help">News · Event · Special · Presse. Bilder werden noch nicht in diesem Slice bearbeitet.</p>
+        <div id="postAdmin"></div>
+      </section>
+    </div>
+  </main>
+  <script type="module" src="/content.js"></script>
+</body>
+</html>
