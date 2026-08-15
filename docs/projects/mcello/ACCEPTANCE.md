@@ -38,7 +38,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] One-click accept/time -> preparation (`D010`)
 - [x] Quick reject reasons (`D011`)
 - [x] Ready + completed states (`D010`)
-- [ ] Rush/pause and item/ingredient snooze (`D012`, `D013`)
+- [x] Rush/pause and item/ingredient snooze (`D012`, `D013`)
 - [x] Planned future lane + configurable activation lead (`D055`)
 - [x] +5/+10/+15/custom delay + customer update (`D056`)
 

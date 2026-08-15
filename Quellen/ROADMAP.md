@@ -20,7 +20,7 @@ Evidence-Ledger: `docs/projects/mcello/V1_EVIDENCE.md`
 
 - [x] PR #10 hat den vorhandenen V1-Stand in VERIFIED/PARTIAL/OPEN/PREPARED getrennt und nur belegte Acceptance-Haken geschlossen.
 - [x] Merge-Commit PR #10: `2eddd26fca31465c2b7c32f7f4aefaa984fd6cea`.
-- [x] D056 Custom Delay wird auf `agent/mcello-custom-delay` als erste echte Restlücke geschlossen: +5/+10/+15 bleiben, zusätzlich frei 1–120 Minuten; Server validiert unabhängig; ETA und Customer-Update-Outbox werden Ende-zu-Ende geprüft.
+- [x] D056 Custom Delay — +5/+10/+15 sowie frei 1–120 Minuten; Server validiert unabhängig; ETA und Customer-Update-Outbox Ende-zu-Ende geprüft.
 
 ### Bereits VERIFIED
 
@@ -33,6 +33,7 @@ Evidence-Ledger: `docs/projects/mcello/V1_EVIDENCE.md`
 - [x] D053 — konfigurierbarer Default-Timeout 5 Minuten
 - [x] D010 — Accept/Preparing/Ready/Completed
 - [x] D011 — Quick-Reject-Gründe
+- [x] D012/D013 — eigenständiger Rush-Modus + harte Pause + Produkt-/Modifier-/Zutaten-Snooze; Rush bleibt bestellbar, addiert nur auf ASAP einen admin-konfigurierten DB-Puffer und verschiebt keine Vorbestellslots (PR #15).
 - [x] D014/D049 — Alarm + Multi-Device Realtime
 - [x] D055 — Geplant-Lane + Preparation Lead
 - [x] D056 — +5/+10/+15/custom Delay, ETA-Update und delayed Notification-Outbox
@@ -53,7 +54,6 @@ Evidence-Ledger: `docs/projects/mcello/V1_EVIDENCE.md`
 
 - [ ] D003 — Contract WhatsApp-primary/SMS-fallback vorhanden; echter freigegebener Production-Transport fehlt.
 - [ ] D037/D044/D052 — Closed/Pause/Cutoff technisch korrekt; D037-Fallback Telefon/WhatsApp braucht bestätigte Kontaktdaten.
-- [ ] D012/D013 — Pause + Snooze vorhanden; eigenständige Rush-Semantik fehlt.
 - [ ] D015 — Status/Progress/Summary vorhanden; Pickup-Adresse fehlt.
 - [ ] D016 — Notification-Outbox vorhanden; Production WhatsApp/SMS-Transport fehlt.
 - [ ] D017 — Route + Call brauchen bestätigte Adresse/Telefonnummer.
@@ -62,10 +62,9 @@ Evidence-Ledger: `docs/projects/mcello/V1_EVIDENCE.md`
 
 ## P2 — Nächste echte Implementierungslücken
 
-1. **D012 Rush Mode** — Semantik so definieren, dass keine ungeklärten Betriebsregeln erfunden werden.
-2. **D003/D016 Production Messaging** — erst nach expliziter Freigabe eines Providers und unvermeidbarer Carrier-/Providerkosten.
-3. **D015/D017 Kontakt/Anfahrt** — nach first-party Bestätigung von Adresse und Telefonnummer.
-4. **D020/D007/D008 Admin-/Menu-Gesamtabnahme** — nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
+1. **D003/D016 Production Messaging** — erst nach expliziter Freigabe eines Providers und unvermeidbarer Carrier-/Providerkosten.
+2. **D015/D017 Kontakt/Anfahrt** — nach first-party Bestätigung von Adresse und Telefonnummer.
+3. **D020/D007/D008 Admin-/Menu-Gesamtabnahme** — nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
 
 ## P3 — Public Experience / Showcase-Qualität
 
