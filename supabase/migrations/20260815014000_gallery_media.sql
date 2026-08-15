@@ -113,18 +113,13 @@ for select to authenticated
 using ((select public.has_role((select auth.uid()), 'admin')));
 
 -- A private bucket is prepared by scripts/bootstrap-local-staff.mjs through the
--- Storage API. Authenticated admins may only operate image objects below a
--- real location's <location-id>/gallery/ prefix.
+-- Storage API. Only authenticated admins may operate this private bucket.
+-- The registration RPC below validates the exact location/gallery path,
+-- extension, MIME type and size before an object can enter public content.
 create policy "mcello media admin insert" on storage.objects
 for insert to authenticated
 with check (
   bucket_id = 'mcello-media'
-  and (storage.foldername(name))[2] = 'gallery'
-  and lower(storage.extension(name)) in ('jpg', 'jpeg', 'png', 'webp', 'avif')
-  and exists (
-    select 1 from public.locations l
-    where l.id::text = (storage.foldername(name))[1]
-  )
   and (select public.has_role((select auth.uid()), 'admin'))
 );
 
@@ -132,11 +127,6 @@ create policy "mcello media admin select" on storage.objects
 for select to authenticated
 using (
   bucket_id = 'mcello-media'
-  and (storage.foldername(name))[2] = 'gallery'
-  and exists (
-    select 1 from public.locations l
-    where l.id::text = (storage.foldername(name))[1]
-  )
   and (select public.has_role((select auth.uid()), 'admin'))
 );
 
@@ -144,21 +134,10 @@ create policy "mcello media admin update" on storage.objects
 for update to authenticated
 using (
   bucket_id = 'mcello-media'
-  and (storage.foldername(name))[2] = 'gallery'
-  and exists (
-    select 1 from public.locations l
-    where l.id::text = (storage.foldername(name))[1]
-  )
   and (select public.has_role((select auth.uid()), 'admin'))
 )
 with check (
   bucket_id = 'mcello-media'
-  and (storage.foldername(name))[2] = 'gallery'
-  and lower(storage.extension(name)) in ('jpg', 'jpeg', 'png', 'webp', 'avif')
-  and exists (
-    select 1 from public.locations l
-    where l.id::text = (storage.foldername(name))[1]
-  )
   and (select public.has_role((select auth.uid()), 'admin'))
 );
 
@@ -166,11 +145,6 @@ create policy "mcello media admin delete" on storage.objects
 for delete to authenticated
 using (
   bucket_id = 'mcello-media'
-  and (storage.foldername(name))[2] = 'gallery'
-  and exists (
-    select 1 from public.locations l
-    where l.id::text = (storage.foldername(name))[1]
-  )
   and (select public.has_role((select auth.uid()), 'admin'))
 );
 

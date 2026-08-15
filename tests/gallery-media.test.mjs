@@ -27,6 +27,8 @@ test("gallery storage remains private and admin-scoped", () => {
   assert.match(migration, /create policy "mcello media admin update"/);
   assert.match(migration, /create policy "mcello media admin delete"/);
   assert.match(migration, /public\.has_role\(\(select auth\.uid\(\)\), 'admin'\)/);
+  assert.match(migration, /invalid gallery storage path/);
+  assert.match(migration, /invalid gallery image type or size/);
   assert.doesNotMatch(admin, /SUPABASE_SERVICE_ROLE_KEY|serviceRoleKey/);
 });
 
