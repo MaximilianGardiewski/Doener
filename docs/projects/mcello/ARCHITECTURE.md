@@ -62,6 +62,24 @@ privileged service writes that bypass RLS. A future multi-location shell can
 therefore replace the single-location resolver without changing the core entity
 and persistence contracts.
 
+## Payment boundary
+
+`packages/payments` owns provider-neutral payment semantics. Mcello V1 uses
+`PayOnSiteOnlyPaymentPolicy`: after server-side cart repricing, checkout creates
+a payment snapshot for the exact order amount with `pay_on_site`,
+`cash_or_card`, `due_on_site` and `EUR`. A client-requested `online` mode is
+rejected by the application boundary before an order is persisted.
+
+PostgreSQL independently defaults existing/new V1 orders to the same state and
+`orders_v1_payment_boundary` prevents online/provider payment state even for
+privileged service-role writes. The public bearer-token status contract exposes
+only payment mode/method/status/currency; provider references are never public.
+The customer UI renders this as `Vor Ort · bar oder Karte`.
+
+A future online implementation plugs into the `OnlinePaymentProvider` contract
+and requires an explicit database migration that replaces the V1 constraint.
+No concrete provider, SDK, checkout URL or paid service is part of V1.
+
 ## Lebtig reuse candidates
 - profiles + explicit role rows
 - bootstrap admin invariant
