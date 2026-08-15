@@ -4,7 +4,7 @@ Stand: 2026-08-15
 
 Diese Roadmap ist eine Arbeitsreihenfolge. Bindend bleibt das Decision Ledger. Ein offener Acceptance-Haken bedeutet nicht automatisch, dass keinerlei Code existiert; vorhandene Implementierung muss zuerst gegen Tests und Decision Ledger abgeglichen werden, bevor der Haken geändert wird.
 
-## P0 — Aktuellen Payment-Baustein abschließen
+## P0 — Payment Boundary abgeschlossen
 
 **D004 Payment Boundary**
 
@@ -14,33 +14,33 @@ Diese Roadmap ist eine Arbeitsreihenfolge. Bindend bleibt das Decision Ledger. E
 - [x] Supabase-Spalten + DB-Constraint gegen Online-Payment
 - [x] öffentlicher Statusvertrag ohne Provider-Geheimnisse
 - [x] Kundenstatus: `Vor Ort · bar oder Karte`
-- [x] Domain-/Struktur-/Integrationstests im Branch
-- [ ] GitHub Actions vollständig grün
-- [x] Diff intern reviewt; externer Codex-Review derzeit durch Nutzungslimit blockiert
-- [ ] Merge in `bootstrap/business-web-factory`
-- [ ] **kein** Production-Deploy in diesem Schritt
+- [x] Domain-/Struktur-/Integrationstests
+- [x] GitHub Actions grün
+- [x] PR #7 gemerged in `bootstrap/business-web-factory`
+- [x] kein Production-Deploy durchgeführt
 
-## P1 — Offene oder noch zu verifizierende PREPARE_NOW-Grenzen
+## P1 — PREPARE_NOW-Grenzen
 
-Diese Punkte sollen die Plattform später vor Umbauten schützen, aber noch keine Future-UI freischalten. Bereits vorhandene Contracts werden nicht neu gebaut, sondern zuerst gegen Decision Ledger und Tests reconciled.
-
-1. **D006 Delivery Boundary — noch auszubauen**
+1. **D006 Delivery Boundary — nächster offener Architekturbaustein**
    - vorhandenen `pickup | delivery` Fulfillment-Contract beibehalten
    - Delivery-Zone/PLZ/Radius-Contract vorbereiten
    - DB darf V1-Delivery weiterhin nicht versehentlich aktivieren
    - Tests für V1-Sperre + spätere Erweiterbarkeit
 
-2. **D027 Order Source Boundary — Contract vorhanden, Acceptance verifizieren**
-   - `web | counter | table` existiert bereits in Domain und PostgreSQL
-   - expliziten Invariant-/Boundary-Nachweis ergänzen bzw. vorhandenen Nachweis zuordnen
-   - Mcello V1 bleibt customer-online only
-   - keine Counter-/Table-UI vorziehen
+2. **D027 Order Source Boundary — umgesetzt, PR/CI ausstehend**
+   - `web | counter | table` ist in Domain und PostgreSQL vorhanden
+   - Mcello V1 Checkout besitzt keinen Source-Selector und persistiert selbst `web`
+   - Manipulations-/Boundary-Test ergänzt
+   - keine Counter-/Table-UI vorgezogen
 
-3. **D040 Capacity Effort Boundary — technisch bereits vorbereitet, Acceptance reconciliieren**
-   - `menu_products.effort_weight numeric(8,2)` ist bereits vorhanden
-   - Schema-Test `future effort capacity is prepared but optional` ist bereits grün
-   - prüfen, ob dies D040 vollständig erfüllt, dann Acceptance statt Neuimplementierung aktualisieren
-   - bestehende 15-Minuten-Slot-Kapazität unverändert lassen
+3. **D040 Capacity Effort Boundary — umgesetzt, PR/CI ausstehend**
+   - optionales `menu_products.effort_weight` bleibt Future-Metadatum
+   - `MenuProduct.effortWeight` und Order-Item-Snapshot ergänzt
+   - PostgreSQL setzt `effort_weight_snapshot` aus dem echten Produkt statt aus Clientdaten
+   - V1-Kapazität bleibt strikt count-basiert
+   - echter Supabase-Integrationstest ergänzt
+
+Nach Merge von D027/D040 bleibt unter den `PREPARE_NOW_IMPLEMENT_LATER`-Architekturgrenzen als nächster klarer Ausbaupunkt D006 Delivery.
 
 ## P2 — Acceptance-Reconciliation für vorhandene V1-Funktionalität
 
