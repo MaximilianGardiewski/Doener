@@ -1,3 +1,9 @@
+const motionStylesheet = document.createElement("link");
+motionStylesheet.rel = "stylesheet";
+motionStylesheet.href = "/motion.css";
+motionStylesheet.dataset.mcelloMotion = "true";
+document.head.appendChild(motionStylesheet);
+
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const revealSelector = [
   ".hero-copy",
