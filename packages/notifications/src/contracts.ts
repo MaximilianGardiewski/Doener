@@ -35,6 +35,9 @@ export interface OrderNotificationProvider {
     mobile: string;
     orderId: string;
     statusUrl: string;
+    /** Stable outbox dedupe key. Real transports should forward this to
+     * provider-native idempotency when available. */
+    idempotencyKey: string;
     messageData?: Record<string, string | number>;
   }): Promise<void>;
 }
