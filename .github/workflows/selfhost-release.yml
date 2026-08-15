@@ -32,13 +32,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check release shell syntax
+      - name: Check release shell and gateway syntax
         run: |
           bash -n infra/selfhost/preflight.sh
           bash -n infra/selfhost/apply-migrations.sh
           bash -n infra/selfhost/backup-db.sh
           bash -n infra/selfhost/restore-drill.sh
           bash -n infra/selfhost/healthcheck.sh
+          node --check infra/selfhost/container-entrypoint.mjs
 
       - name: Build Mcello app image from Git
         run: docker build -f infra/selfhost/Dockerfile -t mcello-app:${GITHUB_SHA} .
@@ -50,7 +51,7 @@ jobs:
             --tmpfs /tmp:size=64m \
             --cap-drop ALL \
             --security-opt no-new-privileges:true \
-            -p 127.0.0.1:4174:4173 \
+            -p 127.0.0.1:4174:8080 \
             mcello-app:${GITHUB_SHA}
           trap 'docker rm -f mcello-app-release-smoke >/dev/null 2>&1 || true' EXIT
           for attempt in {1..30}; do
@@ -59,7 +60,10 @@ jobs:
             fi
             sleep 1
           done
-          curl --fail --silent http://127.0.0.1:4174/api/health
+          if ! curl --fail --silent http://127.0.0.1:4174/api/health; then
+            docker logs mcello-app-release-smoke >&2 || true
+            exit 1
+          fi
           curl --fail --silent http://127.0.0.1:4174/ >/dev/null
           test "$(docker inspect -f '{{.Config.User}}' mcello-app-release-smoke)" = "node"
           test "$(docker inspect -f '{{.HostConfig.ReadonlyRootfs}}' mcello-app-release-smoke)" = "true"
@@ -78,5 +82,6 @@ jobs:
           MCELLO_APP_ENV_FILE=/tmp/mcello-app.env \
             docker compose -f infra/selfhost/compose.app.yml config > /tmp/mcello-compose.rendered.yml
           grep -F '127.0.0.1' /tmp/mcello-compose.rendered.yml >/dev/null
+          grep -F 'target: 8080' /tmp/mcello-compose.rendered.yml >/dev/null
           grep -F 'read_only: true' /tmp/mcello-compose.rendered.yml >/dev/null
           bash infra/selfhost/preflight.sh /tmp/mcello-app.env
