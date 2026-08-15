@@ -71,11 +71,13 @@ test("KDS displays effective rush ETAs but submits only existing base presets", 
 
 test("database adds rush only to ASAP acceptance and leaves preorder path separate", () => {
   hasAll(acceptance, [
-    "if current_order.requested_pickup_at is null then",
+    "current_order.requested_pickup_at is not null",
+    "ASAP order cannot be accepted from current state",
     "settings.override = 'rush'::public.shop_override",
     "effective_pickup_at := _accepted_pickup_at + make_interval(mins => applied_rush_minutes)",
     "Preorders",
     "staff_accept_requested_slot()",
+    "requested_pickup_at is null",
   ]);
   assert.doesNotMatch(acceptance, /update public\.orders[\s\S]*requested_pickup_at\s*=/i);
 });
