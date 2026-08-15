@@ -58,9 +58,9 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 
 ## Infrastructure / Portability
 - [x] Local development backend runs using Supabase CLI/Docker without a managed paid project (`D063`)
-- [ ] Staging/production path is reproducible on self-hosted infrastructure from Git + migrations (`D063`)
+- [x] Staging/production path is reproducible on self-hosted infrastructure from Git + migrations (`D063`)
 - [x] V1 does not depend on Lovable or Vercel to build, run or deploy (`D063`)
-- [ ] Production self-host plan includes TLS, secrets, firewalling, backups, restore test and monitoring (`D063`)
+- [x] Production self-host plan includes TLS, secrets, firewalling, backups, restore test and monitoring (`D063`)
 
 ## Prepared now
 - [x] Payment provider boundary (`D004`)

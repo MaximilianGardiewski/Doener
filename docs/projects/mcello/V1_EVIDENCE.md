@@ -42,6 +42,8 @@ Status:
 | D058 | `VERIFIED` | `apps/mcello/public/motion.css`, `apps/mcello/public/motion.js`, `tests/showcase-motion.test.mjs`, `tests/showcase-motion.browser.mjs`, `.github/workflows/ci.yml` | Zurückhaltende Reveal-/Hover-Motion nutzt nur Opacity/Transform und keine Endlosschleifen oder layout-treibenden Übergänge. Chromium beweist normale Progressive-Reveals sowie einen vollständig sichtbaren/statischen `prefers-reduced-motion: reduce`-Pfad; PWA-Shell cached den Motion-Layer mit. |
 | D063 (local backend) | `VERIFIED` | `supabase/config.toml`, `.github/workflows/supabase-integration.yml`, lokale Dev-Skripte | Vollständiger Backend-Rebuild läuft mit Supabase CLI/Docker ohne Managed-Supabase-Projekt. |
 | D063 (no Lovable/Vercel runtime dependency) | `VERIFIED` | Root `package.json`, `apps/*`, GitHub Actions | Build, Tests und lokale Runtime funktionieren aus Git/Node/Supabase; Lovable/Vercel sind keine notwendige Runtime. |
+| D063 (self-host release path) | `VERIFIED` | `infra/selfhost/Dockerfile`, `infra/selfhost/container-entrypoint.mjs`, `infra/selfhost/compose.app.yml`, `infra/selfhost/preflight.sh`, `infra/selfhost/apply-migrations.sh`, `.github/workflows/selfhost-release.yml`, `.github/workflows/selfhost-db-drill.yml` | Git baut einen non-root/read-only App-Container hinter Host-Loopback; Preflight erzwingt HTTPS/Secrets/sauberen Git-Stand. Der isolierte DB-Drill baut alle Migrationen neu und beweist den direkten `supabase db push --db-url ... --dry-run` Self-host-Pfad. |
+| D063 (production hardening/restore) | `VERIFIED` | `infra/selfhost/README.md`, `infra/selfhost/backup-db.sh`, `infra/selfhost/restore-drill.sh`, `infra/selfhost/healthcheck.sh`, `tests/selfhost-backup-restore.integration.sh` | Runbook deckt TLS, Gateway/Firewall, Secrets, gepinnten Supabase-Upstream, Backup-Retention/Off-host-Kopie und Monitoring ab. CI führt einen echten `pg_dump -> DROP -> pg_restore -> Sentinel` Roundtrip aus; Restore-Script ist destruktiv abgesichert und prüft `public.orders`. |
 
 ## Teilweise erfüllt — Haken bleiben bewusst offen
 
@@ -63,7 +65,6 @@ Diese Punkte werden nicht durch Backend-Fortschritt voreilig geschlossen:
 - D024/D025/D026 — finale Venue-/Story-/Community-Inszenierung mit echten Mcello-Fakten/Medien
 - D015/D017 — Pickup-Adresse, Route und Call erst mit bestätigten first-party Kontaktdaten
 - D036 ist technisch verifiziert, aber der **Go-live** bleibt trotzdem durch `owner_confirmed=false` der provisional Inhalte blockiert
-- D063 — produktiver Self-Host-Plan mit TLS, Secrets, Firewall, Backup/Restore und Monitoring bleibt Release-Hardening
 
 ## Prepared-now Grenzen
 
