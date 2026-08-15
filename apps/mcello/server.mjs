@@ -205,6 +205,16 @@ function validSnoozeUntil(value) {
   return date.toISOString();
 }
 
+function publicMenuAt(url) {
+  const raw = url.searchParams.get("at");
+  if (!raw) return new Date().toISOString();
+  const epoch = Date.parse(raw);
+  const now = Date.now();
+  if (!Number.isFinite(epoch)) return null;
+  if (epoch < now - 5 * 60_000 || epoch > now + 14 * 24 * 60 * 60_000) return null;
+  return new Date(epoch).toISOString();
+}
+
 async function mutateSnooze(rpc, body, undo = false) {
   const type = String(body.type ?? "");
   const id = String(body.id ?? "");
@@ -241,10 +251,15 @@ async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/menu") {
     const rpc = publicRpc();
     if (!rpc) return sendUnavailable(res), true;
+    const at = publicMenuAt(url);
+    if (!at) {
+      sendJson(res, 400, { error: "INVALID_MENU_TIME" });
+      return true;
+    }
     try {
       const menu = await rpc.rpc("get_public_menu", {
         _location_id: DEV_LOCATION_ID,
-        _at: new Date().toISOString(),
+        _at: at,
       });
       sendJson(res, 200, menu);
     } catch (error) {
@@ -457,7 +472,7 @@ async function handleApi(req, res, url) {
     }
     const body = await readJson(req);
     const override = String(body.override ?? "");
-    if (!new Set(["auto", "force_open", "force_closed", "pause", "today_closed"]).has(override)) {
+    if (!new Set(["auto", "force_closed", "pause", "today_closed"]).has(override)) {
       sendJson(res, 400, { error: "INVALID_OVERRIDE" });
       return true;
     }
