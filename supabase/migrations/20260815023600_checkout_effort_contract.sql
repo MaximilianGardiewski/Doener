@@ -1,6 +1,6 @@
 -- D027/D040 contract exposure. Order-source enum already contains web/counter/table;
--- Mcello V1 checkout still hardcodes web. Checkout product now exposes the
--- optional effort metadata so it can be carried into the order snapshot.
+-- Mcello V1 checkout still hardcodes web. Checkout product preserves the full
+-- current allergen/label contract and adds optional effort metadata.
 
 comment on type public.order_source is
   'Reusable order-origin contract: web now; counter/table reserved for later interfaces.';
@@ -47,6 +47,15 @@ as $$
       where s.product_id = p.id and s.until_at > _at
     ),
     'dietaryTags', to_jsonb(p.dietary_tags),
+    'allergens', coalesce((
+      select jsonb_agg(
+        jsonb_build_object('id', a.id, 'code', a.code, 'name', a.name)
+        order by coalesce(a.code, ''), a.name
+      )
+      from public.product_allergens pa
+      join public.allergens a on a.id = pa.allergen_id
+      where pa.product_id = p.id
+    ), '[]'::jsonb),
     'ownerConfirmed', p.owner_confirmed,
     'sourceNote', p.source_note,
     'effortWeight', p.effort_weight,
@@ -64,6 +73,15 @@ as $$
                 'name', o.name,
                 'priceDeltaCents', o.price_delta_cents,
                 'defaultSelected', o.default_selected,
+                'allergens', coalesce((
+                  select jsonb_agg(
+                    jsonb_build_object('id', a.id, 'code', a.code, 'name', a.name)
+                    order by coalesce(a.code, ''), a.name
+                  )
+                  from public.modifier_option_allergens moa
+                  join public.allergens a on a.id = moa.allergen_id
+                  where moa.option_id = o.id
+                ), '[]'::jsonb),
                 'soldOut', exists (
                   select 1 from public.snoozes s
                   where s.modifier_option_id = o.id and s.until_at > _at
