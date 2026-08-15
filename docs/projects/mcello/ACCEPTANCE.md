@@ -5,7 +5,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 ## Brand/Public
 - [ ] Modern Warm Premium visual system (`D001`, `D029`)
 - [ ] Real Mcello media with production rights confirmed; no fake documentary imagery (`D024`, `D025`)
-- [ ] Public navigation and emphasized order CTA (`D030`)
+- [x] Public navigation and emphasized order CTA (`D030`)
 - [ ] Homepage hero, bestseller quick-order, community/news/events, story/team (`D024`)
 - [x] Installable browser-compatible PWA (`D060`)
 - [ ] Showcase-grade motion without harming usability (`D058`)
