@@ -47,13 +47,14 @@ export class SupabaseSlotReader implements SlotReader {
     this.rpcClient = rpcClient;
   }
 
-  async getSlotCapacity(locationId: string, pickupAt: string): Promise<{
+  async getSlotCapacity(locationId: string, pickupAt: string, excludeOrderId?: string): Promise<{
     capacity: number;
     acceptedOrderCount: number;
   }> {
     return this.rpcClient.rpc("server_get_slot_capacity", {
       _location_id: locationId,
       _pickup_at: pickupAt,
+      _exclude_order_id: excludeOrderId ?? null,
     });
   }
 }
