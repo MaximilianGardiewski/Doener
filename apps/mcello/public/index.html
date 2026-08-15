@@ -52,8 +52,8 @@
     </section>
 
     <section class="section" id="ueber"><div class="shell two-col"><article class="story-card"><img src="/media/placeholder.svg" alt="" /><div class="story-copy"><div class="kicker">Das Lokal</div><h3>Mehr Treffpunkt als Bestellseite.</h3><p>Mcello wird als lokaler Ort mit Persönlichkeit, Atmosphäre und Auswahl inszeniert. Das Bestellsystem ist technisch stark, aber nicht die ganze Marke.</p></div></article><article class="story-card"><img src="/media/placeholder.svg" alt="" /><div class="story-copy"><div class="kicker">Qualität & Auswahl</div><h3>Food, Bistro, frische Säfte.</h3><p>Konkrete Claims und Originalmedien werden erst nach Freigabe aus dem CMS ausgespielt.</p></div></article></div></section>
-    <section class="section" id="aktuelles"><div class="shell"><div class="section-head"><div><div class="kicker">Aktuelles & Events</div><h2>Mcello passiert vor Ort.</h2></div><p>News, Events, Specials und Presse bekommen Zeitsteuerung und Homepage-Pinning.</p></div><div class="news-stack"><article class="news-card"><img src="/media/placeholder.svg" alt="" /><div><div class="tag">Event · CMS-Demo</div><h3>Events mit eigenem Auftritt</h3><p>Start-/Enddatum, Highlight und Bild — ohne Entwickler.</p></div></article><article class="news-card"><img src="/media/placeholder.svg" alt="" /><div><div class="tag">Special · CMS-Demo</div><h3>Specials direkt auf die Startseite</h3><p>Der Inhaber entscheidet, was gerade prominent erscheint.</p></div></article></div></div></section>
-    <section class="section" id="galerie"><div class="shell"><div class="section-head"><div><div class="kicker">Galerie</div><h2>Echte Medien, sauber verwaltet.</h2></div><p>Food · Lokal · Team · Events. Der öffentliche Repo enthält vorerst keine Originalfotos; der Media-Layer folgt mit dem Backend-Slice.</p></div><div class="gallery"><img src="/media/placeholder.svg" alt="" /><img src="/media/placeholder.svg" alt="" /><img src="/media/placeholder.svg" alt="" /><img src="/media/placeholder.svg" alt="" /><img src="/media/placeholder.svg" alt="" /></div></div></section>
+    <section class="section" id="aktuelles"><div class="shell"><div class="section-head"><div><div class="kicker">Aktuelles & Events</div><h2>Mcello passiert vor Ort.</h2></div><p>Veröffentlichte News, Events, Specials und Presse werden hier aus dem CMS ausgespielt.</p></div><div class="news-stack" id="newsStack"><div class="notice">Aktuell sind keine veröffentlichten Meldungen hinterlegt.</div></div></div></section>
+    <section class="section" id="galerie"><div class="shell"><div class="section-head"><div><div class="kicker">Galerie</div><h2>Echte Medien, sauber verwaltet.</h2></div><p>Food · Lokal · Team · Events. Der öffentliche Repo enthält vorerst keine Originalfotos; der Media-Layer folgt als eigener Freigabe-Slice.</p></div><div class="gallery"><img src="/media/placeholder.svg" alt="" /><img src="/media/placeholder.svg" alt="" /><img src="/media/placeholder.svg" alt="" /><img src="/media/placeholder.svg" alt="" /><img src="/media/placeholder.svg" alt="" /></div></div></section>
     <section class="section" id="kontakt"><div class="shell"><div class="section-head"><div><div class="kicker">Kontakt & Anfahrt</div><h2>Direkt zu Mcello.</h2></div><p>Adresse, Telefon, WhatsApp und Öffnungszeiten werden als dynamische Business-Daten gepflegt und vor Veröffentlichung bestätigt.</p></div><div class="story-card story-copy"><h3>Bad Krozingen</h3><p>Kontakt- und Öffnungsdaten werden first-party bestätigt, bevor Route/Telefon/WhatsApp öffentlich verdrahtet werden.</p><div class="hero-actions"><a class="pill" href="#bestellen">Speisekarte</a></div></div></div></section>
   </main>
 
@@ -86,7 +86,7 @@
       <label class="field"><span>Vorname</span><input id="checkoutFirstName" autocomplete="given-name" maxlength="80" placeholder="Vorname" /></label>
       <label class="field"><span>Mobilnummer</span><input id="checkoutMobile" inputmode="tel" autocomplete="tel" placeholder="+49 …" /></label>
       <label class="field"><span>Abholung</span><select id="pickupMode"><option value="asap">So schnell wie möglich</option><option value="later">Für später</option></select></label>
-      <label class="field hidden" id="pickupAtField"><span>Gewünschter Zeitpunkt</span><input id="pickupAt" type="datetime-local" /></label>
+      <label class="field hidden" id="pickupAtField"><span>Verfügbarer Abholslot</span><select disabled><option>Slots werden geladen …</option></select></label>
       <label class="field"><span>Optionaler Bestellhinweis</span><textarea id="checkoutComment" rows="2" placeholder="Hinweis für die gesamte Bestellung"></textarea></label>
       <div class="hero-actions" style="margin-top:14px"><button class="primary" id="requestOtp">Nummer verifizieren</button></div>
       <div id="otpPanel" class="hidden">
@@ -99,5 +99,6 @@
   </aside>
 
   <script type="module" src="/app.js"></script>
+  <script type="module" src="/public-content.js"></script>
 </body>
 </html>
