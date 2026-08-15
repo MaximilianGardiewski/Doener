@@ -282,6 +282,75 @@ async function mutateSnooze(rpc, body, undo = false) {
   });
 }
 
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function validOrderEditToken(value) {
+  const token = String(value ?? "").trim();
+  return uuidPattern.test(token) ? token : null;
+}
+
+function boundedText(value, maxLength) {
+  const text = String(value ?? "").trim();
+  if (text.length > maxLength) throw new Error("text too long");
+  return text || null;
+}
+
+function normalizedEditPickupAt(value) {
+  if (value == null || value === "") return null;
+  const epoch = Date.parse(String(value));
+  const now = Date.now();
+  if (!Number.isFinite(epoch) || epoch <= now || epoch > now + 14 * 24 * 60 * 60_000) {
+    throw new Error("invalid pickup time");
+  }
+  return new Date(epoch).toISOString();
+}
+
+function normalizePendingEditPayload(body) {
+  const forbidden = [
+    "locationId", "mobile", "customerFirstName", "source", "fulfillment", "fulfillmentType",
+    "state", "payment", "paymentMode", "orderNumber", "submittedAt", "totalCents",
+  ];
+  if (forbidden.some((key) => Object.hasOwn(body, key))) throw new Error("identity field is immutable");
+  if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 50) throw new Error("invalid items");
+
+  const items = body.items.map((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error("invalid item");
+    const productId = String(item.productId ?? "").trim();
+    const quantity = Number(item.quantity);
+    if (!uuidPattern.test(productId) || !Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
+      throw new Error("invalid item identity or quantity");
+    }
+    if (!Array.isArray(item.selections) || item.selections.length > 30) throw new Error("invalid selections");
+
+    const seenGroups = new Set();
+    const selections = item.selections.map((selection) => {
+      if (!selection || typeof selection !== "object" || Array.isArray(selection)) throw new Error("invalid selection");
+      const groupId = String(selection.groupId ?? "").trim();
+      if (!uuidPattern.test(groupId) || seenGroups.has(groupId)) throw new Error("invalid or duplicate modifier group");
+      seenGroups.add(groupId);
+      if (!Array.isArray(selection.optionIds) || selection.optionIds.length > 30) throw new Error("invalid option ids");
+      const optionIds = selection.optionIds.map((id) => String(id ?? "").trim());
+      if (optionIds.some((id) => !uuidPattern.test(id)) || new Set(optionIds).size !== optionIds.length) {
+        throw new Error("invalid or duplicate modifier option");
+      }
+      return { groupId, optionIds };
+    });
+
+    return {
+      productId,
+      quantity,
+      selections,
+      comment: boundedText(item.comment, 500),
+    };
+  });
+
+  return {
+    comment: boundedText(body.comment, 1000),
+    requestedPickupAt: normalizedEditPickupAt(body.requestedPickupAt),
+    items,
+  };
+}
+
 async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/health") {
     sendJson(res, 200, {
@@ -521,6 +590,53 @@ async function handleApi(req, res, url) {
       sendJson(res, 200, status);
     } catch {
       sendJson(res, 409, { error: "ORDER_NOT_CANCELLABLE" });
+    }
+    return true;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/order-edit") {
+    const rpc = serviceRpc();
+    if (!rpc) return sendUnavailable(res), true;
+    const token = validOrderEditToken(url.searchParams.get("token"));
+    if (!token) {
+      sendJson(res, 400, { error: "INVALID_ORDER_TOKEN" });
+      return true;
+    }
+    try {
+      const context = await rpc.rpc("server_get_pending_order_edit_context", { _public_token: token });
+      if (!context || context.state !== "waiting_for_acceptance") throw new Error("not editable");
+      sendJson(res, 200, context);
+    } catch {
+      sendJson(res, 409, { error: "ORDER_NOT_EDITABLE" });
+    }
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/order-edit") {
+    const rpc = serviceRpc();
+    if (!rpc) return sendUnavailable(res), true;
+    const body = await readJson(req);
+    const token = validOrderEditToken(body.token);
+    if (!token) {
+      sendJson(res, 400, { error: "INVALID_ORDER_TOKEN" });
+      return true;
+    }
+    try {
+      const payload = normalizePendingEditPayload(body);
+      const status = await rpc.rpc("server_replace_pending_order", {
+        _public_token: token,
+        _payload: payload,
+      });
+      sendJson(res, 200, {
+        ...status,
+        statusUrl: `/status.html?token=${encodeURIComponent(token)}`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      const invalidBody = /invalid|immutable|too long|duplicate/i.test(message);
+      sendJson(res, invalidBody ? 400 : 409, {
+        error: invalidBody ? "INVALID_ORDER_EDIT" : "ORDER_NOT_EDITABLE_OR_INVALID",
+      });
     }
     return true;
   }
