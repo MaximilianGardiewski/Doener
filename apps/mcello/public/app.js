@@ -7,6 +7,7 @@ const $ = (selector) => document.querySelector(selector);
 const state = {
   categories: [],
   items: [],
+  crossSellRules: [],
   categoryId: null,
   cart: loadCart(),
   activeProduct: null,
@@ -130,6 +131,7 @@ function renderCart() {
       saveCart();
     };
   });
+  renderCartRecommendations();
   updateCheckoutControls();
 }
 
@@ -156,6 +158,86 @@ function productBadge(product) {
   if (product.soldOut) return `<span class="availability-badge bad">${slotScoped ? "Für diesen Slot ausverkauft" : "Heute ausverkauft"}</span>`;
   if (product.availableNow === false) return `<span class="availability-badge">${slotScoped ? "Für diesen Abholslot nicht verfügbar" : "Aktuell nicht verfügbar"}</span>`;
   return `<span class="availability-badge good">${slotScoped ? "Für diesen Abholslot konfigurierbar" : "Online konfigurierbar"}</span>`;
+}
+
+function selectedOptions(selections = []) {
+  return new Set(selections.flatMap((selection) => selection.optionIds || []));
+}
+
+function recommendationProducts(product, selections = [], limit = 4) {
+  if (!product) return [];
+  const recommendedIds = [];
+  const seen = new Set([product.id, ...state.cart.map((line) => line.productId)]);
+  const optionIds = selectedOptions(selections);
+  const append = (id) => {
+    if (!id || seen.has(id) || recommendedIds.length >= limit) return;
+    if (!state.items.some((candidate) => candidate.id === id)) return;
+    seen.add(id);
+    recommendedIds.push(id);
+  };
+
+  for (const id of product.crossSellIds || []) append(id);
+  for (const rule of state.crossSellRules) {
+    if (recommendedIds.length >= limit) break;
+    const matches = (rule.triggerCategoryId && rule.triggerCategoryId === product.categoryId)
+      || (rule.triggerModifierOptionId && optionIds.has(rule.triggerModifierOptionId));
+    if (!matches) continue;
+    const ruleTargets = rule.suggestedProductId
+      ? [rule.suggestedProductId]
+      : state.items.filter((candidate) => candidate.categoryId === rule.suggestedCategoryId).map((candidate) => candidate.id);
+    for (const id of ruleTargets.slice(0, Number(rule.maxSuggestions || 3))) append(id);
+  }
+
+  return recommendedIds.map((id) => state.items.find((candidate) => candidate.id === id)).filter(Boolean);
+}
+
+function bindRecommendationButtons(target) {
+  target.querySelectorAll("[data-recommended-product]").forEach((button) => {
+    button.onclick = () => {
+      drawer.classList.remove("open");
+      openProduct(button.dataset.recommendedProduct);
+    };
+  });
+}
+
+function recommendationMarkup(products, title, description) {
+  return `<h3>${esc(title)}</h3><p>${esc(description)}</p><div class="recommendation-grid">${products.map((product) => `
+    <article class="recommendation-card">
+      <div><strong>${esc(product.name)}</strong><small>${euro.format(product.basePriceCents / 100)}</small></div>
+      <button class="ghost-btn" data-recommended-product="${product.id}" ${productOrderable(product) ? "" : "disabled"}>${productOrderable(product) ? "Ansehen" : "Nicht verfügbar"}</button>
+    </article>
+  `).join("")}</div>`;
+}
+
+function renderProductRecommendations() {
+  const target = $("#productRecommendations");
+  const products = recommendationProducts(state.activeProduct, state.selections);
+  target.classList.toggle("hidden", products.length === 0);
+  target.innerHTML = products.length
+    ? recommendationMarkup(products, "Passt dazu", "Direkt gepflegt oder passend zu deiner aktuellen Auswahl.")
+    : "";
+  if (products.length) bindRecommendationButtons(target);
+}
+
+function renderCartRecommendations() {
+  const target = $("#cartRecommendations");
+  const products = [];
+  const seen = new Set();
+  for (const line of state.cart) {
+    const product = state.items.find((candidate) => candidate.id === line.productId);
+    for (const recommendation of recommendationProducts(product, line.selections || [], 4)) {
+      if (seen.has(recommendation.id)) continue;
+      seen.add(recommendation.id);
+      products.push(recommendation);
+      if (products.length >= 4) break;
+    }
+    if (products.length >= 4) break;
+  }
+  target.classList.toggle("hidden", products.length === 0);
+  target.innerHTML = products.length
+    ? recommendationMarkup(products, "Noch etwas dazu?", "Kuratierte Ergänzungen zu deinem Warenkorb.")
+    : "";
+  if (products.length) bindRecommendationButtons(target);
 }
 
 function renderMenu() {
@@ -204,6 +286,7 @@ function openProduct(id) {
   $("#specialRequest").value = "";
   $("#productAvailability").innerHTML = productBadge(product);
   renderModifiers();
+  renderProductRecommendations();
   updateAddButton();
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
@@ -258,6 +341,7 @@ function handleModifierChange(input) {
   } else {
     selection.optionIds = selection.optionIds.filter((id) => id !== input.value);
   }
+  renderProductRecommendations();
   updateAddButton();
 }
 
@@ -504,6 +588,7 @@ async function refreshMenuSnapshot(at = null) {
     state.locationId = catalog.locationId;
     state.categories = catalog.categories;
     state.items = catalog.items;
+    state.crossSellRules = catalog.crossSellRules;
     state.menuAt = at;
     state.categoryId = state.categories.some((category) => category.id === previousCategory)
       ? previousCategory
@@ -667,13 +752,26 @@ async function submitOrder() {
 }
 
 function normalizeDbMenu(raw) {
+  const crossSellsByProduct = new Map((raw.productCrossSells || []).map((entry) => [
+    entry.productId,
+    Array.isArray(entry.suggestedProductIds) ? entry.suggestedProductIds : [],
+  ]));
   const categories = (raw.categories || []).map((category) => ({
     id: category.id, slug: category.slug, name: category.name, sort: category.sort,
   }));
   const items = (raw.categories || []).flatMap((category) => (category.products || []).map((product) => ({
-    ...product, categoryId: category.id, modifierGroups: product.modifierGroups || [],
+    ...product,
+    categoryId: category.id,
+    modifierGroups: product.modifierGroups || [],
+    crossSellIds: crossSellsByProduct.get(product.id) || [],
   })));
-  return { locationId: raw.locationId, categories, items, source: "database" };
+  return {
+    locationId: raw.locationId,
+    categories,
+    items,
+    crossSellRules: Array.isArray(raw.crossSellRules) ? raw.crossSellRules : [],
+    source: "database",
+  };
 }
 
 function normalizeFallback(raw) {
@@ -681,6 +779,7 @@ function normalizeFallback(raw) {
   const items = raw.items.map(([id, categoryId, name, description, basePriceCents, variants, orderableOnline]) => ({
     id, categoryId, name, description, basePriceCents, orderableOnline,
     availableNow: orderableOnline, soldOut: false, ownerConfirmed: false,
+    crossSellIds: [],
     modifierGroups: variants.length ? [{
       id: `fallback-size-${id}`, name: "Größe", minSelections: 1, maxSelections: 1,
       options: variants.map(([label, priceCents], index) => ({
@@ -689,7 +788,7 @@ function normalizeFallback(raw) {
       })),
     }] : [],
   }));
-  return { locationId: "static-preview", categories, items, source: "static" };
+  return { locationId: "static-preview", categories, items, crossSellRules: [], source: "static" };
 }
 
 async function loadMenu(at = null, { allowFallback = true } = {}) {
@@ -734,6 +833,7 @@ async function init() {
   state.locationId = catalog.locationId;
   state.categories = catalog.categories;
   state.items = catalog.items;
+  state.crossSellRules = catalog.crossSellRules;
   state.backendReady = backendReady && catalog.source === "database";
   state.menuAt = null;
   setInitialCategory();

@@ -17,7 +17,7 @@ Every item maps back to the binding Decision Ledger.
 - [ ] Sold-out products/options visible but disabled (`D035`)
 - [ ] Timed availability (`D051`)
 - [ ] Provisional supplied menu seed with provenance + owner-confirmation flag (`D036`)
-- [ ] Curated/rule-based cross-sells (`D046`)
+- [x] Curated/rule-based cross-sells (`D046`)
 
 ## Ordering
 - [ ] Pickup ASAP + preorder slots (`D005`, `D009`)

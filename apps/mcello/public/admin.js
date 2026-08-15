@@ -1,6 +1,6 @@
 import { connectPostgresRealtime } from "./realtime-client.js";
 
-let catalog = { categories: [], products: [], modifierGroups: [] };
+let catalog = { categories: [], products: [], modifierGroups: [], crossSellRules: [] };
 let loading = false;
 let dirty = false;
 let externalChangePending = false;
@@ -8,6 +8,7 @@ let directSessionCache = null;
 const categoryTarget = document.querySelector("#categoryAdmin");
 const productTarget = document.querySelector("#productAdmin");
 const modifierTarget = document.querySelector("#modifierAdmin");
+const crossSellRuleTarget = document.querySelector("#crossSellRuleAdmin");
 const message = document.querySelector("#adminMessage");
 const search = document.querySelector("#productSearch");
 const categoryFilter = document.querySelector("#categoryFilter");
@@ -102,6 +103,21 @@ function modifierAssignment(product = {}) {
   </fieldset>`;
 }
 
+function crossSellAssignment(product = {}) {
+  const candidates = catalog.products.filter((candidate) => candidate.id && candidate.id !== product.id);
+  if (!candidates.length) {
+    return '<p class="muted-help">Für direkte „Passt dazu“-Paare wird mindestens ein weiteres Produkt benötigt.</p>';
+  }
+  const selected = new Set(product.crossSellIds || []);
+  return `<fieldset class="cross-sell-assignment">
+    <legend>Direkte „Passt dazu“-Produkte</legend>
+    <select name="crossSellIds" multiple aria-label="Direkt empfohlene Produkte">
+      ${candidates.map((candidate) => `<option value="${candidate.id}" ${selected.has(candidate.id) ? "selected" : ""}>${esc(candidate.name)}</option>`).join("")}
+    </select>
+    <p class="muted-help">Mehrfachauswahl: Strg/Cmd gedrückt halten. Die Reihenfolge folgt der Produktliste.</p>
+  </fieldset>`;
+}
+
 function productForm(product = {}) {
   const id = product.id || "";
   const categoryOptions = catalog.categories.map((category) => `<option value="${category.id}" ${category.id === product.categoryId ? "selected" : ""}>${esc(category.name)}</option>`).join("");
@@ -119,6 +135,7 @@ function productForm(product = {}) {
         <label><input name="ownerConfirmed" type="checkbox" ${product.ownerConfirmed ? "checked" : ""}/> vom Inhaber bestätigt</label>
       </div>
       ${modifierAssignment(product)}
+      ${crossSellAssignment(product)}
       <div class="actions">
         <button class="admin-btn primary" type="submit">Produkt speichern</button>
         ${id ? `<button class="admin-btn ${soldOut ? "good" : "danger"}" type="button" data-snooze-product="${id}" data-active="${soldOut ? "1" : "0"}">${soldOut ? "Wieder verfügbar" : "Heute ausverkauft"}</button>` : ""}
@@ -221,11 +238,78 @@ function bindModifierOptionForms(root = modifierTarget) {
   });
 }
 
+function ruleReferenceOptions(kind, current = "") {
+  let choices = [];
+  if (kind === "category") {
+    choices = catalog.categories.map((category) => ({ id: category.id, label: category.name }));
+  } else if (kind === "option") {
+    choices = catalog.modifierGroups.flatMap((group) => (group.options || []).map((option) => ({
+      id: option.id,
+      label: `${group.name} · ${option.name}`,
+    })));
+  } else if (kind === "product") {
+    choices = catalog.products.map((product) => ({ id: product.id, label: product.name }));
+  }
+  return '<option value="">Bitte wählen …</option>' + choices.map((choice) => (
+    `<option value="${choice.id}" ${choice.id === current ? "selected" : ""}>${esc(choice.label)}</option>`
+  )).join("");
+}
+
+function crossSellRuleForm(rule = {}) {
+  const triggerKind = rule.triggerModifierOptionId ? "option" : "category";
+  const triggerReference = rule.triggerModifierOptionId || rule.triggerCategoryId || "";
+  const targetKind = rule.suggestedProductId ? "product" : "category";
+  const targetReference = rule.suggestedProductId || rule.suggestedCategoryId || "";
+  const id = rule.id || "";
+  return `<article class="rule-card">
+    <form class="admin-form cross-sell-rule-form" data-id="${id}">
+      <input name="name" maxlength="120" value="${esc(rule.name || "")}" placeholder="Regelname, z. B. Getränk zu Hauptgericht" required />
+      <div class="form-row">
+        <label>Auslöser<select name="triggerKind"><option value="category" ${triggerKind === "category" ? "selected" : ""}>Produktkategorie</option><option value="option" ${triggerKind === "option" ? "selected" : ""}>gewählte Zutat/Sauce</option></select></label>
+        <label>Auswahl<select name="triggerReference" required>${ruleReferenceOptions(triggerKind, triggerReference)}</select></label>
+      </div>
+      <div class="form-row">
+        <label>Empfehlungsziel<select name="targetKind"><option value="category" ${targetKind === "category" ? "selected" : ""}>Kategorie</option><option value="product" ${targetKind === "product" ? "selected" : ""}>ein Produkt</option></select></label>
+        <label>Auswahl<select name="targetReference" required>${ruleReferenceOptions(targetKind, targetReference)}</select></label>
+      </div>
+      <div class="form-row three">
+        <label>Max.<input name="maxSuggestions" type="number" min="1" max="6" value="${Number(rule.maxSuggestions || 3)}" required /></label>
+        <label>Sort.<input name="sort" type="number" value="${Number(rule.sort ?? 100)}" /></label>
+        <label class="wide-label"><input name="enabled" type="checkbox" ${rule.enabled !== false ? "checked" : ""}/> aktiv</label>
+      </div>
+      <div class="actions"><button class="admin-btn primary" type="submit">Regel speichern</button>${id ? `<button class="admin-btn danger" type="button" data-delete-cross-sell-rule="${id}">Löschen</button>` : ""}</div>
+    </form>
+  </article>`;
+}
+
+function bindCrossSellRuleForms() {
+  crossSellRuleTarget.querySelectorAll(".cross-sell-rule-form").forEach((form) => {
+    form.addEventListener("input", () => { dirty = true; });
+    form.elements.triggerKind.addEventListener("change", () => {
+      form.elements.triggerReference.innerHTML = ruleReferenceOptions(form.elements.triggerKind.value);
+    });
+    form.elements.targetKind.addEventListener("change", () => {
+      form.elements.targetReference.innerHTML = ruleReferenceOptions(form.elements.targetKind.value);
+    });
+    form.addEventListener("submit", (event) => saveCrossSellRule(event, form));
+  });
+  crossSellRuleTarget.querySelectorAll("[data-delete-cross-sell-rule]").forEach((button) => {
+    button.addEventListener("click", () => deleteCrossSellRule(button.dataset.deleteCrossSellRule, button));
+  });
+}
+
+function renderCrossSellRules(extraNew = false) {
+  crossSellRuleTarget.innerHTML = `${extraNew ? crossSellRuleForm({}) : ""}${catalog.crossSellRules.map(crossSellRuleForm).join("")}`
+    || '<p class="muted-help">Noch keine automatische Empfehlungsregel. Direkte Produktpaare können trotzdem schon in den Produktformularen gepflegt werden.</p>';
+  bindCrossSellRuleForms();
+}
+
 function render() {
   renderCategoryFilter();
   renderCategories();
   renderProducts();
   renderModifierGroups();
+  renderCrossSellRules();
 }
 
 async function loadCatalog({ force = false } = {}) {
@@ -237,13 +321,25 @@ async function loadCatalog({ force = false } = {}) {
   }
   loading = true;
   try {
-    const response = await fetch("/api/admin/catalog", { cache: "no-store" });
+    const session = await getDirectAdminSession();
+    const [response, recommendationConfig] = await Promise.all([
+      fetch("/api/admin/catalog", { cache: "no-store" }),
+      adminRpcDirect("admin_get_cross_sell_config", { _location_id: session.locationId }),
+    ]);
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "Admin-Katalog nicht verfügbar");
+    const crossSellsByProduct = new Map((recommendationConfig.productCrossSells || []).map((entry) => [
+      entry.productId,
+      Array.isArray(entry.suggestedProductIds) ? entry.suggestedProductIds : [],
+    ]));
     catalog = {
       categories: Array.isArray(data.categories) ? data.categories : [],
-      products: Array.isArray(data.products) ? data.products : [],
+      products: Array.isArray(data.products) ? data.products.map((product) => ({
+        ...product,
+        crossSellIds: crossSellsByProduct.get(product.id) || [],
+      })) : [],
       modifierGroups: Array.isArray(data.modifierGroups) ? data.modifierGroups : [],
+      crossSellRules: Array.isArray(recommendationConfig.rules) ? recommendationConfig.rules : [],
     };
     dirty = false;
     externalChangePending = false;
@@ -349,7 +445,10 @@ async function saveProduct(event, form) {
     const session = await getDirectAdminSession();
     const existing = catalog.products.find((product) => product.id === form.dataset.id);
     const groupIds = [...form.querySelectorAll('input[name="modifierGroupIds"]:checked')].map((input) => input.value);
-    await adminRpcDirect("admin_save_menu_product_configured", {
+    const crossSellIds = form.elements.crossSellIds
+      ? [...form.elements.crossSellIds.selectedOptions].map((option) => option.value)
+      : [];
+    await adminRpcDirect("admin_save_menu_product_recommended", {
       _id: form.dataset.id || null,
       _location_id: session.locationId,
       _category_id: form.elements.categoryId.value,
@@ -365,9 +464,10 @@ async function saveProduct(event, form) {
       _modifier_group_ids: groupIds,
       _dietary_tags: existing?.dietaryTags || [],
       _allergen_ids: existing?.allergenIds || [],
+      _suggested_product_ids: crossSellIds,
     });
     dirty = false;
-    message.textContent = "Produkt, Konfigurator-Gruppen und bestehende Kennzeichnungen atomar gespeichert.";
+    message.textContent = "Produkt, Konfigurator-Gruppen, Kennzeichnungen und direkte Empfehlungen gespeichert.";
     await loadCatalog({ force: true });
   } catch (error) {
     message.textContent = error.message;
@@ -435,6 +535,60 @@ async function saveModifierOption(event, form) {
   }
 }
 
+async function saveCrossSellRule(event, form) {
+  event.preventDefault();
+  const triggerKind = form.elements.triggerKind.value;
+  const targetKind = form.elements.targetKind.value;
+  const triggerReference = form.elements.triggerReference.value || null;
+  const targetReference = form.elements.targetReference.value || null;
+  if (!triggerReference || !targetReference) {
+    message.textContent = "Bitte Auslöser und Empfehlungsziel vollständig auswählen.";
+    return;
+  }
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    const session = await getDirectAdminSession();
+    await adminRpcDirect("admin_save_cross_sell_rule", {
+      _id: form.dataset.id || null,
+      _location_id: session.locationId,
+      _name: form.elements.name.value.trim(),
+      _trigger_category_id: triggerKind === "category" ? triggerReference : null,
+      _trigger_modifier_option_id: triggerKind === "option" ? triggerReference : null,
+      _suggested_category_id: targetKind === "category" ? targetReference : null,
+      _suggested_product_id: targetKind === "product" ? targetReference : null,
+      _max_suggestions: Number(form.elements.maxSuggestions.value || 3),
+      _sort: Number(form.elements.sort.value || 100),
+      _enabled: form.elements.enabled.checked,
+    });
+    dirty = false;
+    message.textContent = "Empfehlungsregel gespeichert.";
+    await loadCatalog({ force: true });
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function deleteCrossSellRule(id, button) {
+  button.disabled = true;
+  try {
+    const session = await getDirectAdminSession();
+    await adminRpcDirect("admin_delete_cross_sell_rule", {
+      _id: id,
+      _location_id: session.locationId,
+    });
+    dirty = false;
+    message.textContent = "Empfehlungsregel gelöscht.";
+    await loadCatalog({ force: true });
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function toggleProductSnooze(button) {
   const active = button.dataset.active === "1";
   button.disabled = true;
@@ -488,6 +642,7 @@ categoryFilter.addEventListener("change", () => renderProducts());
 document.querySelector("#newCategory").addEventListener("click", () => renderCategories(true));
 document.querySelector("#newProduct").addEventListener("click", () => renderProducts(true));
 document.querySelector("#newModifierGroup").addEventListener("click", () => renderModifierGroups(true));
+document.querySelector("#newCrossSellRule").addEventListener("click", () => renderCrossSellRules(true));
 document.querySelector("#reloadAdmin").addEventListener("click", () => loadCatalog({ force: true }));
 
 await loadCatalog({ force: true });
@@ -499,6 +654,8 @@ connectPostgresRealtime({
     { event: "*", schema: "public", table: "modifier_groups", filter: `location_id=eq.${session.locationId}` },
     { event: "*", schema: "public", table: "modifier_options" },
     { event: "*", schema: "public", table: "product_modifier_groups" },
+    { event: "*", schema: "public", table: "product_cross_sells" },
+    { event: "*", schema: "public", table: "cross_sell_rules", filter: `location_id=eq.${session.locationId}` },
     { event: "*", schema: "public", table: "snoozes", filter: `location_id=eq.${session.locationId}` },
   ],
   onChange: () => loadCatalog(),

@@ -319,11 +319,16 @@ async function handleApi(req, res, url) {
       return true;
     }
     try {
-      const menu = await rpc.rpc("get_public_menu", {
-        _location_id: DEV_LOCATION_ID,
-        _at: at,
-      });
-      sendJson(res, 200, menu);
+      const [menu, crossSells] = await Promise.all([
+        rpc.rpc("get_public_menu", {
+          _location_id: DEV_LOCATION_ID,
+          _at: at,
+        }),
+        rpc.rpc("get_public_cross_sells", {
+          _location_id: DEV_LOCATION_ID,
+        }),
+      ]);
+      sendJson(res, 200, { ...menu, ...crossSells });
     } catch (error) {
       console.error(error);
       sendJson(res, 503, { error: "MENU_BACKEND_UNAVAILABLE" });
