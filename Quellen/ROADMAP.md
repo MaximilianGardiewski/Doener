@@ -29,6 +29,7 @@ Evidence-Ledger: `docs/projects/mcello/V1_EVIDENCE.md`
 - [x] D038 — Cart-Persistenz + Revalidation
 - [x] D018/D048 — minimaler Checkout + freie Hinweise
 - [x] D042 — bindend erst bei KDS-Akzeptanz
+- [x] D043 — token-scoped Edit/Cancel nur pre-accept; atomare Revalidation von Preis, Verfügbarkeit und Slot/Kapazität; nach KDS-Acceptance DB-seitig gesperrt (PR #14).
 - [x] D053 — konfigurierbarer Default-Timeout 5 Minuten
 - [x] D010 — Accept/Preparing/Ready/Completed
 - [x] D011 — Quick-Reject-Gründe
@@ -52,7 +53,6 @@ Evidence-Ledger: `docs/projects/mcello/V1_EVIDENCE.md`
 
 - [ ] D003 — Contract WhatsApp-primary/SMS-fallback vorhanden; echter freigegebener Production-Transport fehlt.
 - [ ] D037/D044/D052 — Closed/Pause/Cutoff technisch korrekt; D037-Fallback Telefon/WhatsApp braucht bestätigte Kontaktdaten.
-- [ ] D043 — Cancel pre-accept vorhanden; Edit pre-accept fehlt.
 - [ ] D012/D013 — Pause + Snooze vorhanden; eigenständige Rush-Semantik fehlt.
 - [ ] D015 — Status/Progress/Summary vorhanden; Pickup-Adresse fehlt.
 - [ ] D016 — Notification-Outbox vorhanden; Production WhatsApp/SMS-Transport fehlt.
@@ -62,11 +62,10 @@ Evidence-Ledger: `docs/projects/mcello/V1_EVIDENCE.md`
 
 ## P2 — Nächste echte Implementierungslücken
 
-1. **D043 Pre-Accept Edit** — sicherer token-scoped Edit-Flow mit vollständiger Revalidation/Preis-/Slot-Prüfung.
-2. **D012 Rush Mode** — Semantik so definieren, dass keine ungeklärten Betriebsregeln erfunden werden.
-3. **D003/D016 Production Messaging** — erst nach expliziter Freigabe eines Providers und unvermeidbarer Carrier-/Providerkosten.
-4. **D015/D017 Kontakt/Anfahrt** — nach first-party Bestätigung von Adresse und Telefonnummer.
-5. **D020/D007/D008 Admin-/Menu-Gesamtabnahme** — nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
+1. **D012 Rush Mode** — Semantik so definieren, dass keine ungeklärten Betriebsregeln erfunden werden.
+2. **D003/D016 Production Messaging** — erst nach expliziter Freigabe eines Providers und unvermeidbarer Carrier-/Providerkosten.
+3. **D015/D017 Kontakt/Anfahrt** — nach first-party Bestätigung von Adresse und Telefonnummer.
+4. **D020/D007/D008 Admin-/Menu-Gesamtabnahme** — nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
 
 ## P3 — Public Experience / Showcase-Qualität
 
