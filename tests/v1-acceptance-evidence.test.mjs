@@ -17,6 +17,7 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
     "[x] 15-minute slot capacity (`D039`)",
     "[x] Cart persistence + revalidation (`D038`)",
     "[x] Binding only on KDS acceptance (`D042`)",
+    "[x] Edit/cancel pre-accept only (`D043`)",
     "[x] Configurable default 5-min acceptance timeout (`D053`)",
     "[x] Repeating incoming alarm + multi-device sync (`D014`, `D049`)",
     "[x] Planned future lane + configurable activation lead (`D055`)",
@@ -35,7 +36,6 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
 test("known partial V1 requirements remain unchecked", () => {
   for (const expected of [
     "[ ] WhatsApp OTP primary + SMS fallback (`D003`)",
-    "[ ] Edit/cancel pre-accept only (`D043`)",
     "[ ] Rush/pause and item/ingredient snooze (`D012`, `D013`)",
     "[ ] Live status/order summary/pickup location (`D015`)",
     "[ ] WhatsApp/SMS status notifications (`D016`)",
@@ -45,17 +45,17 @@ test("known partial V1 requirements remain unchecked", () => {
   }
 });
 
-test("evidence ledger records verified custom delay and remaining blockers", () => {
+test("evidence ledger records verified ordering flows and remaining blockers", () => {
   for (const marker of [
+    "D043 | `VERIFIED`",
     "D056 | `VERIFIED`",
     "D003 | `PARTIAL`",
-    "D043 | `PARTIAL`",
     "D012 + D013 | `PARTIAL`",
     "D015 | `PARTIAL`",
     "D016 | `PARTIAL`",
     "D017 | `OPEN`",
+    "tests/preaccept-edit.integration.mjs",
     "23-Minuten-Integrationstest",
-    "Customer-Edit vor Acceptance",
     "Verifizierte Pickup-Adresse",
   ]) {
     assert.match(evidence, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));

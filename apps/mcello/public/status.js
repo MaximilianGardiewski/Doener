@@ -81,7 +81,9 @@ function render(status) {
   }).join("") || '<p style="color:var(--muted)">Keine Positionen verfügbar.</p>';
   $("#statusTotal").textContent = euro.format((status.totalCents ?? 0) / 100);
   $("#statusPayment").textContent = paymentCopy(status.payment);
-  $("#cancelOrder").classList.toggle("hidden", status.state !== "waiting_for_acceptance");
+  const editable = status.editable === true && status.state === "waiting_for_acceptance";
+  $("#editOrder").classList.toggle("hidden", !editable);
+  $("#cancelOrder").classList.toggle("hidden", !editable);
 }
 
 function showError(message) {
@@ -114,13 +116,18 @@ function schedulePoll() {
   pollTimer = setTimeout(() => fetchStatus(), pollDelay);
 }
 
+$("#editOrder").addEventListener("click", () => {
+  if (!token || current?.editable !== true || current?.state !== "waiting_for_acceptance") return;
+  location.href = `/edit-order.html?token=${encodeURIComponent(token)}`;
+});
+
 $("#refreshStatus").addEventListener("click", () => {
   clearTimeout(pollTimer);
   fetchStatus({ manual: true });
 });
 
 $("#cancelOrder").addEventListener("click", async () => {
-  if (!token || current?.state !== "waiting_for_acceptance") return;
+  if (!token || current?.editable !== true || current?.state !== "waiting_for_acceptance") return;
   const button = $("#cancelOrder");
   button.disabled = true;
   try {

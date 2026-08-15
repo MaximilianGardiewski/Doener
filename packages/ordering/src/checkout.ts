@@ -45,6 +45,35 @@ export interface CheckoutRequest {
   cart: CheckoutCartLine[];
 }
 
+export interface PickupDraftRequest {
+  locationId: string;
+  comment?: string;
+  requestedPickupAt?: string | null;
+  cart: CheckoutCartLine[];
+  /** Pending-order edits exclude the order itself from application slot occupancy. */
+  excludeOrderId?: string;
+}
+
+export interface PreparedPickupOrderItem {
+  productId: string;
+  productNameSnapshot: string;
+  quantity: number;
+  unitPriceCentsSnapshot: number;
+  lineTotalCents: number;
+  /** Reserved snapshot for future weighted capacity. V1 does not consume it. */
+  effortWeightSnapshot?: number;
+  selections: ProductSelection[];
+  comment?: string;
+}
+
+export interface PreparedPickupOrderDraft {
+  locationId: string;
+  comment?: string;
+  requestedPickupAt: string | null;
+  totalCents: number;
+  items: PreparedPickupOrderItem[];
+}
+
 export interface CatalogReader {
   getProduct(productId: string, at: string): Promise<MenuProduct | null>;
   isProductAvailable(productId: string, at: string): Promise<boolean>;
@@ -55,10 +84,16 @@ export interface ShopStateReader {
 }
 
 export interface SlotReader {
-  getSlotCapacity(locationId: string, pickupAt: string): Promise<{
+  getSlotCapacity(locationId: string, pickupAt: string, excludeOrderId?: string): Promise<{
     capacity: number;
     acceptedOrderCount: number;
   }>;
+}
+
+export interface PickupPreparationDependencies {
+  catalog: CatalogReader;
+  shop: ShopStateReader;
+  slots: SlotReader;
 }
 
 export interface OrderWriter {
@@ -74,25 +109,12 @@ export interface OrderWriter {
     totalCents: number;
     submittedAt: string;
     payment: PaymentSnapshot;
-    items: Array<{
-      productId: string;
-      productNameSnapshot: string;
-      quantity: number;
-      unitPriceCentsSnapshot: number;
-      lineTotalCents: number;
-      /** Reserved snapshot for future weighted capacity. V1 does not consume it. */
-      effortWeightSnapshot?: number;
-      selections: ProductSelection[];
-      comment?: string;
-    }>;
+    items: PreparedPickupOrderItem[];
   }): Promise<Order>;
 }
 
-export interface CheckoutDependencies {
+export interface CheckoutDependencies extends PickupPreparationDependencies {
   otp: OtpProvider;
-  catalog: CatalogReader;
-  shop: ShopStateReader;
-  slots: SlotReader;
   orders: OrderWriter;
   fulfillment?: FulfillmentPolicy;
   payments?: PaymentPolicy;
@@ -152,39 +174,23 @@ function validateCustomer(firstName: string, mobile: string): void {
   }
 }
 
-export async function submitVerifiedPickupOrder(
-  request: CheckoutRequest,
-  deps: CheckoutDependencies,
-  nowIso = new Date().toISOString(),
-): Promise<Order> {
-  const firstName = normalizeName(request.firstName);
-  const mobile = normalizeMobile(request.mobile);
-  validateCustomer(firstName, mobile);
-
-  if (request.cart.length === 0 || request.cart.some((line) => line.quantity < 1 || line.quantity > 99)) {
+function validateCartShape(cart: readonly CheckoutCartLine[]): void {
+  if (cart.length === 0 || cart.some((line) => line.quantity < 1 || line.quantity > 99)) {
     throw new CheckoutError("EMPTY_CART", "Warenkorb ist leer oder ungültig.");
   }
+}
 
-  let fulfillment;
-  try {
-    fulfillment = await (deps.fulfillment ?? new PickupOnlyFulfillmentPolicy()).prepare({
-      requestedType: request.fulfillmentType,
-    });
-  } catch (error) {
-    if (error instanceof FulfillmentBoundaryError) {
-      throw new CheckoutError("FULFILLMENT_NOT_AVAILABLE", error.message);
-    }
-    throw error;
-  }
-
-  const otp = await deps.otp.verifyOtp({
-    challengeId: request.otpChallengeId,
-    code: request.otpCode,
-    mobile,
-  });
-  if (!otp.verified) {
-    throw new CheckoutError("OTP_FAILED", "OTP-Verifikation fehlgeschlagen.");
-  }
+/**
+ * Shared authoritative application preparation for both initial checkout and
+ * token-scoped pre-accept edits. PostgreSQL independently revalidates the same
+ * persistence invariants inside its transaction.
+ */
+export async function preparePickupOrderDraft(
+  request: PickupDraftRequest,
+  deps: PickupPreparationDependencies,
+  nowIso = new Date().toISOString(),
+): Promise<PreparedPickupOrderDraft> {
+  validateCartShape(request.cart);
 
   const shopInput = await deps.shop.getShopState(request.locationId, nowIso);
   const shop = resolveShopCapabilities(shopInput);
@@ -195,16 +201,17 @@ export async function submitVerifiedPickupOrder(
     );
   }
 
-  const availabilityAt = request.requestedPickupAt ?? nowIso;
-  if (request.requestedPickupAt) {
-    const pickupEpoch = Date.parse(request.requestedPickupAt);
+  const requestedPickupAt = request.requestedPickupAt ?? null;
+  const availabilityAt = requestedPickupAt ?? nowIso;
+  if (requestedPickupAt) {
+    const pickupEpoch = Date.parse(requestedPickupAt);
     const nowEpoch = Date.parse(nowIso);
     if (!Number.isFinite(pickupEpoch) || pickupEpoch <= nowEpoch) {
       throw new CheckoutError("INVALID_PICKUP_TIME", "Der gewünschte Abholzeitpunkt muss in der Zukunft liegen.");
     }
 
     const futureShop = resolveShopCapabilities(
-      await deps.shop.getShopState(request.locationId, request.requestedPickupAt),
+      await deps.shop.getShopState(request.locationId, requestedPickupAt),
     );
     if (!futureShop.canSubmitOrder) {
       throw new CheckoutError(
@@ -213,14 +220,18 @@ export async function submitVerifiedPickupOrder(
       );
     }
 
-    const slot = await deps.slots.getSlotCapacity(request.locationId, request.requestedPickupAt);
+    const slot = await deps.slots.getSlotCapacity(
+      request.locationId,
+      requestedPickupAt,
+      request.excludeOrderId,
+    );
     if (!hasSlotCapacity(slot)) {
       throw new CheckoutError("SLOT_FULL", "Der gewünschte Abholslot ist ausgelastet.");
     }
   }
 
   let totalCents = 0;
-  const items: Parameters<OrderWriter["create"]>[0]["items"] = [];
+  const items: PreparedPickupOrderItem[] = [];
 
   for (const line of request.cart) {
     const product = await deps.catalog.getProduct(line.productId, availabilityAt);
@@ -251,11 +262,53 @@ export async function submitVerifiedPickupOrder(
     });
   }
 
+  return {
+    locationId: request.locationId,
+    comment: request.comment?.trim() || undefined,
+    requestedPickupAt,
+    totalCents,
+    items,
+  };
+}
+
+export async function submitVerifiedPickupOrder(
+  request: CheckoutRequest,
+  deps: CheckoutDependencies,
+  nowIso = new Date().toISOString(),
+): Promise<Order> {
+  const firstName = normalizeName(request.firstName);
+  const mobile = normalizeMobile(request.mobile);
+  validateCustomer(firstName, mobile);
+  validateCartShape(request.cart);
+
+  let fulfillment;
+  try {
+    fulfillment = await (deps.fulfillment ?? new PickupOnlyFulfillmentPolicy()).prepare({
+      requestedType: request.fulfillmentType,
+    });
+  } catch (error) {
+    if (error instanceof FulfillmentBoundaryError) {
+      throw new CheckoutError("FULFILLMENT_NOT_AVAILABLE", error.message);
+    }
+    throw error;
+  }
+
+  const otp = await deps.otp.verifyOtp({
+    challengeId: request.otpChallengeId,
+    code: request.otpCode,
+    mobile,
+  });
+  if (!otp.verified) {
+    throw new CheckoutError("OTP_FAILED", "OTP-Verifikation fehlgeschlagen.");
+  }
+
+  const prepared = await preparePickupOrderDraft(request, deps, nowIso);
+
   let payment: PaymentSnapshot;
   try {
     payment = await (deps.payments ?? new PayOnSiteOnlyPaymentPolicy()).prepare({
       requestedMode: request.paymentMode,
-      amountCents: totalCents,
+      amountCents: prepared.totalCents,
       currency: "EUR",
     });
   } catch (error) {
@@ -266,18 +319,14 @@ export async function submitVerifiedPickupOrder(
   }
 
   const order = await deps.orders.create({
-    locationId: request.locationId,
+    ...prepared,
     source: "web",
     fulfillmentType: fulfillment.type,
     state: "waiting_for_acceptance",
     customerFirstName: firstName,
     mobile,
-    comment: request.comment?.trim() || undefined,
-    requestedPickupAt: request.requestedPickupAt ?? null,
-    totalCents,
     submittedAt: nowIso,
     payment,
-    items,
   });
 
   if (deps.notifications) {

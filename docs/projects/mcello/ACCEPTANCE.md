@@ -30,7 +30,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [ ] No paid messaging provider activated without explicit owner approval (`D064`)
 - [x] Pay on site (`D004`)
 - [x] Binding only on KDS acceptance (`D042`)
-- [ ] Edit/cancel pre-accept only (`D043`)
+- [x] Edit/cancel pre-accept only (`D043`)
 - [x] Configurable default 5-min acceptance timeout (`D053`)
 
 ## KDS

@@ -19,6 +19,7 @@ Status:
 | D038 | `VERIFIED` | `apps/mcello/public/app.js`, Checkout-Domain/DB-Revalidation | Warenkorb bleibt lokal bestehen; Menü, Verfügbarkeit, Modifier und Preise werden vor Submit erneut geladen/geprüft. |
 | D018 + D048 | `VERIFIED` | `apps/mcello/public/index.html`, `packages/ordering/src/checkout.ts` | V1 fragt Vorname, Mobilnummer und optionale Bestell-/Artikelhinweise; kein Account/E-Mail-Zwang. |
 | D042 | `VERIFIED` | `packages/ordering/src/model.ts`, `packages/ordering/test/model.test.ts`, `tests/supabase-local.integration.mjs` | Submit endet `waiting_for_acceptance`; erst Staff-Acceptance wechselt in `preparing`/`scheduled`. |
+| D043 | `VERIFIED` | `apps/mcello/public/status.js`, `apps/mcello/public/edit-order.js`, `apps/mcello/server.mjs`, `tests/preaccept-edit.integration.mjs` | Status-Token erlaubt Edit/Cancel nur in `waiting_for_acceptance`. Edit rekonstruiert stabile Produkt-/Modifier-IDs, revalidiert Shop, Slot/Kapazität, Verfügbarkeit und Serverpreise atomar, erhält Identität/`submitted_at`/Payment und wird nach KDS-Acceptance DB-seitig abgewiesen. |
 | D053 | `VERIFIED` | `packages/ordering/test/model.test.ts`, `tests/scheduling.integration.mjs`, Maintenance-RPCs | Default 5 Minuten ist konfigurierbar; Warn-/Auto-Reject-Ablauf wird mit temporärem Testwert vollständig ausgeführt. |
 | D010 | `VERIFIED` | `apps/mcello/public/kds.js`, `packages/ordering/test/model.test.ts`, `tests/supabase-local.integration.mjs` | Incoming -> Accept mit Zeit -> Preparing -> Ready -> Completed ist durch UI, Domain und echte DB-Transitions belegt. |
 | D011 | `VERIFIED` | `apps/mcello/public/kds.js`, Staff-Reject-RPC | Quick-Reject-Gründe für Überlastung, ausverkauft und Küchenschluss sind im KDS verdrahtet. |
@@ -44,7 +45,6 @@ Status:
 |---|---|---|---|
 | D003 | `PARTIAL` | Provider-neutraler OTP-Contract; Start fordert `whatsapp` primär und `sms` als Fallback an; lokaler OTP-Provider ist getestet. | Echte freigegebene Production-Transporte für WhatsApp + SMS sind noch nicht aktiviert. D064 verbietet stille Providerkosten. |
 | D037 + D044 + D052 | `PARTIAL` | Closed/Pause/Cutoff lässt Browsen/Konfigurieren/Warenkorb zu und blockiert Submit; Öffnungsplan, Overrides und Cutoff sind DB-getestet. | D037 verlangt zusätzlich sichtbare Telefon-/WhatsApp-Fallback-Kontakte; first-party bestätigte Kontaktdaten sind noch nicht verdrahtet. |
-| D043 | `PARTIAL` | Token-basierte Stornierung ist ausschließlich vor Acceptance möglich; danach gesperrt. | Customer-Edit vor Acceptance fehlt noch als sicherer Revalidation-/Persistence-Flow. |
 | D012 + D013 | `PARTIAL` | Pause/Auto/Closed Operations und Produkt-/Modifier-Snooze sind in `ops.js` + DB vorhanden. | Eigenständige Rush-Semantik zur Anpassung operativer Timing-Logik ist noch nicht definiert/implementiert. |
 | D015 | `PARTIAL` | Token-Statusseite mit Progress, Bestellnummer, Summary und ETA ist vorhanden. | Verifizierte Pickup-Adresse fehlt im Statusvertrag/UI. Keine Geschäftsadresse darf erfunden werden. |
 | D016 | `PARTIAL` | Notification-Outbox kennt received/accepted/delayed/ready/rejected/cancelled und Statuslinks; Lifecycle/Lease sind DB-getestet. | Freigegebener WhatsApp/SMS-Production-Transport fehlt weiterhin. |
@@ -80,8 +80,7 @@ Diese Punkte werden nicht durch Backend-Fortschritt voreilig geschlossen:
 
 Nach dieser Reconciliation sollen keine bereits vorhandenen Features erneut gebaut werden. Die kleinsten klaren V1-Lücken sind:
 
-1. D043 — sicheren Pre-Accept-Edit-Flow definieren/implementieren (Token + vollständige Revalidation).
-2. D012 — Rush-Semantik konkretisieren, ohne ungeklärte Betriebsregeln zu erfinden.
-3. D003/D016 — erst nach expliziter Freigabe eines unvermeidbaren Messaging-Providers/Carrier-Kosten Production-Transport aktivieren.
-4. D015/D017 — bestätigte Adresse/Telefonnummer einpflegen, danach Status-Route/Call vervollständigen.
-5. Public/Design/Media-Abnahme mit echten Mcello-Medien und owner-bestätigtem Menü.
+1. D012 — Rush-Semantik konkretisieren, ohne ungeklärte Betriebsregeln zu erfinden.
+2. D003/D016 — erst nach expliziter Freigabe eines unvermeidbaren Messaging-Providers/Carrier-Kosten Production-Transport aktivieren.
+3. D015/D017 — bestätigte Adresse/Telefonnummer einpflegen, danach Status-Route/Call vervollständigen.
+4. Public/Design/Media-Abnahme mit echten Mcello-Medien und owner-bestätigtem Menü.

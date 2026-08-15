@@ -1,6 +1,8 @@
+import type { PreparedPickupOrderDraft } from "../../ordering/src/checkout.ts";
 import type { OrderWriter } from "../../ordering/src/checkout.ts";
 import type { Order, OrderState } from "../../ordering/src/model.ts";
 import type { PaymentMethod, PaymentMode, PaymentStatus } from "../../payments/src/contracts.ts";
+import type { ProductSelection } from "../../menu-engine/src/model.ts";
 import type { RpcClient } from "./rest-rpc.ts";
 
 interface DbOrder {
@@ -107,6 +109,7 @@ export interface PublicOrderStatus {
   id: string;
   orderNumber: number;
   state: OrderState;
+  editable?: boolean;
   customerFirstName: string;
   requestedPickupAt?: string | null;
   acceptedPickupAt?: string | null;
@@ -120,6 +123,23 @@ export interface PublicOrderStatus {
   totalCents: number;
   payment: PublicOrderPaymentStatus;
   items: PublicOrderStatusItem[];
+}
+
+export interface PendingOrderEditItem {
+  productId: string;
+  quantity: number;
+  comment?: string | null;
+  selections: ProductSelection[];
+}
+
+/** Privacy-minimal service-RPC result that is safe for the application to forward to the token holder. */
+export interface PendingOrderEditContext {
+  orderNumber: number;
+  state: "waiting_for_acceptance";
+  customerFirstName: string;
+  comment?: string | null;
+  requestedPickupAt?: string | null;
+  items: PendingOrderEditItem[];
 }
 
 export class SupabasePublicOrderStatusReader {
@@ -139,6 +159,36 @@ export class SupabasePublicOrderStatusReader {
   async cancelPending(publicToken: string): Promise<PublicOrderStatus> {
     return this.rpcClient.rpc<PublicOrderStatus>("customer_cancel_pending_order", {
       _public_token: publicToken,
+    });
+  }
+}
+
+export class SupabasePendingOrderEditor {
+  private readonly rpcClient: RpcClient;
+
+  constructor(rpcClient: RpcClient) {
+    this.rpcClient = rpcClient;
+  }
+
+  async getContext(publicToken: string): Promise<PendingOrderEditContext> {
+    return this.rpcClient.rpc<PendingOrderEditContext>("server_get_pending_order_edit_context", {
+      _public_token: publicToken,
+    });
+  }
+
+  async replace(publicToken: string, prepared: PreparedPickupOrderDraft): Promise<PublicOrderStatus> {
+    return this.rpcClient.rpc<PublicOrderStatus>("server_replace_pending_order", {
+      _public_token: publicToken,
+      _payload: {
+        comment: prepared.comment,
+        requestedPickupAt: prepared.requestedPickupAt,
+        items: prepared.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          selections: item.selections,
+          comment: item.comment,
+        })),
+      },
     });
   }
 }
