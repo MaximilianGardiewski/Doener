@@ -5,6 +5,7 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 const dockerfile = await readFile(new URL("infra/selfhost/Dockerfile", root), "utf8");
 const compose = await readFile(new URL("infra/selfhost/compose.app.yml", root), "utf8");
+const gateway = await readFile(new URL("infra/selfhost/container-entrypoint.mjs", root), "utf8");
 const preflight = await readFile(new URL("infra/selfhost/preflight.sh", root), "utf8");
 const migrations = await readFile(new URL("infra/selfhost/apply-migrations.sh", root), "utf8");
 const backup = await readFile(new URL("infra/selfhost/backup-db.sh", root), "utf8");
@@ -15,14 +16,20 @@ function includesAll(source, values) {
   for (const value of values) assert.equal(source.includes(value), true, `missing: ${value}`);
 }
 
-test("app image runs non-root with a liveness probe", () => {
-  includesAll(dockerfile, ["USER node", "HEALTHCHECK", "/api/health", "NODE_ENV=production"]);
+test("app image runs non-root with a liveness probe and explicit container gateway", () => {
+  includesAll(dockerfile, ["USER node", "HEALTHCHECK", "/api/health", "EXPOSE 8080", "container-entrypoint.mjs"]);
+  includesAll(gateway, [
+    'hostname: "127.0.0.1"',
+    'proxy.listen(containerPort, "0.0.0.0"',
+    "request.pipe(upstream)",
+    "upstreamResponse.pipe(response)",
+  ]);
   assert.doesNotMatch(dockerfile, /COPY\s+\.\s+\./, "image should not indiscriminately copy the repository");
 });
 
-test("production compose keeps the app behind localhost and strips container privileges", () => {
+test("production compose keeps the host boundary on localhost and strips container privileges", () => {
   includesAll(compose, [
-    '127.0.0.1:${MCELLO_APP_HOST_PORT:-4173}:4173',
+    '127.0.0.1:${MCELLO_APP_HOST_PORT:-4173}:8080',
     "read_only: true",
     "cap_drop:",
     "- ALL",
