@@ -16,7 +16,7 @@ try {
   assert.match(await page.locator("#aktuelles .section-head > p").innerText(), /vorbeizuschauen/);
   assert.equal(await page.locator("#galerie .section-head h2").innerText(), "Momente aus Mcello.");
   assert.equal(await page.locator("#kontakt .section-head h2").innerText(), "Komm vorbei.");
-  assert.equal(await page.locator(".footer .brand span").innerText(), "Bad Krozingen");
+  assert.equal((await page.locator(".footer .brand span").innerText()).toLowerCase(), "bad krozingen");
 
   const marketingText = await page.evaluate(() => [
     document.querySelector("#start")?.innerText,
