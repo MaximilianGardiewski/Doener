@@ -21,6 +21,7 @@ on:
       - "tests/modifier-backoffice.integration.mjs"
       - "tests/allergen-labels.integration.mjs"
       - "tests/ordering-schedule.integration.mjs"
+      - "tests/timed-product-db-gate.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -45,6 +46,7 @@ on:
       - "tests/modifier-backoffice.integration.mjs"
       - "tests/allergen-labels.integration.mjs"
       - "tests/ordering-schedule.integration.mjs"
+      - "tests/timed-product-db-gate.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
 
 concurrency:
@@ -155,6 +157,9 @@ jobs:
       - name: Prove opening hours cutoff overrides and timed availability
         id: ordering_schedule
         run: node tests/ordering-schedule.integration.mjs
+
+      - name: Prove timed product availability at database persistence boundary
+        run: node tests/timed-product-db-gate.integration.mjs
 
       - name: Prove realtime readiness and backoffice role boundaries
         id: realtime_backoffice
