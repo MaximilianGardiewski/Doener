@@ -28,7 +28,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Minimal checkout data (`D018`, `D048`)
 - [ ] WhatsApp OTP primary + SMS fallback (`D003`)
 - [x] Development OTP can run without external paid messaging (`D064`)
-- [ ] No paid messaging provider activated without explicit owner approval (`D064`)
+- [x] No paid messaging provider activated without explicit owner approval (`D064`)
 - [x] Pay on site (`D004`)
 - [x] Binding only on KDS acceptance (`D042`)
 - [x] Edit/cancel pre-accept only (`D043`)
