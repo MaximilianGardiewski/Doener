@@ -14,7 +14,6 @@ const serviceRoleKey = envValue("SUPABASE_SERVICE_ROLE_KEY");
 if (!baseUrl || !anonKey || !serviceRoleKey) throw new Error("Local Supabase env is missing");
 
 const locationId = "00000000-0000-4000-8000-000000000001";
-const categoryId = "00000000-0000-4000-8000-000000000010";
 
 async function request(path, { method = "GET", apiKey = anonKey, bearer, body } = {}) {
   const headers = { apikey: apiKey, accept: "application/json" };
@@ -44,8 +43,42 @@ async function signIn(email, password) {
   return result.data.access_token;
 }
 
+async function serviceInsert(table, body) {
+  const response = await fetch(`${baseUrl}/rest/v1/${table}`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      authorization: `Bearer ${serviceRoleKey}`,
+      "content-type": "application/json",
+      accept: "application/json",
+      prefer: "return=representation",
+    },
+    body: JSON.stringify(body),
+  });
+  const raw = await response.text();
+  let data = null;
+  try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+  assert.equal(response.ok, true, `${table} setup failed: ${JSON.stringify(data)}`);
+  return Array.isArray(data) ? data[0] : data;
+}
+
 const adminToken = await signIn("bootstrap-admin@mcello.local", "LocalOnly-Admin-2026!");
 const staffToken = await signIn("kds-staff@mcello.local", "LocalOnly-Staff-2026!");
+
+// Isolated published category: the provisional Mcello seed intentionally keeps
+// owner-unconfirmed content out of the public snapshot, so the integration test
+// must not change those publication semantics merely to test allergen output.
+const category = await serviceInsert("menu_categories", {
+  location_id: locationId,
+  slug: `dev-allergen-category-${Date.now()}`,
+  name: "DEV Allergen Public Category",
+  description: "temporary integration row only",
+  sort: 999,
+  status: "published",
+  visible: true,
+});
+assert.ok(category?.id);
+const categoryId = category.id;
 
 const staffCreate = await rpc("admin_save_allergen", {
   _id: null,
@@ -90,12 +123,11 @@ assert.ok(optionResult.data?.id);
 const optionId = optionResult.data.id;
 assert.deepEqual(optionResult.data.allergenIds, [allergen.id]);
 
-const slug = `dev-allergen-product-${Date.now()}`;
 const productResult = await rpc("admin_save_menu_product_configured", {
   _id: null,
   _location_id: locationId,
   _category_id: categoryId,
-  _slug: slug,
+  _slug: `dev-allergen-product-${Date.now()}`,
   _name: "DEV Structured Allergen Product",
   _description: "temporary integration row only",
   _base_price_cents: 999,
@@ -145,9 +177,9 @@ const publicMenu = await rpc("get_public_menu", {
 });
 assert.equal(publicMenu.response.ok, true, JSON.stringify(publicMenu.data));
 const publicProduct = publicMenu.data.categories
-  .flatMap((category) => category.products || [])
+  .flatMap((publicCategory) => publicCategory.products || [])
   .find((product) => product.id === productId);
-assert.ok(publicProduct, "published temporary product must appear in public menu snapshot");
+assert.ok(publicProduct, "published product inside published visible DEV category must appear in public menu snapshot");
 assert.deepEqual(publicProduct.dietaryTags, ["spicy", "vegetarian"]);
 assert.equal(publicProduct.allergens[0]?.id, allergen.id);
 assert.equal(
@@ -174,9 +206,13 @@ const invalidTag = await rpc("admin_set_product_labels", {
 }, adminToken);
 assert.equal(invalidTag.response.ok, false, "unstable/free-form dietary labels must be rejected by DB validation");
 
-// Delete product/group first so FK assignments disappear before the temporary
-// allergen definition is removed. Nothing from this test survives the run.
-for (const [table, id] of [["menu_products", productId], ["modifier_groups", group.id], ["allergens", allergen.id]]) {
+// Delete dependent rows first. No temporary business claim survives the test.
+for (const [table, id] of [
+  ["menu_products", productId],
+  ["modifier_groups", group.id],
+  ["allergens", allergen.id],
+  ["menu_categories", categoryId],
+]) {
   const cleanup = await request(`/rest/v1/${table}?id=eq.${id}`, {
     method: "DELETE",
     apiKey: serviceRoleKey,
