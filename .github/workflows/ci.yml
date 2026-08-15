@@ -27,7 +27,7 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Run public responsive motion homepage and brand browser smokes
+      - name: Run public responsive motion homepage brand and tone browser smokes
         run: |
           python3 -m http.server 4173 --directory dist > /tmp/mcello-preview.log 2>&1 &
           preview_pid=$!
@@ -43,3 +43,4 @@ jobs:
           node tests/showcase-motion.browser.mjs
           node tests/homepage-composition.browser.mjs
           node tests/brand-design-system.browser.mjs
+          node tests/public-copy-tone.browser.mjs
