@@ -11,8 +11,10 @@ const outboxMigration = await readFile(
 );
 
 test("KDS keeps quick delays and adds an inline bounded custom delay", () => {
+  assert.match(kds, /data-action="delay"/);
   for (const minutes of [5, 10, 15]) {
-    assert.match(kds, new RegExp(`data-action="delay"[^>]*data-minutes="${minutes}"`));
+    assert.match(kds, new RegExp(`data-minutes="${minutes}"`));
+    assert.match(kds, new RegExp(`>\\+${minutes}<\\/button>`));
   }
   assert.match(kds, /data-custom-delay-input/);
   assert.match(kds, /type="number" min="1" max="120" step="1"/);
