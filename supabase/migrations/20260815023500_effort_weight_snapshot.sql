@@ -13,7 +13,7 @@ alter table public.order_items
 comment on column public.menu_products.effort_weight is
   'Optional kitchen-effort metadata reserved for future weighted capacity; unused by V1 slot admission.';
 comment on column public.order_items.effort_weight_snapshot is
-  'Product effort captured when the order item is created; unused by V1 slot admission.';
+  'Product effort captured when the order item is created; unused by V1 slot admission and immutable afterward.';
 
 create or replace function public.snapshot_order_item_effort_weight()
 returns trigger
@@ -32,9 +32,29 @@ begin
 end;
 $$;
 
+create or replace function public.prevent_effort_snapshot_reassignment()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.effort_weight_snapshot is distinct from old.effort_weight_snapshot then
+    raise exception 'order item effort snapshot is immutable'
+      using errcode = 'check_violation';
+  end if;
+  return new;
+end;
+$$;
+
 revoke all on function public.snapshot_order_item_effort_weight() from public, anon, authenticated;
+revoke all on function public.prevent_effort_snapshot_reassignment() from public, anon, authenticated;
 
 drop trigger if exists order_items_snapshot_effort_weight on public.order_items;
 create trigger order_items_snapshot_effort_weight
 before insert on public.order_items
 for each row execute function public.snapshot_order_item_effort_weight();
+
+drop trigger if exists order_items_prevent_effort_snapshot_reassignment on public.order_items;
+create trigger order_items_prevent_effort_snapshot_reassignment
+before update of effort_weight_snapshot on public.order_items
+for each row execute function public.prevent_effort_snapshot_reassignment();
