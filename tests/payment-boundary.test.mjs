@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 
 const contracts = await readFile(new URL("../packages/payments/src/contracts.ts", import.meta.url), "utf8");
 const checkout = await readFile(new URL("../packages/ordering/src/checkout.ts", import.meta.url), "utf8");
@@ -11,11 +11,16 @@ const migration = await readFile(
 const statusHtml = await readFile(new URL("../apps/mcello/public/status.html", import.meta.url), "utf8");
 const statusJs = await readFile(new URL("../apps/mcello/public/status.js", import.meta.url), "utf8");
 
-test("payment package keeps provider coupling outside ordering", () => {
+test("payment package is the single provider-neutral payment contract", async () => {
   assert.match(contracts, /interface OnlinePaymentProvider/);
   assert.match(contracts, /class PayOnSiteOnlyPaymentPolicy/);
   assert.match(contracts, /ONLINE_PAYMENT_DISABLED/);
+  assert.match(contracts, /UNSUPPORTED_PAYMENT_MODE/);
   assert.doesNotMatch(contracts, /stripe|paypal|adyen|mollie/i);
+  await assert.rejects(
+    access(new URL("../packages/notifications/src/payment-contract.ts", import.meta.url)),
+    (error) => error?.code === "ENOENT",
+  );
 });
 
 test("checkout prepares a payment snapshot and fails closed for online mode", () => {
