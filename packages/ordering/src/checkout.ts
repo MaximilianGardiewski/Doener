@@ -73,6 +73,8 @@ export interface OrderWriter {
       quantity: number;
       unitPriceCentsSnapshot: number;
       lineTotalCents: number;
+      /** Reserved snapshot for future weighted capacity. V1 does not consume it. */
+      effortWeightSnapshot?: number;
       selections: ProductSelection[];
       comment?: string;
     }>;
@@ -221,6 +223,7 @@ export async function submitVerifiedPickupOrder(
       quantity: line.quantity,
       unitPriceCentsSnapshot: unitPriceCents,
       lineTotalCents,
+      effortWeightSnapshot: product.effortWeight,
       selections: line.selections,
       comment: line.comment?.trim() || undefined,
     });
