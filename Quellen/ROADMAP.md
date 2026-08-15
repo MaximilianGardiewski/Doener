@@ -2,103 +2,100 @@
 
 Stand: 2026-08-15
 
-Diese Roadmap ist eine Arbeitsreihenfolge. Bindend bleibt das Decision Ledger. Ein offener Acceptance-Haken bedeutet nicht automatisch, dass keinerlei Code existiert; vorhandene Implementierung muss zuerst gegen Tests und Decision Ledger abgeglichen werden, bevor der Haken geändert wird.
+Diese Roadmap ist eine Arbeitsreihenfolge. Bindend bleibt das Decision Ledger. Ein offener Acceptance-Haken bedeutet nicht automatisch, dass keinerlei Code existiert; vorhandene Implementierung wird gegen Tests und Decision Ledger abgeglichen, bevor der Haken geändert wird.
 
-## P0 — Abgeschlossene PREPARE_NOW-Grenzen
+## P0 — PREPARE_NOW-Plattformgrenzen abgeschlossen
 
-### D004 Payment Boundary
-- [x] provider-neutrales `packages/payments`
-- [x] V1-Policy: nur `pay_on_site`
-- [x] Checkout/Order Payment-Snapshot
-- [x] Supabase-Spalten + DB-Constraint gegen Online-Payment
-- [x] öffentlicher Statusvertrag ohne Provider-Geheimnisse
-- [x] Kundenstatus: `Vor Ort · bar oder Karte`
-- [x] Domain-/Struktur-/Integrationstests
-- [x] GitHub Actions grün
-- [x] PR #7 gemerged in `bootstrap/business-web-factory`
-- [x] kein Production-Deploy durchgeführt
+- [x] D004 Payment Boundary — PR #7; V1 pay-on-site, Online-Payment provider-neutral vorbereitet.
+- [x] D006 Delivery Boundary — PR #9; Merge-Commit `01dd008743ce617b0d8e93ff44fef9881cf8318e`; PLZ/Radius-Vertrag vorbereitet, Mcello V1 Application + DB hart Pickup-only.
+- [x] D027 Order Source Boundary — PR #8; `web | counter | table` vorbereitet, Mcello V1 web-only, Source immutable.
+- [x] D040 Capacity Effort Boundary — PR #8; Effort-Snapshots vorbereitet, V1 weiterhin count-basiert.
+- [x] D047/D050 Recommendation-/Analytics-Datenbasis.
+- [x] D057 Location Boundary — PR #6; Single-Location-App mit wiederverwendbarer Location-Grenze.
+- [x] Keine dieser Arbeiten hat Production deployed oder mutiert.
 
-### D027 Order Source Boundary
-- [x] `web | counter | table` in Domain und PostgreSQL
-- [x] Mcello V1 Checkout persistiert selbst `web`
-- [x] Order-Ursprung nach Insert unveränderlich
-- [x] Manipulations-/Boundary-Test
-- [x] keine Counter-/Table-UI vorgezogen
-- [x] PR #8 gemerged; Merge-Commit `5cc56c3678310a1928c82180f46e2c5fa0a854da`
+Der Integrationszweig wurde nach PR #9 zusätzlich durch Commit `d182fb538fc62bd5b0ede5f662d5ef8b0982ac17` um eine redundante Ordering-Security-Migration bereinigt. Neue Arbeit basiert auf diesem aktuellsten Stand.
 
-### D040 Capacity Effort Boundary
-- [x] optionales `menu_products.effort_weight`
-- [x] `MenuProduct.effortWeight` und Order-Item-Snapshot
-- [x] PostgreSQL setzt/versiegelt `effort_weight_snapshot` aus dem echten Produkt
-- [x] V1-Kapazität bleibt strikt count-basiert
-- [x] vollständiger Supabase-Integrationsnachweis
-- [x] bestehender Allergen-/Label-Vertrag nach Regressionstest erhalten
-- [x] PR #8 gemerged
+## P1 — V1 Acceptance Reconciliation — aktiv
 
-## P1 — D006 Delivery Boundary
+Branch: `agent/mcello-v1-acceptance-reconciliation`
 
-Aktueller Baustein auf `agent/mcello-delivery-boundary`:
+Ziel: vorhandene Funktionen **beweisen statt neu bauen**. Das detaillierte Ledger liegt in `docs/projects/mcello/V1_EVIDENCE.md`.
 
-- [x] vorhandenen `pickup | delivery` Fulfillment-Contract beibehalten
-- [x] provider-neutraler `DeliveryZoneResolver`
-- [x] PLZ- und Radius-Zonen als Future-Contracts vorbereitet
-- [x] `PickupOnlyFulfillmentPolicy` für Mcello V1
-- [x] manipuliertes `fulfillmentType: delivery` scheitert vor OTP/Persistenz
-- [x] PostgreSQL-Constraint verhindert V1-Delivery auch bei privilegiertem Direktzugriff
-- [x] Fulfillment einer Bestellung ist nach Erstellung unveränderlich
-- [x] keine Delivery-UI und keine erfundenen Gebühren/Mindestwerte/Provider eingebaut
-- [x] Domain-/Struktur-/Supabase-Integrationstests ergänzt
-- [ ] CI vollständig grün
-- [ ] PR Review / Merge
-- [ ] kein Production-Deploy
+### Bereits VERIFIED und in Acceptance übernommen
 
-Nach D006 sind die ausdrücklich als `PREPARE_NOW_IMPLEMENT_LATER` markierten Plattformgrenzen D004, D006, D027, D040, D047/D050 und D057 architektonisch vorbereitet. Danach liegt der Schwerpunkt auf evidenzbasierter V1-Acceptance-Reconciliation statt weiteren Future-Features.
+- [x] D005/D009 — Pickup ASAP + Vorbestellslots
+- [x] D039 — atomare 15-Minuten-Slot-Kapazität
+- [x] D038 — Cart-Persistenz + Revalidation
+- [x] D018/D048 — minimaler Checkout + freie Hinweise
+- [x] D042 — bindend erst bei KDS-Akzeptanz
+- [x] D053 — konfigurierbarer Default-Timeout 5 Minuten
+- [x] D010 — Accept/Preparing/Ready/Completed
+- [x] D011 — Quick-Reject-Gründe
+- [x] D014/D049 — Alarm + Multi-Device Realtime
+- [x] D055 — Geplant-Lane + Preparation Lead
+- [x] D054 — Zielzeit + Countdown
+- [x] D035 — Sold-out sichtbar aber disabled
+- [x] D045 — strukturierte Allergene/Dietary Labels
+- [x] D051 — zeitgesteuerte Verfügbarkeit
+- [x] D036 — provisional Seed + Provenienz + Owner-Flag
+- [x] D021 — Staff operational-only
+- [x] D031 — Homepage-Sektionen kontrolliert ordnen/ausblenden
+- [x] D032 — News/Event Scheduling + Pinning
+- [x] D022/D023 — Server-/DB-Rollenboundary
+- [x] D064 — Development OTP ohne externen Paid Provider
+- [x] D063 — lokaler Supabase-CLI/Docker-Backendpfad
+- [x] D063 — keine Lovable-/Vercel-Runtime-Abhängigkeit
 
-## P2 — Acceptance-Reconciliation für vorhandene V1-Funktionalität
+### Bewusst PARTIAL / nicht grün markiert
 
-Im Repository existieren bereits beträchtliche Ordering-/KDS-/CMS-/Realtime-Bausteine. Statt sie erneut zu bauen, wird pro Decision nachgewiesen, ob die Acceptance-Kriterien bereits erfüllt sind.
+- [ ] D003 — Contract WhatsApp-primary/SMS-fallback vorhanden; echter freigegebener Production-Transport fehlt.
+- [ ] D037/D044/D052 — Closed/Pause/Cutoff technisch korrekt; D037-Fallback Telefon/WhatsApp braucht bestätigte Kontaktdaten.
+- [ ] D043 — Cancel pre-accept vorhanden; Edit pre-accept fehlt.
+- [ ] D012/D013 — Pause + Snooze vorhanden; eigenständige Rush-Semantik fehlt.
+- [ ] D056 — +5/+10/+15 vorhanden; Custom Delay fehlt.
+- [ ] D015 — Status/Progress/Summary vorhanden; Pickup-Adresse fehlt.
+- [ ] D016 — Notification-Outbox vorhanden; Production WhatsApp/SMS-Transport fehlt.
+- [ ] D017 — Route + Call brauchen bestätigte Adresse/Telefonnummer.
+- [ ] D020 — Admin-Bausteine weitgehend vorhanden; Gesamt-Acceptance inkl. Media-/Owner-Workflow noch nicht geschlossen.
+- [ ] D007/D008 — Konfigurator/Modifier/Extras vorhanden; owner-bestätigte Mcello Ingredient-/Sauce-Konfiguration fehlt noch.
 
-Priorisierte Prüfgruppen:
+## P2 — Nächste echte Implementierungslücken
 
-- **Ordering:** `D005`, `D009`, `D018`, `D037`–`D039`, `D042`, `D043`, `D052`, `D053`, `D055`, `D056`
-- **OTP/Notifications:** `D003`, `D016`, `D064`
-- **KDS/Operations:** `D010`–`D014`, `D049`, `D051`
-- **Menu/Admin:** `D007`, `D008`, `D020`, `D021`, `D035`, `D045`
-- **CMS/Public Content:** `D024`, `D031`–`D033`
-- **Customer Status:** `D015`, `D017`, `D054`
+Priorität nach dieser Evidence-PR:
 
-Vorgehen je Gruppe:
-
-1. vorhandenen Code und Migrationen inventarisieren
-2. Decision gegen reale Invarianten mappen
-3. fehlende Tests zuerst ergänzen
-4. echten Supabase-Flow prüfen, falls Datenbank/Rechte beteiligt sind
-5. erst danach Acceptance-Haken setzen
+1. **D056 Custom Delay** — kleinste klare Code-Lücke; KDS um frei eingebbare Verzögerung ergänzen und End-to-End testen.
+2. **D043 Pre-Accept Edit** — sicherer token-scoped Edit-Flow mit vollständiger Revalidation/Preis-/Slot-Prüfung.
+3. **D012 Rush Mode** — Semantik so definieren, dass keine ungeklärten Betriebsregeln erfunden werden.
+4. **D003/D016 Production Messaging** — erst nach expliziter Freigabe eines Providers und unvermeidbarer Carrier-/Providerkosten.
+5. **D015/D017 Kontakt/Anfahrt** — nach first-party Bestätigung von Adresse und Telefonnummer.
+6. **D020/D007/D008 Admin-/Menu-Gesamtabnahme** — nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
 
 ## P3 — Public Experience / Showcase-Qualität
 
-Wenn die Kernflows nachweisbar stabil sind:
+Wenn die funktionalen V1-Lücken geschlossen sind:
 
-- `D001`, `D029`: Modern Warm Premium Designsystem festziehen
-- `D024`–`D026`: Venue-/Community-/Story-Inszenierung
-- `D030`: finale Navigation und Order-CTA
-- `D058`: hochwertige Motion, ohne Geschwindigkeit/Usability zu opfern
-- `D060`: PWA vollständig prüfen
-- echte, freigegebene Mcello-Medien und Fakten integrieren
-- Responsive-/Route-QA über Desktop und Mobile
+- D001/D029 — finales Modern Warm Premium Designsystem
+- D024–D026 — Venue/Community/Story mit echten Mcello-Fakten
+- D030 — finale Navigation/CTA inklusive responsive QA
+- D058 — hochwertige, schnelle Motion
+- D060 — PWA-Installability-/Browser-Abnahme
+- echte, freigegebene Mcello-Medien integrieren
+- Responsive-/Route-QA Desktop + Mobile
 
-Figma/Lovable/Visual Truth dürfen hier beschleunigen; die resultierenden Entscheidungen und Änderungen müssen zurück ins Repo.
+Figma, Lovable und Visual Truth dürfen beschleunigen; relevante Ergebnisse müssen zurück ins Repo.
 
 ## P4 — Release Hardening
 
-Vor einem echten Go-live:
+Vor echtem Go-live:
 
-- vollständige owner-bestätigte Menü-/Preis-/Ingredient-Daten (`D036`)
+- owner-bestätigte Menü-/Preis-/Ingredient-Daten
 - Auth/RLS-/Storage-Audit
 - Secrets-/Environment-Audit
-- Supabase-Migrations-Neuaufbau aus leerer DB
+- leerer DB-Rebuild aus Migrationen
+- Self-Host-Runbook
+- TLS/Firewall/Monitoring
 - Backup + Restore-Test
-- TLS/Firewall/Monitoring für Self-Host
 - Browser-/PWA-/Mobile-Smokes
 - SEO/Metadata/Content-Integrity
 - Rollback-Plan
