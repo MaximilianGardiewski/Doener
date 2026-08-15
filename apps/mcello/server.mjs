@@ -215,6 +215,18 @@ function publicMenuAt(url) {
   return new Date(epoch).toISOString();
 }
 
+function publicMediaId(pathname) {
+  const match = pathname.match(/^\/api\/media\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);
+  return match?.[1] ?? null;
+}
+
+function storageObjectPath(bucketId, objectPath) {
+  const encoded = [bucketId, ...objectPath.split("/")]
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+  return `/storage/v1/object/authenticated/${encoded}`;
+}
+
 async function mutateSnooze(rpc, body, undo = false) {
   const type = String(body.type ?? "");
   const id = String(body.id ?? "");
@@ -245,6 +257,56 @@ async function handleApi(req, res, url) {
       maintenanceWorker: Boolean(serviceRoleKey),
       realtime: Boolean(anonKey),
     });
+    return true;
+  }
+
+  if (req.method === "GET" && url.pathname.startsWith("/api/media/")) {
+    const mediaId = publicMediaId(url.pathname);
+    const rpc = serviceRpc();
+    if (!mediaId) {
+      sendJson(res, 400, { error: "INVALID_MEDIA_ID" });
+      return true;
+    }
+    if (!rpc || !serviceRoleKey) return sendUnavailable(res), true;
+
+    try {
+      const descriptor = await rpc.rpc("get_public_media_descriptor", { _media_id: mediaId });
+      if (!descriptor?.bucketId || !descriptor?.objectPath) {
+        sendJson(res, 404, { error: "MEDIA_NOT_FOUND" });
+        return true;
+      }
+
+      const response = await fetch(
+        `${supabaseUrl}${storageObjectPath(descriptor.bucketId, descriptor.objectPath)}`,
+        {
+          headers: {
+            apikey: serviceRoleKey,
+            authorization: `Bearer ${serviceRoleKey}`,
+            accept: descriptor.mimeType || "image/*",
+          },
+        },
+      );
+      if (!response.ok) {
+        sendJson(res, response.status === 404 ? 404 : 502, { error: "MEDIA_STORAGE_UNAVAILABLE" });
+        return true;
+      }
+
+      const bytes = Buffer.from(await response.arrayBuffer());
+      if (bytes.length > 10 * 1024 * 1024) {
+        sendJson(res, 502, { error: "MEDIA_SIZE_INVALID" });
+        return true;
+      }
+      res.writeHead(200, {
+        "content-type": descriptor.mimeType || response.headers.get("content-type") || "application/octet-stream",
+        "content-length": String(bytes.length),
+        "cache-control": "public, max-age=60, stale-while-revalidate=300",
+        "x-content-type-options": "nosniff",
+      });
+      res.end(bytes);
+    } catch (error) {
+      console.error(error);
+      sendJson(res, 404, { error: "MEDIA_NOT_FOUND" });
+    }
     return true;
   }
 

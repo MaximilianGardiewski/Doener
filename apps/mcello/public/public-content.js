@@ -77,6 +77,23 @@ function renderEditorial(posts = []) {
   }).join("");
 }
 
+function renderGallery(items = []) {
+  const target = document.querySelector("#galleryGrid");
+  if (!target) return;
+  if (!items.length) {
+    target.innerHTML = '<div class="notice">Noch keine freigegebenen Originalmedien hinterlegt.</div>';
+    return;
+  }
+
+  target.innerHTML = items.map((item) => {
+    const caption = item.caption || item.title || "";
+    return `<figure class="gallery-item ${item.featured ? "featured" : ""}">
+      <img src="/api/media/${encodeURIComponent(item.mediaId)}" alt="${esc(item.altText)}" loading="lazy" decoding="async" />
+      ${caption ? `<figcaption>${esc(caption)}</figcaption>` : ""}
+    </figure>`;
+  }).join("");
+}
+
 async function loadPublicContent() {
   try {
     const response = await fetch("/api/menu", { cache: "no-store" });
@@ -86,6 +103,7 @@ async function loadPublicContent() {
     if (!snapshot) throw new Error("content snapshot unavailable");
     applyHomepage(snapshot);
     renderEditorial(snapshot.editorialPosts || []);
+    renderGallery(snapshot.galleryItems || []);
   } catch {
     // Static preview remains safe without a local backend. No demo news are injected.
   }

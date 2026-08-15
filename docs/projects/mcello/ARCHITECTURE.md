@@ -24,6 +24,16 @@ RLS/Realtime       provider         provider (later)
 
 Domain packages must not depend on Lovable, Supabase SDK, Twilio/Meta, Stripe or a specific host.
 
+## Media boundary
+Gallery originals live in the private `mcello-media` bucket. Browser uploads use
+the authenticated admin JWT and Storage RLS; the service-role key never reaches
+the browser. Application-owned `media_assets` and `gallery_items` rows carry
+category, provenance, rights confirmation, alt text, publication window and
+featured ordering. Public pages receive only approved media IDs and load bytes
+through `/api/media/:id`, which re-checks the published metadata before streaming
+the private object. This keeps storage-provider paths out of public content data
+and preserves a portable application-owned media contract.
+
 ## Lebtig reuse candidates
 - profiles + explicit role rows
 - bootstrap admin invariant

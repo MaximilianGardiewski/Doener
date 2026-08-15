@@ -24,6 +24,7 @@ on:
       - "tests/ordering-schedule.integration.mjs"
       - "tests/timed-product-db-gate.integration.mjs"
       - "tests/editorial-homepage.integration.mjs"
+      - "tests/gallery-media.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -51,6 +52,7 @@ on:
       - "tests/ordering-schedule.integration.mjs"
       - "tests/timed-product-db-gate.integration.mjs"
       - "tests/editorial-homepage.integration.mjs"
+      - "tests/gallery-media.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
 
 concurrency:
@@ -102,6 +104,15 @@ jobs:
             --override-name auth.anon_key=SUPABASE_ANON_KEY \
             --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
             >> "$GITHUB_ENV"
+
+      - name: Prepare private media bucket and local-only operator accounts
+        run: |
+          supabase status -o env \
+            --override-name api.url=SUPABASE_URL \
+            --override-name auth.anon_key=SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            > .env.local
+          node scripts/bootstrap-local-staff.mjs
 
       - name: Verify Realtime publication membership
         run: |
@@ -170,6 +181,9 @@ jobs:
 
       - name: Prove editorial publication and homepage module flow
         run: node tests/editorial-homepage.integration.mjs
+
+      - name: Prove private gallery media and publication rights boundary
+        run: node tests/gallery-media.integration.mjs
 
       - name: Prove realtime readiness and backoffice role boundaries
         id: realtime_backoffice
