@@ -1,9 +1,27 @@
 {
+  "id": "/",
   "name": "Mcello — Preview",
   "short_name": "Mcello",
+  "description": "Installierbare Mcello Entwicklungs-Preview für Speisekarte und Pickup-Bestellung.",
+  "lang": "de-DE",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#171715",
-  "description": "Vendor-neutral Mcello showcase PWA prototype."
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icons/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
