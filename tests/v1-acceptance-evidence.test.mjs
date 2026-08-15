@@ -14,6 +14,7 @@ const evidence = await readFile(
 test("verified V1 backend/ordering capabilities are reflected in acceptance", () => {
   for (const expected of [
     "[x] Modern Warm Premium visual system (`D001`)",
+    "[x] Own independent first-party ordering core; no third-party marketplace required (`D002`)",
     "[x] Pickup ASAP + preorder slots (`D005`, `D009`)",
     "[x] 15-minute slot capacity (`D039`)",
     "[x] Cart persistence + revalidation (`D038`)",
@@ -30,6 +31,7 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
     "[x] Allergen/dietary label model (`D045`)",
     "[x] Timed availability (`D051`)",
     "[x] Staff operational-only role (`D021`)",
+    "[x] Server/database role enforcement for admin/staff boundaries (`D020`, `D021`)",
     "[x] Safe homepage section ordering/toggling (`D031`)",
     "[x] Event/Special/Presse/News scheduling + pinning (`D032`)",
     "[x] Installable browser-compatible PWA (`D060`)",
@@ -37,6 +39,9 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
     "[x] Showcase-grade motion without harming usability (`D058`)",
     "[x] Public copy tone: premium/quiet + warm/personal with restrained street-food moments (`D059`)",
     "[x] Homepage hero, highlight/quick-order, community/news/events, story/team (`D024`)",
+    "[x] Reuse documented Lebtig foundations through shared packages without app-to-app coupling (`D022`)",
+    "[x] Shared core remains reusable / Product-D-ready through workspace package boundaries (`D023`)",
+    "[x] Binding Decision Ledger coverage/status discipline is enforced in CI (`D062`)",
     "[x] Staging/production path is reproducible on self-hosted infrastructure from Git + migrations (`D063`)",
     "[x] Production self-host plan includes TLS, secrets, firewalling, backups, restore test and monitoring (`D063`)",
   ]) {
@@ -60,9 +65,14 @@ test("known partial V1 requirements remain unchecked", () => {
 test("evidence ledger records verified ordering flows and remaining blockers", () => {
   for (const marker of [
     "D001 | `VERIFIED`",
+    "D002 | `VERIFIED`",
     "D043 | `VERIFIED`",
     "D012 + D013 | `VERIFIED`",
     "D056 | `VERIFIED`",
+    "D020 + D021 (role-enforcement boundary) | `VERIFIED`",
+    "D022 | `VERIFIED`",
+    "D023 | `VERIFIED`",
+    "D062 | `VERIFIED`",
     "D064 (Development OTP) | `VERIFIED`",
     "D064 (production spend/runtime guard) | `VERIFIED`",
     "D060 | `VERIFIED`",
@@ -72,6 +82,9 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
     "D024 (homepage composition) | `VERIFIED`",
     "D063 (self-host release path) | `VERIFIED`",
     "D063 (production hardening/restore) | `VERIFIED`",
+    "tests/independent-ordering.test.mjs",
+    "tests/reuse-architecture.test.mjs",
+    "tests/decision-ledger-coverage.test.mjs",
     "tests/messaging-spend-boundary.test.mjs",
     "PRODUCTION_MESSAGING_NOT_CONFIGURED",
     "tests/brand-design-system.browser.mjs",
