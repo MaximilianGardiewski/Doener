@@ -3,7 +3,8 @@
 Every item maps back to the binding Decision Ledger. Detailed evidence and explicit partial blockers live in `V1_EVIDENCE.md`.
 
 ## Brand/Public
-- [ ] Modern Warm Premium visual system (`D001`, `D029`)
+- [x] Modern Warm Premium visual system (`D001`)
+- [ ] Existing logo/recognition with premium anthracite/amber/selective-green reinterpretation (`D029`)
 - [ ] Real Mcello media with production rights confirmed; no fake documentary imagery (`D024`, `D025`)
 - [x] Public navigation and emphasized order CTA (`D030`)
 - [x] Homepage hero, highlight/quick-order, community/news/events, story/team (`D024`)
