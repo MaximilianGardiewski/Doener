@@ -65,6 +65,7 @@ function renderShopState() {
   const override = shopState?.override || "auto";
   const labels = {
     auto: "Automatik",
+    rush: `Rush · +${Number(shopState?.rushExtraMinutes || 0)} Min ASAP`,
     pause: "Online-Bestellungen pausiert",
     today_closed: "Heute geschlossen",
     force_closed: "Online-Bestellungen geschlossen",
@@ -77,8 +78,10 @@ function renderShopState() {
     shopModeHelp.textContent = shopState?.scheduledOpen
       ? `Nach Öffnungsplan geöffnet${Number.isFinite(closeMinutes) ? ` · noch ca. ${closeMinutes} Min. bis Schließung` : ""}.`
       : "Nach Öffnungsplan aktuell geschlossen.";
+  } else if (override === "rush") {
+    shopModeHelp.textContent = `Online-Bestellungen bleiben offen. Neue ASAP-Zeitversprechen erhalten serverseitig +${Number(shopState?.rushExtraMinutes || 0)} Minuten; Vorbestellungen bleiben auf ihrem Slot.`;
   } else if (override === "pause") {
-    shopModeHelp.textContent = "Neue Online-Bestellungen sind blockiert, bis das Team auf Automatik zurückstellt.";
+    shopModeHelp.textContent = "Neue Online-Bestellungen sind blockiert, bis das Team auf Automatik oder Rush zurückstellt.";
   } else if (override === "today_closed") {
     shopModeHelp.textContent = "Für heute manuell geschlossen. Rückkehr zur Automatik erfolgt bewusst durch das Team.";
   } else if (override === "force_closed") {
@@ -165,20 +168,46 @@ async function toggleAvailability(button) {
   }
 }
 
+async function staffOverrideRpc(override, operatorMessage) {
+  const sessionResponse = await fetch("/api/ops/realtime-session", { cache: "no-store" });
+  const session = await sessionResponse.json().catch(() => ({}));
+  if (!sessionResponse.ok || !session.websocketUrl || !session.accessToken || !session.locationId) {
+    throw new Error("Staff-Session nicht verfügbar");
+  }
+  const websocket = new URL(session.websocketUrl);
+  const apiKey = websocket.searchParams.get("apikey");
+  if (!apiKey) throw new Error("Öffentlicher Supabase-API-Key fehlt");
+  const restBase = `${websocket.protocol === "wss:" ? "https:" : "http:"}//${websocket.host}`;
+  const response = await fetch(`${restBase}/rest/v1/rpc/staff_set_shop_override`, {
+    method: "POST",
+    headers: {
+      apikey: apiKey,
+      authorization: `Bearer ${session.accessToken}`,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      _location_id: session.locationId,
+      _override: override,
+      _operator_message: operatorMessage || null,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || data.error || "Betriebsmodus wurde abgelehnt");
+  return data;
+}
+
 async function setShopOverride(button) {
   const override = button.dataset.shopOverride;
   button.disabled = true;
   try {
-    const response = await fetch("/api/kds/shop-override", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        override,
-        operatorMessage: shopOperatorMessage.value.trim(),
-      }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || "Betriebsmodus wurde abgelehnt");
+    let operatorMessage = shopOperatorMessage.value.trim();
+    if (!operatorMessage && override === "rush") {
+      operatorMessage = `Aktuell viel los · Abholung kann ca. ${Number(shopState?.rushExtraMinutes || 0)} Min. länger dauern.`;
+    } else if (!operatorMessage && override === "pause") {
+      operatorMessage = "Online-Bestellungen kurz pausiert";
+    }
+    await staffOverrideRpc(override, operatorMessage);
     shopMessage.textContent = "Betriebsmodus aktualisiert.";
     await loadShopState();
   } catch (error) {
