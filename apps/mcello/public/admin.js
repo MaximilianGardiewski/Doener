@@ -271,7 +271,7 @@ async function getDirectAdminSession() {
   if (directSessionCache && directSessionCache.expiresAt > Date.now() + 60_000) return directSessionCache;
   const response = await fetch("/api/admin/realtime-session", { cache: "no-store" });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.websocketUrl || !data.accessToken) {
+  if (!response.ok || !data.websocketUrl || !data.accessToken || !data.locationId) {
     throw new Error(data.error || "Admin-Session nicht verfügbar");
   }
   const websocket = new URL(data.websocketUrl);
@@ -283,6 +283,7 @@ async function getDirectAdminSession() {
     apiKey,
     accessToken: data.accessToken,
     expiresAt: Number(data.expiresAt || Date.now() + 5 * 60_000),
+    locationId: data.locationId,
   };
   return directSessionCache;
 }
@@ -314,14 +315,16 @@ async function saveCategory(event, form) {
   const button = form.querySelector("button[type=submit]");
   button.disabled = true;
   try {
-    await postJson("/api/admin/category/save", {
-      id: form.dataset.id || null,
-      name: form.elements.name.value.trim(),
-      slug: form.elements.slug.value.trim(),
-      description: form.elements.description.value.trim(),
-      sort: Number(form.elements.sort.value || 100),
-      status: form.elements.status.value,
-      visible: form.elements.visible.checked,
+    const session = await getDirectAdminSession();
+    await adminRpcDirect("admin_save_menu_category", {
+      _id: form.dataset.id || null,
+      _location_id: session.locationId,
+      _name: form.elements.name.value.trim(),
+      _slug: form.elements.slug.value.trim(),
+      _description: form.elements.description.value.trim(),
+      _sort: Number(form.elements.sort.value || 100),
+      _status: form.elements.status.value,
+      _visible: form.elements.visible.checked,
     });
     dirty = false;
     message.textContent = "Kategorie gespeichert.";
@@ -343,29 +346,28 @@ async function saveProduct(event, form) {
   const button = form.querySelector("button[type=submit]");
   button.disabled = true;
   try {
-    const saved = await postJson("/api/admin/product/save", {
-      id: form.dataset.id || null,
-      categoryId: form.elements.categoryId.value,
-      name: form.elements.name.value.trim(),
-      slug: form.elements.slug.value.trim(),
-      description: form.elements.description.value.trim(),
-      basePriceCents: price,
-      sort: Number(form.elements.sort.value || 100),
-      status: form.elements.status.value,
-      bestseller: form.elements.bestseller.checked,
-      orderableOnline: form.elements.orderableOnline.checked,
-      ownerConfirmed: form.elements.ownerConfirmed.checked,
-    });
-    const savedProduct = Array.isArray(saved) ? saved[0] : saved;
-    const productId = savedProduct?.id || form.dataset.id;
-    if (!productId) throw new Error("Produkt wurde gespeichert, aber die ID fehlt für die Gruppen-Zuordnung.");
+    const session = await getDirectAdminSession();
+    const existing = catalog.products.find((product) => product.id === form.dataset.id);
     const groupIds = [...form.querySelectorAll('input[name="modifierGroupIds"]:checked')].map((input) => input.value);
-    await adminRpcDirect("admin_set_product_modifier_groups", {
-      _product_id: productId,
-      _group_ids: groupIds,
+    await adminRpcDirect("admin_save_menu_product_configured", {
+      _id: form.dataset.id || null,
+      _location_id: session.locationId,
+      _category_id: form.elements.categoryId.value,
+      _name: form.elements.name.value.trim(),
+      _slug: form.elements.slug.value.trim(),
+      _description: form.elements.description.value.trim(),
+      _base_price_cents: price,
+      _sort: Number(form.elements.sort.value || 100),
+      _status: form.elements.status.value,
+      _bestseller: form.elements.bestseller.checked,
+      _orderable_online: form.elements.orderableOnline.checked,
+      _owner_confirmed: form.elements.ownerConfirmed.checked,
+      _modifier_group_ids: groupIds,
+      _dietary_tags: existing?.dietaryTags || [],
+      _allergen_ids: existing?.allergenIds || [],
     });
     dirty = false;
-    message.textContent = "Produkt und Konfigurator-Gruppen gespeichert.";
+    message.textContent = "Produkt, Konfigurator-Gruppen und bestehende Kennzeichnungen atomar gespeichert.";
     await loadCatalog({ force: true });
   } catch (error) {
     message.textContent = error.message;
@@ -385,9 +387,10 @@ async function saveModifierGroup(event, form) {
   const button = form.querySelector("button[type=submit]");
   button.disabled = true;
   try {
+    const session = await getDirectAdminSession();
     await adminRpcDirect("admin_save_modifier_group", {
       _id: form.dataset.id || null,
-      _location_id: "00000000-0000-4000-8000-000000000001",
+      _location_id: session.locationId,
       _name: form.elements.name.value.trim(),
       _min_selections: minSelections,
       _max_selections: maxSelections,
