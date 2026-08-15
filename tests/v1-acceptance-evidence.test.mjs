@@ -13,6 +13,7 @@ const evidence = await readFile(
 
 test("verified V1 backend/ordering capabilities are reflected in acceptance", () => {
   for (const expected of [
+    "[x] Modern Warm Premium visual system (`D001`)",
     "[x] Pickup ASAP + preorder slots (`D005`, `D009`)",
     "[x] 15-minute slot capacity (`D039`)",
     "[x] Cart persistence + revalidation (`D038`)",
@@ -42,6 +43,7 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
 
 test("known partial V1 requirements remain unchecked", () => {
   for (const expected of [
+    "[ ] Existing logo/recognition with premium anthracite/amber/selective-green reinterpretation (`D029`)",
     "[ ] Real Mcello media with production rights confirmed; no fake documentary imagery (`D024`, `D025`)",
     "[ ] WhatsApp OTP primary + SMS fallback (`D003`)",
     "[ ] Live status/order summary/pickup location (`D015`)",
@@ -54,6 +56,7 @@ test("known partial V1 requirements remain unchecked", () => {
 
 test("evidence ledger records verified ordering flows and remaining blockers", () => {
   for (const marker of [
+    "D001 | `VERIFIED`",
     "D043 | `VERIFIED`",
     "D012 + D013 | `VERIFIED`",
     "D056 | `VERIFIED`",
@@ -63,6 +66,7 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
     "D024 (homepage composition) | `VERIFIED`",
     "D063 (self-host release path) | `VERIFIED`",
     "D063 (production hardening/restore) | `VERIFIED`",
+    "tests/brand-design-system.browser.mjs",
     "tests/pwa-installability.test.mjs",
     "tests/public-navigation.browser.mjs",
     "tests/showcase-motion.browser.mjs",
@@ -79,6 +83,7 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
     "23-Minuten-Integrationstest",
     "Verifizierte Pickup-Adresse",
     "D025/D026",
+    "D029 — finales Logo/Recognition-Asset",
   ]) {
     assert.match(evidence, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
   }

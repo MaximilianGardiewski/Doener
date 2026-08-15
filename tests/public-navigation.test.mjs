@@ -47,7 +47,7 @@ test("D030 keeps an emphasized order path available across desktop mobile and ke
 });
 
 test("mobile access replaces the hidden desktop nav below the public breakpoint", () => {
-  assert.match(styles, /@media \(max-width: 900px\)[\s\S]*?\.nav-links \{ display:none; \}/);
+  assert.match(styles, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.nav-links\s*\{\s*display:\s*none;\s*\}/);
   assert.match(html, /\.mobile-nav\{display:none;position:relative\}/);
   assert.match(html, /@media\(max-width:900px\)\{\.mobile-nav\{display:block\}/);
   assert.match(html, /width:min\(340px,calc\(100vw - 22px\)\)/);
