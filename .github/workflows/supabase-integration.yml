@@ -23,6 +23,7 @@ on:
       - "tests/allergen-labels.integration.mjs"
       - "tests/ordering-schedule.integration.mjs"
       - "tests/timed-product-db-gate.integration.mjs"
+      - "tests/editorial-homepage.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -49,6 +50,7 @@ on:
       - "tests/allergen-labels.integration.mjs"
       - "tests/ordering-schedule.integration.mjs"
       - "tests/timed-product-db-gate.integration.mjs"
+      - "tests/editorial-homepage.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
 
 concurrency:
@@ -165,6 +167,9 @@ jobs:
 
       - name: Prove timed product availability at database persistence boundary
         run: node tests/timed-product-db-gate.integration.mjs
+
+      - name: Prove editorial publication and homepage module flow
+        run: node tests/editorial-homepage.integration.mjs
 
       - name: Prove realtime readiness and backoffice role boundaries
         id: realtime_backoffice
