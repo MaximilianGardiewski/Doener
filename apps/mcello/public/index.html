@@ -22,12 +22,25 @@
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#bestellen">Direkt zur Speisekarte & Bestellung</a>
   <div class="prototype-banner" id="prototypeBanner">Entwicklungsprototyp · Preise vorläufig · Originalmedien noch nicht im öffentlichen Repo</div>
   <header class="site-header">
     <div class="shell nav">
-      <a class="brand" href="#start"><div class="brand-mark">M</div><div><strong>MCELLO</strong><span>Kebap · Pizza · Bistro</span></div></a>
-      <nav class="nav-links"><a href="#start">Start</a><a href="#bestellen">Speisekarte & Bestellen</a><a href="#ueber">Über Mcello</a><a href="#aktuelles">Aktuelles & Events</a><a href="#galerie">Galerie</a><a href="#kontakt">Kontakt & Anfahrt</a></nav>
-      <button class="primary" data-open-cart>Jetzt bestellen</button>
+      <a class="brand" href="#start" aria-label="Mcello Start"><div class="brand-mark">M</div><div><strong>MCELLO</strong><span>Kebap · Pizza · Bistro</span></div></a>
+      <nav class="nav-links" aria-label="Hauptnavigation"><a href="#start">Start</a><a href="#bestellen">Speisekarte & Bestellen</a><a href="#ueber">Über Mcello</a><a href="#aktuelles">Aktuelles & Events</a><a href="#galerie">Galerie</a><a href="#kontakt">Kontakt & Anfahrt</a></nav>
+      <a class="primary header-order-cta" href="#bestellen" data-order-cta>Jetzt bestellen</a>
+      <details class="mobile-nav" id="mobileNav">
+        <summary class="pill" aria-label="Navigation öffnen">Menü</summary>
+        <nav class="mobile-nav-panel" aria-label="Mobile Hauptnavigation">
+          <a href="#start">Start</a>
+          <a href="#bestellen">Speisekarte & Bestellen</a>
+          <a href="#ueber">Über Mcello</a>
+          <a href="#aktuelles">Aktuelles & Events</a>
+          <a href="#galerie">Galerie</a>
+          <a href="#kontakt">Kontakt & Anfahrt</a>
+          <a class="primary mobile-order-cta" href="#bestellen" data-order-cta>Jetzt bestellen</a>
+        </nav>
+      </details>
     </div>
   </header>
   <main>
@@ -36,7 +49,7 @@
         <div class="kicker">Bad Krozingen · Lokal zuerst</div>
         <h1>Warm. Echt. <em>Mcello.</em></h1>
         <p>Bistro-Atmosphäre, Qualität und Community — digital so direkt wie an der Theke. Der Showcase verbindet Premium-Branding mit einem strukturierten Bestell- und Küchenfluss.</p>
-        <div class="hero-actions"><a class="primary" href="#bestellen">Speisekarte entdecken</a><a class="pill" href="#ueber">Das Lokal erleben</a></div>
+        <div class="hero-actions"><a class="primary" href="#bestellen" data-order-cta>Speisekarte entdecken</a><a class="pill" href="#ueber">Das Lokal erleben</a></div>
         <div class="meta-row"><span><strong>V1</strong> Abholung + Vorbestellung</span><span><strong>PWA</strong> Browser & Homescreen</span><span><strong>KDS</strong> Live für die Theke</span></div>
       </div>
       <div class="hero-media"><img class="hero-photo" src="/media/placeholder.svg" alt="" /><div class="float-card"><small>Media Layer</small><strong>Freigegebene Mcello-Fotos kommen aus CMS/Storage.</strong></div></div>
