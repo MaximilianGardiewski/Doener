@@ -86,9 +86,9 @@ function ensureQuickOrderPanel() {
   panel.className = "recommendation-box";
   panel.setAttribute("aria-labelledby", "homepageQuickOrderTitle");
   panel.innerHTML = `
-    <div class="tag">Schnellzugriff</div>
+    <div class="tag">Schnell ausgesucht</div>
     <h3 id="homepageQuickOrderTitle">Highlights & Schnellbestellung</h3>
-    <p>Aktuelle Kategorie-Highlights aus der veröffentlichten Speisekarte – direkt konfigurieren oder bei einfachen Artikeln sofort in den Warenkorb.</p>
+    <p>Einmal quer durch die Karte: ein Highlight pro Kategorie, direkt zum Konfigurieren oder mit einem Klick in den Warenkorb.</p>
     <div class="recommendation-grid" id="homepageQuickOrderGrid" aria-live="polite"></div>`;
   categoryRail.before(panel);
   return panel;
@@ -103,8 +103,8 @@ function ensureStoryTeamSlot() {
       <img src="/media/placeholder.svg" alt="" />
       <div class="story-copy">
         <div class="kicker">Menschen hinter Mcello</div>
-        <h3>Persönlichkeit gehört zur Geschichte.</h3>
-        <p>Die persönliche Mcello-Story und das Team werden hier aus bestätigten First-Party-Inhalten erzählt. Bis dahin bleibt dieser Bereich bewusst ohne erfundene Namen oder Biografie.</p>
+        <h3>Persönlichkeit gehört dazu.</h3>
+        <p>Sobald Namen, Geschichten und Fotos von Mcello bestätigt und freigegeben sind, lernst du hier die Menschen dahinter kennen. Bis dahin erfinden wir lieber nichts dazu.</p>
       </div>
     </article>`);
 }
@@ -137,7 +137,7 @@ function renderQuickOrder(panel, highlights) {
   const grid = panel.querySelector("#homepageQuickOrderGrid");
   if (!grid) return;
   if (!highlights.length) {
-    grid.innerHTML = '<div class="notice">Aktuell sind keine online konfigurierbaren Highlights verfügbar.</div>';
+    grid.innerHTML = '<div class="notice">Gerade kein Highlight für die Schnellbestellung verfügbar — die komplette Karte findest du direkt darunter.</div>';
     return;
   }
 
@@ -162,7 +162,7 @@ function renderQuickOrder(panel, highlights) {
       if (!opened) {
         const notice = document.createElement("div");
         notice.className = "notice";
-        notice.textContent = "Dieses Highlight hat sich gerade geändert. Bitte über die Speisekarte neu auswählen.";
+        notice.textContent = "Das Highlight hat sich gerade geändert. Such es bitte noch einmal direkt in der Speisekarte aus.";
         grid.prepend(notice);
       }
     });
