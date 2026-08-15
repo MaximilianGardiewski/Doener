@@ -56,7 +56,7 @@ test("evidence ledger records the blockers behind partial acceptance", () => {
     "D017 | `OPEN`",
     "Custom-Delay",
     "Customer-Edit vor Acceptance",
-    "bestätigte Pickup-Adresse",
+    "Verifizierte Pickup-Adresse",
   ]) {
     assert.match(evidence, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
   }
