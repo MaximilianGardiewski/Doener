@@ -26,6 +26,7 @@ on:
       - "tests/editorial-homepage.integration.mjs"
       - "tests/gallery-media.integration.mjs"
       - "tests/cross-sell-recommendations.integration.mjs"
+      - "tests/analytics-events.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -55,6 +56,7 @@ on:
       - "tests/editorial-homepage.integration.mjs"
       - "tests/gallery-media.integration.mjs"
       - "tests/cross-sell-recommendations.integration.mjs"
+      - "tests/analytics-events.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
 
 concurrency:
@@ -189,6 +191,9 @@ jobs:
 
       - name: Prove curated and rule-based cross-sell boundaries
         run: node tests/cross-sell-recommendations.integration.mjs
+
+      - name: Prove pseudonymous analytics event boundaries
+        run: node tests/analytics-events.integration.mjs
 
       - name: Prove realtime readiness and backoffice role boundaries
         id: realtime_backoffice

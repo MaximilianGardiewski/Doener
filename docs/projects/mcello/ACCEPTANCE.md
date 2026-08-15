@@ -67,5 +67,5 @@ Every item maps back to the binding Decision Ledger.
 - [ ] Delivery fulfillment/zone contracts with no V1 delivery UI (`D006`)
 - [ ] Future web/counter/table order source contract (`D027`)
 - [ ] Future effort-weight capacity field (`D040`)
-- [ ] Analytics/recommendation event data (`D047`, `D050`)
+- [x] Analytics/recommendation event data (`D047`, `D050`)
 - [ ] Location boundary while Mcello UI stays single-location (`D057`)
