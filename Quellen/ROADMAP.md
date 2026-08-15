@@ -16,28 +16,31 @@ Diese Roadmap ist eine Arbeitsreihenfolge. Bindend bleibt das Decision Ledger. E
 - [x] Kundenstatus: `Vor Ort · bar oder Karte`
 - [x] Domain-/Struktur-/Integrationstests im Branch
 - [ ] GitHub Actions vollständig grün
-- [ ] PR Review
+- [x] Diff intern reviewt; externer Codex-Review derzeit durch Nutzungslimit blockiert
 - [ ] Merge in `bootstrap/business-web-factory`
 - [ ] **kein** Production-Deploy in diesem Schritt
 
-## P1 — Noch offene PREPARE_NOW-Grenzen
+## P1 — Offene oder noch zu verifizierende PREPARE_NOW-Grenzen
 
-Diese Punkte sollen die Plattform später vor Umbauten schützen, aber noch keine Future-UI freischalten.
+Diese Punkte sollen die Plattform später vor Umbauten schützen, aber noch keine Future-UI freischalten. Bereits vorhandene Contracts werden nicht neu gebaut, sondern zuerst gegen Decision Ledger und Tests reconciled.
 
-1. **D006 Delivery Boundary**
-   - Fulfillment-Contract für Pickup/Delivery stabilisieren
+1. **D006 Delivery Boundary — noch auszubauen**
+   - vorhandenen `pickup | delivery` Fulfillment-Contract beibehalten
    - Delivery-Zone/PLZ/Radius-Contract vorbereiten
    - DB darf V1-Delivery weiterhin nicht versehentlich aktivieren
    - Tests für V1-Sperre + spätere Erweiterbarkeit
 
-2. **D027 Order Source Boundary**
-   - `web | counter | table` als stabile Quelle beibehalten/prüfen
+2. **D027 Order Source Boundary — Contract vorhanden, Acceptance verifizieren**
+   - `web | counter | table` existiert bereits in Domain und PostgreSQL
+   - expliziten Invariant-/Boundary-Nachweis ergänzen bzw. vorhandenen Nachweis zuordnen
    - Mcello V1 bleibt customer-online only
    - keine Counter-/Table-UI vorziehen
 
-3. **D040 Capacity Effort Boundary**
-   - zukünftiges Kitchen-Effort-Weight-Feld/Contract vorbereiten
-   - bestehende 15-Minuten-Slot-Kapazität darf sich nicht ändern
+3. **D040 Capacity Effort Boundary — technisch bereits vorbereitet, Acceptance reconciliieren**
+   - `menu_products.effort_weight numeric(8,2)` ist bereits vorhanden
+   - Schema-Test `future effort capacity is prepared but optional` ist bereits grün
+   - prüfen, ob dies D040 vollständig erfüllt, dann Acceptance statt Neuimplementierung aktualisieren
+   - bestehende 15-Minuten-Slot-Kapazität unverändert lassen
 
 ## P2 — Acceptance-Reconciliation für vorhandene V1-Funktionalität
 
