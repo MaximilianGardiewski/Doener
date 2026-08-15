@@ -32,6 +32,8 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
     "[x] Installable browser-compatible PWA (`D060`)",
     "[x] Public navigation and emphasized order CTA (`D030`)",
     "[x] Showcase-grade motion without harming usability (`D058`)",
+    "[x] Staging/production path is reproducible on self-hosted infrastructure from Git + migrations (`D063`)",
+    "[x] Production self-host plan includes TLS, secrets, firewalling, backups, restore test and monitoring (`D063`)",
   ]) {
     assert.match(acceptance, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
@@ -56,9 +58,14 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
     "D060 | `VERIFIED`",
     "D030 | `VERIFIED`",
     "D058 | `VERIFIED`",
+    "D063 (self-host release path) | `VERIFIED`",
+    "D063 (production hardening/restore) | `VERIFIED`",
     "tests/pwa-installability.test.mjs",
     "tests/public-navigation.browser.mjs",
     "tests/showcase-motion.browser.mjs",
+    "tests/selfhost-backup-restore.integration.sh",
+    ".github/workflows/selfhost-release.yml",
+    ".github/workflows/selfhost-db-drill.yml",
     "D003 | `PARTIAL`",
     "D015 | `PARTIAL`",
     "D016 | `PARTIAL`",
