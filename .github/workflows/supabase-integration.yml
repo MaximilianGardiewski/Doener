@@ -18,7 +18,7 @@ on:
       - "tests/scheduling.integration.mjs"
       - "tests/slot-capacity.integration.mjs"
       - "tests/notification-outbox.integration.mjs"
-      - "tests/realtime-backoffice.integration.mjs"
+      - "tests/modifier-backoffice.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -40,7 +40,7 @@ on:
       - "tests/scheduling.integration.mjs"
       - "tests/slot-capacity.integration.mjs"
       - "tests/notification-outbox.integration.mjs"
-      - "tests/realtime-backoffice.integration.mjs"
+      - "tests/modifier-backoffice.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
 
 concurrency:
@@ -97,7 +97,7 @@ jobs:
         run: |
           published="$(docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select tablename from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' order by tablename")"
           printf '%s\n' "$published"
-          for table in orders ordering_settings snoozes menu_products modifier_options; do
+          for table in orders ordering_settings snoozes menu_products modifier_groups modifier_options product_modifier_groups; do
             printf '%s\n' "$published" | grep -Fx "$table" >/dev/null || { echo "Missing from supabase_realtime: $table" >&2; exit 1; }
           done
 
@@ -115,9 +115,7 @@ jobs:
                 tenant_external_id,
                 type,
                 coalesce(settings->>'publication',''),
-                coalesce(settings->>'slot_name',''),
-                coalesce(settings->>'db_name',''),
-                coalesce(settings->>'db_host','')
+                coalesce(settings->>'slot_name','')
               from _realtime.extensions
               order by tenant_external_id,type
             "
@@ -149,6 +147,10 @@ jobs:
 
       - name: Prove notification outbox lifecycle
         run: node tests/notification-outbox.integration.mjs
+
+      - name: Prove modifier backoffice and role boundary
+        id: modifier_backoffice
+        run: node tests/modifier-backoffice.integration.mjs
 
       - name: Prove realtime readiness and backoffice role boundaries
         id: realtime_backoffice
