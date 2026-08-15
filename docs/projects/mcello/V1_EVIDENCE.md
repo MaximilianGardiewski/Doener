@@ -37,6 +37,7 @@ Status:
 | D032 | `VERIFIED` | `tests/editorial-homepage.integration.mjs` | News/Event-Publishing mit Draft/Published, Sichtbarkeitsfenstern, Eventzeit und Pinning ist DB-integriert. |
 | D022 + D023 (Role enforcement acceptance) | `VERIFIED` | RLS-/RPC-Migrationen, `tests/realtime-ready.integration.mjs`, Backoffice-Integrationen | Rollen werden server-/datenbankseitig erzwungen; Browserrollen sind nicht die Autoritätsgrenze. |
 | D064 (Development OTP) | `VERIFIED` | `packages/notifications/src/dev-otp.ts`, `apps/mcello/server.mjs` | Development-OTP sendet keine externe Nachricht und braucht keinen bezahlten Provider; Startpfad fordert WhatsApp primär/SMS Fallback an. |
+| D060 | `VERIFIED` | `apps/mcello/public/manifest.webmanifest`, `apps/mcello/public/sw.js`, `apps/mcello/public/icons/pwa-192.png`, `apps/mcello/public/icons/pwa-512.png`, `tests/pwa-installability.test.mjs` | Vollständiger Install-Contract mit echten 192/512-PNGs und maskable-safe Preview-Icon. Service Worker hält nur den öffentlichen App-Shell offline; API/REST/Auth/Storage, Mutationen, KDS und Statusdaten bleiben fail-closed/network-only. Das Preview-`M` ist kein freigegebenes finales Mcello-Logo. |
 | D063 (local backend) | `VERIFIED` | `supabase/config.toml`, `.github/workflows/supabase-integration.yml`, lokale Dev-Skripte | Vollständiger Backend-Rebuild läuft mit Supabase CLI/Docker ohne Managed-Supabase-Projekt. |
 | D063 (no Lovable/Vercel runtime dependency) | `VERIFIED` | Root `package.json`, `apps/*`, GitHub Actions | Build, Tests und lokale Runtime funktionieren aus Git/Node/Supabase; Lovable/Vercel sind keine notwendige Runtime. |
 
@@ -60,7 +61,6 @@ Diese Punkte werden nicht durch Backend-Fortschritt voreilig geschlossen:
 - D024/D025/D026 — finale Venue-/Story-/Community-Inszenierung mit echten Mcello-Fakten/Medien
 - D030 — Navigation/CTA existiert im Prototyp, wird aber zusammen mit finalem responsive Public QA abgenommen
 - D058 — Showcase-Motion
-- D060 — finale installierbare PWA-Abnahme
 - D015/D017 — Pickup-Adresse, Route und Call erst mit bestätigten first-party Kontaktdaten
 - D036 ist technisch verifiziert, aber der **Go-live** bleibt trotzdem durch `owner_confirmed=false` der provisional Inhalte blockiert
 - D063 — produktiver Self-Host-Plan mit TLS, Secrets, Firewall, Backup/Restore und Monitoring bleibt Release-Hardening
@@ -80,7 +80,8 @@ Diese Punkte werden nicht durch Backend-Fortschritt voreilig geschlossen:
 
 Nach dieser Reconciliation sollen keine bereits vorhandenen Features erneut gebaut werden. Die kleinsten klaren V1-Lücken sind:
 
-1. D003/D016 — erst nach expliziter Freigabe eines unvermeidbaren Messaging-Providers/Carrier-Kosten Production-Transport aktivieren.
-2. D015/D017 — bestätigte Adresse/Telefonnummer einpflegen, danach Status-Route/Call vervollständigen.
-3. D020/D007/D008 — Admin-/Menu-Gesamtabnahme nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
-4. Public/Design/Media-Abnahme mit echten Mcello-Medien und owner-bestätigtem Menü.
+1. D030 — Public Navigation + betonter Order-CTA als zusammenhängende responsive/browser Public-QA abnehmen.
+2. D003/D016 — erst nach expliziter Freigabe eines unvermeidbaren Messaging-Providers/Carrier-Kosten Production-Transport aktivieren.
+3. D015/D017 — bestätigte Adresse/Telefonnummer einpflegen, danach Status-Route/Call vervollständigen.
+4. D020/D007/D008 — Admin-/Menu-Gesamtabnahme nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
+5. Public/Design/Media-Abnahme mit echten Mcello-Medien und owner-bestätigtem Menü.
