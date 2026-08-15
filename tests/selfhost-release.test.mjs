@@ -55,8 +55,8 @@ test("release migrations are previewed before explicit application", () => {
 test("backup artifacts are private, checksummed and explicit about non-database assets", () => {
   includesAll(backup, [
     "umask 077",
-    "pg_dump \\",
-    "pg_dumpall \\",
+    "pg_dump",
+    "pg_dumpall",
     "sha256sum database.dump globals.sql",
     "does NOT contain Supabase Storage object bytes",
     "off-host",
