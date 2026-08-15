@@ -36,10 +36,12 @@ test("KDS keeps quick delays and adds an inline bounded custom delay", () => {
 
 test("server independently validates custom delay before invoking KDS adapter", () => {
   requireTokens(server, [
-    'body.action === "delay"',
+    'const action = String(body.action ?? "")',
+    'action === "delay"',
+    'const minutes = Number(body.minutes)',
     'Number.isInteger(minutes)',
     'minutes < 1 || minutes > 120',
-    'await kds.delay(body.orderId, minutes)',
+    'await kds.delay(orderId, minutes)',
   ]);
 });
 
