@@ -6,6 +6,7 @@ const target = Object.fromEntries(lanes.map((lane) => [lane, document.querySelec
 let orders = [];
 let refreshing = false;
 let shopOverride = "auto";
+let rushExtraMinutes = 0;
 let soundEnabled = false;
 let audioContext = null;
 let alarmTimer = null;
@@ -60,16 +61,23 @@ function normalize(raw) {
   };
 }
 
+function effectiveAcceptanceMinutes(baseMinutes) {
+  return baseMinutes + (shopOverride === "rush" ? rushExtraMinutes : 0);
+}
+
 function actions(order) {
   if (order.lane === "incoming") {
     const accept = order.requestedPickupAt
       ? `<div class="quick"><button data-action="accept-slot" data-id="${order.id}">Slot ${formatClock(order.requestedPickupAt)} bestätigen</button></div>`
       : `<div class="quick">
-          <button data-action="accept" data-id="${order.id}" data-minutes="15">15 Min</button>
-          <button data-action="accept" data-id="${order.id}" data-minutes="20">20 Min</button>
-          <button data-action="accept" data-id="${order.id}" data-minutes="30">30 Min</button>
+          <button data-action="accept" data-id="${order.id}" data-minutes="15">${effectiveAcceptanceMinutes(15)} Min</button>
+          <button data-action="accept" data-id="${order.id}" data-minutes="20">${effectiveAcceptanceMinutes(20)} Min</button>
+          <button data-action="accept" data-id="${order.id}" data-minutes="30">${effectiveAcceptanceMinutes(30)} Min</button>
         </div>`;
-    return `${accept}
+    const rushNote = !order.requestedPickupAt && shopOverride === "rush"
+      ? `<small>Rush aktiv · +${rushExtraMinutes} Min werden serverseitig auf ASAP addiert.</small>`
+      : "";
+    return `${accept}${rushNote}
       <div class="quick">
         <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Zu viel los">Zu viel los</button>
         <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Artikel/Zutat ausverkauft">Ausverkauft</button>
@@ -140,7 +148,11 @@ async function refresh() {
     orders = (await ordersResponse.json()).map(normalize);
     const shop = await shopResponse.json();
     shopOverride = shop.override ?? "auto";
-    document.querySelector("#rush").textContent = shopOverride === "pause" ? "Rush/Pause AKTIV" : "Rush/Pause";
+    rushExtraMinutes = Number(shop.rushExtraMinutes || 0);
+    document.querySelector("#rush").textContent = shopOverride === "rush" ? `Rush +${rushExtraMinutes} Min` : "Rush";
+    document.querySelector("#rush").classList.toggle("mode-active", shopOverride === "rush");
+    document.querySelector("#pause").textContent = shopOverride === "pause" ? "Pause AKTIV" : "Pause";
+    document.querySelector("#pause").classList.toggle("mode-active", shopOverride === "pause");
     document.querySelector("#kdsError").hidden = true;
     render();
   } catch {
@@ -186,6 +198,8 @@ async function act(button) {
     if (minutes == null) return;
     body.minutes = minutes;
   } else if (button.dataset.minutes) {
+    // Always send the original preset. PostgreSQL applies the current Rush
+    // buffer authoritatively when the ASAP order is accepted.
     body.minutes = Number(button.dataset.minutes);
   }
   if (button.dataset.reason) body.reason = button.dataset.reason;
@@ -197,8 +211,6 @@ async function act(button) {
       body: JSON.stringify(body),
     });
     if (!response.ok) throw new Error("transition rejected");
-    // Realtime will fan this change out to every device. Refresh immediately on
-    // the acting device as a latency optimization, not as the sync mechanism.
     await refresh();
   } catch {
     const error = document.querySelector("#kdsError");
@@ -210,21 +222,55 @@ async function act(button) {
   }
 }
 
-document.querySelector("#rush").addEventListener("click", async (event) => {
-  event.currentTarget.disabled = true;
-  try {
-    const override = shopOverride === "pause" ? "auto" : "pause";
-    const response = await fetch("/api/kds/shop-override", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ override, operatorMessage: override === "pause" ? "Online-Bestellungen kurz pausiert" : "" }),
-    });
-    if (!response.ok) throw new Error("override rejected");
-    await refresh();
-  } finally {
-    event.currentTarget.disabled = false;
+async function staffSetOverride(override, operatorMessage) {
+  const sessionResponse = await fetch("/api/kds/realtime-session", { cache: "no-store" });
+  const session = await sessionResponse.json().catch(() => ({}));
+  if (!sessionResponse.ok || !session.websocketUrl || !session.accessToken || !session.locationId) {
+    throw new Error("KDS-Session nicht verfügbar");
   }
-});
+  const websocket = new URL(session.websocketUrl);
+  const apiKey = websocket.searchParams.get("apikey");
+  if (!apiKey) throw new Error("Öffentlicher Supabase-API-Key fehlt");
+  const restBase = `${websocket.protocol === "wss:" ? "https:" : "http:"}//${websocket.host}`;
+  const response = await fetch(`${restBase}/rest/v1/rpc/staff_set_shop_override`, {
+    method: "POST",
+    headers: {
+      apikey: apiKey,
+      authorization: `Bearer ${session.accessToken}`,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      _location_id: session.locationId,
+      _override: override,
+      _operator_message: operatorMessage || null,
+    }),
+  });
+  if (!response.ok) throw new Error("Betriebsmodus wurde abgelehnt");
+}
+
+async function toggleOperationalMode(button, mode) {
+  button.disabled = true;
+  try {
+    const next = shopOverride === mode ? "auto" : mode;
+    const message = next === "rush"
+      ? `Aktuell viel los · Abholung kann ca. ${rushExtraMinutes} Min. länger dauern.`
+      : next === "pause"
+        ? "Online-Bestellungen kurz pausiert"
+        : "";
+    await staffSetOverride(next, message);
+    await refresh();
+  } catch (error) {
+    const target = document.querySelector("#kdsError");
+    target.hidden = false;
+    target.textContent = error.message || "Betriebsmodus konnte nicht geändert werden.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+document.querySelector("#rush").addEventListener("click", (event) => toggleOperationalMode(event.currentTarget, "rush"));
+document.querySelector("#pause").addEventListener("click", (event) => toggleOperationalMode(event.currentTarget, "pause"));
 
 document.querySelector("#sound").addEventListener("click", async (event) => {
   soundEnabled = !soundEnabled;
