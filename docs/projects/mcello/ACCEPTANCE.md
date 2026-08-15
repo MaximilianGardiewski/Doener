@@ -28,7 +28,7 @@ Every item maps back to the binding Decision Ledger.
 - [ ] WhatsApp OTP primary + SMS fallback (`D003`)
 - [ ] Development OTP can run without external paid messaging (`D064`)
 - [ ] No paid messaging provider activated without explicit owner approval (`D064`)
-- [ ] Pay on site (`D004`)
+- [x] Pay on site (`D004`)
 - [ ] Binding only on KDS acceptance (`D042`)
 - [ ] Edit/cancel pre-accept only (`D043`)
 - [ ] Configurable default 5-min acceptance timeout (`D053`)
@@ -63,7 +63,7 @@ Every item maps back to the binding Decision Ledger.
 - [ ] Production self-host plan includes TLS, secrets, firewalling, backups, restore test and monitoring (`D063`)
 
 ## Prepared now
-- [ ] Payment provider boundary (`D004`)
+- [x] Payment provider boundary (`D004`)
 - [ ] Delivery fulfillment/zone contracts with no V1 delivery UI (`D006`)
 - [ ] Future web/counter/table order source contract (`D027`)
 - [ ] Future effort-weight capacity field (`D040`)
