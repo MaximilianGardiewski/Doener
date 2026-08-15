@@ -14,15 +14,15 @@ Diese Roadmap ist eine Arbeitsreihenfolge. Bindend bleibt das Decision Ledger. E
 - [x] D057 Location Boundary — PR #6; Single-Location-App mit wiederverwendbarer Location-Grenze.
 - [x] Keine dieser Arbeiten hat Production deployed oder mutiert.
 
-Der Integrationszweig wurde nach PR #9 zusätzlich durch Commit `d182fb538fc62bd5b0ede5f662d5ef8b0982ac17` um eine redundante Ordering-Security-Migration bereinigt. Neue Arbeit basiert auf diesem aktuellsten Stand.
+## P1 — V1 Acceptance Reconciliation
 
-## P1 — V1 Acceptance Reconciliation — aktiv
+Evidence-Ledger: `docs/projects/mcello/V1_EVIDENCE.md`
 
-Branch: `agent/mcello-v1-acceptance-reconciliation`
+- [x] PR #10 hat den vorhandenen V1-Stand in VERIFIED/PARTIAL/OPEN/PREPARED getrennt und nur belegte Acceptance-Haken geschlossen.
+- [x] Merge-Commit PR #10: `2eddd26fca31465c2b7c32f7f4aefaa984fd6cea`.
+- [x] D056 Custom Delay wird auf `agent/mcello-custom-delay` als erste echte Restlücke geschlossen: +5/+10/+15 bleiben, zusätzlich frei 1–120 Minuten; Server validiert unabhängig; ETA und Customer-Update-Outbox werden Ende-zu-Ende geprüft.
 
-Ziel: vorhandene Funktionen **beweisen statt neu bauen**. Das detaillierte Ledger liegt in `docs/projects/mcello/V1_EVIDENCE.md`.
-
-### Bereits VERIFIED und in Acceptance übernommen
+### Bereits VERIFIED
 
 - [x] D005/D009 — Pickup ASAP + Vorbestellslots
 - [x] D039 — atomare 15-Minuten-Slot-Kapazität
@@ -34,6 +34,7 @@ Ziel: vorhandene Funktionen **beweisen statt neu bauen**. Das detaillierte Ledge
 - [x] D011 — Quick-Reject-Gründe
 - [x] D014/D049 — Alarm + Multi-Device Realtime
 - [x] D055 — Geplant-Lane + Preparation Lead
+- [x] D056 — +5/+10/+15/custom Delay, ETA-Update und delayed Notification-Outbox
 - [x] D054 — Zielzeit + Countdown
 - [x] D035 — Sold-out sichtbar aber disabled
 - [x] D045 — strukturierte Allergene/Dietary Labels
@@ -53,7 +54,6 @@ Ziel: vorhandene Funktionen **beweisen statt neu bauen**. Das detaillierte Ledge
 - [ ] D037/D044/D052 — Closed/Pause/Cutoff technisch korrekt; D037-Fallback Telefon/WhatsApp braucht bestätigte Kontaktdaten.
 - [ ] D043 — Cancel pre-accept vorhanden; Edit pre-accept fehlt.
 - [ ] D012/D013 — Pause + Snooze vorhanden; eigenständige Rush-Semantik fehlt.
-- [ ] D056 — +5/+10/+15 vorhanden; Custom Delay fehlt.
 - [ ] D015 — Status/Progress/Summary vorhanden; Pickup-Adresse fehlt.
 - [ ] D016 — Notification-Outbox vorhanden; Production WhatsApp/SMS-Transport fehlt.
 - [ ] D017 — Route + Call brauchen bestätigte Adresse/Telefonnummer.
@@ -62,14 +62,11 @@ Ziel: vorhandene Funktionen **beweisen statt neu bauen**. Das detaillierte Ledge
 
 ## P2 — Nächste echte Implementierungslücken
 
-Priorität nach dieser Evidence-PR:
-
-1. **D056 Custom Delay** — kleinste klare Code-Lücke; KDS um frei eingebbare Verzögerung ergänzen und End-to-End testen.
-2. **D043 Pre-Accept Edit** — sicherer token-scoped Edit-Flow mit vollständiger Revalidation/Preis-/Slot-Prüfung.
-3. **D012 Rush Mode** — Semantik so definieren, dass keine ungeklärten Betriebsregeln erfunden werden.
-4. **D003/D016 Production Messaging** — erst nach expliziter Freigabe eines Providers und unvermeidbarer Carrier-/Providerkosten.
-5. **D015/D017 Kontakt/Anfahrt** — nach first-party Bestätigung von Adresse und Telefonnummer.
-6. **D020/D007/D008 Admin-/Menu-Gesamtabnahme** — nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
+1. **D043 Pre-Accept Edit** — sicherer token-scoped Edit-Flow mit vollständiger Revalidation/Preis-/Slot-Prüfung.
+2. **D012 Rush Mode** — Semantik so definieren, dass keine ungeklärten Betriebsregeln erfunden werden.
+3. **D003/D016 Production Messaging** — erst nach expliziter Freigabe eines Providers und unvermeidbarer Carrier-/Providerkosten.
+4. **D015/D017 Kontakt/Anfahrt** — nach first-party Bestätigung von Adresse und Telefonnummer.
+5. **D020/D007/D008 Admin-/Menu-Gesamtabnahme** — nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
 
 ## P3 — Public Experience / Showcase-Qualität
 
