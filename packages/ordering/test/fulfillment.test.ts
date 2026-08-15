@@ -69,23 +69,24 @@ test("checkout rejects delivery before OTP or persistence work", async () => {
 });
 
 test("future delivery-zone contract supports PLZ and radius without choosing a provider", async () => {
+  // Synthetic fixtures only; these are not Mcello delivery areas.
   const rules: DeliveryZoneRule[] = [
-    { id: "postal", kind: "postal_code", postalCodes: ["79189"] },
-    { id: "radius", kind: "radius", center: { lat: 47.9, lon: 7.7 }, radiusMeters: 5000 },
+    { id: "postal-fixture", kind: "postal_code", postalCodes: ["12345"] },
+    { id: "radius-fixture", kind: "radius", center: { lat: 0, lon: 0 }, radiusMeters: 5000 },
   ];
   assert.equal(rules[0]?.kind, "postal_code");
   assert.equal(rules[1]?.kind, "radius");
 
   const resolver: DeliveryZoneResolver = {
     async resolve(input) {
-      return input.destination.postalCode === "79189"
-        ? { eligible: true, matchedZoneId: "postal" }
+      return input.destination.postalCode === "12345"
+        ? { eligible: true, matchedZoneId: "postal-fixture" }
         : { eligible: false };
     },
   };
 
   assert.deepEqual(
-    await resolver.resolve({ locationId: "mcello", destination: { postalCode: "79189" } }),
-    { eligible: true, matchedZoneId: "postal" },
+    await resolver.resolve({ locationId: "fixture-location", destination: { postalCode: "12345" } }),
+    { eligible: true, matchedZoneId: "postal-fixture" },
   );
 });
