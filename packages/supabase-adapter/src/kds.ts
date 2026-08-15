@@ -42,7 +42,7 @@ export class SupabaseKdsOperations {
 
   async setShopOverride(
     locationId: string,
-    override: "auto" | "force_open" | "force_closed" | "pause" | "today_closed",
+    override: "auto" | "force_closed" | "pause" | "today_closed",
     operatorMessage?: string,
   ): Promise<unknown> {
     return this.rpcClient.rpc("staff_set_shop_override", {
