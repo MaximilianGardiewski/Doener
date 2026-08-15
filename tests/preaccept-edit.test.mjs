@@ -10,6 +10,7 @@ const hardening = await readFile(
   new URL("../supabase/migrations/20260815025600_preaccept_order_edit_hardening.sql", import.meta.url),
   "utf8",
 );
+const server = await readFile(new URL("../apps/mcello/server.mjs", import.meta.url), "utf8");
 
 test("pre-accept edit keeps reconstruction and replacement behind service role", () => {
   for (const signature of [
@@ -55,4 +56,26 @@ test("received notification total is corrected before create transaction commits
   assert.match(hardening, /order_notification_outbox/);
   assert.match(hardening, /jsonb_set\(payload, '\{totalCents\}'/);
   assert.match(hardening, /dedupe_key = created_order\.id::text \|\| ':received'/);
+});
+
+test("public HTTP edit endpoint keeps service credentials server-side and rejects identity mutation", () => {
+  assert.match(server, /GET" && url\.pathname === "\/api\/order-edit"/);
+  assert.match(server, /POST" && url\.pathname === "\/api\/order-edit"/);
+  assert.match(server, /serviceRpc\(\)/);
+  assert.match(server, /server_get_pending_order_edit_context/);
+  assert.match(server, /server_replace_pending_order/);
+  for (const field of ["locationId", "mobile", "customerFirstName", "source", "state", "paymentMode", "submittedAt", "totalCents"]) {
+    assert.match(server, new RegExp(`"${field}"`));
+  }
+  assert.match(server, /identity field is immutable/);
+  assert.doesNotMatch(server, /SUPABASE_SERVICE_ROLE_KEY[^\n]+sendJson/);
+});
+
+test("HTTP edit payload is bounded before the service-role RPC", () => {
+  assert.match(server, /items\.length < 1 \|\| body\.items\.length > 50/);
+  assert.match(server, /quantity < 1 \|\| quantity > 99/);
+  assert.match(server, /item\.selections\.length > 30/);
+  assert.match(server, /new Set\(optionIds\)\.size !== optionIds\.length/);
+  assert.match(server, /boundedText\(item\.comment, 500\)/);
+  assert.match(server, /boundedText\(body\.comment, 1000\)/);
 });
