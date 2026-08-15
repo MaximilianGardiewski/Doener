@@ -17,6 +17,7 @@ const state = {
   slots: [],
   slotMinutes: 15,
   shopState: null,
+  menuAt: null,
 };
 
 const rail = $("#categoryRail");
@@ -43,8 +44,12 @@ function loadCart() {
   }
 }
 
-function saveCart() {
+function persistCart() {
   localStorage.setItem(CART_KEY, JSON.stringify(state.cart));
+}
+
+function saveCart() {
+  persistCart();
   renderCart();
 }
 
@@ -146,10 +151,11 @@ function productOrderable(product) {
 }
 
 function productBadge(product) {
+  const slotScoped = Boolean(state.menuAt);
   if (!product.orderableOnline) return '<span class="availability-badge">Nur vor Ort · online deaktiviert</span>';
-  if (product.soldOut) return '<span class="availability-badge bad">Heute ausverkauft</span>';
-  if (product.availableNow === false) return '<span class="availability-badge">Aktuell nicht verfügbar</span>';
-  return '<span class="availability-badge good">Online konfigurierbar</span>';
+  if (product.soldOut) return `<span class="availability-badge bad">${slotScoped ? "Für diesen Slot ausverkauft" : "Heute ausverkauft"}</span>`;
+  if (product.availableNow === false) return `<span class="availability-badge">${slotScoped ? "Für diesen Abholslot nicht verfügbar" : "Aktuell nicht verfügbar"}</span>`;
+  return `<span class="availability-badge good">${slotScoped ? "Für diesen Abholslot konfigurierbar" : "Online konfigurierbar"}</span>`;
 }
 
 function renderMenu() {
@@ -329,6 +335,15 @@ function installSlotSelector() {
     <span>Verfügbarer Abholslot</span>
     <select id="pickupSlot" disabled><option value="">Slots werden geladen …</option></select>
     <small id="slotHint" style="color:var(--muted)">Nur freie ${state.slotMinutes}-Minuten-Slots werden angezeigt.</small>`;
+  $("#pickupSlot").addEventListener("change", async () => {
+    resetOtp();
+    const selected = $("#pickupSlot").value || null;
+    await refreshMenuSnapshot(selected);
+    if (selected) {
+      const issues = validateAndRepriceCart();
+      if (issues.length) setCheckoutMessage(issues[0], "error");
+    }
+  });
 }
 
 async function loadShopState({ quiet = false } = {}) {
@@ -415,6 +430,107 @@ function localDateInBerlin(date) {
   }).format(date);
 }
 
+function currentSelectionsForLine(line) {
+  return new Map((line.selections || []).map((selection) => [selection.groupId, selection.optionIds || []]));
+}
+
+function validateAndRepriceCart() {
+  const issues = [];
+  let changed = false;
+
+  for (const line of state.cart) {
+    const product = state.items.find((candidate) => candidate.id === line.productId);
+    if (!product || !productOrderable(product)) {
+      issues.push(`${line.name} ist für den gewählten Abholzeitpunkt nicht verfügbar. Bitte aus dem Warenkorb entfernen oder einen anderen Slot wählen.`);
+      continue;
+    }
+
+    const groups = new Map((product.modifierGroups || []).map((group) => [group.id, group]));
+    const selected = currentSelectionsForLine(line);
+    let valid = true;
+
+    for (const groupId of selected.keys()) {
+      if (!groups.has(groupId)) {
+        valid = false;
+        break;
+      }
+    }
+
+    let currentPrice = product.basePriceCents;
+    const labels = [];
+    for (const group of product.modifierGroups || []) {
+      const optionIds = selected.get(group.id) || [];
+      if (optionIds.length < group.minSelections || optionIds.length > group.maxSelections) {
+        valid = false;
+        break;
+      }
+      for (const optionId of optionIds) {
+        const option = group.options.find((candidate) => candidate.id === optionId);
+        if (!option || option.soldOut) {
+          valid = false;
+          break;
+        }
+        currentPrice += option.priceDeltaCents || 0;
+        labels.push(`${group.name}: ${option.name}`);
+      }
+      if (!valid) break;
+    }
+
+    if (!valid) {
+      issues.push(`${line.name} wurde bei Zutaten, Sauce, Größe oder Extras geändert. Bitte neu konfigurieren.`);
+      continue;
+    }
+
+    if (line.name !== product.name || line.unitPriceCents !== currentPrice || JSON.stringify(line.selectionLabels || []) !== JSON.stringify(labels)) {
+      line.name = product.name;
+      line.unitPriceCents = currentPrice;
+      line.selectionLabels = labels;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    persistCart();
+    renderCart();
+  }
+  return issues;
+}
+
+async function refreshMenuSnapshot(at = null) {
+  if (!state.backendReady) return false;
+  try {
+    const catalog = await loadMenu(at, { allowFallback: false });
+    const previousCategory = state.categoryId;
+    state.locationId = catalog.locationId;
+    state.categories = catalog.categories;
+    state.items = catalog.items;
+    state.menuAt = at;
+    state.categoryId = state.categories.some((category) => category.id === previousCategory)
+      ? previousCategory
+      : null;
+    if (!state.categoryId) setInitialCategory();
+    reconcileCartWithMenu();
+    renderRail();
+    renderMenu();
+    renderCart();
+    return true;
+  } catch (error) {
+    setCheckoutMessage(error.message || "Speisekarte konnte für den Abholzeitpunkt nicht aktualisiert werden.", "error");
+    return false;
+  }
+}
+
+async function prepareCartForCheckout(requestedPickupAt = null) {
+  const refreshed = await refreshMenuSnapshot(requestedPickupAt);
+  if (!refreshed) return false;
+  const issues = validateAndRepriceCart();
+  if (issues.length) {
+    setCheckoutMessage(issues[0], "error");
+    return false;
+  }
+  return true;
+}
+
 async function requestOtp() {
   if (!state.cart.length) return;
   if (!await loadShopState()) {
@@ -429,6 +545,7 @@ async function requestOtp() {
     return;
   }
 
+  let requestedPickupAt = null;
   if ($("#pickupMode").value === "later") {
     const selectedBeforeRefresh = $("#pickupSlot")?.value || "";
     if (!selectedBeforeRefresh) {
@@ -437,11 +554,15 @@ async function requestOtp() {
     }
     await loadSlots({ preserveSelection: true });
     if (!$("#pickupSlot")?.value || $("#pickupSlot").value !== selectedBeforeRefresh) {
+      await refreshMenuSnapshot(null);
       setCheckoutMessage("Der gewählte Slot ist nicht mehr frei. Bitte einen neuen Slot auswählen.", "error");
       resetOtp();
       return;
     }
+    requestedPickupAt = selectedBeforeRefresh;
   }
+
+  if (!await prepareCartForCheckout(requestedPickupAt)) return;
 
   const button = $("#requestOtp");
   button.disabled = true;
@@ -495,11 +616,14 @@ async function submitOrder() {
     await loadSlots({ preserveSelection: true });
     if (!$("#pickupSlot")?.value || $("#pickupSlot").value !== selectedBeforeRefresh) {
       resetOtp();
+      await refreshMenuSnapshot(null);
       setCheckoutMessage("Der gewählte Slot ist nicht mehr frei. Bitte einen neuen Slot auswählen und die Nummer erneut verifizieren.", "error");
       return;
     }
     requestedPickupAt = selectedBeforeRefresh;
   }
+
+  if (!await prepareCartForCheckout(requestedPickupAt)) return;
 
   const button = $("#submitOrder");
   button.disabled = true;
@@ -569,12 +693,14 @@ function normalizeFallback(raw) {
   return { locationId: "static-preview", categories, items, source: "static" };
 }
 
-async function loadMenu() {
+async function loadMenu(at = null, { allowFallback = true } = {}) {
   try {
-    const response = await fetch("/api/menu", { cache: "no-store" });
-    if (!response.ok) throw new Error("no local backend");
+    const query = at ? `?at=${encodeURIComponent(at)}` : "";
+    const response = await fetch(`/api/menu${query}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("Speisekarte konnte nicht aus dem lokalen Backend geladen werden.");
     return normalizeDbMenu(await response.json());
-  } catch {
+  } catch (error) {
+    if (!allowFallback) throw error;
     const response = await fetch("/menu-seed.provisional.json", { cache: "no-store" });
     return normalizeFallback(await response.json());
   }
@@ -595,7 +721,7 @@ function reconcileCartWithMenu() {
   const ids = new Set(state.items.map((item) => item.id));
   const before = state.cart.length;
   state.cart = state.cart.filter((line) => ids.has(line.productId));
-  if (before !== state.cart.length) saveCart();
+  if (before !== state.cart.length) persistCart();
 }
 
 function setInitialCategory() {
@@ -610,6 +736,7 @@ async function init() {
   state.categories = catalog.categories;
   state.items = catalog.items;
   state.backendReady = backendReady && catalog.source === "database";
+  state.menuAt = null;
   setInitialCategory();
   reconcileCartWithMenu();
   renderRail();
@@ -617,7 +744,7 @@ async function init() {
   renderCart();
 
   $("#menuSourceText").textContent = catalog.source === "database"
-    ? "Lokale DB-Speisekarte: 97 transkribierte Positionen bleiben bis zur Inhaber-Freigabe ausdrücklich vorläufig. Preise und Verfügbarkeit werden beim Checkout erneut geprüft."
+    ? "Lokale DB-Speisekarte: 97 transkribierte Positionen bleiben bis zur Inhaber-Freigabe ausdrücklich vorläufig. Bei Vorbestellungen wird die Produkt- und Zutatenverfügbarkeit für den gewählten Abholslot neu ausgewertet."
     : "Statische Design-Preview: Produkte und Preise sind vorläufig. Echte Testbestellungen sind nur mit lokalem Backend möglich.";
   $("#prototypeBanner").textContent = state.backendReady
     ? "Lokaler E2E-Modus · echte Testorders in lokaler DB · Speisekarte weiterhin unbestätigt"
@@ -637,7 +764,12 @@ $("#pickupMode").addEventListener("change", async () => {
   const later = $("#pickupMode").value === "later";
   $("#pickupAtField").classList.toggle("hidden", !later);
   resetOtp();
-  if (later && await loadShopState({ quiet: true })) await loadSlots({ preserveSelection: false });
+  if (later && await loadShopState({ quiet: true })) {
+    await loadSlots({ preserveSelection: false });
+  } else if (!later) {
+    await refreshMenuSnapshot(null);
+    validateAndRepriceCart();
+  }
 });
 modal.onclick = (event) => { if (event.target === modal) closeProduct(); };
 
