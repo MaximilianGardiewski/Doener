@@ -4,7 +4,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { DevOtpProvider } from "../../packages/notifications/src/dev-otp.ts";
+import {
+  parseOrderAnalyticsContext,
+  parsePublicAnalyticsEvent,
+} from "../../packages/analytics/src/events.ts";
 import { CheckoutError, submitVerifiedPickupOrder } from "../../packages/ordering/src/checkout.ts";
+import { SupabaseAnalyticsRecorder } from "../../packages/supabase-adapter/src/analytics.ts";
 import { SupabaseRestRpcClient } from "../../packages/supabase-adapter/src/rest-rpc.ts";
 import {
   SupabaseCatalogReader,
@@ -37,6 +42,8 @@ const devAdminPassword = optionalEnv("MCELLO_DEV_ADMIN_PASSWORD");
 let staffSession = null;
 let adminSession = null;
 let maintenanceRunning = false;
+const analyticsRateWindows = new Map();
+let analyticsGlobalWindow = { count: 0, resetAt: Date.now() + 60_000 };
 
 const devCodes = new Map();
 const otp = new DevOtpProvider({
@@ -227,6 +234,28 @@ function storageObjectPath(bucketId, objectPath) {
   return `/storage/v1/object/authenticated/${encoded}`;
 }
 
+function consumeAnalyticsQuota(sessionId, now = Date.now()) {
+  if (analyticsGlobalWindow.resetAt <= now) {
+    analyticsGlobalWindow = { count: 0, resetAt: now + 60_000 };
+    for (const [key, value] of analyticsRateWindows) {
+      if (value.resetAt <= now) analyticsRateWindows.delete(key);
+    }
+  } else if (analyticsGlobalWindow.count >= 3_000) {
+    return false;
+  }
+
+  const current = analyticsRateWindows.get(sessionId);
+  if (!current || current.resetAt <= now) {
+    analyticsRateWindows.set(sessionId, { count: 1, resetAt: now + 60_000 });
+  } else if (current.count >= 60) {
+    return false;
+  } else {
+    current.count += 1;
+  }
+  analyticsGlobalWindow.count += 1;
+  return true;
+}
+
 async function mutateSnooze(rpc, body, undo = false) {
   const type = String(body.type ?? "");
   const id = String(body.id ?? "");
@@ -257,6 +286,28 @@ async function handleApi(req, res, url) {
       maintenanceWorker: Boolean(serviceRoleKey),
       realtime: Boolean(anonKey),
     });
+    return true;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/analytics/events") {
+    const rpc = serviceRpc();
+    if (!rpc) return sendUnavailable(res), true;
+    try {
+      const event = parsePublicAnalyticsEvent(await readJson(req));
+      if (event.locationId !== DEV_LOCATION_ID) {
+        sendJson(res, 400, { error: "INVALID_ANALYTICS_LOCATION" });
+        return true;
+      }
+      if (!consumeAnalyticsQuota(event.anonymousSessionId)) {
+        sendJson(res, 429, { error: "ANALYTICS_RATE_LIMITED" });
+        return true;
+      }
+      await new SupabaseAnalyticsRecorder(rpc).record(event);
+      sendJson(res, 202, { accepted: true });
+    } catch (error) {
+      console.warn("Analytics event rejected", error instanceof Error ? error.message : "invalid event");
+      sendJson(res, 400, { error: "INVALID_ANALYTICS_EVENT" });
+    }
     return true;
   }
 
@@ -377,6 +428,14 @@ async function handleApi(req, res, url) {
     const rpc = serviceRpc();
     if (!rpc) return sendUnavailable(res), true;
     const body = await readJson(req);
+    let analyticsContext = null;
+    if (body.analytics != null) {
+      try {
+        analyticsContext = parseOrderAnalyticsContext(body.analytics);
+      } catch {
+        // Analytics is best-effort and must never block a valid order.
+      }
+    }
     try {
       const order = await submitVerifiedPickupOrder(body, {
         otp,
@@ -389,6 +448,14 @@ async function handleApi(req, res, url) {
           return `${url.origin}/status.html?token=${encodeURIComponent(created.publicToken)}`;
         },
       });
+      if (analyticsContext) {
+        await new SupabaseAnalyticsRecorder(rpc)
+          .recordOrderSubmitted(DEV_LOCATION_ID, order.id, analyticsContext)
+          .catch((error) => console.warn(
+            "Order analytics event was not recorded",
+            error instanceof Error ? error.message : "unknown error",
+          ));
+      }
       sendJson(res, 201, {
         id: order.id,
         publicToken: order.publicToken,
