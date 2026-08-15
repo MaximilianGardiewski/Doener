@@ -13,6 +13,10 @@ const state = {
   selections: [],
   backendReady: false,
   otpChallenge: null,
+  locationId: null,
+  slots: [],
+  slotMinutes: 15,
+  shopState: null,
 };
 
 const rail = $("#categoryRail");
@@ -23,11 +27,7 @@ const drawer = $("#cartDrawer");
 
 function esc(value = "") {
   return String(value).replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
   })[char]);
 }
 
@@ -48,8 +48,57 @@ function saveCart() {
   renderCart();
 }
 
+function resetOtp() {
+  state.otpChallenge = null;
+  $("#otpPanel").classList.add("hidden");
+  $("#devOtpHint").classList.add("hidden");
+  updateCheckoutControls();
+}
+
 function lineTotal(line) {
   return (line.unitPriceCents || 0) * (line.quantity || 1);
+}
+
+function shopAcceptsOrders() {
+  if (!state.backendReady || !state.shopState) return false;
+  const shop = state.shopState;
+  if (shop.onlineOrderingEnabled === false || shop.pickupEnabled === false) return false;
+  if (["force_closed", "pause", "today_closed"].includes(shop.override)) return false;
+  if (shop.override === "force_open") return true;
+  if (!shop.scheduledOpen) return false;
+  return shop.minutesUntilScheduledClose == null
+    || Number(shop.minutesUntilScheduledClose) > Number(shop.orderCutoffMinutes || 0);
+}
+
+function shopStatusCopy() {
+  if (!state.backendReady) return "Ohne lokalen Backend-Stack bleibt die Preview vollständig read-only.";
+  if (!state.shopState) return "Bestellstatus konnte nicht geladen werden. Speisekarte und Warenkorb bleiben verfügbar; Absenden ist vorsorglich gesperrt.";
+  const shop = state.shopState;
+  if (shop.onlineOrderingEnabled === false || shop.pickupEnabled === false) {
+    return shop.operatorMessage || "Online-Abholung ist aktuell deaktiviert. Du kannst weiter stöbern und deinen Warenkorb behalten.";
+  }
+  if (shop.override === "pause") return shop.operatorMessage || "Online-Bestellungen sind gerade kurz pausiert. Dein Warenkorb bleibt gespeichert.";
+  if (shop.override === "today_closed") return shop.operatorMessage || "Heute sind keine Online-Bestellungen möglich. Dein Warenkorb bleibt gespeichert.";
+  if (shop.override === "force_closed") return shop.operatorMessage || "Online-Bestellungen sind aktuell geschlossen. Dein Warenkorb bleibt gespeichert.";
+  if (shop.override !== "force_open" && !shop.scheduledOpen) {
+    return shop.operatorMessage || "Aktuell geschlossen. Du kannst weiter stöbern und den Warenkorb für später vorbereiten.";
+  }
+  if (shop.override !== "force_open"
+      && shop.minutesUntilScheduledClose != null
+      && Number(shop.minutesUntilScheduledClose) <= Number(shop.orderCutoffMinutes || 0)) {
+    return shop.operatorMessage || "Der Online-Bestellschluss für heute ist erreicht. Dein Warenkorb bleibt gespeichert.";
+  }
+  const closeHint = shop.override !== "force_open" && Number.isFinite(Number(shop.minutesUntilScheduledClose))
+    ? ` · noch ca. ${Number(shop.minutesUntilScheduledClose)} Min. bis zur geplanten Schließung`
+    : "";
+  return `Online-Bestellung möglich${closeHint}. Preise, Verfügbarkeit und Kapazität werden beim Absenden erneut geprüft.`;
+}
+
+function updateCheckoutControls() {
+  const canStart = state.cart.length > 0 && state.backendReady && shopAcceptsOrders();
+  $("#requestOtp").disabled = !canStart;
+  const submit = $("#submitOrder");
+  if (submit) submit.disabled = !canStart || !state.otpChallenge;
 }
 
 function renderCart() {
@@ -67,18 +116,16 @@ function renderCart() {
         <div><strong>${euro.format(lineTotal(line) / 100)}</strong><br><button class="ghost-btn" data-remove="${index}" aria-label="Artikel entfernen">×</button></div>
       </div>`;
     }).join("")
-    : `<p style="color:var(--muted)">Noch nichts drin.</p>`;
+    : '<p style="color:var(--muted)">Noch nichts drin.</p>';
 
   document.querySelectorAll("[data-remove]").forEach((button) => {
     button.onclick = () => {
       state.cart.splice(Number(button.dataset.remove), 1);
-      state.otpChallenge = null;
-      $("#otpPanel").classList.add("hidden");
+      resetOtp();
       saveCart();
     };
   });
-
-  $("#requestOtp").disabled = state.cart.length === 0;
+  updateCheckoutControls();
 }
 
 function renderRail() {
@@ -129,7 +176,7 @@ function renderMenu() {
       <span class="price">${euro.format(product.basePriceCents / 100)}</span>
       <button class="ghost-btn" data-product="${product.id}" ${productOrderable(product) ? "" : "disabled"}>${productOrderable(product) ? "Hinzufügen" : "Nicht online"}</button>
     </div>
-  `).join("") || `<div class="list-row"><strong>Für diese Kategorie sind noch keine Positionen vorhanden.</strong></div>`;
+  `).join("") || '<div class="list-row"><strong>Für diese Kategorie sind noch keine Positionen vorhanden.</strong></div>';
 
   document.querySelectorAll("[data-product]").forEach((button) => {
     button.onclick = () => openProduct(button.dataset.product);
@@ -263,8 +310,7 @@ function addActiveProductToCart() {
     comment: $("#specialRequest").value.trim(),
     savedAt: new Date().toISOString(),
   });
-  state.otpChallenge = null;
-  $("#otpPanel").classList.add("hidden");
+  resetOtp();
   saveCart();
   closeProduct();
   drawer.classList.add("open");
@@ -276,14 +322,125 @@ function setCheckoutMessage(message, type = "") {
   element.className = `checkout-message${type ? ` ${type}` : ""}`;
 }
 
+function installSlotSelector() {
+  const field = $("#pickupAtField");
+  if (!field) return;
+  field.innerHTML = `
+    <span>Verfügbarer Abholslot</span>
+    <select id="pickupSlot" disabled><option value="">Slots werden geladen …</option></select>
+    <small id="slotHint" style="color:var(--muted)">Nur freie ${state.slotMinutes}-Minuten-Slots werden angezeigt.</small>`;
+}
+
+async function loadShopState({ quiet = false } = {}) {
+  const wasAccepting = shopAcceptsOrders();
+  if (!state.backendReady) {
+    state.shopState = null;
+    updateCheckoutControls();
+    if (!quiet) setCheckoutMessage(shopStatusCopy());
+    return false;
+  }
+  try {
+    const response = await fetch("/api/kds/shop-state", { cache: "no-store" });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Bestellstatus nicht verfügbar");
+    state.shopState = data;
+    const accepting = shopAcceptsOrders();
+    if (wasAccepting && !accepting) resetOtp();
+    updateCheckoutControls();
+    if (!quiet || !accepting) setCheckoutMessage(shopStatusCopy(), accepting ? "success" : "");
+    return accepting;
+  } catch (error) {
+    state.shopState = null;
+    resetOtp();
+    if (!quiet) setCheckoutMessage(error.message || shopStatusCopy(), "error");
+    return false;
+  }
+}
+
+async function loadSlots({ preserveSelection = true } = {}) {
+  const select = $("#pickupSlot");
+  if (!select) return;
+  const previous = preserveSelection ? select.value : "";
+  select.disabled = true;
+  select.innerHTML = '<option value="">Slots werden geladen …</option>';
+
+  if (!state.backendReady || !shopAcceptsOrders()) {
+    state.slots = [];
+    select.innerHTML = `<option value="">${state.backendReady ? "Bestellungen aktuell geschlossen" : "Lokales Backend erforderlich"}</option>`;
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/slots?days=7", { cache: "no-store" });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Slots nicht verfügbar");
+    state.slots = data.slots || [];
+    state.slotMinutes = data.slotMinutes || 15;
+    $("#slotHint").textContent = `Nur freie ${state.slotMinutes}-Minuten-Slots werden angezeigt; Kapazität wird beim Absenden nochmals atomar geprüft.`;
+
+    if (!state.slots.length) {
+      select.innerHTML = '<option value="">Aktuell keine freien Slots</option>';
+      return;
+    }
+
+    select.innerHTML = '<option value="">Bitte Slot auswählen</option>' + state.slots.slice(0, 160).map((slot) => {
+      const label = slotLabel(slot);
+      const scarcity = slot.remaining <= 2 ? ` · noch ${slot.remaining} frei` : "";
+      return `<option value="${esc(slot.startsAt)}">${esc(label + scarcity)}</option>`;
+    }).join("");
+    if (previous && state.slots.some((slot) => slot.startsAt === previous)) select.value = previous;
+    select.disabled = false;
+  } catch (error) {
+    state.slots = [];
+    select.innerHTML = '<option value="">Slots konnten nicht geladen werden</option>';
+    setCheckoutMessage(error.message, "error");
+  }
+}
+
+function slotLabel(slot) {
+  const today = localDateInBerlin(new Date());
+  const tomorrow = localDateInBerlin(new Date(Date.now() + 24 * 60 * 60 * 1000));
+  if (slot.localDate === today) return `Heute · ${slot.localTime}`;
+  if (slot.localDate === tomorrow) return `Morgen · ${slot.localTime}`;
+  const date = new Date(`${slot.localDate}T12:00:00Z`);
+  const weekday = new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" }).format(date);
+  return `${weekday} · ${slot.localTime}`;
+}
+
+function localDateInBerlin(date) {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(date);
+}
+
 async function requestOtp() {
   if (!state.cart.length) return;
+  if (!await loadShopState()) {
+    setCheckoutMessage(shopStatusCopy(), "error");
+    return;
+  }
+
   const firstName = $("#checkoutFirstName").value.trim();
   const mobile = $("#checkoutMobile").value.trim();
   if (!firstName || !mobile) {
     setCheckoutMessage("Bitte Vorname und Mobilnummer eingeben.", "error");
     return;
   }
+
+  if ($("#pickupMode").value === "later") {
+    const selectedBeforeRefresh = $("#pickupSlot")?.value || "";
+    if (!selectedBeforeRefresh) {
+      setCheckoutMessage("Bitte zuerst einen freien Abholslot auswählen.", "error");
+      return;
+    }
+    await loadSlots({ preserveSelection: true });
+    if (!$("#pickupSlot")?.value || $("#pickupSlot").value !== selectedBeforeRefresh) {
+      setCheckoutMessage("Der gewählte Slot ist nicht mehr frei. Bitte einen neuen Slot auswählen.", "error");
+      resetOtp();
+      return;
+    }
+  }
+
   const button = $("#requestOtp");
   button.disabled = true;
   try {
@@ -305,11 +462,12 @@ async function requestOtp() {
     } else {
       hint.classList.add("hidden");
     }
-    setCheckoutMessage("Nummer verifiziert? Code eingeben und die lokale Testbestellung absenden.", "success");
+    setCheckoutMessage("Code eingeben und die lokale Testbestellung absenden.", "success");
   } catch (error) {
+    resetOtp();
     setCheckoutMessage(state.backendReady ? error.message : "Lokaler Backend-Stack ist nicht aktiv. Die statische Preview bleibt read-only.", "error");
   } finally {
-    button.disabled = state.cart.length === 0;
+    updateCheckoutControls();
   }
 }
 
@@ -318,25 +476,32 @@ async function submitOrder() {
     setCheckoutMessage("Bitte zuerst einen Bestätigungscode anfordern.", "error");
     return;
   }
+  if (!await loadShopState()) {
+    resetOtp();
+    setCheckoutMessage(shopStatusCopy(), "error");
+    return;
+  }
+
   const pickupMode = $("#pickupMode").value;
   let requestedPickupAt = null;
   if (pickupMode === "later") {
-    const raw = $("#pickupAt").value;
-    if (!raw) {
-      setCheckoutMessage("Bitte einen gewünschten Abholzeitpunkt auswählen.", "error");
+    const selectedBeforeRefresh = $("#pickupSlot")?.value || "";
+    if (!selectedBeforeRefresh) {
+      setCheckoutMessage("Bitte einen freien Abholslot auswählen.", "error");
       return;
     }
-    const date = new Date(raw);
-    if (Number.isNaN(date.getTime())) {
-      setCheckoutMessage("Der gewünschte Abholzeitpunkt ist ungültig.", "error");
+    await loadSlots({ preserveSelection: true });
+    if (!$("#pickupSlot")?.value || $("#pickupSlot").value !== selectedBeforeRefresh) {
+      resetOtp();
+      setCheckoutMessage("Der gewählte Slot ist nicht mehr frei. Bitte einen neuen Slot auswählen und die Nummer erneut verifizieren.", "error");
       return;
     }
-    requestedPickupAt = date.toISOString();
+    requestedPickupAt = selectedBeforeRefresh;
   }
 
   const button = $("#submitOrder");
   button.disabled = true;
-  setCheckoutMessage("Backend prüft Preise, Optionen und Verfügbarkeit …");
+  setCheckoutMessage("Backend prüft Preise, Optionen, Öffnungszeit und Slot-Kapazität …");
   try {
     const response = await fetch("/api/checkout", {
       method: "POST",
@@ -359,29 +524,28 @@ async function submitOrder() {
       }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || data.error || "Bestellung konnte nicht angelegt werden");
+    if (!response.ok) {
+      if (data.error === "SLOT_FULL" || /slot/i.test(data.message || "")) await loadSlots({ preserveSelection: false });
+      throw new Error(data.message || data.error || "Bestellung konnte nicht angelegt werden");
+    }
     state.cart = [];
+    resetOtp();
     saveCart();
     setCheckoutMessage(`Testbestellung #${data.orderNumber} wurde lokal angelegt.`, "success");
     if (data.statusUrl) location.href = data.statusUrl;
   } catch (error) {
     setCheckoutMessage(error.message, "error");
   } finally {
-    button.disabled = false;
+    updateCheckoutControls();
   }
 }
 
 function normalizeDbMenu(raw) {
   const categories = (raw.categories || []).map((category) => ({
-    id: category.id,
-    slug: category.slug,
-    name: category.name,
-    sort: category.sort,
+    id: category.id, slug: category.slug, name: category.name, sort: category.sort,
   }));
   const items = (raw.categories || []).flatMap((category) => (category.products || []).map((product) => ({
-    ...product,
-    categoryId: category.id,
-    modifierGroups: product.modifierGroups || [],
+    ...product, categoryId: category.id, modifierGroups: product.modifierGroups || [],
   })));
   return { locationId: raw.locationId, categories, items, source: "database" };
 }
@@ -389,26 +553,13 @@ function normalizeDbMenu(raw) {
 function normalizeFallback(raw) {
   const categories = raw.categories.map(([slug, name, sort]) => ({ id: slug, slug, name, sort }));
   const items = raw.items.map(([id, categoryId, name, description, basePriceCents, variants, orderableOnline]) => ({
-    id,
-    categoryId,
-    name,
-    description,
-    basePriceCents,
-    orderableOnline,
-    availableNow: orderableOnline,
-    soldOut: false,
-    ownerConfirmed: false,
+    id, categoryId, name, description, basePriceCents, orderableOnline,
+    availableNow: orderableOnline, soldOut: false, ownerConfirmed: false,
     modifierGroups: variants.length ? [{
-      id: `fallback-size-${id}`,
-      name: "Größe",
-      minSelections: 1,
-      maxSelections: 1,
+      id: `fallback-size-${id}`, name: "Größe", minSelections: 1, maxSelections: 1,
       options: variants.map(([label, priceCents], index) => ({
-        id: `fallback-size-${id}-${index}`,
-        name: label,
-        priceDeltaCents: priceCents - basePriceCents,
-        defaultSelected: index === 0,
-        soldOut: false,
+        id: `fallback-size-${id}-${index}`, name: label,
+        priceDeltaCents: priceCents - basePriceCents, defaultSelected: index === 0, soldOut: false,
       })),
     }] : [],
   }));
@@ -449,14 +600,8 @@ function setInitialCategory() {
   state.categoryId = preferred?.id || state.categories[0]?.id || null;
 }
 
-function setPickupMin() {
-  const date = new Date(Date.now() + 15 * 60_000);
-  date.setMinutes(Math.ceil(date.getMinutes() / 15) * 15, 0, 0);
-  const offset = date.getTimezoneOffset() * 60_000;
-  $("#pickupAt").min = new Date(date.getTime() - offset).toISOString().slice(0, 16);
-}
-
 async function init() {
+  installSlotSelector();
   const [catalog, backendReady] = await Promise.all([loadMenu(), checkBackend()]);
   state.locationId = catalog.locationId;
   state.categories = catalog.categories;
@@ -467,7 +612,6 @@ async function init() {
   renderRail();
   renderMenu();
   renderCart();
-  setPickupMin();
 
   $("#menuSourceText").textContent = catalog.source === "database"
     ? "Lokale DB-Speisekarte: 97 transkribierte Positionen bleiben bis zur Inhaber-Freigabe ausdrücklich vorläufig. Preise und Verfügbarkeit werden beim Checkout erneut geprüft."
@@ -475,10 +619,8 @@ async function init() {
   $("#prototypeBanner").textContent = state.backendReady
     ? "Lokaler E2E-Modus · echte Testorders in lokaler DB · Speisekarte weiterhin unbestätigt"
     : "Statische Entwicklungs-Preview · Preise vorläufig · keine echte Bestellung";
-  setCheckoutMessage(state.backendReady
-    ? "Lokaler Backend-Stack aktiv. Testbestellungen landen ausschließlich in deiner lokalen Entwicklungsdatenbank."
-    : "Ohne lokalen Backend-Stack bleibt die Preview vollständig read-only.");
 
+  await loadShopState();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
@@ -488,10 +630,18 @@ document.querySelectorAll("[data-close-modal]").forEach((button) => { button.onc
 $("#addToCart").onclick = addActiveProductToCart;
 $("#requestOtp").onclick = requestOtp;
 $("#submitOrder").onclick = submitOrder;
-$("#pickupMode").addEventListener("change", () => {
-  $("#pickupAtField").classList.toggle("hidden", $("#pickupMode").value !== "later");
+$("#pickupMode").addEventListener("change", async () => {
+  const later = $("#pickupMode").value === "later";
+  $("#pickupAtField").classList.toggle("hidden", !later);
+  resetOtp();
+  if (later && await loadShopState({ quiet: true })) await loadSlots({ preserveSelection: false });
 });
 modal.onclick = (event) => { if (event.target === modal) closeProduct(); };
+
+setInterval(() => loadShopState({ quiet: true }), 30_000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) loadShopState({ quiet: true });
+});
 
 init().catch((error) => {
   console.error(error);
