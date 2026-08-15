@@ -1,4 +1,5 @@
 import "./motion.js";
+import "./homepage-composition.js";
 
 const knownSections = new Map([
   ["hero", "start"],

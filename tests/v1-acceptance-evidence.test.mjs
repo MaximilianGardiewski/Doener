@@ -32,6 +32,7 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
     "[x] Installable browser-compatible PWA (`D060`)",
     "[x] Public navigation and emphasized order CTA (`D030`)",
     "[x] Showcase-grade motion without harming usability (`D058`)",
+    "[x] Homepage hero, highlight/quick-order, community/news/events, story/team (`D024`)",
     "[x] Staging/production path is reproducible on self-hosted infrastructure from Git + migrations (`D063`)",
     "[x] Production self-host plan includes TLS, secrets, firewalling, backups, restore test and monitoring (`D063`)",
   ]) {
@@ -41,6 +42,7 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
 
 test("known partial V1 requirements remain unchecked", () => {
   for (const expected of [
+    "[ ] Real Mcello media with production rights confirmed; no fake documentary imagery (`D024`, `D025`)",
     "[ ] WhatsApp OTP primary + SMS fallback (`D003`)",
     "[ ] Live status/order summary/pickup location (`D015`)",
     "[ ] WhatsApp/SMS status notifications (`D016`)",
@@ -58,11 +60,13 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
     "D060 | `VERIFIED`",
     "D030 | `VERIFIED`",
     "D058 | `VERIFIED`",
+    "D024 (homepage composition) | `VERIFIED`",
     "D063 (self-host release path) | `VERIFIED`",
     "D063 (production hardening/restore) | `VERIFIED`",
     "tests/pwa-installability.test.mjs",
     "tests/public-navigation.browser.mjs",
     "tests/showcase-motion.browser.mjs",
+    "tests/homepage-composition.browser.mjs",
     "tests/selfhost-backup-restore.integration.sh",
     ".github/workflows/selfhost-release.yml",
     ".github/workflows/selfhost-db-drill.yml",
@@ -74,6 +78,7 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
     "tests/rush-mode.integration.mjs",
     "23-Minuten-Integrationstest",
     "Verifizierte Pickup-Adresse",
+    "D025/D026",
   ]) {
     assert.match(evidence, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
   }
