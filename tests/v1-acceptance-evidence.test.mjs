@@ -20,6 +20,7 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
     "[x] Configurable default 5-min acceptance timeout (`D053`)",
     "[x] Repeating incoming alarm + multi-device sync (`D014`, `D049`)",
     "[x] Planned future lane + configurable activation lead (`D055`)",
+    "[x] +5/+10/+15/custom delay + customer update (`D056`)",
     "[x] Target time + approximate countdown (`D054`)",
     "[x] Allergen/dietary label model (`D045`)",
     "[x] Timed availability (`D051`)",
@@ -36,7 +37,6 @@ test("known partial V1 requirements remain unchecked", () => {
     "[ ] WhatsApp OTP primary + SMS fallback (`D003`)",
     "[ ] Edit/cancel pre-accept only (`D043`)",
     "[ ] Rush/pause and item/ingredient snooze (`D012`, `D013`)",
-    "[ ] +5/+10/+15/custom delay + customer update (`D056`)",
     "[ ] Live status/order summary/pickup location (`D015`)",
     "[ ] WhatsApp/SMS status notifications (`D016`)",
     "[ ] Route + call actions (`D017`)",
@@ -45,16 +45,16 @@ test("known partial V1 requirements remain unchecked", () => {
   }
 });
 
-test("evidence ledger records the blockers behind partial acceptance", () => {
+test("evidence ledger records verified custom delay and remaining blockers", () => {
   for (const marker of [
+    "D056 | `VERIFIED`",
     "D003 | `PARTIAL`",
     "D043 | `PARTIAL`",
     "D012 + D013 | `PARTIAL`",
-    "D056 | `PARTIAL`",
     "D015 | `PARTIAL`",
     "D016 | `PARTIAL`",
     "D017 | `OPEN`",
-    "Custom-Delay",
+    "23-Minuten-Integrationstest",
     "Customer-Edit vor Acceptance",
     "Verifizierte Pickup-Adresse",
   ]) {
