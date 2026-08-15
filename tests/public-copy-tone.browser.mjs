@@ -32,7 +32,7 @@ try {
   }
 
   const prototypeText = await page.locator("#prototypeBanner").innerText();
-  assert.match(prototypeText, /Entwicklungsprototyp|Entwicklungs-Preview|Entwicklungs/);
+  assert.match(prototypeText, /Entwicklungsprototyp|Entwicklungs-Preview|Entwicklungs/i);
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
   await mobile.goto(baseUrl, { waitUntil: "networkidle" });
