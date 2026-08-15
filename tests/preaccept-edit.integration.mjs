@@ -23,6 +23,7 @@ const productId = "00000000-0000-4000-8000-000000000100";
 const groupId = "00000000-0000-4000-8000-000000000200";
 const mildOptionId = "00000000-0000-4000-8000-000000000201";
 const extraOptionId = "00000000-0000-4000-8000-000000000202";
+const invalidProductId = "00000000-0000-4000-8000-000000000999";
 
 async function request(path, { method = "GET", apiKey = anonKey, bearer, body } = {}) {
   const headers = { apikey: apiKey, accept: "application/json" };
@@ -94,37 +95,53 @@ async function receivedOutbox(orderId) {
   return result.data[0];
 }
 
+function payloadFor({ firstName, mobile, requestedPickupAt = null, optionId = extraOptionId }) {
+  return {
+    locationId,
+    source: "web",
+    fulfillmentType: "pickup",
+    state: "waiting_for_acceptance",
+    customerFirstName: firstName,
+    mobile,
+    comment: "Ursprünglicher Hinweis",
+    requestedPickupAt,
+    totalCents: 1,
+    submittedAt: new Date().toISOString(),
+    items: [{
+      productId,
+      productNameSnapshot: "Manipulierter Name",
+      quantity: 1,
+      unitPriceCentsSnapshot: 1,
+      lineTotalCents: 1,
+      selections: [{ groupId, optionIds: [optionId] }],
+      comment: "Alt",
+    }],
+  };
+}
+
+async function createVerified(payload) {
+  const result = await rpc("server_create_verified_order", { _payload: payload });
+  assert.equal(result.response.ok, true, JSON.stringify(result.data));
+  return Array.isArray(result.data) ? result.data[0] : result.data;
+}
+
+function alignedFutureSlot(minutes = 90, slotMinutes = 15) {
+  const slotMs = slotMinutes * 60_000;
+  const target = Date.now() + minutes * 60_000;
+  return new Date(Math.ceil(target / slotMs) * slotMs).toISOString();
+}
+
 const staffEmail = "preaccept-edit-staff@mcello.local";
 const staffPassword = "LocalOnly-Preaccept-2026!";
 const staffUser = await createUser(staffEmail, staffPassword);
 await grantRole(staffUser.id, "staff");
 const staffToken = await signIn(staffEmail, staffPassword);
 
-const initialPayload = {
-  locationId,
-  source: "web",
-  fulfillmentType: "pickup",
-  state: "waiting_for_acceptance",
-  customerFirstName: "Edit Flow",
+const initialPayload = payloadFor({
+  firstName: "Edit Flow",
   mobile: "+491700000043",
-  comment: "Ursprünglicher Hinweis",
-  requestedPickupAt: null,
-  totalCents: 1,
-  submittedAt: new Date().toISOString(),
-  items: [{
-    productId,
-    productNameSnapshot: "Manipulierter Name",
-    quantity: 1,
-    unitPriceCentsSnapshot: 1,
-    lineTotalCents: 1,
-    selections: [{ groupId, optionIds: [extraOptionId] }],
-    comment: "Alt",
-  }],
-};
-
-const createdResult = await rpc("server_create_verified_order", { _payload: initialPayload });
-assert.equal(createdResult.response.ok, true, JSON.stringify(createdResult.data));
-const created = Array.isArray(createdResult.data) ? createdResult.data[0] : createdResult.data;
+});
+const created = await createVerified(initialPayload);
 assert.equal(created.state, "waiting_for_acceptance");
 assert.equal(created.total_cents, 900, "database must ignore manipulated client prices and compute 800 + 100");
 
@@ -152,16 +169,27 @@ assert.equal(anonymousEditContext.response.ok, false, "raw edit reconstruction m
 const contextResult = await rpc("server_get_pending_order_edit_context", { _public_token: created.public_token });
 assert.equal(contextResult.response.ok, true, JSON.stringify(contextResult.data));
 assert.equal(contextResult.data.orderNumber, Number(created.order_number));
-assert.equal(contextResult.data.locationId, locationId);
+assert.equal(Object.hasOwn(contextResult.data, "locationId"), false, "edit draft must not leak internal location id");
+assert.equal(Object.hasOwn(contextResult.data, "mobile"), false, "edit draft must not leak verified mobile");
+assert.equal(Object.hasOwn(contextResult.data, "payment"), false, "edit draft must not expose immutable payment state");
 assert.equal(contextResult.data.items.length, 1);
 assert.equal(contextResult.data.items[0].productId, productId);
 assert.equal(contextResult.data.items[0].selections[0].groupId, groupId);
 assert.deepEqual(contextResult.data.items[0].selections[0].optionIds, [extraOptionId]);
 
 const editPayload = {
-  // Deliberately no mobile/customer/location/source/payment fields: those are immutable identity/state.
   comment: "Neu gespeichert",
   requestedPickupAt: null,
+  // Deliberately hostile immutable/client-authoritative fields. The DB edit RPC
+  // must ignore all of them and derive identity/state/payment/price from the row/catalog.
+  locationId: "00000000-0000-4000-8000-000000000002",
+  mobile: "+499999999999",
+  customerFirstName: "Manipuliert",
+  source: "counter",
+  fulfillmentType: "delivery",
+  state: "completed",
+  paymentMode: "online",
+  submittedAt: new Date(0).toISOString(),
   totalCents: 999999,
   items: [{
     productId,
@@ -197,6 +225,7 @@ assert.equal(after.comment, "Neu gespeichert");
 assert.equal(after.payment_mode, before.payment_mode);
 assert.equal(after.payment_method, before.payment_method);
 assert.equal(after.payment_status, before.payment_status);
+assert.equal(after.state, "waiting_for_acceptance");
 
 const eventResult = await request(
   `/rest/v1/order_events?order_id=eq.${created.id}&event_type=eq.customer_edited&select=event_type,metadata`,
@@ -205,6 +234,58 @@ const eventResult = await request(
 assert.equal(eventResult.response.ok, true, JSON.stringify(eventResult.data));
 assert.equal(eventResult.data.length, 1);
 assert.equal(eventResult.data[0].metadata.totalCents, 1600);
+
+// Invalid catalog mutation must roll back the comment, total and existing line set.
+const invalidEdit = await rpc("server_replace_pending_order", {
+  _public_token: created.public_token,
+  _payload: {
+    comment: "DARF NICHT BLEIBEN",
+    requestedPickupAt: null,
+    items: [{
+      productId: invalidProductId,
+      quantity: 1,
+      selections: [],
+      comment: "Ungültig",
+    }],
+  },
+});
+assert.equal(invalidEdit.response.ok, false, "invalid product edit must fail atomically");
+let afterRollback = await orderRow(created.id);
+assert.equal(afterRollback.comment, "Neu gespeichert");
+assert.equal(afterRollback.total_cents, 1600);
+assert.equal(afterRollback.requested_pickup_at, null);
+
+// Fill an aligned future slot to configured V1 capacity (6). Moving the
+// existing ASAP order into that full slot must fail and leave it unchanged.
+const fullSlot = alignedFutureSlot();
+for (let index = 0; index < 6; index += 1) {
+  const filler = await createVerified(payloadFor({
+    firstName: `Slot Filler ${index + 1}`,
+    mobile: `+4917000010${String(index).padStart(2, "0")}`,
+    requestedPickupAt: fullSlot,
+    optionId: mildOptionId,
+  }));
+  assert.equal(filler.requested_pickup_at, fullSlot);
+}
+
+const fullSlotEdit = await rpc("server_replace_pending_order", {
+  _public_token: created.public_token,
+  _payload: {
+    comment: "DARF AUCH NICHT BLEIBEN",
+    requestedPickupAt: fullSlot,
+    items: [{
+      productId,
+      quantity: 2,
+      selections: [{ groupId, optionIds: [mildOptionId] }],
+      comment: "Ohne Extra",
+    }],
+  },
+});
+assert.equal(fullSlotEdit.response.ok, false, "moving an edit into a full slot must fail atomically");
+afterRollback = await orderRow(created.id);
+assert.equal(afterRollback.comment, "Neu gespeichert");
+assert.equal(afterRollback.total_cents, 1600);
+assert.equal(afterRollback.requested_pickup_at, null);
 
 const acceptedPickupAt = new Date(Date.now() + 20 * 60_000).toISOString();
 const accepted = await rpc(
@@ -220,7 +301,11 @@ assert.equal(publicAfterAccept.data.editable, false);
 
 const editAfterAccept = await rpc("server_replace_pending_order", {
   _public_token: created.public_token,
-  _payload: editPayload,
+  _payload: {
+    comment: "Zu spät",
+    requestedPickupAt: null,
+    items: [{ productId, quantity: 1, selections: [{ groupId, optionIds: [mildOptionId] }] }],
+  },
 });
 assert.equal(editAfterAccept.response.ok, false, "accepted order must be immutable to customer edit token");
 
@@ -233,6 +318,9 @@ console.log("Pre-accept edit boundary passed:", {
   orderNumber: after.order_number,
   totalBefore: before.total_cents,
   totalAfter: after.total_cents,
-  identityPreserved: true,
+  privacyMinimalDraft: true,
+  immutableIdentityPreserved: true,
+  invalidProductRollback: true,
+  fullSlotRollback: true,
   editAfterAcceptanceRejected: true,
 });
