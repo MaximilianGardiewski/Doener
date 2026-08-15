@@ -61,13 +61,16 @@ function renderEditorial(posts = []) {
 
   target.innerHTML = posts.map((post) => {
     const eventTime = post.kind === "event" && post.eventStartsAt
-      ? `<div class="editorial-date">${esc(dateLabel(post.eventStartsAt))}</div>`
+      ? esc(dateLabel(post.eventStartsAt))
       : "";
-    return `<article class="news-card no-media">
+    return `<article class="news-card">
       <div>
-        <div class="tag">${esc(kindLabel(post.kind))}${post.pinned ? " · Highlight" : ""}</div>
+        <div class="tag">${esc(kindLabel(post.kind))}</div>
+        ${eventTime ? `<small>${eventTime}</small>` : `<small>${post.pinned ? "Highlight" : "Veröffentlicht"}</small>`}
+      </div>
+      <div>
+        <div class="tag">${post.pinned ? "Highlight" : ""}</div>
         <h3>${esc(post.title)}</h3>
-        ${eventTime}
         <p>${esc(post.teaser || post.content || "")}</p>
       </div>
     </article>`;
