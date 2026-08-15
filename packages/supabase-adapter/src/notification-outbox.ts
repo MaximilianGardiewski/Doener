@@ -10,6 +10,7 @@ export interface NotificationOutboxJob {
   mobile_snapshot: string;
   public_token_snapshot: string;
   payload: Record<string, string | number | null>;
+  dedupe_key: string;
   attempt_count: number;
 }
 
@@ -38,6 +39,7 @@ export class SupabaseNotificationOutbox {
           mobile: job.mobile_snapshot,
           orderId: job.order_id,
           statusUrl: input.statusUrlForToken(job.public_token_snapshot),
+          idempotencyKey: job.dedupe_key,
           messageData: Object.fromEntries(
             Object.entries(job.payload ?? {}).filter(([, value]) => value !== null) as Array<
               [string, string | number]
