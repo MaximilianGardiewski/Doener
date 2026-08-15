@@ -27,7 +27,7 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Run responsive public navigation smoke
+      - name: Run public responsive and motion browser smokes
         run: |
           python3 -m http.server 4173 --directory dist > /tmp/mcello-preview.log 2>&1 &
           preview_pid=$!
@@ -40,3 +40,4 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:4173/ >/dev/null
           node tests/public-navigation.browser.mjs
+          node tests/showcase-motion.browser.mjs

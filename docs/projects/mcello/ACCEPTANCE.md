@@ -8,7 +8,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Public navigation and emphasized order CTA (`D030`)
 - [ ] Homepage hero, bestseller quick-order, community/news/events, story/team (`D024`)
 - [x] Installable browser-compatible PWA (`D060`)
-- [ ] Showcase-grade motion without harming usability (`D058`)
+- [x] Showcase-grade motion without harming usability (`D058`)
 
 ## Menu/Configurator
 - [ ] Structured categories/products/variants/modifier groups (`D007`, `D008`, `D020`)
