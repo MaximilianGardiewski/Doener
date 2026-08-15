@@ -28,7 +28,7 @@
       <a class="pill" href="/kds.html">KDS</a>
       <a class="pill" href="/">Public</a>
     </div>
-    <div class="notice">Hier kann das Team nur operative Verfügbarkeit steuern. Preise, Kategorien, Öffnungszeiten und Kapazitätsregeln bleiben Admin-Sache.</div>
+    <div class="notice">Hier kann das Team nur operative Verfügbarkeit steuern. <strong>Rush</strong> lässt Online-Bestellungen offen und verlängert neue ASAP-Zeitversprechen; <strong>Pause</strong> stoppt neue Bestellungen. Preise, Öffnungszeiten, Kapazität und Rush-Puffer bleiben Admin-Sache.</div>
     <p class="message" id="opsMessage"></p>
     <div class="ops-grid">
       <section class="ops-panel ops-panel-wide">
@@ -37,13 +37,14 @@
           <div class="shop-state"><strong id="shopMode">Status wird geladen …</strong><small id="shopModeHelp">Automatik folgt dem bestätigten Öffnungsplan und Cutoff.</small></div>
           <div class="shop-actions" id="shopControls">
             <button class="ops-btn" type="button" data-shop-override="auto">Automatik</button>
+            <button class="ops-btn" type="button" data-shop-override="rush">Rush</button>
             <button class="ops-btn" type="button" data-shop-override="pause">Pause</button>
             <button class="ops-btn danger" type="button" data-shop-override="today_closed">Heute geschlossen</button>
             <button class="ops-btn danger" type="button" data-shop-override="force_closed">Geschlossen</button>
           </div>
         </div>
         <label class="operator-message">Hinweis für Gäste (optional, max. 180 Zeichen)
-          <input id="shopOperatorMessage" maxlength="180" placeholder="z. B. Online-Bestellungen kurz pausiert" />
+          <input id="shopOperatorMessage" maxlength="180" placeholder="z. B. Aktuell viel los · Abholung dauert etwas länger" />
         </label>
         <p class="message" id="shopMessage"></p>
       </section>

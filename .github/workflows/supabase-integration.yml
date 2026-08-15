@@ -24,6 +24,7 @@ on:
       - "tests/modifier-backoffice.integration.mjs"
       - "tests/allergen-labels.integration.mjs"
       - "tests/ordering-schedule.integration.mjs"
+      - "tests/rush-mode.integration.mjs"
       - "tests/timed-product-db-gate.integration.mjs"
       - "tests/editorial-homepage.integration.mjs"
       - "tests/gallery-media.integration.mjs"
@@ -59,6 +60,7 @@ on:
       - "tests/modifier-backoffice.integration.mjs"
       - "tests/allergen-labels.integration.mjs"
       - "tests/ordering-schedule.integration.mjs"
+      - "tests/rush-mode.integration.mjs"
       - "tests/timed-product-db-gate.integration.mjs"
       - "tests/editorial-homepage.integration.mjs"
       - "tests/gallery-media.integration.mjs"
@@ -201,6 +203,9 @@ jobs:
       - name: Prove opening hours cutoff overrides and timed availability
         id: ordering_schedule
         run: node tests/ordering-schedule.integration.mjs
+
+      - name: Prove Rush operational timing without weakening pause or preorder slots
+        run: node tests/rush-mode.integration.mjs
 
       - name: Prove timed product availability at database persistence boundary
         run: node tests/timed-product-db-gate.integration.mjs

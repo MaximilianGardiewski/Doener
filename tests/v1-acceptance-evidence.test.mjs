@@ -20,6 +20,7 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
     "[x] Edit/cancel pre-accept only (`D043`)",
     "[x] Configurable default 5-min acceptance timeout (`D053`)",
     "[x] Repeating incoming alarm + multi-device sync (`D014`, `D049`)",
+    "[x] Rush/pause and item/ingredient snooze (`D012`, `D013`)",
     "[x] Planned future lane + configurable activation lead (`D055`)",
     "[x] +5/+10/+15/custom delay + customer update (`D056`)",
     "[x] Target time + approximate countdown (`D054`)",
@@ -36,7 +37,6 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
 test("known partial V1 requirements remain unchecked", () => {
   for (const expected of [
     "[ ] WhatsApp OTP primary + SMS fallback (`D003`)",
-    "[ ] Rush/pause and item/ingredient snooze (`D012`, `D013`)",
     "[ ] Live status/order summary/pickup location (`D015`)",
     "[ ] WhatsApp/SMS status notifications (`D016`)",
     "[ ] Route + call actions (`D017`)",
@@ -48,13 +48,14 @@ test("known partial V1 requirements remain unchecked", () => {
 test("evidence ledger records verified ordering flows and remaining blockers", () => {
   for (const marker of [
     "D043 | `VERIFIED`",
+    "D012 + D013 | `VERIFIED`",
     "D056 | `VERIFIED`",
     "D003 | `PARTIAL`",
-    "D012 + D013 | `PARTIAL`",
     "D015 | `PARTIAL`",
     "D016 | `PARTIAL`",
     "D017 | `OPEN`",
     "tests/preaccept-edit.integration.mjs",
+    "tests/rush-mode.integration.mjs",
     "23-Minuten-Integrationstest",
     "Verifizierte Pickup-Adresse",
   ]) {

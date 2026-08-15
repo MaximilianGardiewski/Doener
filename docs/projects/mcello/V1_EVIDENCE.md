@@ -23,6 +23,7 @@ Status:
 | D053 | `VERIFIED` | `packages/ordering/test/model.test.ts`, `tests/scheduling.integration.mjs`, Maintenance-RPCs | Default 5 Minuten ist konfigurierbar; Warn-/Auto-Reject-Ablauf wird mit temporärem Testwert vollständig ausgeführt. |
 | D010 | `VERIFIED` | `apps/mcello/public/kds.js`, `packages/ordering/test/model.test.ts`, `tests/supabase-local.integration.mjs` | Incoming -> Accept mit Zeit -> Preparing -> Ready -> Completed ist durch UI, Domain und echte DB-Transitions belegt. |
 | D011 | `VERIFIED` | `apps/mcello/public/kds.js`, Staff-Reject-RPC | Quick-Reject-Gründe für Überlastung, ausverkauft und Küchenschluss sind im KDS verdrahtet. |
+| D012 + D013 | `VERIFIED` | `apps/mcello/public/kds.js`, `apps/mcello/public/ops.js`, `apps/mcello/public/rush-settings.js`, `tests/rush-mode.integration.mjs`, `tests/realtime-ready.integration.mjs` | Pause blockiert neue Online-Bestellungen. Rush bleibt innerhalb Öffnungsplan/Cutoff bestellbar und addiert nur auf neue ASAP-KDS-Versprechen einen admin-konfigurierten, DB-autoritativen Puffer; Vorbestell-Slots bleiben unverändert. Staff kann Produkte und strukturierte Modifier-/Zutatenoptionen operativ snoozen, aber weder Preise/Struktur noch den Rush-Puffer ändern. |
 | D014 + D049 | `VERIFIED` | `apps/mcello/public/kds.js`, `apps/mcello/public/realtime-client.js`, `tests/realtime-ready.integration.mjs` | Wiederholter Alarm läuft solange Incoming Orders existieren; Postgres-Realtime + Safety-Reconciliation synchronisiert mehrere Geräte. |
 | D055 | `VERIFIED` | `apps/mcello/public/kds.js`, `tests/scheduling.integration.mjs` | Vorbestellungen landen in `planned`; Preparation Lead ist konfigurierbar und Maintenance aktiviert Orders automatisch. |
 | D056 | `VERIFIED` | `apps/mcello/public/kds.js`, `apps/mcello/server.mjs`, `tests/kds-custom-delay.test.mjs`, `tests/notification-outbox.integration.mjs` | KDS bietet +5/+10/+15 sowie frei 1–120 Minuten; Server validiert unabhängig. Ein 23-Minuten-Integrationstest verschiebt die ETA exakt und erzeugt einen `delayed`-Customer-Update-Job mit neuer Abholzeit. Externe Production-Zustellung bleibt separat D016. |
@@ -45,7 +46,6 @@ Status:
 |---|---|---|---|
 | D003 | `PARTIAL` | Provider-neutraler OTP-Contract; Start fordert `whatsapp` primär und `sms` als Fallback an; lokaler OTP-Provider ist getestet. | Echte freigegebene Production-Transporte für WhatsApp + SMS sind noch nicht aktiviert. D064 verbietet stille Providerkosten. |
 | D037 + D044 + D052 | `PARTIAL` | Closed/Pause/Cutoff lässt Browsen/Konfigurieren/Warenkorb zu und blockiert Submit; Öffnungsplan, Overrides und Cutoff sind DB-getestet. | D037 verlangt zusätzlich sichtbare Telefon-/WhatsApp-Fallback-Kontakte; first-party bestätigte Kontaktdaten sind noch nicht verdrahtet. |
-| D012 + D013 | `PARTIAL` | Pause/Auto/Closed Operations und Produkt-/Modifier-Snooze sind in `ops.js` + DB vorhanden. | Eigenständige Rush-Semantik zur Anpassung operativer Timing-Logik ist noch nicht definiert/implementiert. |
 | D015 | `PARTIAL` | Token-Statusseite mit Progress, Bestellnummer, Summary und ETA ist vorhanden. | Verifizierte Pickup-Adresse fehlt im Statusvertrag/UI. Keine Geschäftsadresse darf erfunden werden. |
 | D016 | `PARTIAL` | Notification-Outbox kennt received/accepted/delayed/ready/rejected/cancelled und Statuslinks; Lifecycle/Lease sind DB-getestet. | Freigegebener WhatsApp/SMS-Production-Transport fehlt weiterhin. |
 | D017 | `OPEN` | Statusseite vorhanden. | Route- und Call-Actions benötigen bestätigte Adresse/Telefonnummer. |
@@ -80,7 +80,7 @@ Diese Punkte werden nicht durch Backend-Fortschritt voreilig geschlossen:
 
 Nach dieser Reconciliation sollen keine bereits vorhandenen Features erneut gebaut werden. Die kleinsten klaren V1-Lücken sind:
 
-1. D012 — Rush-Semantik konkretisieren, ohne ungeklärte Betriebsregeln zu erfinden.
-2. D003/D016 — erst nach expliziter Freigabe eines unvermeidbaren Messaging-Providers/Carrier-Kosten Production-Transport aktivieren.
-3. D015/D017 — bestätigte Adresse/Telefonnummer einpflegen, danach Status-Route/Call vervollständigen.
+1. D003/D016 — erst nach expliziter Freigabe eines unvermeidbaren Messaging-Providers/Carrier-Kosten Production-Transport aktivieren.
+2. D015/D017 — bestätigte Adresse/Telefonnummer einpflegen, danach Status-Route/Call vervollständigen.
+3. D020/D007/D008 — Admin-/Menu-Gesamtabnahme nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
 4. Public/Design/Media-Abnahme mit echten Mcello-Medien und owner-bestätigtem Menü.
