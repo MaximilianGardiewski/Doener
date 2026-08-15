@@ -44,3 +44,9 @@ test("public media bytes are gated by the publication descriptor", () => {
   assert.match(migration, /grant execute on function public\.get_public_media_descriptor\(uuid\) to service_role/);
   assert.match(migration, /revoke all on function public\.get_public_media_descriptor\(uuid\) from public, anon, authenticated/);
 });
+
+test("gallery bootstrap preserves structured product and option allergens", () => {
+  assert.match(migration, /'content', public\.get_public_content/);
+  assert.match(migration, /from public\.product_allergens/);
+  assert.match(migration, /from public\.modifier_option_allergens/);
+});

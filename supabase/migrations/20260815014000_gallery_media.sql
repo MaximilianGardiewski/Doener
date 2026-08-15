@@ -526,12 +526,119 @@ begin
 end;
 $$;
 
+-- Preserve every established menu field while attaching the current CMS and
+-- gallery snapshot. The earlier content migration must not erase structured
+-- product or modifier-option allergens from the public contract.
+create or replace function public.get_public_menu(_location_id uuid, _at timestamptz default now())
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'locationId', _location_id,
+    'generatedAt', _at,
+    'content', public.get_public_content(_location_id, now()),
+    'categories', coalesce((
+      select jsonb_agg(
+        jsonb_build_object(
+          'id', c.id,
+          'slug', c.slug,
+          'name', c.name,
+          'description', c.description,
+          'sort', c.sort,
+          'products', coalesce((
+            select jsonb_agg(
+              jsonb_build_object(
+                'id', p.id,
+                'slug', p.slug,
+                'name', p.name,
+                'description', p.description,
+                'basePriceCents', p.base_price_cents,
+                'bestseller', p.bestseller,
+                'orderableOnline', p.orderable_online,
+                'ownerConfirmed', p.owner_confirmed,
+                'dietaryTags', to_jsonb(p.dietary_tags),
+                'allergens', coalesce((
+                  select jsonb_agg(
+                    jsonb_build_object('id', a.id, 'code', a.code, 'name', a.name)
+                    order by coalesce(a.code, ''), a.name
+                  )
+                  from public.product_allergens pa
+                  join public.allergens a on a.id = pa.allergen_id
+                  where pa.product_id = p.id
+                ), '[]'::jsonb),
+                'soldOut', exists (
+                  select 1 from public.snoozes s
+                  where s.product_id = p.id and s.until_at > _at
+                ),
+                'availableNow', case
+                  when p.orderable_online then public.server_is_product_available(p.id, _at)
+                  else false
+                end,
+                'modifierGroups', coalesce((
+                  select jsonb_agg(
+                    jsonb_build_object(
+                      'id', g.id,
+                      'name', g.name,
+                      'minSelections', g.min_selections,
+                      'maxSelections', g.max_selections,
+                      'options', coalesce((
+                        select jsonb_agg(
+                          jsonb_build_object(
+                            'id', o.id,
+                            'name', o.name,
+                            'priceDeltaCents', o.price_delta_cents,
+                            'defaultSelected', o.default_selected,
+                            'allergens', coalesce((
+                              select jsonb_agg(
+                                jsonb_build_object('id', a.id, 'code', a.code, 'name', a.name)
+                                order by coalesce(a.code, ''), a.name
+                              )
+                              from public.modifier_option_allergens moa
+                              join public.allergens a on a.id = moa.allergen_id
+                              where moa.option_id = o.id
+                            ), '[]'::jsonb),
+                            'soldOut', exists (
+                              select 1 from public.snoozes s
+                              where s.modifier_option_id = o.id and s.until_at > _at
+                            )
+                          ) order by o.sort, o.id
+                        )
+                        from public.modifier_options o
+                        where o.group_id = g.id and o.active
+                      ), '[]'::jsonb)
+                    ) order by pmg.sort, g.sort, g.id
+                  )
+                  from public.product_modifier_groups pmg
+                  join public.modifier_groups g on g.id = pmg.group_id
+                  where pmg.product_id = p.id
+                ), '[]'::jsonb)
+              ) order by p.sort, p.id
+            )
+            from public.menu_products p
+            where p.location_id = _location_id
+              and p.category_id = c.id
+              and p.status = 'published'
+          ), '[]'::jsonb)
+        ) order by c.sort, c.id
+      )
+      from public.menu_categories c
+      where c.location_id = _location_id
+        and c.status = 'published'
+        and c.visible
+    ), '[]'::jsonb)
+  )
+$$;
+
 revoke all on function public.admin_get_gallery(uuid) from public, anon;
 revoke all on function public.admin_register_gallery_upload(uuid,text,text,text,text,bigint,integer,integer,text,text,boolean,text,text,text,public.content_status,boolean,integer,timestamptz,timestamptz) from public, anon;
 revoke all on function public.admin_save_gallery_item(uuid,uuid,text,text,text,public.content_status,boolean,integer,timestamptz,timestamptz,text,text,boolean) from public, anon;
 revoke all on function public.admin_delete_gallery_item(uuid,uuid) from public, anon;
 revoke all on function public.get_public_media_descriptor(uuid) from public, anon, authenticated;
 revoke all on function public.get_public_content(uuid,timestamptz) from public;
+revoke all on function public.get_public_menu(uuid,timestamptz) from public;
 
 grant execute on function public.admin_get_gallery(uuid) to authenticated;
 grant execute on function public.admin_register_gallery_upload(uuid,text,text,text,text,bigint,integer,integer,text,text,boolean,text,text,text,public.content_status,boolean,integer,timestamptz,timestamptz) to authenticated;
@@ -539,3 +646,4 @@ grant execute on function public.admin_save_gallery_item(uuid,uuid,text,text,tex
 grant execute on function public.admin_delete_gallery_item(uuid,uuid) to authenticated;
 grant execute on function public.get_public_media_descriptor(uuid) to service_role;
 grant execute on function public.get_public_content(uuid,timestamptz) to anon, authenticated, service_role;
+grant execute on function public.get_public_menu(uuid,timestamptz) to anon, authenticated, service_role;
