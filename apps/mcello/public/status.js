@@ -45,6 +45,13 @@ function progressRank(state) {
   return -1;
 }
 
+function paymentCopy(payment) {
+  if (payment?.mode === "pay_on_site" && payment?.method === "cash_or_card") {
+    return "Vor Ort · bar oder Karte";
+  }
+  return "Zahlungsart wird bestätigt";
+}
+
 function render(status) {
   current = status;
   $("#statusError").classList.add("hidden");
@@ -73,6 +80,7 @@ function render(status) {
     return `<div class="status-item"><div><strong>${item.quantity}× ${escapeHtml(item.name)}</strong>${options ? `<small>${options}</small>` : ""}${comment}</div><strong>${euro.format((item.lineTotalCents ?? 0) / 100)}</strong></div>`;
   }).join("") || '<p style="color:var(--muted)">Keine Positionen verfügbar.</p>';
   $("#statusTotal").textContent = euro.format((status.totalCents ?? 0) / 100);
+  $("#statusPayment").textContent = paymentCopy(status.payment);
   $("#cancelOrder").classList.toggle("hidden", status.state !== "waiting_for_acceptance");
 }
 

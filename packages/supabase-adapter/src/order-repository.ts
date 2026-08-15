@@ -1,5 +1,6 @@
 import type { OrderWriter } from "../../ordering/src/checkout.ts";
 import type { Order, OrderState } from "../../ordering/src/model.ts";
+import type { PaymentMethod, PaymentMode, PaymentStatus } from "../../payments/src/contracts.ts";
 import type { RpcClient } from "./rest-rpc.ts";
 
 interface DbOrder {
@@ -16,6 +17,11 @@ interface DbOrder {
   requested_pickup_at?: string | null;
   accepted_pickup_at?: string | null;
   total_cents: number;
+  payment_mode: PaymentMode;
+  payment_method: PaymentMethod;
+  payment_status: PaymentStatus;
+  payment_currency: string;
+  payment_provider_reference?: string | null;
   submitted_at?: string | null;
   accepted_at?: string | null;
   ready_at?: string | null;
@@ -51,6 +57,14 @@ export function mapDbOrder(row: DbOrder): Order {
     cancelledAt: row.cancelled_at ?? null,
     rejectionReason: row.rejection_reason ?? null,
     totalCents: row.total_cents,
+    payment: {
+      mode: row.payment_mode,
+      method: row.payment_method,
+      status: row.payment_status,
+      currency: row.payment_currency,
+      amountCents: row.total_cents,
+      providerReference: row.payment_provider_reference ?? null,
+    },
   };
 }
 
@@ -82,6 +96,13 @@ export interface PublicOrderStatusItem {
   }>;
 }
 
+export interface PublicOrderPaymentStatus {
+  mode: PaymentMode;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  currency: string;
+}
+
 export interface PublicOrderStatus {
   id: string;
   orderNumber: number;
@@ -97,6 +118,7 @@ export interface PublicOrderStatus {
   cancelledAt?: string | null;
   rejectionReason?: string | null;
   totalCents: number;
+  payment: PublicOrderPaymentStatus;
   items: PublicOrderStatusItem[];
 }
 

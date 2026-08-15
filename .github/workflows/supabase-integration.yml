@@ -12,6 +12,7 @@ on:
       - "apps/mcello/**"
       - "packages/supabase-adapter/**"
       - "packages/ordering/**"
+      - "packages/payments/**"
       - "packages/notifications/**"
       - "tests/supabase-local.integration.mjs"
       - "tests/provisional-menu.integration.mjs"
@@ -28,6 +29,7 @@ on:
       - "tests/cross-sell-recommendations.integration.mjs"
       - "tests/analytics-events.integration.mjs"
       - "tests/location-boundary.integration.mjs"
+      - "tests/payment-boundary.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
       - ".github/workflows/supabase-integration.yml"
   push:
@@ -43,6 +45,7 @@ on:
       - "apps/mcello/**"
       - "packages/supabase-adapter/**"
       - "packages/ordering/**"
+      - "packages/payments/**"
       - "packages/notifications/**"
       - "tests/supabase-local.integration.mjs"
       - "tests/provisional-menu.integration.mjs"
@@ -59,6 +62,7 @@ on:
       - "tests/cross-sell-recommendations.integration.mjs"
       - "tests/analytics-events.integration.mjs"
       - "tests/location-boundary.integration.mjs"
+      - "tests/payment-boundary.integration.mjs"
       - "tests/realtime-ready.integration.mjs"
 
 concurrency:
@@ -159,6 +163,9 @@ jobs:
 
       - name: Prove single-location application and database boundaries
         run: node tests/location-boundary.integration.mjs
+
+      - name: Prove pay-on-site payment boundary
+        run: node tests/payment-boundary.integration.mjs
 
       - name: Run real PostgREST/RPC order flow
         run: node tests/supabase-local.integration.mjs
