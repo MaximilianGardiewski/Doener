@@ -29,6 +29,7 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
     "[x] Staff operational-only role (`D021`)",
     "[x] Safe homepage section ordering/toggling (`D031`)",
     "[x] Event/Special/Presse/News scheduling + pinning (`D032`)",
+    "[x] Installable browser-compatible PWA (`D060`)",
   ]) {
     assert.match(acceptance, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
@@ -50,6 +51,8 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
     "D043 | `VERIFIED`",
     "D012 + D013 | `VERIFIED`",
     "D056 | `VERIFIED`",
+    "D060 | `VERIFIED`",
+    "tests/pwa-installability.test.mjs",
     "D003 | `PARTIAL`",
     "D015 | `PARTIAL`",
     "D016 | `PARTIAL`",
