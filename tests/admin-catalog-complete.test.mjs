@@ -31,7 +31,8 @@ test("D020 admin surface covers catalog fields and reusable configuration groups
 
 test("D020 product media UI reuses private Storage and never exposes a service key", () => {
   assert.match(mediaHtml, /Produktbilder/);
-  assert.match(mediaHtml, /Bildrechte bestätigt/);
+  assert.match(mediaHtml, /bestätigte Bildrechte|bestätigten Rechten/);
+  assert.match(mediaJs, /Bildrechte bestätigt/);
   assert.match(mediaJs, /storage\/v1\/\$\{objectRoute\}/);
   assert.match(mediaJs, /admin_register_product_image_upload/);
   assert.match(mediaJs, /admin_save_product_image_metadata/);
