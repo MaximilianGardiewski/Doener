@@ -291,7 +291,8 @@ as $$
   limit 1
 $$;
 
--- Preserve the current public menu contract and add only safe product-image fields.
+-- Preserve the full public menu contract (content, labels/allergens, modifiers)
+-- and add only safe product-image fields.
 create or replace function public.get_public_menu(_location_id uuid, _at timestamptz default now())
 returns jsonb
 language sql
@@ -323,6 +324,15 @@ as $$
                 'orderableOnline', p.orderable_online,
                 'ownerConfirmed', p.owner_confirmed,
                 'dietaryTags', to_jsonb(p.dietary_tags),
+                'allergens', coalesce((
+                  select jsonb_agg(
+                    jsonb_build_object('id', a.id, 'code', a.code, 'name', a.name)
+                    order by coalesce(a.code, ''), a.name
+                  )
+                  from public.product_allergens pa
+                  join public.allergens a on a.id = pa.allergen_id
+                  where pa.product_id = p.id
+                ), '[]'::jsonb),
                 'imageMediaId', (
                   select m.id
                   from public.media_assets m
@@ -361,6 +371,15 @@ as $$
                             'name', o.name,
                             'priceDeltaCents', o.price_delta_cents,
                             'defaultSelected', o.default_selected,
+                            'allergens', coalesce((
+                              select jsonb_agg(
+                                jsonb_build_object('id', a.id, 'code', a.code, 'name', a.name)
+                                order by coalesce(a.code, ''), a.name
+                              )
+                              from public.modifier_option_allergens moa
+                              join public.allergens a on a.id = moa.allergen_id
+                              where moa.option_id = o.id
+                            ), '[]'::jsonb),
                             'soldOut', exists (
                               select 1 from public.snoozes s
                               where s.modifier_option_id = o.id and s.until_at > _at
