@@ -1,6 +1,6 @@
 # Projektkontext — Doener / BusinessWebFactory / Mcello
 
-Stand: 2026-08-15
+Stand: 2026-08-18
 
 ## Mission
 
@@ -14,7 +14,7 @@ Doener ist nicht nur eine einzelne Restaurant-Website. Im Repository entsteht ei
 
 Git, Migrationen, Tests, Decision Ledgers und Repo-Dokumentation sind kanonisch. Builder und Coding-Agents sind Clients/Assistenten.
 
-Aktiver Integrationszweig zum Stand dieser Notiz: `bootstrap/business-web-factory`. `main` bildet derzeit nicht den vollständigen Entwicklungsstand ab. Dieser Hinweis ist ein Snapshot und darf nicht als dauerhafte Branch-Regel interpretiert werden.
+Aktiver Integrationszweig zum Stand dieser Notiz: `bootstrap/business-web-factory`. `main` bildet derzeit nicht zwingend den vollständigen Entwicklungsstand ab. Dieser Hinweis ist ein Snapshot und darf nicht als dauerhafte Branch-Regel interpretiert werden.
 
 ## Architekturprinzipien
 
@@ -23,8 +23,9 @@ Aktiver Integrationszweig zum Stand dieser Notiz: `bootstrap/business-web-factor
 3. **Datenbank als zweite Schutzschicht** — kritische Grenzen müssen zusätzlich zu Application-Checks in PostgreSQL/RLS/Constraints abgesichert sein.
 4. **Single source of truth** — keine wichtige Logik nur in Lovable/Figma/Codex/Claude/Vercel.
 5. **Vertical slices** — Domain → Adapter → DB → Integrationstest → UI, bevor reines Oberflächenpolishing priorisiert wird.
-6. **Keine erfundenen Business-Fakten** — Preise, Öffnungszeiten, Claims, Zertifizierungen und Medienrechte brauchen Herkunft/Freigabe.
+6. **Keine erfundenen Business-Fakten** — Preise, Öffnungszeiten, Claims, Kontaktangaben, Story und Medienrechte brauchen Herkunft/Freigabe.
 7. **Produktionsschutz** — kein Production-Deploy und keine Produktionsmutation ohne ausdrückliche Freigabe.
+8. **Evidence vor Haken** — Acceptance erst auf VERIFIED setzen, wenn Runtime-/DB-/Browser-Evidenz den bindenden Decision-Scope abdeckt.
 
 ## Aktuelle Kernpakete
 
@@ -54,13 +55,45 @@ Die vollständige Wahrheit steht in `docs/projects/mcello/DECISIONS.md`. Besonde
 - PWA + hochwertige, warme Premium-Darstellung (`D001`, `D029`, `D058`, `D060`)
 - kein verpflichtender neuer monatlicher SaaS-Posten; Self-Hosting-Pfad muss erhalten bleiben (`D063`)
 
+## Stand der technischen V1-Basis
+
+Wichtige bereits VERIFIED Slices:
+
+- eigenes Ordering, Slots/Kapazität, Pre-accept Edit/Cancel und KDS-Lifecycle
+- Shop-State mit Admin-only Force-Open, Pause/Rush/Closed und konfigurierbarem Cutoff (`D044`, `D052`)
+- komplette technische Admin-Katalog-Control-Plane inklusive rights-aware Produktbildern (`D020`)
+- Staff operational-only und DB-/RPC-Rollenforcement (`D021`)
+- Allergene, Timed Availability, Cross-Sells, CMS, Galerie und Realtime
+- Modern-Warm-Premium Designsystem, responsive Navigation, Homepage-Composition, Motion, Copy-Ton und PWA (`D001`, `D024`, `D030`, `D058`, `D059`, `D060`)
+- Self-host Release/DB-Migration/Backup-Restore/Monitoring-Path (`D063`)
+- Paid-Messaging Spend/Runtime Guard (`D064`)
+- Decision-Coverage-Guard über D001–D064 (`D062`)
+
+Der aktuelle Engpass liegt deshalb nicht mehr bei Grundarchitektur, sondern bei den **echten First-Party-/Owner-/Provider-Inputs** in `Quellen/V1-GO-LIVE-INPUTS.md`.
+
 ## Bereits belastbar vorbereitete Plattformgrenzen
 
 - Analytics-/Recommendation-Datenbasis (`D047`, `D050`)
 - Location Boundary (`D057`)
 - Payment Provider Boundary (`D004`)
+- Delivery Boundary (`D006`)
+- Future Order Sources (`D027`)
+- Effort-/Capacity-Metadaten (`D040`)
 
 Für jede weitere PREPARE_NOW-Entscheidung gilt: Contract + Datenmodell/Boundary + Tests jetzt; sichtbare Future-Funktion erst später.
+
+## Verbleibende Go-live-Inputs
+
+Nicht mit Placeholdern oder ungeprüfter Recherche schließen:
+
+- bestätigte Adresse, Telefon-/WhatsApp-Kontakt und Maps-Ziel
+- explizite WhatsApp-/SMS-Provider-/Kostenfreigabe
+- owner-bestätigte reale Menü-/Ingredient-/Sauce-/Extra-Konfiguration
+- finales originales Mcello-Logo/Recognition-Asset
+- echte freigegebene Mcello-Fotos, Rechte und Owner-/Team-/Story-Fakten
+- bestätigte reale Betriebsparameter wie Öffnungszeiten, Sonderzeiten, Cutoff/Kapazität/Rush-Werte
+
+Details: `Quellen/V1-GO-LIVE-INPUTS.md`.
 
 ## Kosten- und Vendor-Regel
 
@@ -74,6 +107,8 @@ Ein Baustein ist nicht „fertig“, nur weil Code geschrieben wurde. Er braucht
 - Struktur-/Regressionstests
 - Datenbank-/RLS-/Constraint-Nachweis, wenn Persistenz betroffen ist
 - echten Integrationsworkflow bei Supabase-/Realtime-/Storage-Änderungen
-- aktualisierte Acceptance-/Architektur-Dokumentation
+- Browser-/Responsive-Test bei Public-UI-Verträgen
+- Self-host-/Migration-/Restore-Gegenprobe bei Release-relevanten Änderungen
+- aktualisierte Acceptance-/Evidence-/Architektur-Dokumentation
 - PR + grüne Checks + Review vor Merge
-- kein Production-Deploy ohne separate Freigeabe
+- kein Production-Deploy ohne separate Freigabe
