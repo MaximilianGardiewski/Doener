@@ -13,7 +13,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Public copy tone: premium/quiet + warm/personal with restrained street-food moments (`D059`)
 
 ## Menu/Configurator
-- [ ] Structured categories/products/variants/modifier groups (`D007`, `D008`, `D020`)
+- [ ] Structured categories/products/variants/modifier groups with owner-confirmed Mcello configuration (`D007`, `D008`)
 - [ ] Ingredient/sauce toggle and explicit extras (`D008`)
 - [x] Allergen/dietary label model (`D045`)
 - [x] Sold-out products/options visible but disabled (`D035`)
@@ -54,7 +54,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [ ] Route + call actions (`D017`)
 
 ## CMS/Roles
-- [ ] Admin full catalog/content control (`D020`)
+- [x] Admin full catalog control: categories, products, descriptions, images, prices and reusable ingredient/sauce/extra groups (`D020`)
 - [x] Staff operational-only role (`D021`)
 - [x] Safe homepage section ordering/toggling (`D031`)
 - [x] Event/Special/Presse/News scheduling + pinning (`D032`)
