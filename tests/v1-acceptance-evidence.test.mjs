@@ -30,6 +30,7 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
     "[x] Target time + approximate countdown (`D054`)",
     "[x] Allergen/dietary label model (`D045`)",
     "[x] Timed availability (`D051`)",
+    "[x] Admin full catalog control: categories, products, descriptions, images, prices and reusable ingredient/sauce/extra groups (`D020`)",
     "[x] Staff operational-only role (`D021`)",
     "[x] Server/database role enforcement for admin/staff boundaries (`D020`, `D021`)",
     "[x] Safe homepage section ordering/toggling (`D031`)",
@@ -53,6 +54,8 @@ test("known partial V1 requirements remain unchecked", () => {
   for (const expected of [
     "[ ] Existing logo/recognition with premium anthracite/amber/selective-green reinterpretation (`D029`)",
     "[ ] Real Mcello media with production rights confirmed; no fake documentary imagery (`D024`, `D025`)",
+    "[ ] Structured categories/products/variants/modifier groups with owner-confirmed Mcello configuration (`D007`, `D008`)",
+    "[ ] Ingredient/sauce toggle and explicit extras (`D008`)",
     "[ ] WhatsApp OTP primary + SMS fallback (`D003`)",
     "[ ] Live status/order summary/pickup location (`D015`)",
     "[ ] WhatsApp/SMS status notifications (`D016`)",
@@ -66,6 +69,7 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
   for (const marker of [
     "D001 | `VERIFIED`",
     "D002 | `VERIFIED`",
+    "D020 | `VERIFIED`",
     "D043 | `VERIFIED`",
     "D012 + D013 | `VERIFIED`",
     "D056 | `VERIFIED`",
@@ -83,6 +87,9 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
     "D063 (self-host release path) | `VERIFIED`",
     "D063 (production hardening/restore) | `VERIFIED`",
     "tests/independent-ordering.test.mjs",
+    "tests/admin-catalog-complete.integration.mjs",
+    "apps/mcello/public/product-media.html",
+    "supabase/migrations/20260818010000_product_media_backoffice.sql",
     "tests/reuse-architecture.test.mjs",
     "tests/decision-ledger-coverage.test.mjs",
     "tests/messaging-spend-boundary.test.mjs",
@@ -97,6 +104,7 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
     ".github/workflows/selfhost-release.yml",
     ".github/workflows/selfhost-db-drill.yml",
     "D003 | `PARTIAL`",
+    "D007 + D008 | `PARTIAL`",
     "D015 | `PARTIAL`",
     "D016 | `PARTIAL`",
     "D017 | `OPEN`",
@@ -109,4 +117,6 @@ test("evidence ledger records verified ordering flows and remaining blockers", (
   ]) {
     assert.match(evidence, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
   }
+
+  assert.doesNotMatch(evidence, /\| D020 \| `PARTIAL` \|/);
 });
