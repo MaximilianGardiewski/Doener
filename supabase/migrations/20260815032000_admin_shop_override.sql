@@ -12,7 +12,7 @@ declare
   _message text := nullif(btrim(coalesce(_operator_message, '')), '');
   _result jsonb;
 begin
-  perform public.require_admin(_location_id);
+  perform public.require_admin();
 
   if _override is null then
     raise exception 'Shop override is required';
