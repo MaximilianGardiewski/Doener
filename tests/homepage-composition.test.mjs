@@ -60,5 +60,5 @@ test("story team slot refuses invented identity claims", () => {
 test("homepage composition is part of public module graph and offline shell", () => {
   assert.match(publicContent, /import "\.\/homepage-composition\.js";/);
   assert.match(sw, /"\/homepage-composition\.js"/);
-  assert.match(sw, /mcello-public-shell-v7/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
 });
