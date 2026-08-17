@@ -1,6 +1,6 @@
 # Mcello V1 — Acceptance Evidence Ledger
 
-Stand: 2026-08-15
+Stand: 2026-08-18
 
 Dieses Dokument trennt **nachgewiesene V1-Funktionalität** von teilweise vorhandenen oder noch blockierten Decisions. Es ersetzt weder `DECISIONS.md` noch `ACCEPTANCE.md`.
 
@@ -36,9 +36,10 @@ Status:
 | D051 | `VERIFIED` | `tests/ordering-schedule.integration.mjs`, `tests/timed-product-db-gate.integration.mjs` | Produkt-/Kategorie-Verfügbarkeit nach Wochentag, Zeit und Datumsfenster wird an Application- und DB-Grenze geprüft. |
 | D036 | `VERIFIED` | `tests/provisional-menu.integration.mjs`, `data/mcello/menu-seed.provisional.json` | 97 Positionen deterministisch importiert; Provenienz bleibt erhalten; `owner_confirmed=false`; sensible Positionen bleiben online deaktiviert. |
 | D021 | `VERIFIED` | `tests/modifier-backoffice.integration.mjs`, `tests/allergen-labels.integration.mjs`, `tests/ordering-schedule.integration.mjs`, `tests/realtime-ready.integration.mjs` | Staff kann operative Daten sehen/steuern, aber keine strukturellen Menu-/Label-/Schedule-Schreiboperationen ausführen. |
+| D020 | `VERIFIED` | `apps/mcello/public/admin.html`, `apps/mcello/public/admin.js`, `apps/mcello/public/product-media.html`, `apps/mcello/public/product-media.js`, `supabase/migrations/20260818010000_product_media_backoffice.sql`, `tests/admin-catalog-complete.integration.mjs`, `tests/modifier-backoffice.integration.mjs` | Admin kann Kategorien, Produkte, Beschreibungen, Preise sowie wiederverwendbare Zutaten-/Saucen-/Extra-Gruppen vollständig strukturell pflegen. Produktbilder nutzen den bestehenden privaten, rights-aware `mcello-media`-Storage; Alt-Text ist Pflicht und öffentliche Auslieferung setzt bestätigte Bildrechte voraus. Der echte Supabase-Test erstellt/ändert Kategorie, Produkt, Preis/Beschreibung, Modifier-Gruppe und privates Produktbild, beweist Public-Rechte-Gate und verweigert Staff alle strukturellen Mutationen. Die technische D020-Control-Plane ist damit abgeschlossen; reale Mcello-Zutaten-/Sauce-Inhalte bleiben D007/D008 und echte Mcello-Medien/Story D025/D026. |
 | D031 | `VERIFIED` | `tests/editorial-homepage.integration.mjs` | Admin kann kontrollierte Homepage-Sektionen ein-/ausblenden und sortieren; Public Snapshot enthält nur aktive Module. |
 | D032 | `VERIFIED` | `tests/editorial-homepage.integration.mjs` | News/Event-Publishing mit Draft/Published, Sichtbarkeitsfenstern, Eventzeit und Pinning ist DB-integriert. |
-| D020 + D021 (role-enforcement boundary) | `VERIFIED` | RLS-/RPC-Migrationen, `tests/realtime-ready.integration.mjs`, Backoffice-Integrationen | Admin-/Staff-Rollen werden server-/datenbankseitig erzwungen; Browserrollen sind nicht die Autoritätsgrenze. D020 als vollständige Admin-Gesamtabnahme bleibt separat PARTIAL. |
+| D020 + D021 (role-enforcement boundary) | `VERIFIED` | RLS-/RPC-Migrationen, `tests/realtime-ready.integration.mjs`, Backoffice-Integrationen | Admin-/Staff-Rollen werden server-/datenbankseitig erzwungen; Browserrollen sind nicht die Autoritätsgrenze. D020 ist zusätzlich durch die vollständige Admin-Katalog-/Produktbild-Acceptance separat VERIFIED. |
 | D022 | `VERIFIED` | `apps/lebtig/README.md`, Root-Workspaces, `packages/core`, `packages/auth`, `packages/cms`, `tests/reuse-architecture.test.mjs` | Lebtig bleibt als ehrliche Donor-Referenz dokumentiert; wiederverwendbare Auth/Rollen/RLS/Media/CMS-Grundlagen werden über gemeinsame Paketgrenzen weitergeführt statt Mcello direkt an die Lebtig-App zu koppeln. |
 | D023 | `VERIFIED` | Root `package.json`, `packages/*`, `apps/mcello/server.mjs`, `tests/reuse-architecture.test.mjs` | Mcello komponiert Core, Ordering, Analytics, Notifications, KDS-/Supabase-Grenzen aus separaten Workspace-Paketen. Der Kern bleibt damit von Tag 1 wiederverwendbar und für ein späteres Produkt D erweiterbar. |
 | D064 (Development OTP) | `VERIFIED` | `packages/notifications/src/dev-otp.ts`, `apps/mcello/server.mjs` | Development-OTP sendet keine externe Nachricht und braucht keinen bezahlten Provider; Startpfad fordert WhatsApp primär/SMS Fallback an. |
@@ -64,7 +65,6 @@ Status:
 | D015 | `PARTIAL` | Token-Statusseite mit Progress, Bestellnummer, Summary und ETA ist vorhanden. | Verifizierte Pickup-Adresse fehlt im Statusvertrag/UI. Keine Geschäftsadresse darf erfunden werden. |
 | D016 | `PARTIAL` | Notification-Outbox kennt received/accepted/delayed/ready/rejected/cancelled und Statuslinks; Lifecycle/Lease sind DB-getestet. | Freigegebener WhatsApp/SMS-Production-Transport fehlt weiterhin; D064 verhindert bis dahin eine scheinbar funktionierende Production-Zustellung. |
 | D017 | `OPEN` | Statusseite vorhanden. | Route- und Call-Actions benötigen bestätigte Adresse/Telefonnummer. |
-| D020 | `PARTIAL` | Admin kann Produkte/Preise, Modifier/Extras, Labels, Recommendations, Schedules, Editorial und Media strukturell verwalten. | Vor dem Haken wird der gesamte Admin-UI-Flow noch einmal als zusammenhängende Acceptance geprüft, inklusive bestätigtem Media-/Owner-Workflow. |
 | D007 + D008 | `PARTIAL` | Sticky Kategorie-Navigation, Produktkonfigurator, zentrale Modifier-Gruppen, Größenvarianten und bezahlte Extras sind vorhanden. | Vollständige owner-bestätigte Mcello Ingredient-/Sauce-Standardkonfiguration ist wegen provisional seed noch nicht freigegeben. |
 
 ## Bewusst offen — Public/Go-live/Design
@@ -93,6 +93,6 @@ Nach dieser Reconciliation sollen keine bereits vorhandenen Features erneut geba
 
 1. D003/D016 — erst nach expliziter Freigabe eines unvermeidbaren Messaging-Providers/Carrier-Kosten Production-Transport aktivieren.
 2. D015/D017 — bestätigte Adresse/Telefonnummer einpflegen, danach Status-Route/Call vervollständigen.
-3. D020/D007/D008 — Admin-/Menu-Gesamtabnahme nach owner-bestätigtem Produkt-/Ingredient-/Media-Datensatz.
+3. D007/D008 — owner-bestätigte reale Mcello Ingredient-/Sauce-Standardkonfiguration im provisional Menü ersetzen/freigeben.
 4. D029 — finale Logo-/Recognition-Anwendung erst mit freigegebenem Original-Asset.
 5. D025/D026 — echte Mcello-Medien und persönliche Story erst nach First-Party-Freigabe.
