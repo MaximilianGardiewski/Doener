@@ -11,6 +11,9 @@ const knownSections = new Map([
   ["contact", "kontakt"],
 ]);
 
+let productMedia = new Map();
+let productMediaObserver = null;
+
 function esc(value = "") {
   return String(value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
@@ -98,6 +101,60 @@ function renderGallery(items = []) {
   }).join("");
 }
 
+function indexProductMedia(categories = []) {
+  productMedia = new Map();
+  for (const category of categories) {
+    for (const product of category.products || []) {
+      if (!product.imageMediaId) continue;
+      productMedia.set(product.id, {
+        src: `/api/media/${encodeURIComponent(product.imageMediaId)}`,
+        alt: product.imageAltText || product.name || "Produktbild",
+      });
+    }
+  }
+}
+
+function applyProductMedia() {
+  const featured = document.querySelector("#featuredGrid");
+  if (!featured) return;
+  for (const card of featured.querySelectorAll(".food-card")) {
+    const productButton = card.querySelector("[data-product]");
+    const image = card.querySelector("img");
+    const media = productButton ? productMedia.get(productButton.dataset.product) : null;
+    if (!image || !media) continue;
+    if (image.dataset.productMediaId === productButton.dataset.product) continue;
+    image.src = media.src;
+    image.alt = media.alt;
+    image.loading = "lazy";
+    image.decoding = "async";
+    image.dataset.productMediaId = productButton.dataset.product;
+  }
+}
+
+function bindProductMedia(categories = []) {
+  indexProductMedia(categories);
+  applyProductMedia();
+
+  const featured = document.querySelector("#featuredGrid");
+  if (featured && !productMediaObserver) {
+    productMediaObserver = new MutationObserver(() => applyProductMedia());
+    productMediaObserver.observe(featured, { childList: true, subtree: true });
+  }
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.("[data-product],[data-recommended-product]");
+    const productId = button?.dataset.product || button?.dataset.recommendedProduct;
+    const media = productId ? productMedia.get(productId) : null;
+    if (!media) return;
+    setTimeout(() => {
+      const modalImage = document.querySelector("#modalImage");
+      if (!modalImage) return;
+      modalImage.src = media.src;
+      modalImage.alt = media.alt;
+    }, 0);
+  });
+}
+
 async function loadPublicContent() {
   try {
     const response = await fetch("/api/menu", { cache: "no-store" });
@@ -108,8 +165,9 @@ async function loadPublicContent() {
     applyHomepage(snapshot);
     renderEditorial(snapshot.editorialPosts || []);
     renderGallery(snapshot.galleryItems || []);
+    bindProductMedia(menuSnapshot.categories || []);
   } catch {
-    // Static preview remains safe without a local backend. No demo news are injected.
+    // Static preview remains safe without a local backend. No demo news or product media are injected.
   }
 }
 

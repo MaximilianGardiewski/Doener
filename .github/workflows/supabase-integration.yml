@@ -22,6 +22,7 @@ on:
       - "tests/notification-outbox.integration.mjs"
       - "tests/notification-outbox-lease.integration.mjs"
       - "tests/modifier-backoffice.integration.mjs"
+      - "tests/admin-catalog-complete.integration.mjs"
       - "tests/allergen-labels.integration.mjs"
       - "tests/ordering-schedule.integration.mjs"
       - "tests/admin-shop-override.integration.mjs"
@@ -59,6 +60,7 @@ on:
       - "tests/notification-outbox.integration.mjs"
       - "tests/notification-outbox-lease.integration.mjs"
       - "tests/modifier-backoffice.integration.mjs"
+      - "tests/admin-catalog-complete.integration.mjs"
       - "tests/allergen-labels.integration.mjs"
       - "tests/ordering-schedule.integration.mjs"
       - "tests/admin-shop-override.integration.mjs"
@@ -198,6 +200,9 @@ jobs:
 
       - name: Prove modifier backoffice and role boundary
         run: node tests/modifier-backoffice.integration.mjs
+
+      - name: Prove complete admin catalog and product-media control
+        run: node tests/admin-catalog-complete.integration.mjs
 
       - name: Prove structured allergen and dietary label flow
         run: node tests/allergen-labels.integration.mjs
