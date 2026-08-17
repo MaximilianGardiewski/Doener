@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello — Showcase Preview</title>
+  <meta name="description" content="Mcello Showcase-PWA — Entwicklungsprototyp." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .field{display:grid;gap:7px;margin-top:12px}.field span{font-size:13px;color:var(--muted)}
+    .field input,.field select,.field textarea{width:100%;background:#11110f;color:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;font:inherit}
+    .modifier-group{margin-top:16px;padding:16px;border:1px solid rgba(255,255,255,.07);border-radius:18px;background:#1c1c18}
+    .modifier-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px}.modifier-head small{color:var(--muted)}
+    .modifier-options{display:grid;gap:8px}.modifier-option{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid rgba(255,255,255,.06);border-radius:13px;background:#24231e;cursor:pointer}
+    .modifier-option:has(input:checked){border-color:rgba(215,169,76,.45);background:#2b2418}.modifier-option:has(input:disabled){opacity:.45;cursor:not-allowed}.modifier-option span:last-child{margin-left:auto;color:var(--gold-2)}
+    .availability-badge{display:inline-flex;margin-top:8px;padding:6px 9px;border-radius:999px;background:#272218;color:#eacb8a;font-size:12px}.availability-badge.good{background:#1f291b;color:#cce8b0}.availability-badge.bad{background:#2b1c19;color:#efb0a5}
+    .checkout-box{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}.checkout-message{margin-top:12px;padding:12px 14px;border-radius:14px;background:#20201b;color:var(--muted);font-size:14px}.checkout-message.error{color:#efb0a5;background:#291c19}.checkout-message.success{color:#cce8b0;background:#1e281b}
+    .dev-code{margin-top:10px;padding:10px 12px;border:1px dashed rgba(215,169,76,.35);border-radius:12px;color:var(--gold-2);font-family:ui-monospace,monospace}
+    .hidden{display:none!important}
+    .skip-link{position:fixed;left:16px;top:8px;z-index:250;transform:translateY(-180%);padding:10px 14px;border-radius:999px;background:var(--gold-2);color:#18130a;font-weight:800;box-shadow:var(--shadow)}
+    .skip-link:focus{transform:none}
+    .mobile-nav{display:none;position:relative}
+    .mobile-nav summary{list-style:none;user-select:none}
+    .mobile-nav summary::-webkit-details-marker{display:none}
+    .mobile-nav[open] summary{border-color:rgba(215,169,76,.55);color:var(--gold-2)}
+    .mobile-nav-panel{position:absolute;right:0;top:calc(100% + 12px);width:min(340px,calc(100vw - 22px));max-height:calc(100vh - 120px);overflow:auto;padding:10px;border:1px solid var(--line);border-radius:22px;background:rgba(21,21,19,.98);box-shadow:var(--shadow)}
+    .mobile-nav-panel a{display:block;padding:12px 14px;border-radius:13px;color:#ddd3c5}
+    .mobile-nav-panel a:hover{background:rgba(255,255,255,.05);color:var(--gold-2)}
+    .mobile-nav-panel .mobile-order-cta{text-align:center;margin-top:7px;color:#18130a}
+    .nav-links a:focus-visible,.mobile-nav summary:focus-visible,.mobile-nav-panel a:focus-visible,.header-order-cta:focus-visible,.skip-link:focus-visible{outline:3px solid var(--gold-2);outline-offset:3px}
+    @media(max-width:900px){.mobile-nav{display:block}.header-order-cta{margin-left:auto}}
+    @media(max-width:620px){.nav{gap:8px}.header-order-cta{padding:10px 12px;font-size:13px}.mobile-nav summary{padding:10px 12px}.brand strong{font-size:16px}}
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#bestellen">Direkt zur Speisekarte & Bestellung</a>
+  <div class="prototype-banner" id="prototypeBanner">Entwicklungsprototyp · Preise vorläufig · Originalmedien noch nicht im öffentlichen Repo</div>
+  <header class="site-header">
+    <div class="shell nav">
+      <a class="brand" href="#start" aria-label="Mcello Start"><div class="brand-mark">M</div><div><strong>MCELLO</strong><span>Kebap · Pizza · Bistro</span></div></a>
+      <nav class="nav-links" aria-label="Hauptnavigation"><a href="#start">Start</a><a href="#bestellen">Speisekarte & Bestellen</a><a href="#ueber">Über Mcello</a><a href="#aktuelles">Aktuelles & Events</a><a href="#galerie">Galerie</a><a href="#kontakt">Kontakt & Anfahrt</a></nav>
+      <a class="primary header-order-cta" href="#bestellen" data-order-cta>Jetzt bestellen</a>
+      <details class="mobile-nav" id="mobileNav">
+        <summary class="pill" aria-label="Navigation öffnen">Menü</summary>
+        <nav class="mobile-nav-panel" aria-label="Mobile Hauptnavigation">
+          <a href="#start">Start</a>
+          <a href="#bestellen">Speisekarte & Bestellen</a>
+          <a href="#ueber">Über Mcello</a>
+          <a href="#aktuelles">Aktuelles & Events</a>
+          <a href="#galerie">Galerie</a>
+          <a href="#kontakt">Kontakt & Anfahrt</a>
+          <a class="primary mobile-order-cta" href="#bestellen" data-order-cta>Jetzt bestellen</a>
+        </nav>
+      </details>
+    </div>
+  </header>
+  <main>
+    <section class="shell hero" id="start">
+      <div class="hero-copy">
+        <div class="kicker">Bad Krozingen · Lokal zuerst</div>
+        <h1>Warm. Echt. <em>Mcello.</em></h1>
+        <p>Bistro-Atmosphäre, Qualität und Community — digital so direkt wie an der Theke. Der Showcase verbindet Premium-Branding mit einem strukturierten Bestell- und Küchenfluss.</p>
+        <div class="hero-actions"><a class="primary" href="#bestellen" data-order-cta>Speisekarte entdecken</a><a class="pill" href="#ueber">Das Lokal erleben</a></div>
+        <div class="meta-row"><span><strong>V1</strong> Abholung + Vorbestellung</span><span><strong>PWA</strong> Browser & Homescreen</span><span><strong>KDS</strong> Live für die Theke</span></div>
+      </div>
+      <div class="hero-media"><img class="hero-photo" src="/media/placeholder.svg" alt="" /><div class="float-card"><small>Media Layer</small><strong>Freigegebene Mcello-Fotos kommen aus CMS/Storage.</strong></div></div>
+    </section>
+
+    <section class="section" id="bestellen">
+      <div class="shell">
+        <div class="section-head"><div><div class="kicker">Speisekarte & Bestellen</div><h2>App-schnell. Bistro-echt.</h2></div><p id="menuSourceText">Produkte und Preise sind aus bereitgestelltem Material vorläufig erfasst und bleiben bis zur Inhaber-Freigabe als unbestätigt markiert.</p></div>
+        <div class="category-rail" id="categoryRail"></div>
+        <div class="grid" id="featuredGrid"></div>
+        <div class="list-panel" id="menuList"></div>
+      </div>
+    </section>
+
+    <section class="section" id="ueber"><div class="shell two-col"><article class="story-card"><img src="/media/placeholder.svg" alt="" /><div class="story-copy"><div class="kicker">Das Lokal</div><h3>Mehr Treffpunkt als Bestellseite.</h3><p>Mcello wird als lokaler Ort mit Persönlichkeit, Atmosphäre und Auswahl inszeniert. Das Bestellsystem ist technisch stark, aber nicht die ganze Marke.</p></div></article><article class="story-card"><img src="/media/placeholder.svg" alt="" /><div class="story-copy"><div class="kicker">Qualität & Auswahl</div><h3>Food, Bistro, frische Säfte.</h3><p>Konkrete Claims und Originalmedien werden erst nach Freigabe aus dem CMS ausgespielt.</p></div></article></div></section>
+    <section class="section" id="aktuelles"><div class="shell"><div class="section-head"><div><div class="kicker">Aktuelles & Events</div><h2>Mcello passiert vor Ort.</h2></div><p>Veröffentlichte News, Events, Specials und Presse werden hier aus dem CMS ausgespielt.</p></div><div class="news-stack" id="newsStack"><div class="notice">Aktuell sind keine veröffentlichten Meldungen hinterlegt.</div></div></div></section>
+    <section class="section" id="galerie"><div class="shell"><div class="section-head"><div><div class="kicker">Galerie</div><h2>Echte Medien, sauber verwaltet.</h2></div><p>Food · Lokal · Team · Events. Hier erscheinen ausschließlich freigegebene Originalmedien mit bestätigten Bildrechten.</p></div><div class="gallery" id="galleryGrid"><div class="notice">Noch keine freigegebenen Originalmedien hinterlegt.</div></div></div></section>
+    <section class="section" id="kontakt"><div class="shell"><div class="section-head"><div><div class="kicker">Kontakt & Anfahrt</div><h2>Direkt zu Mcello.</h2></div><p>Adresse, Telefon, WhatsApp und Öffnungszeiten werden als dynamische Business-Daten gepflegt und vor Veröffentlichung bestätigt.</p></div><div class="story-card story-copy"><h3>Bad Krozingen</h3><p>Kontakt- und Öffnungsdaten werden first-party bestätigt, bevor Route/Telefon/WhatsApp öffentlich verdrahtet werden.</p><div class="hero-actions"><a class="pill" href="#bestellen">Speisekarte</a></div></div></div></section>
+  </main>
+
+  <footer class="footer"><div class="shell footer-grid"><div class="brand"><div class="brand-mark">M</div><div><strong>MCELLO</strong><span>Showcase Preview</span></div></div><div><strong>Operativ</strong><p><a href="/kds.html">KDS Preview</a><br /><a href="/status.html">Bestellstatus</a></p></div></div></footer>
+
+  <div class="sticky-order"><span><strong id="cartCount">0 Artikel</strong> · lokal gespeichert</span><button class="primary" data-open-cart>Warenkorb <span id="cartAmount">0,00 €</span></button></div>
+
+  <div class="modal-backdrop" id="productModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <img class="modal-hero" id="modalImage" src="/media/placeholder.svg" alt="" />
+      <div class="modal-content">
+        <div class="tag">Konfigurator</div>
+        <h2 id="modalTitle">Produkt</h2>
+        <p id="modalDescription"></p>
+        <div id="productAvailability"></div>
+        <div id="modifierGroups"></div>
+        <section class="recommendation-box hidden" id="productRecommendations" aria-live="polite"></section>
+        <div class="option-box"><strong>Besonderer Wunsch</strong><textarea id="specialRequest" rows="3" style="width:100%;margin-top:12px;background:#11110f;color:white;border:1px solid var(--line);border-radius:14px;padding:12px" placeholder="V1: Freitext erlaubt"></textarea></div>
+        <div class="modal-footer"><button class="pill" data-close-modal>Abbrechen</button><button class="primary" id="addToCart">In den Warenkorb</button></div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-head"><h2>Warenkorb</h2><button class="pill" data-close-cart>Schließen</button></div>
+    <div class="cart-items" id="cartItems"></div>
+    <section class="cart-recommendations hidden" id="cartRecommendations" aria-live="polite"></section>
+    <div class="cart-total"><span>Gesamt</span><strong id="cartTotal">0,00 €</strong></div>
+    <div class="checkout-box">
+      <div class="tag">Lokaler Test-Checkout</div>
+      <p style="color:var(--muted)">Der Browserpreis wird beim Absenden ignoriert. Backend und PostgreSQL prüfen Produkt, Optionen, Verfügbarkeit und Preis erneut.</p>
+      <div class="checkout-message"><strong>Zahlung:</strong> Vor Ort · bar oder Karte. Online-Zahlung ist in V1 nicht aktiv.</div>
+      <label class="field"><span>Vorname</span><input id="checkoutFirstName" autocomplete="given-name" maxlength="80" placeholder="Vorname" /></label>
+      <label class="field"><span>Mobilnummer</span><input id="checkoutMobile" inputmode="tel" autocomplete="tel" placeholder="+49 …" /></label>
+      <label class="field"><span>Abholung</span><select id="pickupMode"><option value="asap">So schnell wie möglich</option><option value="later">Für später</option></select></label>
+      <label class="field hidden" id="pickupAtField"><span>Verfügbarer Abholslot</span><select disabled><option>Slots werden geladen …</option></select></label>
+      <label class="field"><span>Optionaler Bestellhinweis</span><textarea id="checkoutComment" rows="2" placeholder="Hinweis für die gesamte Bestellung"></textarea></label>
+      <div class="hero-actions" style="margin-top:14px"><button class="primary" id="requestOtp">Nummer verifizieren</button></div>
+      <div id="otpPanel" class="hidden">
+        <label class="field"><span>Bestätigungscode</span><input id="otpCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6-stelliger Code" /></label>
+        <div class="dev-code hidden" id="devOtpHint"></div>
+        <div class="hero-actions" style="margin-top:14px"><button class="primary" id="submitOrder">Testbestellung absenden</button></div>
+      </div>
+      <div id="checkoutMessage" class="checkout-message">Ohne lokalen Backend-Stack bleibt die Preview vollständig read-only.</div>
+    </div>
+  </aside>
+
+  <script type="module">
+    const mobileNav = document.querySelector("#mobileNav");
+    mobileNav?.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => mobileNav.removeAttribute("open"));
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !mobileNav?.open) return;
+      mobileNav.removeAttribute("open");
+      mobileNav.querySelector("summary")?.focus();
+    });
+  </script>
+  <script type="module" src="/app.js"></script>
+  <script type="module" src="/public-content.js"></script>
+</body>
+</html>

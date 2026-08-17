@@ -1,0 +1,63 @@
+name: Self-host DB Drill
+
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "infra/selfhost/**"
+      - "tests/selfhost-backup-restore.integration.sh"
+      - ".github/workflows/selfhost-db-drill.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/**"
+      - "infra/selfhost/**"
+      - "tests/selfhost-backup-restore.integration.sh"
+      - ".github/workflows/selfhost-db-drill.yml"
+
+concurrency:
+  group: selfhost-db-drill-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  migration-backup-restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: latest
+
+      - name: Start isolated local Supabase
+        run: supabase start
+
+      - name: Rebuild database exclusively from Git migrations
+        run: supabase db reset --local
+
+      - name: Export local direct database URL
+        run: |
+          status_env="$(supabase status -o env --override-name db.url=DATABASE_URL)"
+          eval "$status_env"
+          test -n "${DATABASE_URL:-}"
+          printf 'DATABASE_URL=%s\n' "$DATABASE_URL" >> "$GITHUB_ENV"
+
+      - name: Prove self-host db-url migration release path
+        run: bash infra/selfhost/apply-migrations.sh
+
+      - name: Prove real Postgres dump drop restore roundtrip
+        run: bash tests/selfhost-backup-restore.integration.sh
+
+      - name: Verify local migration history remains aligned
+        run: supabase migration list --local
+
+      - name: Stop isolated local Supabase
+        if: always()
+        run: supabase stop --no-backup

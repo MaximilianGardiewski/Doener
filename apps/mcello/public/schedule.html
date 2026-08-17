@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello Admin — Öffnungszeiten & Bestellbetrieb</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .shell{width:min(calc(100% - 24px),1240px);margin:auto;padding:24px 0 90px}.top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:20px 0}.top h1{font-size:42px;margin-right:auto}.status-dot{width:9px;height:9px;background:var(--green);border-radius:50%;display:inline-block}.status-dot.offline{background:#b96e62}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.panel{background:#161613;border:1px solid rgba(255,255,255,.07);border-radius:24px;padding:16px}.panel-wide{grid-column:1/-1}.panel h2{margin:4px 0 14px}.form{display:grid;gap:12px}.form input,.form select,.form textarea{background:#171714;color:#f3eadf;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}.form textarea{min-height:72px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row.three{grid-template-columns:repeat(3,1fr)}.btn{border:1px solid var(--line);background:#29251c;color:var(--gold-2);border-radius:11px;padding:9px 12px;cursor:pointer}.btn.primary{background:var(--gold);color:#15120d;border-color:transparent}.btn.danger{color:#efaea3}.btn:disabled{opacity:.45}.message{min-height:24px;color:var(--muted)}.muted{color:var(--muted);font-size:13px;line-height:1.5}.day-card,.special-card,.rule-card{border:1px solid rgba(255,255,255,.07);background:#20201b;border-radius:18px;padding:12px;margin:10px 0}.day-head{display:flex;align-items:center;gap:12px}.day-head strong{margin-right:auto}.interval{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:8px}.checks{display:flex;gap:12px;flex-wrap:wrap}.checks label{display:flex;gap:7px;align-items:center}.list-row{display:flex;justify-content:space-between;gap:12px;align-items:center}.badge{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}.rule-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.warning{border-color:rgba(218,162,80,.35);background:rgba(218,162,80,.06)}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}.panel-wide{grid-column:auto}.top h1{font-size:34px}.row,.row.three,.interval{grid-template-columns:1fr}.list-row{align-items:flex-start;flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">Lokaler Adminbereich · Öffnungszeiten erst nach Betreiberbestätigung veröffentlichen</div>
+  <main class="shell">
+    <div class="top">
+      <h1>Öffnungszeiten & Bestellbetrieb</h1>
+      <span class="pill"><span class="status-dot offline" id="scheduleDot"></span> <span id="scheduleSync">Verbinden …</span></span>
+      <a class="pill" href="/admin.html">Speisekarte</a>
+      <a class="pill" href="/labels.html">Allergene & Tags</a>
+      <a class="pill" href="/ops.html">Betrieb</a>
+      <a class="pill" href="/">Public</a>
+    </div>
+    <div class="notice warning"><strong>Keine geratenen Zeiten:</strong> Der Wochenplan ist erst dann eine öffentliche Wahrheit, wenn der Betrieb ihn bestätigt. Sondertage überschreiben den normalen Wochenplan.</div>
+    <p class="message" id="scheduleMessage"></p>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Reguläre Woche</h2>
+        <p class="muted">Mehrere Zeitfenster pro Tag sind möglich, z. B. bei einer Pause. Zeitfenster dürfen sich nicht überschneiden.</p>
+        <div id="weeklyHours"></div>
+        <button class="btn primary" id="saveWeekly" type="button">Wochenplan speichern</button>
+      </section>
+
+      <section class="panel">
+        <h2>Bestellparameter</h2>
+        <form class="form" id="orderingSettingsForm">
+          <div class="row">
+            <label>Bestell-Cutoff vor Schließung (Min.)<input name="orderCutoffMinutes" type="number" min="0" max="240" required /></label>
+            <label>Annahme-Timeout (Min.)<input name="acceptanceTimeoutMinutes" type="number" min="1" max="60" required /></label>
+          </div>
+          <div class="row three">
+            <label>Slotlänge (Min.)<input name="slotMinutes" type="number" min="5" max="120" required /></label>
+            <label>Bestellungen pro Slot<input name="slotCapacity" type="number" min="1" required /></label>
+            <label>Vorbereitungs-Vorlauf (Min.)<input name="preparationLeadMinutes" type="number" min="0" max="240" required /></label>
+          </div>
+          <div class="checks">
+            <label><input name="onlineOrderingEnabled" type="checkbox" /> Online-Bestellungen aktiv</label>
+            <label><input name="pickupEnabled" type="checkbox" /> Abholung aktiv</label>
+            <label><input name="deliveryEnabled" type="checkbox" /> Lieferung vorbereitet/aktiv</label>
+          </div>
+          <p class="muted">Hier werden strukturelle Bestellparameter geändert. Der aktuelle Betriebsmodus hat darunter eine eigene, rollengetrennte Steuerung.</p>
+          <button class="btn primary" type="submit">Bestellparameter speichern</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Shop-Modus · Admin</h2>
+        <form class="form" id="shopOverrideForm">
+          <label>Manueller Modus
+            <select name="override">
+              <option value="auto">Automatisch nach Öffnungszeiten</option>
+              <option value="force_open">Manuell geöffnet · Admin-only</option>
+              <option value="force_closed">Manuell geschlossen</option>
+              <option value="pause">Bestellpause</option>
+              <option value="rush">Rush</option>
+              <option value="today_closed">Heute geschlossen</option>
+            </select>
+          </label>
+          <label>Hinweis für Gäste / Betrieb
+            <input name="operatorMessage" maxlength="180" placeholder="Optionaler Hinweis" />
+          </label>
+          <p class="muted">„Manuell geöffnet“ ist bewusst Admin/Owner-only und kann den Zeitplan übersteuern. Mitarbeiter behalten im Betriebsmodus nur die schmalen operativen Overrides; sie können den Shop nicht außerhalb des strukturellen Zeitplans erzwingen.</p>
+          <button class="btn primary" type="submit">Shop-Modus speichern</button>
+          <p class="message" id="shopOverrideStatus"></p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Rush-Puffer</h2>
+        <form class="form" id="rushSettingsForm">
+          <label>Zusätzliche Minuten für ASAP im Rush-Modus
+            <input name="rushExtraMinutes" type="number" min="5" max="60" step="1" required value="10" />
+          </label>
+          <p class="muted">Nur Admin-Konfiguration. Wenn Mitarbeiter „Rush“ aktivieren, bleiben Online-Bestellungen offen; bei neuen ASAP-Bestellungen addiert der Server diesen Puffer auf die 15/20/30-Minuten-KDS-Zeitbuttons. Vorbestell-Slots bleiben unverändert.</p>
+          <button class="btn primary" type="submit">Rush-Puffer speichern</button>
+          <p class="message" id="rushSettingsMessage"></p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Sondertage</h2>
+        <form class="form" id="specialForm">
+          <input name="day" type="date" required />
+          <div class="checks"><label><input name="closed" type="checkbox" /> ganztägig geschlossen</label></div>
+          <div class="row" id="specialTimes">
+            <label>Öffnet<input name="opensAt" type="time" /></label>
+            <label>Schließt<input name="closesAt" type="time" /></label>
+          </div>
+          <input name="publicNote" maxlength="180" placeholder="Öffentlicher Hinweis, z. B. Feiertag" />
+          <button class="btn primary" type="submit">Sondertag hinzufügen</button>
+        </form>
+        <div id="specialList"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Zeitgesteuerte Verfügbarkeit</h2>
+        <form class="form" id="ruleForm">
+          <div class="row">
+            <label>Ziel<select name="targetType"><option value="product">Gericht</option><option value="category">Kategorie</option></select></label>
+            <label>Gericht/Kategorie<select name="targetId" required></select></label>
+          </div>
+          <div class="row three">
+            <label>Wochentag<select name="weekday"><option value="">jeden Tag</option></select></label>
+            <label>Von<input name="startsAt" type="time" /></label>
+            <label>Bis<input name="endsAt" type="time" /></label>
+          </div>
+          <div class="row">
+            <label>Gültig ab<input name="validFrom" type="date" /></label>
+            <label>Gültig bis<input name="validUntil" type="date" /></label>
+          </div>
+          <div class="checks"><label><input name="enabled" type="checkbox" checked /> Regel aktiv</label></div>
+          <button class="btn primary" type="submit">Verfügbarkeitsregel anlegen</button>
+        </form>
+        <div id="ruleList"></div>
+      </section>
+    </div>
+  </main>
+  <script type="module" src="/schedule.js"></script>
+  <script type="module" src="/admin-shop-override.js"></script>
+  <script type="module" src="/rush-settings.js"></script>
+</body>
+</html>

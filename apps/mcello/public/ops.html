@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello Betrieb — Verfügbarkeit</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .ops-shell{width:min(calc(100% - 24px),1180px);margin:auto;padding:24px 0 80px}
+    .ops-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:20px 0}.ops-top h1{font-size:42px;margin-right:auto}
+    .ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.ops-panel{background:#161613;border:1px solid rgba(255,255,255,.07);border-radius:24px;padding:18px}.ops-panel-wide{grid-column:1/-1}
+    .ops-row{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}.ops-row:last-child{border-bottom:0}
+    .ops-row>div:first-child{flex:1}.ops-row small{display:block;color:var(--muted);margin-top:3px}
+    .ops-btn{border:1px solid var(--line);background:#29251c;color:var(--gold-2);border-radius:12px;padding:9px 12px;cursor:pointer}.ops-btn.danger{color:#efaea3}.ops-btn.good{color:#b9dc8c}.ops-btn.active{background:var(--gold);color:#15120d;border-color:transparent}.ops-btn:disabled{opacity:.45;cursor:wait}
+    .status-dot{width:9px;height:9px;background:var(--green);border-radius:50%;display:inline-block}.status-dot.offline{background:#b96e62}
+    .group{margin:18px 0}.group h3{margin-bottom:4px}.message{min-height:24px;color:var(--muted)}
+    .shop-control{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:14px;align-items:end}.shop-state strong{font-size:20px}.shop-state small{display:block;color:var(--muted);margin-top:5px}.shop-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.operator-message{display:grid;gap:6px;margin-top:14px}.operator-message input{background:#171714;color:#f3eadf;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;width:100%}
+    @media(max-width:760px){.ops-grid{grid-template-columns:1fr}.ops-panel-wide{grid-column:auto}.ops-top h1{font-size:34px}.shop-control{grid-template-columns:1fr}.shop-actions{justify-content:flex-start}}
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">Lokaler Mitarbeiterbereich · Staff-Rolle · keine Preis-/Strukturänderungen</div>
+  <main class="ops-shell">
+    <div class="ops-top">
+      <h1>Betrieb</h1>
+      <span class="pill"><span class="status-dot offline" id="opsDot"></span> <span id="opsSync">Verbinden …</span></span>
+      <a class="pill" href="/kds.html">KDS</a>
+      <a class="pill" href="/">Public</a>
+    </div>
+    <div class="notice">Hier kann das Team nur operative Verfügbarkeit steuern. <strong>Rush</strong> lässt Online-Bestellungen offen und verlängert neue ASAP-Zeitversprechen; <strong>Pause</strong> stoppt neue Bestellungen. Preise, Öffnungszeiten, Kapazität und Rush-Puffer bleiben Admin-Sache.</div>
+    <p class="message" id="opsMessage"></p>
+    <div class="ops-grid">
+      <section class="ops-panel ops-panel-wide">
+        <h2>Online-Bestellbetrieb</h2>
+        <div class="shop-control">
+          <div class="shop-state"><strong id="shopMode">Status wird geladen …</strong><small id="shopModeHelp">Automatik folgt dem bestätigten Öffnungsplan und Cutoff.</small></div>
+          <div class="shop-actions" id="shopControls">
+            <button class="ops-btn" type="button" data-shop-override="auto">Automatik</button>
+            <button class="ops-btn" type="button" data-shop-override="rush">Rush</button>
+            <button class="ops-btn" type="button" data-shop-override="pause">Pause</button>
+            <button class="ops-btn danger" type="button" data-shop-override="today_closed">Heute geschlossen</button>
+            <button class="ops-btn danger" type="button" data-shop-override="force_closed">Geschlossen</button>
+          </div>
+        </div>
+        <label class="operator-message">Hinweis für Gäste (optional, max. 180 Zeichen)
+          <input id="shopOperatorMessage" maxlength="180" placeholder="z. B. Aktuell viel los · Abholung dauert etwas länger" />
+        </label>
+        <p class="message" id="shopMessage"></p>
+      </section>
+      <section class="ops-panel"><h2>Gerichte</h2><div id="productOps"></div></section>
+      <section class="ops-panel"><h2>Zutaten & Optionen</h2><div id="modifierOps"></div></section>
+    </div>
+  </main>
+  <script type="module" src="/ops.js"></script>
+</body>
+</html>

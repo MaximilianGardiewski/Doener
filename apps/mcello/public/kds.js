@@ -1,0 +1,344 @@
+import { connectPostgresRealtime } from "./realtime-client.js";
+
+const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
+const lanes = ["incoming", "planned", "preparing", "ready"];
+const target = Object.fromEntries(lanes.map((lane) => [lane, document.querySelector(`#${lane}`)]));
+let orders = [];
+let refreshing = false;
+let shopOverride = "auto";
+let rushExtraMinutes = 0;
+let soundEnabled = false;
+let audioContext = null;
+let alarmTimer = null;
+let alarmIntervalMs = null;
+
+function escapeHtml(value = "") {
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
+  })[char]);
+}
+
+function stateToLane(state) {
+  return ({ waiting_for_acceptance: "incoming", scheduled: "planned", preparing: "preparing", ready: "ready" })[state];
+}
+
+function formatClock(iso) {
+  if (!iso) return "jetzt";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "–";
+  return new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+function elapsedText(iso) {
+  if (!iso) return "";
+  const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function isUrgent(order) {
+  return order.lane === "incoming" && order.submittedAt && Date.now() - new Date(order.submittedAt).getTime() >= 4 * 60_000;
+}
+
+function normalize(raw) {
+  return {
+    id: raw.id,
+    number: raw.order_number,
+    state: raw.state,
+    lane: stateToLane(raw.state),
+    customer: raw.customer_first_name,
+    comment: raw.comment,
+    requestedPickupAt: raw.requested_pickup_at,
+    acceptedPickupAt: raw.accepted_pickup_at,
+    submittedAt: raw.submitted_at,
+    time: raw.accepted_pickup_at || raw.requested_pickup_at || raw.submitted_at,
+    totalCents: raw.total_cents,
+    items: (raw.order_items ?? []).map((item) => ({
+      name: item.product_name_snapshot,
+      quantity: item.quantity,
+      comment: item.comment,
+      options: (item.order_item_options ?? []).map((option) => option.option_name_snapshot),
+    })),
+  };
+}
+
+function effectiveAcceptanceMinutes(baseMinutes) {
+  return baseMinutes + (shopOverride === "rush" ? rushExtraMinutes : 0);
+}
+
+function actions(order) {
+  if (order.lane === "incoming") {
+    const accept = order.requestedPickupAt
+      ? `<div class="quick"><button data-action="accept-slot" data-id="${order.id}">Slot ${formatClock(order.requestedPickupAt)} bestätigen</button></div>`
+      : `<div class="quick">
+          <button data-action="accept" data-id="${order.id}" data-minutes="15">${effectiveAcceptanceMinutes(15)} Min</button>
+          <button data-action="accept" data-id="${order.id}" data-minutes="20">${effectiveAcceptanceMinutes(20)} Min</button>
+          <button data-action="accept" data-id="${order.id}" data-minutes="30">${effectiveAcceptanceMinutes(30)} Min</button>
+        </div>`;
+    const rushNote = !order.requestedPickupAt && shopOverride === "rush"
+      ? `<small>Rush aktiv · +${rushExtraMinutes} Min werden serverseitig auf ASAP addiert.</small>`
+      : "";
+    return `${accept}${rushNote}
+      <div class="quick">
+        <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Zu viel los">Zu viel los</button>
+        <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Artikel/Zutat ausverkauft">Ausverkauft</button>
+        <button class="danger" data-action="reject" data-id="${order.id}" data-reason="Küche schließt">Küche schließt</button>
+      </div>`;
+  }
+  if (order.lane === "planned") return `<div class="quick"><button data-action="activate" data-id="${order.id}">Jetzt aktivieren</button></div>`;
+  if (order.lane === "preparing") return `
+    <div class="quick">
+      <button data-action="ready" data-id="${order.id}">Fertig</button>
+      <button data-action="delay" data-id="${order.id}" data-minutes="5">+5</button>
+      <button data-action="delay" data-id="${order.id}" data-minutes="10">+10</button>
+      <button data-action="delay" data-id="${order.id}" data-minutes="15">+15</button>
+      <label class="custom-delay">
+        <span>Individuell</span>
+        <input type="number" min="1" max="120" step="1" value="20" inputmode="numeric" data-custom-delay-input aria-label="Individuelle Verzögerung in Minuten" />
+        <button data-action="delay" data-custom-delay="true" data-id="${order.id}">+ Min</button>
+      </label>
+    </div>`;
+  return `<div class="quick"><button data-action="complete" data-id="${order.id}">Erledigt</button></div>`;
+}
+
+function render() {
+  const counts = Object.fromEntries(lanes.map((lane) => [lane, 0]));
+  lanes.forEach((lane) => { target[lane].innerHTML = ""; });
+
+  for (const order of orders) {
+    if (!order.lane || !target[order.lane]) continue;
+    counts[order.lane] += 1;
+    const urgent = isUrgent(order);
+    const el = document.createElement("article");
+    el.dataset.orderId = order.id;
+    el.className = `order ${order.lane === "incoming" ? "alert" : ""}${urgent ? " urgent" : ""}`;
+    const itemHtml = order.items.map((item) => {
+      const options = item.options.length ? `<small>${item.options.map(escapeHtml).join(" · ")}</small>` : "";
+      const comment = item.comment ? `<small>Wunsch: ${escapeHtml(item.comment)}</small>` : "";
+      return `<li><strong>${item.quantity}×</strong> ${escapeHtml(item.name)}${options}${comment}</li>`;
+    }).join("");
+    const preorder = order.requestedPickupAt ? `<small>Vorbestellung · Slot ${formatClock(order.requestedPickupAt)}</small>` : "";
+    const age = order.lane === "incoming"
+      ? `<small class="wait-age ${urgent ? "urgent-copy" : ""}" data-wait-since="${escapeHtml(order.submittedAt || "")}">${urgent ? "⚠ " : ""}wartet ${elapsedText(order.submittedAt)}</small>`
+      : "";
+    el.innerHTML = `
+      <div class="order-head"><div><strong>#${order.number} · ${escapeHtml(order.customer)}</strong>${preorder}</div><div><small>${formatClock(order.time)}</small>${age}</div></div>
+      <ul>${itemHtml}</ul>
+      ${order.comment ? `<p><small>Bestellhinweis: ${escapeHtml(order.comment)}</small></p>` : ""}
+      <p><strong>${euro.format(order.totalCents / 100)}</strong></p>${actions(order)}`;
+    target[order.lane].appendChild(el);
+  }
+
+  for (const lane of lanes) {
+    document.querySelector(`#${lane}Count`).textContent = counts[lane];
+    if (counts[lane] === 0) target[lane].innerHTML = '<div class="empty">Keine Bestellungen</div>';
+  }
+  document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", () => act(button)));
+  syncAlarm();
+}
+
+async function refresh() {
+  if (refreshing) return;
+  refreshing = true;
+  try {
+    const [ordersResponse, shopResponse] = await Promise.all([
+      fetch("/api/kds/orders", { cache: "no-store" }),
+      fetch("/api/kds/shop-state", { cache: "no-store" }),
+    ]);
+    if (!ordersResponse.ok || !shopResponse.ok) throw new Error("KDS backend unavailable");
+    orders = (await ordersResponse.json()).map(normalize);
+    const shop = await shopResponse.json();
+    shopOverride = shop.override ?? "auto";
+    rushExtraMinutes = Number(shop.rushExtraMinutes || 0);
+    document.querySelector("#rush").textContent = shopOverride === "rush" ? `Rush +${rushExtraMinutes} Min` : "Rush";
+    document.querySelector("#rush").classList.toggle("mode-active", shopOverride === "rush");
+    document.querySelector("#pause").textContent = shopOverride === "pause" ? "Pause AKTIV" : "Pause";
+    document.querySelector("#pause").classList.toggle("mode-active", shopOverride === "pause");
+    document.querySelector("#kdsError").hidden = true;
+    render();
+  } catch {
+    const error = document.querySelector("#kdsError");
+    error.hidden = false;
+    error.textContent = "KDS-Daten konnten nicht geladen werden. Realtime versucht automatisch neu zu verbinden.";
+  } finally {
+    refreshing = false;
+  }
+}
+
+function setRealtimeStatus(status, error) {
+  const dot = document.querySelector("#syncDot");
+  const text = document.querySelector("#syncText");
+  const labels = {
+    connecting: "Realtime verbindet …",
+    subscribed: "Realtime · Multi-Device live",
+    reconnecting: "Realtime verbindet neu …",
+    degraded: "Realtime gestört · Safety-Sync aktiv",
+  };
+  dot.classList.toggle("offline", status !== "subscribed");
+  text.textContent = labels[status] || status;
+  if (error && status === "degraded") console.warn("Realtime degraded", error);
+}
+
+function customDelayMinutes(button) {
+  const input = button.closest(".order")?.querySelector("[data-custom-delay-input]");
+  const minutes = Number(input?.value);
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 120) {
+    const error = document.querySelector("#kdsError");
+    error.hidden = false;
+    error.textContent = "Individuelle Verzögerung muss zwischen 1 und 120 Minuten liegen.";
+    input?.focus();
+    return null;
+  }
+  return minutes;
+}
+
+async function act(button) {
+  const body = { orderId: button.dataset.id, action: button.dataset.action };
+  if (button.dataset.customDelay === "true") {
+    const minutes = customDelayMinutes(button);
+    if (minutes == null) return;
+    body.minutes = minutes;
+  } else if (button.dataset.minutes) {
+    // Always send the original preset. PostgreSQL applies the current Rush
+    // buffer authoritatively when the ASAP order is accepted.
+    body.minutes = Number(button.dataset.minutes);
+  }
+  if (button.dataset.reason) body.reason = button.dataset.reason;
+  button.disabled = true;
+  try {
+    const response = await fetch("/api/kds/action", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) throw new Error("transition rejected");
+    await refresh();
+  } catch {
+    const error = document.querySelector("#kdsError");
+    error.hidden = false;
+    error.textContent = "Die Aktion wurde vom Backend abgelehnt. Der Bestellstatus wurde neu geladen.";
+    await refresh();
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function staffSetOverride(override, operatorMessage) {
+  const sessionResponse = await fetch("/api/kds/realtime-session", { cache: "no-store" });
+  const session = await sessionResponse.json().catch(() => ({}));
+  if (!sessionResponse.ok || !session.websocketUrl || !session.accessToken || !session.locationId) {
+    throw new Error("KDS-Session nicht verfügbar");
+  }
+  const websocket = new URL(session.websocketUrl);
+  const apiKey = websocket.searchParams.get("apikey");
+  if (!apiKey) throw new Error("Öffentlicher Supabase-API-Key fehlt");
+  const restBase = `${websocket.protocol === "wss:" ? "https:" : "http:"}//${websocket.host}`;
+  const response = await fetch(`${restBase}/rest/v1/rpc/staff_set_shop_override`, {
+    method: "POST",
+    headers: {
+      apikey: apiKey,
+      authorization: `Bearer ${session.accessToken}`,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      _location_id: session.locationId,
+      _override: override,
+      _operator_message: operatorMessage || null,
+    }),
+  });
+  if (!response.ok) throw new Error("Betriebsmodus wurde abgelehnt");
+}
+
+async function toggleOperationalMode(button, mode) {
+  button.disabled = true;
+  try {
+    const next = shopOverride === mode ? "auto" : mode;
+    const message = next === "rush"
+      ? `Aktuell viel los · Abholung kann ca. ${rushExtraMinutes} Min. länger dauern.`
+      : next === "pause"
+        ? "Online-Bestellungen kurz pausiert"
+        : "";
+    await staffSetOverride(next, message);
+    await refresh();
+  } catch (error) {
+    const target = document.querySelector("#kdsError");
+    target.hidden = false;
+    target.textContent = error.message || "Betriebsmodus konnte nicht geändert werden.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+document.querySelector("#rush").addEventListener("click", (event) => toggleOperationalMode(event.currentTarget, "rush"));
+document.querySelector("#pause").addEventListener("click", (event) => toggleOperationalMode(event.currentTarget, "pause"));
+
+document.querySelector("#sound").addEventListener("click", async (event) => {
+  soundEnabled = !soundEnabled;
+  if (soundEnabled) {
+    audioContext ??= new AudioContext();
+    if (audioContext.state === "suspended") await audioContext.resume();
+  }
+  event.currentTarget.textContent = soundEnabled ? "Ton aktiv" : "Ton aktivieren";
+  syncAlarm();
+});
+
+function syncAlarm() {
+  const incoming = orders.filter((order) => order.lane === "incoming");
+  const urgent = incoming.some(isUrgent);
+  const desiredInterval = urgent ? 850 : 1800;
+  if (!soundEnabled || incoming.length === 0) {
+    clearInterval(alarmTimer);
+    alarmTimer = null;
+    alarmIntervalMs = null;
+    return;
+  }
+  if (alarmTimer && alarmIntervalMs === desiredInterval) return;
+  clearInterval(alarmTimer);
+  beep(urgent);
+  alarmIntervalMs = desiredInterval;
+  alarmTimer = setInterval(() => beep(urgent), desiredInterval);
+}
+
+function beep(urgent = false) {
+  if (!audioContext || audioContext.state !== "running") return;
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  oscillator.frequency.value = urgent ? 920 : 760;
+  gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(urgent ? 0.18 : 0.12, audioContext.currentTime + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.22);
+  oscillator.connect(gain).connect(audioContext.destination);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.24);
+}
+
+function updateElapsedUi() {
+  let alarmMayHaveChanged = false;
+  document.querySelectorAll("[data-wait-since]").forEach((element) => {
+    const iso = element.dataset.waitSince;
+    const urgent = iso && Date.now() - new Date(iso).getTime() >= 4 * 60_000;
+    const wasUrgent = element.classList.contains("urgent-copy");
+    element.classList.toggle("urgent-copy", urgent);
+    element.textContent = `${urgent ? "⚠ " : ""}wartet ${elapsedText(iso)}`;
+    element.closest(".order")?.classList.toggle("urgent", urgent);
+    if (urgent !== wasUrgent) alarmMayHaveChanged = true;
+  });
+  if (alarmMayHaveChanged) syncAlarm();
+}
+
+await refresh();
+connectPostgresRealtime({
+  sessionEndpoint: "/api/kds/realtime-session",
+  topic: "realtime:mcello-kds",
+  changes: (session) => [
+    { event: "*", schema: "public", table: "orders", filter: `location_id=eq.${session.locationId}` },
+    { event: "*", schema: "public", table: "ordering_settings", filter: `location_id=eq.${session.locationId}` },
+  ],
+  onChange: () => refresh(),
+  onStatus: setRealtimeStatus,
+  reconciliationMs: 30_000,
+});
+setInterval(updateElapsedUi, 1000);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refresh();
+});

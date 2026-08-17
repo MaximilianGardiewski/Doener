@@ -1,0 +1,252 @@
+name: Supabase Integration
+
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "data/mcello/menu-seed.provisional.json"
+      - "scripts/import-provisional-menu.mjs"
+      - "scripts/bootstrap-local-staff.mjs"
+      - "scripts/dev-supabase.sh"
+      - "scripts/dev-supabase.ps1"
+      - "apps/mcello/**"
+      - "packages/supabase-adapter/**"
+      - "packages/ordering/**"
+      - "packages/payments/**"
+      - "packages/notifications/**"
+      - "tests/supabase-local.integration.mjs"
+      - "tests/preaccept-edit.integration.mjs"
+      - "tests/provisional-menu.integration.mjs"
+      - "tests/scheduling.integration.mjs"
+      - "tests/slot-capacity.integration.mjs"
+      - "tests/notification-outbox.integration.mjs"
+      - "tests/notification-outbox-lease.integration.mjs"
+      - "tests/modifier-backoffice.integration.mjs"
+      - "tests/admin-catalog-complete.integration.mjs"
+      - "tests/allergen-labels.integration.mjs"
+      - "tests/ordering-schedule.integration.mjs"
+      - "tests/admin-shop-override.integration.mjs"
+      - "tests/rush-mode.integration.mjs"
+      - "tests/timed-product-db-gate.integration.mjs"
+      - "tests/editorial-homepage.integration.mjs"
+      - "tests/gallery-media.integration.mjs"
+      - "tests/cross-sell-recommendations.integration.mjs"
+      - "tests/analytics-events.integration.mjs"
+      - "tests/location-boundary.integration.mjs"
+      - "tests/payment-boundary.integration.mjs"
+      - "tests/prepared-order-boundaries.integration.mjs"
+      - "tests/realtime-ready.integration.mjs"
+      - ".github/workflows/supabase-integration.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/**"
+      - "data/mcello/menu-seed.provisional.json"
+      - "scripts/import-provisional-menu.mjs"
+      - "scripts/bootstrap-local-staff.mjs"
+      - "scripts/dev-supabase.sh"
+      - "scripts/dev-supabase.ps1"
+      - "apps/mcello/**"
+      - "packages/supabase-adapter/**"
+      - "packages/ordering/**"
+      - "packages/payments/**"
+      - "packages/notifications/**"
+      - "tests/supabase-local.integration.mjs"
+      - "tests/preaccept-edit.integration.mjs"
+      - "tests/provisional-menu.integration.mjs"
+      - "tests/scheduling.integration.mjs"
+      - "tests/slot-capacity.integration.mjs"
+      - "tests/notification-outbox.integration.mjs"
+      - "tests/notification-outbox-lease.integration.mjs"
+      - "tests/modifier-backoffice.integration.mjs"
+      - "tests/admin-catalog-complete.integration.mjs"
+      - "tests/allergen-labels.integration.mjs"
+      - "tests/ordering-schedule.integration.mjs"
+      - "tests/admin-shop-override.integration.mjs"
+      - "tests/rush-mode.integration.mjs"
+      - "tests/timed-product-db-gate.integration.mjs"
+      - "tests/editorial-homepage.integration.mjs"
+      - "tests/gallery-media.integration.mjs"
+      - "tests/cross-sell-recommendations.integration.mjs"
+      - "tests/analytics-events.integration.mjs"
+      - "tests/location-boundary.integration.mjs"
+      - "tests/payment-boundary.integration.mjs"
+      - "tests/prepared-order-boundaries.integration.mjs"
+      - "tests/realtime-ready.integration.mjs"
+
+concurrency:
+  group: supabase-integration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  local-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: latest
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Rebuild database from migrations and seed
+        run: supabase db reset --local
+
+      - name: Restart Realtime after schema rebuild
+        run: |
+          docker restart supabase_realtime_business-web-factory >/dev/null
+          for attempt in {1..30}; do
+            if [ "$(docker inspect -f '{{.State.Running}}' supabase_realtime_business-web-factory 2>/dev/null || true)" = "true" ]; then
+              sleep 2
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Export local API credentials
+        run: |
+          supabase status -o env \
+            --override-name api.url=SUPABASE_URL \
+            --override-name auth.anon_key=SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            >> "$GITHUB_ENV"
+
+      - name: Prepare private media bucket and local-only operator accounts
+        run: |
+          supabase status -o env \
+            --override-name api.url=SUPABASE_URL \
+            --override-name auth.anon_key=SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            > .env.local
+          MCELLO_MEDIA_BUCKET_ONLY=1 node scripts/bootstrap-local-staff.mjs
+
+      - name: Verify Realtime publication membership
+        run: |
+          published="$(docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select tablename from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' order by tablename")"
+          printf '%s\n' "$published"
+          for table in orders ordering_settings snoozes menu_products modifier_groups modifier_options product_modifier_groups allergens product_allergens modifier_option_allergens opening_hours special_opening_hours availability_rules; do
+            printf '%s\n' "$published" | grep -Fx "$table" >/dev/null || { echo "Missing from supabase_realtime: $table" >&2; exit 1; }
+          done
+
+      - name: Inspect Realtime tenant CDC extension
+        run: |
+          echo '--- Realtime non-secret container config ---'
+          docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' supabase_realtime_business-web-factory \
+            | grep -E '^(DB_HOST|DB_PORT|DB_NAME|DB_USER|SEED_SELF_HOST|SLOT_NAME_SUFFIX|TENANT_ID|ERL_AFLAGS)=' \
+            || true
+
+          echo '--- _realtime tenant metadata ---'
+          if [ "$(docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select case when to_regclass('_realtime.extensions') is null then 0 else 1 end")" = "1" ]; then
+            docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "
+              select tenant_external_id, type, coalesce(settings->>'publication',''), coalesce(settings->>'slot_name','')
+              from _realtime.extensions order by tenant_external_id,type
+            "
+          else
+            echo '_realtime.extensions not found'
+          fi
+
+          echo '--- logical replication slots before subscriber test ---'
+          docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "
+            select slot_name||'|'||plugin||'|'||slot_type||'|'||coalesce(database,'')||'|'||active
+            from pg_replication_slots order by slot_name
+          "
+
+      - name: Import provisional Mcello menu
+        run: node scripts/import-provisional-menu.mjs
+
+      - name: Verify provisional menu safety
+        run: node tests/provisional-menu.integration.mjs
+
+      - name: Prove single-location application and database boundaries
+        run: node tests/location-boundary.integration.mjs
+
+      - name: Prove pay-on-site payment boundary
+        run: node tests/payment-boundary.integration.mjs
+
+      - name: Prove prepared order-source and effort-weight boundaries
+        run: node tests/prepared-order-boundaries.integration.mjs
+
+      - name: Run real PostgREST/RPC order flow
+        run: node tests/supabase-local.integration.mjs
+
+      - name: Prove token-scoped pre-accept order editing
+        run: node tests/preaccept-edit.integration.mjs
+
+      - name: Prove slots timeout and scheduled activation
+        run: node tests/scheduling.integration.mjs
+
+      - name: Prove atomic pickup-slot capacity
+        run: node tests/slot-capacity.integration.mjs
+
+      - name: Prove notification outbox lifecycle
+        run: node tests/notification-outbox.integration.mjs
+
+      - name: Prove notification outbox lease recovery and concurrent claims
+        run: node tests/notification-outbox-lease.integration.mjs
+
+      - name: Prove modifier backoffice and role boundary
+        run: node tests/modifier-backoffice.integration.mjs
+
+      - name: Prove complete admin catalog and product-media control
+        run: node tests/admin-catalog-complete.integration.mjs
+
+      - name: Prove structured allergen and dietary label flow
+        run: node tests/allergen-labels.integration.mjs
+
+      - name: Prove opening hours cutoff overrides and timed availability
+        id: ordering_schedule
+        run: |
+          node tests/ordering-schedule.integration.mjs
+          node tests/admin-shop-override.integration.mjs
+
+      - name: Prove Rush operational timing without weakening pause or preorder slots
+        run: node tests/rush-mode.integration.mjs
+
+      - name: Prove timed product availability at database persistence boundary
+        run: node tests/timed-product-db-gate.integration.mjs
+
+      - name: Prove editorial publication and homepage module flow
+        run: node tests/editorial-homepage.integration.mjs
+
+      - name: Prove private gallery media and publication rights boundary
+        run: node tests/gallery-media.integration.mjs
+
+      - name: Prove curated and rule-based cross-sell boundaries
+        run: node tests/cross-sell-recommendations.integration.mjs
+
+      - name: Prove pseudonymous analytics event boundaries
+        run: node tests/analytics-events.integration.mjs
+
+      - name: Prove realtime readiness and backoffice role boundaries
+        id: realtime_backoffice
+        run: node tests/realtime-ready.integration.mjs
+
+      - name: Dump Realtime diagnostics on failure
+        if: failure() && steps.realtime_backoffice.outcome == 'failure'
+        run: |
+          echo '--- realtime container tail ---'
+          docker logs --tail 300 supabase_realtime_business-web-factory || true
+          echo '--- publication ---'
+          docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select pubname,schemaname,tablename from pg_publication_tables where pubname='supabase_realtime' order by tablename" || true
+          echo '--- realtime subscription rows ---'
+          docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select count(*), coalesce(string_agg(distinct entity::text, ','),'') from realtime.subscription" || true
+          echo '--- replication slots after failed subscriber test ---'
+          docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select slot_name,plugin,slot_type,database,active,restart_lsn,confirmed_flush_lsn from pg_replication_slots order by slot_name" || true
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup

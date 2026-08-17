@@ -1,0 +1,73 @@
+:root {
+  --motion-ease-out: cubic-bezier(.22,.8,.32,1);
+  --motion-fast: 180ms;
+  --motion-reveal: 620ms;
+}
+
+.motion-ready [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0,18px,0);
+  transition:
+    opacity var(--motion-reveal) var(--motion-ease-out),
+    transform var(--motion-reveal) var(--motion-ease-out);
+  transition-delay: var(--reveal-delay,0ms);
+  will-change: opacity, transform;
+}
+
+.motion-ready [data-reveal="hero-media"] {
+  transform: translate3d(0,12px,0) scale(.985);
+}
+
+.motion-ready [data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+.food-card,
+.story-card,
+.recommendation-card,
+.list-row,
+.primary,
+.pill,
+.ghost-btn {
+  transition:
+    transform var(--motion-fast) var(--motion-ease-out),
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+
+@media (hover:hover) and (pointer:fine) {
+  .food-card:hover,
+  .story-card:hover,
+  .recommendation-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .primary:hover,
+  .pill:hover,
+  .ghost-btn:hover {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+
+  .motion-ready [data-reveal],
+  .motion-ready [data-reveal="hero-media"],
+  .motion-ready [data-reveal].is-revealed,
+  .food-card,
+  .story-card,
+  .recommendation-card,
+  .list-row,
+  .primary,
+  .pill,
+  .ghost-btn {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

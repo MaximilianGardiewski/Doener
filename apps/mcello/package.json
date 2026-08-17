@@ -1,0 +1,9 @@
+{
+  "name": "@business-web/mcello",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "node --experimental-strip-types run.mjs"
+  }
+}
