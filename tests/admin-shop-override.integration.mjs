@@ -113,7 +113,7 @@ try {
 
   for (const [override, message] of [
     ["force_closed", "Admin geschlossen"],
-    ["paused", "Kurze Bestellpause"],
+    ["pause", "Kurze Bestellpause"],
     ["today_closed", "Heute geschlossen"],
   ]) {
     const changed = await rpc("admin_set_shop_override", {
