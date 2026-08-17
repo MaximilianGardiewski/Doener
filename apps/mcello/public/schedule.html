@@ -50,8 +50,30 @@
             <label><input name="pickupEnabled" type="checkbox" /> Abholung aktiv</label>
             <label><input name="deliveryEnabled" type="checkbox" /> Lieferung vorbereitet/aktiv</label>
           </div>
-          <p class="muted">Operative Pause/„heute geschlossen“ bleibt im Mitarbeiter-Betriebsmodus. Hier werden nur strukturelle Parameter geändert.</p>
+          <p class="muted">Hier werden strukturelle Bestellparameter geändert. Der aktuelle Betriebsmodus hat darunter eine eigene, rollengetrennte Steuerung.</p>
           <button class="btn primary" type="submit">Bestellparameter speichern</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Shop-Modus · Admin</h2>
+        <form class="form" id="shopOverrideForm">
+          <label>Manueller Modus
+            <select name="override">
+              <option value="auto">Automatisch nach Öffnungszeiten</option>
+              <option value="force_open">Manuell geöffnet · Admin-only</option>
+              <option value="force_closed">Manuell geschlossen</option>
+              <option value="pause">Bestellpause</option>
+              <option value="rush">Rush</option>
+              <option value="today_closed">Heute geschlossen</option>
+            </select>
+          </label>
+          <label>Hinweis für Gäste / Betrieb
+            <input name="operatorMessage" maxlength="180" placeholder="Optionaler Hinweis" />
+          </label>
+          <p class="muted">„Manuell geöffnet“ ist bewusst Admin/Owner-only und kann den Zeitplan übersteuern. Mitarbeiter behalten im Betriebsmodus nur die schmalen operativen Overrides; sie können den Shop nicht außerhalb des strukturellen Zeitplans erzwingen.</p>
+          <button class="btn primary" type="submit">Shop-Modus speichern</button>
+          <p class="message" id="shopOverrideStatus"></p>
         </form>
       </section>
 
@@ -106,6 +128,7 @@
     </div>
   </main>
   <script type="module" src="/schedule.js"></script>
+  <script type="module" src="/admin-shop-override.js"></script>
   <script type="module" src="/rush-settings.js"></script>
 </body>
 </html>
