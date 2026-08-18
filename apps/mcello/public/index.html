@@ -117,9 +117,10 @@
       <label class="field"><span>Abholung</span><select id="pickupMode"><option value="asap">So schnell wie möglich</option><option value="later">Für später</option></select></label>
       <label class="field hidden" id="pickupAtField"><span>Verfügbarer Abholslot</span><select disabled><option>Slots werden geladen …</option></select></label>
       <label class="field"><span>Optionaler Bestellhinweis</span><textarea id="checkoutComment" rows="2" placeholder="Hinweis für die gesamte Bestellung"></textarea></label>
-      <div class="hero-actions" style="margin-top:14px"><button class="primary" id="requestOtp">Nummer verifizieren</button></div>
+      <p class="notice" style="margin-top:14px"><strong>V1: WhatsApp-only.</strong> Der einmalige Bestätigungscode wird ausschließlich über WhatsApp vorgesehen. In dieser lokalen Demo wird derselbe Code kostenfrei direkt eingeblendet; es wird keine echte Nachricht versendet.</p>
+      <div class="hero-actions" style="margin-top:14px"><button class="primary" id="requestOtp">WhatsApp-Code anfordern</button></div>
       <div id="otpPanel" class="hidden">
-        <label class="field"><span>Bestätigungscode</span><input id="otpCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6-stelliger Code" /></label>
+        <label class="field"><span>WhatsApp-Bestätigungscode</span><input id="otpCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6-stelliger Code" /></label>
         <div class="dev-code hidden" id="devOtpHint"></div>
         <div class="hero-actions" style="margin-top:14px"><button class="primary" id="submitOrder">Testbestellung absenden</button></div>
       </div>
