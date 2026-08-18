@@ -13,7 +13,9 @@ test("root check runs a real no-emit TypeScript compiler before the test suites"
   assert.equal(tsconfig.compilerOptions.noEmit, true);
   assert.equal(tsconfig.compilerOptions.strict, true);
   assert.equal(tsconfig.compilerOptions.allowImportingTsExtensions, true);
-  assert.deepEqual(tsconfig.include, ["packages/**/*.ts"]);
+  assert.ok(tsconfig.include.includes("packages/**/*.ts"), "all shared packages must remain in strict typecheck");
+  assert.ok(tsconfig.include.includes("apps/lebtig/src/**/*.ts"), "Lebtig consumer source must be typechecked");
+  assert.ok(tsconfig.include.includes("apps/lebtig/test/**/*.ts"), "Lebtig consumer behavior tests must be typechecked");
 });
 
 test("static syntax check recursively scans app and script JavaScript instead of a manual filename list", () => {

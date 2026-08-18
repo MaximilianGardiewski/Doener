@@ -1,3 +1,13 @@
+export type PermissionPolicy<Role extends string, PermissionName extends string> = Readonly<
+  Record<Role, ReadonlySet<PermissionName>>
+>;
+
+export function createPermissionChecker<Role extends string, PermissionName extends string>(
+  policy: PermissionPolicy<Role, PermissionName>,
+): (role: Role, permission: PermissionName) => boolean {
+  return (role, permission) => policy[role]?.has(permission) ?? false;
+}
+
 export type StaffRole = "admin" | "staff";
 
 export type Permission =
@@ -10,7 +20,7 @@ export type Permission =
   | "users:manage"
   | "settings:manage";
 
-const rolePermissions: Record<StaffRole, ReadonlySet<Permission>> = {
+export const mcelloRolePermissions: PermissionPolicy<StaffRole, Permission> = {
   admin: new Set([
     "orders:operate",
     "shop:pause",
@@ -28,6 +38,4 @@ const rolePermissions: Record<StaffRole, ReadonlySet<Permission>> = {
   ]),
 };
 
-export function hasPermission(role: StaffRole, permission: Permission): boolean {
-  return rolePermissions[role].has(permission);
-}
+export const hasPermission = createPermissionChecker(mcelloRolePermissions);
