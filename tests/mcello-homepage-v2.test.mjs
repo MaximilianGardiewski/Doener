@@ -29,6 +29,14 @@ test("D067 exposes explicit public and commerce experience boundaries without sp
   assert.match(brand, /\[data-experience-mode="commerce"\]/);
 });
 
+test("public editorial stages activate their dedicated V2 layout contracts", () => {
+  assert.match(html, /class="section venue-stage" id="ueber" data-experience-mode="public"/);
+  assert.match(html, /class="section news-stage" id="aktuelles" data-experience-mode="public"/);
+  assert.match(html, /class="section gallery-stage" id="galerie" data-experience-mode="public"/);
+  assert.match(html, /class="section contact-stage" id="kontakt" data-experience-mode="public"/);
+  assert.match(css, /\.gallery-stage\s*\{/);
+});
+
 test("D024 functional homepage hooks survive the visual re-layout", () => {
   for (const marker of [
     'id="start"',
