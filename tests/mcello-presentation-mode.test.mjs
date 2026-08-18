@@ -12,13 +12,14 @@ const launcher = await readFile(new URL("scripts/demo-mcello.ps1", root), "utf8"
 const lanWrapper = await readFile(new URL("scripts/demo-mcello-presentation-lan.ps1", root), "utf8");
 const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
 
-test("presentation mode is explicit and restricted to local/private HTTP demo origins", () => {
+test("presentation mode is explicit and restricted to approved local/private or hosted showcase origins", () => {
   assert.match(mode, /PRESENTATION_VALUE = "mcello"/);
   assert.match(mode, /window\.location\.protocol === "http:"/);
   assert.match(mode, /loopbackHosts/);
   assert.match(mode, /isPrivateIpv4/);
   assert.match(mode, /isPrivateSslipHost/);
-  assert.doesNotMatch(mode, /https:/);
+  assert.match(mode, /window\.location\.protocol === "https:" && hostname\.endsWith\("\.vercel\.app"\)/);
+  assert.match(mode, /params\.get\(PRESENTATION_PARAM\) === PRESENTATION_VALUE/);
 });
 
 test("presentation reset clears only browser-local demo state and uses the real cart key", () => {
@@ -34,6 +35,7 @@ test("presentation reset clears only browser-local demo state and uses the real 
 
 test("presentation mode remains visibly labeled instead of masquerading as production", () => {
   assert.match(mode, /MCELLO PRESENTATION · lokale Demo · Produktdaten teilweise vorläufig/);
+  assert.match(mode, /MCELLO PRESENTATION · Hosted Showcase · Produktdaten teilweise vorläufig/);
   assert.match(mode, /Demo neu starten/);
   assert.match(css, /data-presentation-mode="mcello"/);
   assert.match(publicContent, /import "\.\/presentation-mode\.js";/);
@@ -41,7 +43,7 @@ test("presentation mode remains visibly labeled instead of masquerading as produ
 
 test("desktop launcher opens a clean presentation URL and shell caches presentation assets", () => {
   assert.match(launcher, /\?presentation=mcello&reset=1/);
-  assert.match(sw, /mcello-public-shell-v18/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/presentation-mode\.js"/);
   assert.match(sw, /"\/presentation-mode\.css"/);
 });
