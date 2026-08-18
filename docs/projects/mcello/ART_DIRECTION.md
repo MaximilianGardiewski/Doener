@@ -2,7 +2,7 @@
 
 Stand: 2026-08-18
 
-Status: **Arbeitsrichtung für Gate A/B, noch keine Owner-Abnahme.** Diese Datei ist kanonisch; Adobe-/Canva-Artefakte sind visuelle Clients/Exploration und keine eigenständige Produktwahrheit.
+Status: **Arbeitsrichtung für Gate A/B, noch keine Owner-Abnahme.** Diese Datei ist kanonisch; Adobe-/Canva-Artefakte und externe Referenzen sind visuelle Clients/Exploration und keine eigenständige Produktwahrheit.
 
 ## Ausgangspunkt
 
@@ -12,6 +12,21 @@ Die technische V1 steht auf einem belastbaren Modern-Warm-Premium-System. Der De
 - **Commerce Mode:** Store/Builder = schnell, präzise, appetitanregend, app-artig.
 
 Das bestehende Logo-/Recognition-Thema D029 bleibt offen, bis das finale Original-Asset freigegeben ist.
+
+## Owner-Referenzen vom 2026-08-18
+
+Der Owner hat zusätzlich einen großen Satz visueller Referenzbilder bereitgestellt. Die daraus abgeleiteten, wiederkehrenden Prinzipien sind in `USER_REFERENCE_SYNTHESIS.md` dokumentiert.
+
+Wichtigster Effekt auf die Working Direction:
+
+- weniger ruhiges "Dark Luxury";
+- mehr Food als aktive Hauptfigur;
+- stärker oversized Typografie;
+- mehr warme/satte Farbflächen;
+- mehr Editorial-/Street-Food-Energie;
+- Commerce bleibt trotzdem klar und präzise.
+
+Die Referenzen werden **nicht kopiert**. Logos, Fotos, Illustrationen, Claims, Layouts und Markenfarben fremder Anbieter werden nicht 1:1 übernommen.
 
 ## Adobe Firefly Board
 
@@ -27,11 +42,11 @@ Canva wurde unabhängig mit demselben Drei-Richtungen-Briefing beauftragt. Es wu
 
 ---
 
-# A — Cinematic Urban Bistro
+# A — Cinematic Food / Urban Bistro
 
 ## Kern
 
-Die stärkste emotionale Ebene für Homepage, Venue, Signature Food und größere Story-Momente.
+Die emotionale Ebene für Homepage, Venue, Signature Food und größere Story-Momente. Nach den Owner-Referenzen wird diese Richtung **food-first** interpretiert und weniger als klassische Dark-Luxury-Restaurantästhetik.
 
 ## Visuelle Sprache
 
@@ -40,9 +55,10 @@ Die stärkste emotionale Ebene für Homepage, Venue, Signature Food und größer
 - Kupfer und gedämpftes Gold als Licht/Handwerksakzent;
 - Olive/Freshness selektiv;
 - Creme/Brot als warmer Kontrast;
-- große Food-Crops und starke negative Fläche;
+- **sehr große Food-Crops** und freigestellte Food-Objekte;
+- starke negative Fläche für Typografie;
 - kontrolliertes Filmgrain, keine künstliche Vintage-Show;
-- ruhige, hochwertige Editorial-Typografie.
+- ruhige, hochwertige Editorial-Typografie kombiniert mit mutigeren Display-Momenten.
 
 ## Adobe-Befund
 
@@ -51,10 +67,12 @@ Die generierte Richtung zeigt überzeugend:
 - dunkle, nahezu schwarze Bistro-Bühne;
 - warmes Ofenlicht;
 - Kupfermetall;
-- Food als kleiner, aber extrem appetitanregender Fokuspunkt;
-- viel dunkle negative Fläche für Hero-Typografie.
+- appetitanregende Food-/Materialwärme;
+- dunkle negative Fläche für Hero-Typografie.
 
-Das ist die **beste Referenz für Experience Mode**.
+## Referenz-Korrektur
+
+Die neuen Owner-Referenzen zeigen klar, dass Food **größer und körperlicher** werden soll als in der ersten Adobe-Richtung. A bleibt emotionaler Kern, darf aber nicht zu zurückhaltend oder zu luxuriös-abstrakt werden.
 
 ## Risiko
 
@@ -62,11 +80,11 @@ Zu viel davon im Store würde zu dunkel, langsam und luxuriös wirken. Commerce-
 
 ---
 
-# B — Editorial Street Luxury
+# B — Editorial Street-Food Energy
 
 ## Kern
 
-Grafischer Akzent, der verhindert, dass Mcello zu einer austauschbaren Premium-Restaurantseite wird.
+Grafische Eigenständigkeit, die verhindert, dass Mcello zu einer austauschbaren Premium-Restaurantseite wird. Durch die Owner-Referenzen ist B deutlich wichtiger als in der ersten Working Direction.
 
 ## Visuelle Sprache
 
@@ -74,28 +92,32 @@ Grafischer Akzent, der verhindert, dass Mcello zu einer austauschbaren Premium-R
 - große Crops und harte Bildkanten;
 - Creme-/Papierflächen;
 - Kohle-/Graphittexturen;
-- feine Kupferlinien;
+- feine Copper-/Heat-Linien;
 - plakative Labels/Zahlen;
 - bewusste Überlagerungen;
-- urbane Street-Food-Energie.
+- organische/gebogene Media-Masken;
+- große Typografie als grafisches Objekt;
+- warme, satte Food-/Street-Food-Flächen statt permanenter Dunkelheit.
 
-## Adobe-Befund
+## Einsatz
 
-Die generierte Richtung ist visuell eigenständig und grafisch stark, aber bewusst abstrakter und weniger appetitanregend. Sie eignet sich hervorragend als **10–15-%-Gewürz** für:
+B liefert insbesondere:
 
 - Section Transitions;
-- Event-/Special-Module;
+- Signature-/Special-Inszenierungen;
+- Event-/News-Module;
 - Labels/Stempel;
 - Typografie-/Crop-Momente;
-- Social-/Print-Ableitungen.
+- grafische Food-Objekte;
+- stärkeren hell/dunkel/warm-Farbrhythmus.
 
 ## Risiko
 
-Als alleinige Richtung fehlt ihr zu viel konkrete Food-/Hospitality-Wärme.
+Als alleinige Richtung wäre B zu kampagnen-/posterartig für den vollständigen Ordering Flow. Deshalb wird sie mit C funktional geerdet.
 
 ---
 
-# C — Warm Future Hospitality
+# C — Warm Future Hospitality / Commerce Precision
 
 ## Kern
 
@@ -109,7 +131,9 @@ Die wichtigste funktionale Ebene für Store, Builder, Cart, Status und PWA.
 - kupferne feine Struktur-/Grid-Linien;
 - Olive als Freshness-/Statussignal;
 - ruhige, weiche Layer und klare räumliche Hierarchie;
-- Consumer-App-Präzision ohne SaaS-/Tech-Optik.
+- Consumer-App-Präzision ohne SaaS-/Tech-Optik;
+- große Touch-Ziele und Sticky Actions;
+- klare Preis- und Kategorie-Hierarchie.
 
 ## Adobe-Befund
 
@@ -120,47 +144,74 @@ Die generierte Richtung zeigt exakt den brauchbaren visuellen Mechanismus für `
 - warmes modulares Raster;
 - Charcoal/Creme/Kupfer/Olive ohne kalte Tech-Farben.
 
-Das ist die **beste Referenz für Commerce Mode und den Interactive Food Builder**.
+## Referenz-Bestätigung
+
+Die Owner-Referenzen bestätigen C sehr stark für:
+
+- Product Builder;
+- Ingredient Thinking;
+- sticky mobile actions;
+- klaren Mobile-Commerce;
+- visuelle Produktzustände statt Formulargefühl.
 
 ## Risiko
 
-Zu sauber eingesetzt könnte die Public Site zu glatt und „Design-App“ statt realem Bistro werden. A muss emotional dominieren.
+Zu sauber eingesetzt könnte die Public Site zu glatt und „Design-App“ statt realem Bistro werden. A und B müssen dort emotional sichtbar bleiben.
 
 ---
 
 # Empfohlene Mcello-Mischung
 
-Arbeitsentscheidung für den nächsten Design-Slice:
+## Ursprüngliche Working Direction
 
-- **58 % Cinematic Urban Bistro (A)**
-- **28 % Warm Future Hospitality (C)**
-- **14 % Editorial Street Luxury (B)**
+- 58 % Cinematic Urban Bistro
+- 28 % Warm Future Hospitality
+- 14 % Editorial Street Luxury
+
+## Aktualisierte Working Direction nach Owner-Referenzen
+
+- **45 % Cinematic Food / Urban Bistro (A)**
+- **30 % Warm Future Hospitality / Commerce Precision (C)**
+- **25 % Editorial Street-Food Energy (B)**
 
 Die Zahlen sind kein mathematisches Designsystem, sondern eine Priorisierung:
 
-1. **A bestimmt Atmosphäre und Fotografie.**
-2. **C bestimmt Ordering-Struktur und Builder.**
-3. **B liefert Eigenständigkeit und grafische Spannung.**
+1. **A bestimmt Food-Wärme, Atmosphäre und Fotografie.**
+2. **C bestimmt Ordering-Struktur, Builder und Mobile Commerce.**
+3. **B liefert deutlich mehr Eigenständigkeit, Typografie, Farbe und grafische Spannung als zuvor.**
 
 ## Public / Homepage
 
-A dominant, B akzentuiert, C nur für interaktive/produktnahe Flächen.
+A + B dominant, C nur für interaktive/produktnahe Flächen. Die Homepage darf deutlich editorialer, asymmetrischer und farblich rhythmischer werden als die erste V2-Foundation.
 
 ## Store
 
-C dominant, A über Signature Food/Media, B sehr selektiv.
+C dominant, A über Signature Food/Media, B selektiv aber sichtbar über Kategorie-/Signature-Momente.
 
 ## Builder
 
-C klar dominant; A liefert Food-Look/Materialwärme; B nur Mikrodetails.
+C klar dominant; A liefert Food-Look/Materialwärme; B liefert einzelne Labels, Transitions und grafische Details.
 
 ## Cart / Checkout / Status
 
-C dominant; A/B nur über Brand Tokens und einzelne Typografie-/Statusmomente.
+C dominant; A/B nur über Brand Tokens, Typografie und einzelne Statusmomente.
 
 ## KDS/Admin
 
 C funktional reduziert; A/B fast vollständig zurückgenommen.
+
+---
+
+# Farbwirkung nach Referenzen
+
+Zusätzlich zur bestehenden Anthrazit-/Copper-/Olive-/Cream-Basis wird visuell vorbereitet:
+
+- mehr große Cream/Bread-Flächen;
+- sattere Olive-/Freshness-Momente;
+- ein möglicher Ember-/Terracotta-Heat-Akzent;
+- deutlich weniger "Gold = Luxus" und mehr "Copper/Gold = Hitze, Handwerk, Material".
+
+Finale Raw-Hex-Werte bleiben Gate-B-abhängig und werden nicht allein aus Referenzbildern übernommen.
 
 ---
 
@@ -174,6 +225,7 @@ Mcello soll **nicht** werden:
 - sterile weiße Fast-Casual-App;
 - rustikale Holzbrett-/Kreidetafel-Folklore;
 - kopierte Lebtig-Struktur;
+- 1:1-Kopie einer Referenzmarke;
 - Stock-Food-Collage ohne echte Mcello-Identität;
 - AI-generierte „echte Mcello-Fotografie“.
 
@@ -187,7 +239,8 @@ Gate A kann erst als akzeptiert gelten, wenn:
 - [x] drei unabhängige Adobe-Konzeptbilder existieren;
 - [x] Adobe-Konzeptbilder in einem Firefly Board zusammengeführt sind;
 - [x] Canva dieselbe Richtungsfrage unabhängig exploriert hat;
-- [x] eine begründete Arbeitsmischung dokumentiert ist;
-- [ ] Owner die Arbeitsmischung oder eine Alternative visuell bestätigt hat.
+- [x] Owner-Referenzen als eigenständige Designquelle synthetisiert sind;
+- [x] die Arbeitsmischung anhand der Owner-Referenzen aktualisiert wurde;
+- [ ] Owner die aktualisierte Arbeitsmischung oder eine Alternative visuell bestätigt hat.
 
-Bis zum letzten Haken gilt die 58/28/14-Mischung als **working direction**, nicht als endgültige Brand-Freigabe.
+Bis zum letzten Haken gilt die **45/30/25-Mischung** als working direction, nicht als endgültige Brand-Freigabe.
