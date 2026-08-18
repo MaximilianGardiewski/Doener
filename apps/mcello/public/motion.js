@@ -116,17 +116,20 @@ function installHeroFoodDepth() {
   };
 }
 
-function syncCategoryEngineLabel() {
-  document.documentElement.dataset.mcelloCategoryEngine = reducedMotion.matches
-    ? "reduced"
-    : commerceMotionV3
-      ? "gsap"
-      : "v2";
+function commerceEngineMode() {
+  if (reducedMotion.matches) return "reduced";
+  return commerceMotionV3 ? "gsap" : "v2";
+}
+
+function syncCommerceEngineLabels() {
+  const mode = commerceEngineMode();
+  document.documentElement.dataset.mcelloCategoryEngine = mode;
+  document.documentElement.dataset.mcelloProductEngine = mode;
 }
 
 function installCommerceMotionContracts() {
-  syncCategoryEngineLabel();
-  reducedMotion.addEventListener?.("change", syncCategoryEngineLabel);
+  syncCommerceEngineLabels();
+  reducedMotion.addEventListener?.("change", syncCommerceEngineLabels);
 
   document.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
@@ -157,10 +160,13 @@ function installCommerceMotionContracts() {
     const productTrigger = target.closest("[data-product], [data-recommended-product]");
     if (productTrigger && !productTrigger.matches(":disabled")) {
       const source = productTrigger.closest(".food-card, .list-row, .recommendation-card");
-      restartMotionClass(source, "motion-product-activate", 320);
       requestAnimationFrame(() => {
         const modal = document.querySelector("#productModal.open .modal");
-        restartMotionClass(modal, "motion-product-open", 380);
+        const handledByV3 = !reducedMotion.matches && Boolean(commerceMotionV3?.animateProductOpen({ source, modal }));
+        if (!handledByV3) {
+          restartMotionClass(source, "motion-product-activate", 320);
+          restartMotionClass(modal, "motion-product-open", 380);
+        }
       });
     }
 
@@ -232,10 +238,10 @@ async function primeMotionV3Adapter(revealController, heroController) {
     try {
       const { createCommerceMotion } = await import("./motion/commerce.js");
       commerceMotionV3 = createCommerceMotion(engine);
-      syncCategoryEngineLabel();
+      syncCommerceEngineLabels();
     } catch {
       commerceMotionV3 = null;
-      syncCategoryEngineLabel();
+      syncCommerceEngineLabels();
     }
   } catch {
     publishMotionEngineMode(null);
