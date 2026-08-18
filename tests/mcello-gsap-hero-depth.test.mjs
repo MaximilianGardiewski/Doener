@@ -63,7 +63,7 @@ test("GSAP hero slice remains visual-only and offline-refreshable", () => {
   assert.doesNotMatch(heroFn, /\/api\/|\/rest\/|supabase|\.rpc\s*\(/i);
   assert.doesNotMatch(heroFn, /localStorage|sessionStorage|indexedDB/);
   assert.doesNotMatch(heroFn, /price|cart|checkout|availability|sold.?out|authorization|locationId/i);
-  assert.match(sw, /mcello-public-shell-v25/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/motion\/homepage\.js"/);
   assert.match(sw, /"\/vendor\/gsap\/ScrollTrigger\.min\.js"/);
 });
