@@ -27,10 +27,12 @@ function installRevealMotion() {
   });
 
   if (reducedMotion.matches || !("IntersectionObserver" in window)) {
+    document.documentElement.dataset.mcelloRevealEngine = reducedMotion.matches ? "reduced" : "v2";
     revealImmediately(nodes);
-    return;
+    return { nodes, observer: null, reduced: reducedMotion.matches };
   }
 
+  document.documentElement.dataset.mcelloRevealEngine = "v2";
   document.documentElement.classList.add("motion-ready");
   const observer = new IntersectionObserver((entries) => {
     for (const entry of entries) {
@@ -44,6 +46,7 @@ function installRevealMotion() {
   });
 
   nodes.forEach((node) => observer.observe(node));
+  return { nodes, observer, reduced: false };
 }
 
 function restartMotionClass(node, className, duration = 420) {
@@ -151,17 +154,26 @@ function publishMotionEngineMode(engine) {
   }));
 }
 
-async function primeMotionV3Adapter() {
+async function primeMotionV3Adapter(revealController) {
   try {
     const { loadMcelloMotionEngine } = await import("./motion/engine.js");
-    publishMotionEngineMode(await loadMcelloMotionEngine());
+    const engine = await loadMcelloMotionEngine();
+    publishMotionEngineMode(engine);
+    if (!engine.available || !revealController?.observer) return;
+
+    try {
+      const { upgradePendingRevealsToGsap } = await import("./motion/homepage.js");
+      upgradePendingRevealsToGsap(engine, revealController);
+    } catch {
+      // V2 observer remains authoritative if the optional V3 reveal module cannot load.
+    }
   } catch {
     publishMotionEngineMode(null);
   }
 }
 
-function scheduleMotionV3Adapter() {
-  const prime = () => void primeMotionV3Adapter();
+function scheduleMotionV3Adapter(revealController) {
+  const prime = () => void primeMotionV3Adapter(revealController);
   if (typeof window.requestIdleCallback === "function") {
     window.requestIdleCallback(prime, { timeout: 1500 });
     return;
@@ -169,7 +181,7 @@ function scheduleMotionV3Adapter() {
   window.setTimeout(prime, 0);
 }
 
-installRevealMotion();
+const revealController = installRevealMotion();
 installHeroFoodDepth();
 installCommerceMotionContracts();
-scheduleMotionV3Adapter();
+scheduleMotionV3Adapter(revealController);
