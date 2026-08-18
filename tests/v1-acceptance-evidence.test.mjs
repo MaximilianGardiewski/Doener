@@ -19,7 +19,8 @@ test("verified V1 backend/ordering capabilities are reflected in acceptance", ()
     "[x] 15-minute slot capacity (`D039`)",
     "[x] Cart persistence + revalidation (`D038`)",
     "[x] Development OTP can run without external paid messaging (`D064`)",
-    "[x] No paid messaging provider activated without explicit owner approval (`D064`)",
+    "[x] No paid WhatsApp provider activated without explicit owner approval (`D064`)",
+    "[x] Mcello V1 production configuration rejects SMS messaging (`D064`)",
     "[x] Binding only on KDS acceptance (`D042`)",
     "[x] Edit/cancel pre-accept only (`D043`)",
     "[x] Configurable default 5-min acceptance timeout (`D053`)",
@@ -56,9 +57,9 @@ test("known partial V1 requirements remain unchecked", () => {
     "[ ] Real Mcello media with production rights confirmed; no fake documentary imagery (`D024`, `D025`)",
     "[ ] Structured categories/products/variants/modifier groups with owner-confirmed Mcello configuration (`D007`, `D008`)",
     "[ ] Ingredient/sauce toggle and explicit extras (`D008`)",
-    "[ ] WhatsApp OTP primary + SMS fallback (`D003`)",
+    "[ ] WhatsApp one-time key/code verification with no SMS fallback (`D003`)",
     "[ ] Live status/order summary/pickup location (`D015`)",
-    "[ ] WhatsApp/SMS status notifications (`D016`)",
+    "[ ] WhatsApp status/ready notifications (`D016`)",
     "[ ] Route + call actions (`D017`)",
   ]) {
     assert.match(acceptance, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
