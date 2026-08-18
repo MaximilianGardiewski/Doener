@@ -22,6 +22,8 @@ import {
   type LebtigAuthRouteResult,
 } from "../auth/route-controller.ts";
 import { createLebtigBrowserAuthRuntime } from "./auth-runtime.ts";
+import { LebtigLunchAdminPage } from "./lunch-admin.tsx";
+import { LunchPublicPage } from "./lunch-public.tsx";
 import {
   LEBTIG_PUBLIC_PAGE_COPY,
   type LebtigPublicRouteId,
@@ -156,6 +158,8 @@ function PublicPage({ id }: { id: LebtigPublicRouteId }) {
     document.title = `${copy.title} · Metzgerei Lebtig`;
   }, [copy.title]);
 
+  if (id === "lunch") return <LunchPublicPage />;
+
   return (
     <>
       <section className="hero-section">
@@ -211,7 +215,8 @@ function PublicPage({ id }: { id: LebtigPublicRouteId }) {
 
 function AuthPage() {
   const runtime = useMemo(() => createLebtigBrowserAuthRuntime(), []);
-  const bootstrapOpen = false;
+  const [bootstrapOpen, setBootstrapOpen] = useState(false);
+  const [bootstrapChecked, setBootstrapChecked] = useState(false);
   const [mode, setMode] = useState<LebtigAuthMode>("signin");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -219,6 +224,21 @@ function AuthPage() {
   useEffect(() => {
     document.title = "Redaktion – Anmeldung · Metzgerei Lebtig";
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    runtime
+      .getBootstrapStatus()
+      .then((open) => {
+        if (active) setBootstrapOpen(open);
+      })
+      .finally(() => {
+        if (active) setBootstrapChecked(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [runtime]);
 
   useEffect(() => {
     setMode((current) => resolveLebtigAuthMode(current, bootstrapOpen));
@@ -278,13 +298,24 @@ function AuthPage() {
           Metzgerei Lebtig
         </Link>
         <p className="eyebrow">Redaktion</p>
-        <h1>Anmeldung</h1>
-        <p className="muted">Melden Sie sich an, um den redaktionellen Bereich zu öffnen.</p>
-
-        <p data-testid="invite-only-hint" className="auth-hint">
-          Die Ersteinrichtung wird in diesem portablen Shell-Build fail-closed behandelt. Ein serverseitig bestätigter
-          Bootstrap-Status wird erst mit dem Schema-/RLS-Slice freigeschaltet.
+        <h1>{mode === "signup" ? "Ersteinrichtung" : "Anmeldung"}</h1>
+        <p className="muted">
+          {mode === "signup"
+            ? "Legen Sie das erste Administratorkonto für diese Installation an."
+            : "Melden Sie sich an, um den redaktionellen Bereich zu öffnen."}
         </p>
+
+        {bootstrapOpen ? (
+          <p data-testid="bootstrap-open" className="auth-hint">
+            Die Ersteinrichtung ist offen. Genau das erste Konto erhält serverseitig Administratorrechte.
+          </p>
+        ) : bootstrapChecked ? (
+          <p data-testid="invite-only-hint" className="auth-hint">
+            Die Ersteinrichtung ist abgeschlossen. Weitere Konten erhalten ohne explizite Rollenfreigabe keine Redaktionsrechte.
+          </p>
+        ) : (
+          <p className="auth-hint" role="status">Status der Ersteinrichtung wird geprüft…</p>
+        )}
 
         {!runtime.configured ? (
           <p className="auth-warning" role="status">
@@ -299,16 +330,33 @@ function AuthPage() {
           </label>
           <label>
             <span>Passwort</span>
-            <input name="password" type="password" autoComplete="current-password" minLength={8} maxLength={72} required />
+            <input
+              name="password"
+              type="password"
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              minLength={8}
+              maxLength={72}
+              required
+            />
           </label>
-          <button className="button primary-button" type="submit" disabled={pending}>
-            {pending ? "Bitte warten…" : "Anmelden"}
+          <button className="button primary-button" type="submit" disabled={pending || !bootstrapChecked}>
+            {pending ? "Bitte warten…" : mode === "signin" ? "Anmelden" : "Konto anlegen"}
           </button>
         </form>
 
         <button className="button secondary-button full-button" type="button" onClick={onGoogle} disabled={pending}>
           Mit Google anmelden
         </button>
+
+        {bootstrapOpen ? (
+          <button
+            type="button"
+            className="auth-mode-toggle"
+            onClick={() => setMode((current) => current === "signin" ? "signup" : "signin")}
+          >
+            {mode === "signin" ? "Ersten Administrator einrichten" : "Bereits registriert? Anmelden"}
+          </button>
+        ) : null}
 
         {message ? (
           <p className="auth-message" role="alert">
@@ -329,7 +377,7 @@ function NotFoundPage() {
     <section className="not-found">
       <p className="eyebrow">404</p>
       <h1>Seite nicht gefunden</h1>
-      <p className="muted">Diese Route gehört nicht zur aktuell portierten Public/Auth-Oberfläche.</p>
+      <p className="muted">Diese Route gehört nicht zur aktuell portierten Public-, Auth- oder Admin-Oberfläche.</p>
       <Link to="/" className="button primary-button">
         Zur Startseite
       </Link>
@@ -369,6 +417,16 @@ const routeTree = rootRoute.addChildren([
     getParentRoute: () => rootRoute,
     path: "/auth",
     component: AuthPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin",
+    component: LebtigLunchAdminPage,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/admin/mittagstisch",
+    component: LebtigLunchAdminPage,
   }),
 ]);
 
