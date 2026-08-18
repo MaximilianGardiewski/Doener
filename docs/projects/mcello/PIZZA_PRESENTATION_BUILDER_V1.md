@@ -10,7 +10,7 @@ The first presentation-ready Pizza experience uses the provisional first-party `
 
 The Builder reads the normal Mcello modifier inputs rendered by `app.js`. The five presentation ingredients are:
 
-- Kebab Fleisch
+- Kebap Fleisch
 - Tomaten
 - Broccoli
 - Käse
