@@ -9,6 +9,7 @@ const app = await readFile(new URL("apps/mcello/public/app.js", root), "utf8");
 const publicContent = await readFile(new URL("apps/mcello/public/public-content.js", root), "utf8");
 const sw = await readFile(new URL("apps/mcello/public/sw.js", root), "utf8");
 const docs = await readFile(new URL("docs/projects/mcello/BUILDER_CORE_V2.md", root), "utf8");
+const responsiveDocs = await readFile(new URL("docs/projects/mcello/BUILDER_RESPONSIVE_V3.md", root), "utf8");
 
 test("Builder Core loads as a visual shell over the existing configurator", () => {
   assert.match(publicContent, /import "\.\/builder-core-v2\.js";/);
@@ -51,6 +52,22 @@ test("Builder Core uses semantic commerce tokens and touch contracts", () => {
   assert.match(builderCss, /@media \(max-width: 820px\)/);
   assert.doesNotMatch(builderCss, /#[0-9a-f]{3,8}\b/i);
   assert.doesNotMatch(builderCss, /url\s*\(\s*["']?https?:/i);
+});
+
+test("touch builders are landscape-only and guided without owning product state", () => {
+  assert.match(builderJs, /navigator\.maxTouchPoints/);
+  assert.match(builderJs, /builderOrientation = orientation/);
+  assert.match(builderJs, /data-builder-orientation-gate/);
+  assert.match(builderJs, /data-builder-guided-nav/);
+  assert.match(builderJs, /builderStepCurrent/);
+  assert.match(builderCss, /data-builder-step-current="true"/);
+  assert.match(builderCss, /data-builder-device="touch"\]\[data-builder-orientation="portrait"/);
+  assert.match(builderCss, /data-builder-device="touch"\]\[data-builder-orientation="landscape"/);
+  assert.match(builderCss, /env\(safe-area-inset-left\)/);
+  assert.match(builderCss, /env\(safe-area-inset-right\)/);
+  assert.doesNotMatch(builderJs, /\.checked\s*=|\.value\s*=|dispatchEvent\(new Event\("change"/);
+  assert.match(responsiveDocs, /Smartphone and Tablet.*Querformat/s);
+  assert.match(responsiveDocs, /kein Reload und kein Verlust/s);
 });
 
 test("Builder Core keeps Adobe concept work outside runtime media and remains offline-capable", () => {

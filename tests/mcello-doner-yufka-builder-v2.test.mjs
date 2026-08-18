@@ -30,8 +30,8 @@ test("assembly specialization is visual only and distinct from Pizza top-down", 
   assert.doesNotMatch(js, /price|localStorage|sessionStorage|fetch\s*\(|cart\s*=|availableNow|soldOut/i);
 });
 
-test("Döner/Yufka assets are offline shell v14 while business data remains network-only", () => {
-  assert.match(sw, /mcello-public-shell-v14/);
+test("Döner/Yufka assets remain in the versioned offline shell while business data stays network-only", () => {
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /doner-yufka-builder-v2\.js/);
   assert.match(sw, /doner-yufka-builder-v2\.css/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);

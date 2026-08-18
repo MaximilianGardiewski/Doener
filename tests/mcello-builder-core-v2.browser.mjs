@@ -22,6 +22,17 @@ async function openBuilderProduct(page) {
   throw new Error("No orderable product found in preview data");
 }
 
+async function resolvedTwoPaneLayout(page, message) {
+  const layout = await page.locator("#productModal .modal").evaluate((node) => {
+    const style = getComputedStyle(node);
+    const rect = node.getBoundingClientRect();
+    return { display: style.display, columns: style.gridTemplateColumns, width: rect.width, viewport: window.innerWidth };
+  });
+  assert.equal(layout.display, "grid");
+  assert.ok(layout.width <= layout.viewport + 1, `${message}: workbench must fit the viewport`);
+  assert.match(layout.columns, /\d+(?:\.\d+)?px \d+(?:\.\d+)?px/, `${message}: Builder must resolve to two visual panes`);
+}
+
 async function exerciseModifierStateWhenPresent(page) {
   const inputs = page.locator("#modifierGroups input");
   const inputCount = await inputs.count();
@@ -80,49 +91,76 @@ try {
   const groups = desktop.locator("#modifierGroups .modifier-group");
 
   assert.equal(await modal.getAttribute("data-builder-version"), "core-v2");
+  assert.equal(await desktop.locator("#productModal").getAttribute("data-builder-device"), "desktop");
   assert.equal(await stage.count(), 1, "existing modal image should become the one Builder FoodStage");
   assert.equal(await controls.count(), 1, "existing modal content should remain the one control pane");
   assert.equal(await actionBar.count(), 1, "existing footer should become the one Builder action bar");
   assert.equal(await steps.count(), await groups.count(), "each existing modifier group should map to exactly one visual step");
-
-  const layout = await modal.evaluate((node) => {
-    const style = getComputedStyle(node);
-    return { display: style.display, columns: style.gridTemplateColumns };
-  });
-  assert.equal(layout.display, "grid");
-  assert.match(layout.columns, /\d+(?:\.\d+)?px \d+(?:\.\d+)?px/, "desktop builder should resolve to two visual columns");
-
+  await resolvedTwoPaneLayout(desktop, "desktop");
   await exerciseModifierStateWhenPresent(desktop);
 
   const addButton = desktop.locator("#addToCart");
   assert.match(await addButton.textContent(), /In den Warenkorb ·|Online derzeit nicht bestellbar/);
   assert.ok(await actionBar.evaluate((node) => node.getBoundingClientRect().height) >= 48, "Builder action bar must remain reachable");
 
-  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, reducedMotion: "reduce" });
+  const tablet = await browser.newPage({ viewport: { width: 1180, height: 820 }, isMobile: true, hasTouch: true, reducedMotion: "no-preference" });
+  await tablet.goto(baseUrl, { waitUntil: "networkidle" });
+  await openBuilderProduct(tablet);
+  await tablet.waitForFunction(() => document.querySelector("#productModal")?.dataset.builderOrientation === "landscape");
+  assert.equal(await tablet.locator("#productModal").getAttribute("data-builder-device"), "touch");
+  assert.equal(await tablet.locator("[data-builder-orientation-gate]").isHidden(), true, "tablet landscape must enter the Builder directly");
+  assert.equal(await tablet.locator('[data-builder-food-stage="true"]').isVisible(), true, "tablet keeps the FoodStage visible");
+  assert.equal(await tablet.locator('[data-builder-action-bar="true"]').isVisible(), true, "tablet keeps the action bar reachable");
+  await resolvedTwoPaneLayout(tablet, "tablet landscape");
+  assert.equal(
+    await tablet.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+    true,
+    "tablet landscape Builder must not introduce horizontal page overflow",
+  );
+
+  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
   await mobile.goto(baseUrl, { waitUntil: "networkidle" });
   await openBuilderProduct(mobile);
+  await mobile.waitForFunction(() => document.querySelector("#productModal")?.dataset.builderOrientation === "portrait");
 
+  const mobileBackdrop = mobile.locator("#productModal");
+  const orientationGate = mobile.locator("[data-builder-orientation-gate]");
+  const mobileModal = mobile.locator("#productModal .modal");
+  const portraitSignature = await mobileBackdrop.getAttribute("data-builder-original-selection");
+
+  assert.equal(await mobileBackdrop.getAttribute("data-builder-device"), "touch");
+  assert.equal(await orientationGate.isVisible(), true, "touch portrait must show the intentional rotate gate");
+  assert.equal(await mobileModal.isHidden(), true, "the actual Builder workbench must not be usable in portrait on touch devices");
+  assert.match(await orientationGate.textContent(), /Querformat drehen/);
+  assert.match(await orientationGate.textContent(), /Auswahl bleibt/);
+
+  await mobile.setViewportSize({ width: 740, height: 360 });
+  await mobile.waitForFunction(() => document.querySelector("#productModal")?.dataset.builderOrientation === "landscape");
+
+  assert.equal(await orientationGate.isHidden(), true, "rotate gate must disappear immediately in landscape");
+  assert.equal(await mobileModal.isVisible(), true, "Builder workbench must resume without closing after rotation");
+  assert.equal(await mobileBackdrop.getAttribute("data-builder-original-selection"), portraitSignature, "rotation must not reset the captured Builder selection state");
   assert.equal(
     await mobile.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
     true,
-    "Builder Core must not introduce mobile horizontal overflow",
+    "compact landscape Builder must not introduce horizontal page overflow",
   );
-
-  const mobileModal = mobile.locator("#productModal .modal");
-  const mobileLayout = await mobileModal.evaluate((node) => {
-    const style = getComputedStyle(node);
-    const rect = node.getBoundingClientRect();
-    return { columns: style.gridTemplateColumns, width: rect.width, viewport: window.innerWidth };
-  });
-  assert.ok(mobileLayout.width <= mobileLayout.viewport + 1, "mobile builder sheet must fit the viewport");
-  assert.doesNotMatch(mobileLayout.columns, /\s\d+(?:\.\d+)?px\s+\d+(?:\.\d+)?px/, "mobile builder should collapse to one column");
+  await resolvedTwoPaneLayout(mobile, "compact smartphone landscape");
 
   assert.equal(await mobile.locator('[data-builder-food-stage="true"]').isVisible(), true);
   assert.equal(await mobile.locator('[data-builder-action-bar="true"]').isVisible(), true);
-  assert.ok(await mobile.locator("#addToCart").evaluate((node) => node.getBoundingClientRect().height) >= 48, "mobile add action must keep the primary touch target");
+  assert.ok(await mobile.locator("#addToCart").evaluate((node) => node.getBoundingClientRect().height) >= 48, "landscape add action must keep the primary touch target");
   await exerciseModifierStateWhenPresent(mobile);
 
-  console.log("Builder Core V2 Chromium smoke passed for truthful modifier-group/input states, existing price action, and mobile sheet layout.");
+  const guidedNav = mobile.locator("[data-builder-guided-nav]");
+  const groupCount = await mobile.locator("#modifierGroups .modifier-group").count();
+  assert.equal(await guidedNav.isHidden(), groupCount === 0, "guided navigation is shown only when the real product exposes modifier groups");
+  if (groupCount > 0) {
+    assert.match(await guidedNav.textContent(), /1 \/ /);
+    assert.equal(await mobile.locator('#modifierGroups .builder-step[data-builder-step-current="true"]').count(), 1, "touch landscape focuses exactly one real modifier step at a time");
+  }
+
+  console.log("Builder Core V2 Chromium smoke passed for desktop, tablet landscape, touch portrait gate, state-preserving rotation, and compact guided landscape workbench.");
 } finally {
   await browser.close();
 }
