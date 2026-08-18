@@ -5,6 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const lebtigSupabaseRoot = path.join(repoRoot, "apps", "lebtig", "supabase");
 
 const DONOR_MIGRATION_IDS = [
   "5c43e9c9-5dd0-4fe7-a035-eeafe3d6b3ce",
@@ -30,8 +31,50 @@ test("historical Lebtig donor migrations are not copied into the Mcello root cha
 });
 
 test("Lebtig has an explicit app-owned database boundary before schema import", async () => {
-  const boundary = await readFile(path.join(repoRoot, "apps", "lebtig", "supabase", "README.md"), "utf8");
+  const boundary = await readFile(path.join(lebtigSupabaseRoot, "README.md"), "utf8");
   assert.match(boundary, /Clean-Install-Baseline/);
   assert.match(boundary, /admin \| moderator/);
   assert.match(boundary, /Business-\/Seed-Inhalte werden nicht Teil/);
+});
+
+test("Lebtig clean install uses one app-owned baseline instead of replaying donor history", async () => {
+  const migrationDir = path.join(lebtigSupabaseRoot, "migrations");
+  const filenames = (await readdir(migrationDir)).filter((filename) => filename.endsWith(".sql"));
+  assert.deepEqual(filenames, ["20260818000100_lebtig_clean_baseline.sql"]);
+  for (const donorId of DONOR_MIGRATION_IDS) {
+    assert.equal(filenames.some((filename) => filename.includes(donorId)), false);
+  }
+});
+
+test("clean baseline contains schema security only and no business seed inserts", async () => {
+  const migration = await readFile(
+    path.join(lebtigSupabaseRoot, "migrations", "20260818000100_lebtig_clean_baseline.sql"),
+    "utf8",
+  );
+  const seed = await readFile(path.join(lebtigSupabaseRoot, "seed.sql"), "utf8");
+
+  assert.doesNotMatch(migration, /insert\s+into\s+public\.site_settings/i);
+  assert.doesNotMatch(migration, /insert\s+into\s+public\.lunch_weeks/i);
+  assert.doesNotMatch(migration, /insert\s+into\s+public\.offer_weeks/i);
+  assert.doesNotMatch(migration, /insert\s+into\s+public\.news/i);
+  assert.doesNotMatch(migration, /insert\s+into\s+public\.recipes/i);
+  assert.doesNotMatch(migration, /insert\s+into\s+public\.pages/i);
+  assert.doesNotMatch(seed, /^\s*(insert|update|delete|copy)\b/im);
+});
+
+test("baseline pins the effective auth media and publication safety boundaries", async () => {
+  const migration = await readFile(
+    path.join(lebtigSupabaseRoot, "migrations", "20260818000100_lebtig_clean_baseline.sql"),
+    "utf8",
+  );
+
+  assert.match(migration, /grant execute on function public\.is_bootstrap_open\(\) to service_role/i);
+  assert.match(migration, /revoke all on function public\.is_bootstrap_open\(\) from public, anon, authenticated/i);
+  assert.match(migration, /protect_last_admin/);
+  assert.match(migration, /bucket_id = 'media' and public\.is_staff\(\)/);
+  assert.match(migration, /file_size_limit, allowed_mime_types/);
+  assert.match(migration, /char_length\(btrim\(alt\)\) between 1 and 180/);
+  assert.match(migration, /lunch_items_public_read/);
+  assert.match(migration, /offer_items_public_read/);
+  assert.match(migration, /news_public_read/);
 });
