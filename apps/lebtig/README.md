@@ -39,7 +39,17 @@ Die BusinessWebFactory-Grenze ist deshalb bewusst klein:
 - `createLebtigOAuthPort(...)` wählt standardmäßig native Supabase-OAuth; Lovable wird nur bei explizitem `useLegacyLovableBroker` benutzt.
 - Shared Auth importiert weder Supabase noch Lovable und bleibt damit provider-neutral.
 
-Der vollständige UI-Login wird erst beim kontrollierten Route-Import auf diesen Port umgestellt. Bis dahin wird der vorhandene Lovable-Source nicht mutiert.
+## Public/Auth-Route-Port
+
+Der erste kontrollierte Route-Slice liegt jetzt als **framework-neutrale, testbare Route-/Auth-Grenze** im Repo. Er kopiert bewusst noch nicht den kompletten TanStack-/Lovable-Frontend-Monolithen.
+
+- `src/routes/manifest.ts` pinnt die 17 verifizierten Public-/Auth-URLs des Donor-Snapshots inklusive dynamischer News-/Recipe-/Page-/Media-Routen und Sitemap.
+- Admin-Routen sind absichtlich ausgeschlossen, bis der Supabase-Schema-/RLS-Abgleich erfolgt ist.
+- `src/auth/route-controller.ts` übernimmt die Semantik des bestehenden Login-Flows: Sign-in, Bootstrap-gebundenes Sign-up, Verifikationszustand und Google-OAuth.
+- Der Controller kennt weder Lovable noch Supabase direkt. E-Mail/Passwort läuft über `LebtigCredentialAuthPort`, Google über den gemeinsamen `OAuthPort`.
+- Geschlossener Bootstrap blockiert Self-Service-Sign-up fail-closed auch dann, wenn eine spätere UI den Button versehentlich sichtbar machen sollte.
+- Redirect-Ziel nach erfolgreicher Authentifizierung ist app-owned `/admin`.
+- Der nächste Render-Slice kann die TanStack-UI gegen diese Contracts verdrahten, ohne Vendorlogik erneut in die Route zu ziehen.
 
 ## CMS-/Media-Portabilität
 
@@ -94,7 +104,7 @@ Provider-neutrale Teile existieren bereits umfangreich: TanStack-Source, Supabas
 
 ## Nächste Port-Slices
 
-1. **UI-/Route-Import** — zunächst Public/Auth-Shell kontrolliert übernehmen; OAuth-Aufrufer auf `OAuthPort` umstellen, nicht als unreviewten Dump.
+1. **Public/Auth Render-Shell** — die echte TanStack-UI gegen `LEBTIG_PUBLIC_AUTH_ROUTES`, `LebtigCredentialAuthPort` und `OAuthPort` verdrahten; keine direkte Lovable-Auth-Kopplung.
 2. **E2E übernehmen** — Public/Auth/Admin/Mobile-/Legacy-Redirect-Tests im Repo reproduzierbar machen.
 3. **Supabase-Schema vergleichen** — Lebtig-Migrationen gegen BusinessWebFactory-Auth/CMS/Media-Boundaries abgleichen; keine Mcello-Gastro-Ordering-Tabellen aufzwingen.
 4. **Admin-/CMS-Routen** — nach Schema-/Auth-Abgleich kontrolliert portieren.
