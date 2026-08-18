@@ -6,9 +6,11 @@ on:
       - "apps/mcello/**"
       - "tests/mcello-demo-flow.browser.mjs"
       - "tests/mcello-demo-preparation.test.mjs"
+      - "tests/mcello-presentation-builder-data.test.mjs"
       - "tests/mcello-lan-demo.test.mjs"
       - "scripts/bootstrap-local-staff.mjs"
       - "scripts/import-provisional-menu.mjs"
+      - "scripts/import-mcello-presentation-builders.mjs"
       - "scripts/prepare-mcello-demo.mjs"
       - "scripts/demo-mcello.ps1"
       - "scripts/demo-mcello-lan.ps1"
@@ -16,6 +18,7 @@ on:
       - "scripts/configure-mcello-lan-firewall.ps1"
       - "scripts/stop-mcello-lan.ps1"
       - "data/mcello/menu-seed.provisional.json"
+      - "data/mcello/builder-presentation.v1.json"
       - "supabase/**"
       - ".github/workflows/mcello-demo-diagnostics.yml"
 
@@ -49,7 +52,7 @@ jobs:
           supabase start
           supabase db reset --local
 
-      - name: Prepare local presentation operators and menu
+      - name: Prepare local presentation operators menu and Builder fixtures
         run: |
           supabase status -o env \
             --override-name api.url=SUPABASE_URL \
@@ -60,6 +63,7 @@ jobs:
           echo 'MCELLO_LOCATION_ID=00000000-0000-4000-8000-000000000001' >> .env.local
           node scripts/bootstrap-local-staff.mjs
           node scripts/import-provisional-menu.mjs
+          node scripts/import-mcello-presentation-builders.mjs
 
       - name: Prove localhost-only presentation shop preparation
         run: node scripts/prepare-mcello-demo.mjs
