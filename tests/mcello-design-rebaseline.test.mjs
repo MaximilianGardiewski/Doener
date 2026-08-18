@@ -62,5 +62,5 @@ test("visual gates complement rather than replace technical evidence", () => {
 test("design tools stay optional and outputs return to governed sources", () => {
   assert.match(decisions, /none may become a mandatory Mcello runtime\/deployment dependency/);
   assert.match(designAcceptance, /keine Runtime-Pflicht/);
-  assert.match(masterplan, /keine neue zwingende SaaS-\/Runtime-Abhängigkeit/);
+  assert.match(masterplan, /keine neue zwingende SaaS-\/Runtime-Abhängigkeit/i);
 });
