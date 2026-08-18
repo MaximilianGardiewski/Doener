@@ -3,17 +3,19 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "jsx": "react-jsx",
     "noEmit": true,
     "strict": true,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": [
     "packages/**/*.ts",
     "apps/lebtig/src/**/*.ts",
+    "apps/lebtig/src/**/*.tsx",
     "apps/lebtig/test/**/*.ts"
   ],
   "exclude": [
