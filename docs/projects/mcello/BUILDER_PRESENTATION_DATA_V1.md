@@ -10,7 +10,7 @@ The importer refuses HTTPS, remote hosts and any Supabase hostname other than lo
 
 ## Pizza Mcello
 
-Presentation target: first-party provisional source item `pizza-060`, **Pizza Mcello**.
+Presentation target: first-party provisional source item `pizza-076`, **Pizza Mcello**.
 
 The five visual/toggle ingredients come from the existing user-supplied menu-card transcription for this exact product:
 
