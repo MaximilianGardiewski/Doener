@@ -82,7 +82,13 @@ try {
     (id) => document.querySelector(".store-stage")?.dataset.motionCategory === id,
     categoryId,
   );
-  await normal.waitForFunction(() => document.querySelector("#featuredGrid")?.classList.contains("motion-category-switch"));
+  const categoryEngine = await normal.evaluate(() => document.documentElement.dataset.mcelloCategoryEngine);
+  assert.ok(["v2", "gsap"].includes(categoryEngine), `unexpected category engine ${categoryEngine}`);
+  if (categoryEngine === "v2") {
+    await normal.waitForFunction(() => document.querySelector("#featuredGrid")?.classList.contains("motion-category-switch"));
+  } else {
+    await normal.waitForFunction(() => document.querySelector(".store-stage")?.dataset.motionCategoryEngine === "gsap");
+  }
 
   const productButton = normal.locator('[data-product]:not([disabled])').first();
   await productButton.click();
@@ -123,7 +129,7 @@ try {
     "reduced motion must not inject scroll-depth offsets",
   );
 
-  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, commerce feedback, and reduced-motion preferences.");
+  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, category, remaining commerce feedback, and reduced-motion preferences.");
 } finally {
   await browser.close();
 }
