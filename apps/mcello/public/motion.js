@@ -5,6 +5,7 @@ motionStylesheet.dataset.mcelloMotion = "true";
 document.head.appendChild(motionStylesheet);
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+let commerceMotionV3 = null;
 const revealSelector = [
   ".hero-copy",
   ".hero-media",
@@ -115,7 +116,18 @@ function installHeroFoodDepth() {
   };
 }
 
+function syncCategoryEngineLabel() {
+  document.documentElement.dataset.mcelloCategoryEngine = reducedMotion.matches
+    ? "reduced"
+    : commerceMotionV3
+      ? "gsap"
+      : "v2";
+}
+
 function installCommerceMotionContracts() {
+  syncCategoryEngineLabel();
+  reducedMotion.addEventListener?.("change", syncCategoryEngineLabel);
+
   document.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
@@ -125,9 +137,21 @@ function installCommerceMotionContracts() {
       const categoryId = category.dataset.category || "selected";
       const stage = document.querySelector(".store-stage");
       if (stage) stage.dataset.motionCategory = categoryId;
-      restartMotionClass(document.querySelector("#featuredGrid"), "motion-category-switch", 320);
-      restartMotionClass(document.querySelector("#menuList"), "motion-category-switch", 320);
-      restartMotionClass(document.querySelector(`[data-category="${CSS.escape(categoryId)}"]`), "motion-category-chip", 260);
+      const featuredGrid = document.querySelector("#featuredGrid");
+      const menuList = document.querySelector("#menuList");
+      const activeChip = document.querySelector(`[data-category="${CSS.escape(categoryId)}"]`);
+      const handledByV3 = !reducedMotion.matches && Boolean(commerceMotionV3?.animateCategoryChange({
+        categoryId,
+        stage,
+        featuredGrid,
+        menuList,
+        activeChip,
+      }));
+      if (!handledByV3) {
+        restartMotionClass(featuredGrid, "motion-category-switch", 320);
+        restartMotionClass(menuList, "motion-category-switch", 320);
+        restartMotionClass(activeChip, "motion-category-chip", 260);
+      }
     }
 
     const productTrigger = target.closest("[data-product], [data-recommended-product]");
@@ -189,24 +213,29 @@ async function primeMotionV3Adapter(revealController, heroController) {
     publishMotionEngineMode(engine);
     if (!engine.available) return;
 
-    let homepageMotion;
     try {
-      homepageMotion = await import("./motion/homepage.js");
+      const homepageMotion = await import("./motion/homepage.js");
+      try {
+        if (revealController?.observer) homepageMotion.upgradePendingRevealsToGsap(engine, revealController);
+      } catch {
+        // V2 observer remains authoritative if the V3 reveal slice cannot initialize.
+      }
+      try {
+        if (heroController) homepageMotion.upgradeHeroDepthToGsap(engine, heroController);
+      } catch {
+        // V2 hero scroll handler remains authoritative if the V3 hero slice cannot initialize.
+      }
     } catch {
-      // V2 reveal and hero handlers remain authoritative if the optional V3 homepage module cannot load.
-      return;
+      // Homepage V2 fallbacks remain active if the optional V3 homepage module cannot load.
     }
 
     try {
-      if (revealController?.observer) homepageMotion.upgradePendingRevealsToGsap(engine, revealController);
+      const { createCommerceMotion } = await import("./motion/commerce.js");
+      commerceMotionV3 = createCommerceMotion(engine);
+      syncCategoryEngineLabel();
     } catch {
-      // V2 observer remains authoritative if the V3 reveal slice cannot initialize.
-    }
-
-    try {
-      if (heroController) homepageMotion.upgradeHeroDepthToGsap(engine, heroController);
-    } catch {
-      // V2 hero scroll handler remains authoritative if the V3 hero slice cannot initialize.
+      commerceMotionV3 = null;
+      syncCategoryEngineLabel();
     }
   } catch {
     publishMotionEngineMode(null);
