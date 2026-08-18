@@ -25,21 +25,27 @@ async function openBuilderProduct(page) {
 async function exerciseModifierStateWhenPresent(page) {
   const inputs = page.locator("#modifierGroups input");
   const inputCount = await inputs.count();
+  const groupCount = await page.locator("#modifierGroups .modifier-group").count();
   const context = page.locator("[data-builder-context]");
+  const originalSignature = await page.locator("#productModal").getAttribute("data-builder-original-selection");
 
-  if (inputCount === 0) {
-    assert.equal(await page.locator("#modifierGroups .builder-step").count(), 0, "preview without first-party modifiers must not invent Builder steps");
+  if (groupCount === 0) {
+    assert.equal(await page.locator("#modifierGroups .builder-step").count(), 0, "preview without first-party modifier groups must not invent Builder steps");
     assert.equal(await context.isHidden(), true, "Mcello Original helper stays hidden when there is no structured modifier recipe to explain");
-    assert.equal(await page.locator("#productModal").getAttribute("data-builder-original-selection"), "[]", "empty first-party modifier state should snapshot honestly");
+    assert.equal(originalSignature, "[]", "empty first-party modifier state should snapshot honestly");
     assert.equal(await page.locator("#productModal").getAttribute("data-builder-recipe-state"), "original");
-    return { hadModifiers: false, originalSignature: "[]" };
+    return { hadInputs: false, originalSignature: "[]" };
   }
 
-  assert.equal(await context.isVisible(), true, "Mcello Original helper should be visible when structured modifier steps exist");
-  const originalSignature = await page.locator("#productModal").getAttribute("data-builder-original-selection");
+  assert.equal(await context.isVisible(), true, "Mcello Original helper should be visible when structured modifier groups exist");
   assert.ok(originalSignature, "Builder Core should snapshot the actual checked standard selection");
   assert.equal(await page.locator("#productModal").getAttribute("data-builder-recipe-state"), "original");
   assert.match(await page.locator("[data-builder-selection-state]").textContent(), /Standardauswahl/);
+
+  if (inputCount === 0) {
+    assert.equal(originalSignature, "[]", "structured group without selectable inputs must remain an empty checked-selection snapshot");
+    return { hadInputs: false, originalSignature };
+  }
 
   const checkbox = page.locator('#modifierGroups input[type="checkbox"]:not(:disabled)').first();
   const uncheckedRadio = page.locator('#modifierGroups input[type="radio"]:not(:disabled):not(:checked)').first();
@@ -49,7 +55,7 @@ async function exerciseModifierStateWhenPresent(page) {
   } else if (await uncheckedRadio.count()) {
     await uncheckedRadio.check();
   } else {
-    return { hadModifiers: true, originalSignature };
+    return { hadInputs: true, originalSignature };
   }
 
   await page.waitForFunction(() => document.querySelector("#productModal")?.dataset.builderRecipeState === "customized");
@@ -58,7 +64,7 @@ async function exerciseModifierStateWhenPresent(page) {
 
   const optionHeights = await page.locator('[data-builder-option="true"]').evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height));
   assert.ok(optionHeights.every((height) => height >= 44), "modifier choices must remain touch-safe");
-  return { hadModifiers: true, originalSignature };
+  return { hadInputs: true, originalSignature };
 }
 
 try {
@@ -116,7 +122,7 @@ try {
   assert.ok(await mobile.locator("#addToCart").evaluate((node) => node.getBoundingClientRect().height) >= 48, "mobile add action must keep the primary touch target");
   await exerciseModifierStateWhenPresent(mobile);
 
-  console.log("Builder Core V2 Chromium smoke passed for truthful zero/modifier-step states, existing price action, and mobile sheet layout.");
+  console.log("Builder Core V2 Chromium smoke passed for truthful modifier-group/input states, existing price action, and mobile sheet layout.");
 } finally {
   await browser.close();
 }
