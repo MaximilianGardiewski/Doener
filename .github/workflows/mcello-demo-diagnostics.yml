@@ -93,14 +93,31 @@ jobs:
           proxy_pid=$!
           trap 'kill "$proxy_pid" "$preview_pid" 2>/dev/null || true' EXIT
 
+          ready=false
           for attempt in {1..30}; do
-            if curl --fail --silent "http://${runner_ip}:4180/__mcello_lan_health" >/dev/null; then
+            if ! kill -0 "$preview_pid" 2>/dev/null; then
+              echo "Mcello preview exited before becoming ready" >&2
+              cat /tmp/mcello-demo-preview.log >&2 || true
+              exit 1
+            fi
+            if ! kill -0 "$proxy_pid" 2>/dev/null; then
+              echo "Mcello LAN proxy exited before becoming ready" >&2
+              cat /tmp/mcello-demo-lan-proxy.log >&2 || true
+              exit 1
+            fi
+            if curl --fail --silent http://127.0.0.1:4173/api/health >/dev/null \
+              && curl --fail --silent "http://${runner_ip}:4180/__mcello_lan_health" >/dev/null; then
+              ready=true
               break
             fi
             sleep 1
           done
-          curl --fail --silent "http://${runner_ip}:4180/__mcello_lan_health" >/dev/null
-          curl --fail --silent http://127.0.0.1:4173/api/health >/dev/null
+          if [ "$ready" != "true" ]; then
+            echo "Mcello preview and LAN ingress did not become ready together" >&2
+            cat /tmp/mcello-demo-preview.log >&2 || true
+            cat /tmp/mcello-demo-lan-proxy.log >&2 || true
+            exit 1
+          fi
 
           MCELLO_DEMO_URL="http://${runner_ip}:4180" node tests/mcello-presentation-mode.browser.mjs 2>&1 | tee /tmp/mcello-presentation-mode.log
           MCELLO_DEMO_URL="http://${runner_ip}:4180" node tests/mcello-presentation-builders.browser.mjs 2>&1 | tee /tmp/mcello-builder-browser.log
