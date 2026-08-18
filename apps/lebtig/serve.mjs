@@ -3,6 +3,7 @@ import { access, stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createClient } from "@supabase/supabase-js";
 
 import { buildLebtigSitemap, resolveLebtigLegacyRedirect } from "./src/http-contracts.ts";
 import { findLebtigPublicAuthRoute } from "./src/routes/manifest.ts";
@@ -24,6 +25,8 @@ const mimeTypes = new Map([
   [".webp", "image/webp"],
 ]);
 
+let privilegedSupabaseClient;
+
 function sendText(response, status, body, contentType = "text/plain; charset=utf-8") {
   response.writeHead(status, {
     "content-type": contentType,
@@ -31,6 +34,37 @@ function sendText(response, status, body, contentType = "text/plain; charset=utf
     "cache-control": "no-store",
   });
   response.end(body);
+}
+
+function sendJson(response, status, payload) {
+  sendText(response, status, `${JSON.stringify(payload)}\n`, "application/json; charset=utf-8");
+}
+
+function getPrivilegedSupabaseClient() {
+  if (privilegedSupabaseClient !== undefined) return privilegedSupabaseClient;
+  const url = process.env.SUPABASE_URL?.trim();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!url || !serviceRoleKey) {
+    privilegedSupabaseClient = null;
+    return privilegedSupabaseClient;
+  }
+
+  privilegedSupabaseClient = createClient(url, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+  return privilegedSupabaseClient;
+}
+
+async function bootstrapStatus() {
+  const client = getPrivilegedSupabaseClient();
+  if (!client) return { configured: false, bootstrapOpen: false };
+  const result = await client.rpc("is_bootstrap_open");
+  if (result.error) throw new Error("Lebtig bootstrap status could not be loaded");
+  return { configured: true, bootstrapOpen: result.data === true };
 }
 
 async function serveFile(response, absolutePath, method) {
@@ -70,9 +104,8 @@ const server = createServer(async (request, response) => {
     const requestUrl = new URL(request.url || "/", `http://${request.headers.host || `${host}:${port}`}`);
     const { pathname, search } = requestUrl;
 
-    if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-      response.writeHead(307, { location: "/auth", "cache-control": "no-store" });
-      response.end();
+    if (pathname === "/api/bootstrap-status") {
+      sendJson(response, 200, await bootstrapStatus());
       return;
     }
 
@@ -98,7 +131,8 @@ const server = createServer(async (request, response) => {
       return;
     }
 
-    if (route && (route.shell === "public" || route.shell === "auth")) {
+    const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
+    if (isAdminPath || (route && (route.shell === "public" || route.shell === "auth"))) {
       const indexPath = path.join(distRoot, "index.html");
       if (await serveFile(response, indexPath, method)) return;
       sendText(response, 503, "Lebtig build missing. Run npm run build:lebtig first.\n");
