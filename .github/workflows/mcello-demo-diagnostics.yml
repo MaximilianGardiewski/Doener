@@ -6,6 +6,7 @@ on:
       - "apps/mcello/**"
       - "tests/mcello-demo-flow.browser.mjs"
       - "tests/mcello-presentation-builders.browser.mjs"
+      - "tests/mcello-presentation-builder-lifecycle.browser.mjs"
       - "tests/mcello-demo-preparation.test.mjs"
       - "tests/mcello-presentation-builder-data.test.mjs"
       - "tests/mcello-lan-demo.test.mjs"
@@ -100,6 +101,7 @@ jobs:
           curl --fail --silent http://127.0.0.1:4173/api/health >/dev/null
 
           MCELLO_DEMO_URL="http://${runner_ip}:4180" node tests/mcello-presentation-builders.browser.mjs 2>&1 | tee /tmp/mcello-builder-browser.log
+          MCELLO_DEMO_URL="http://${runner_ip}:4180" node tests/mcello-presentation-builder-lifecycle.browser.mjs 2>&1 | tee /tmp/mcello-builder-lifecycle.log
           MCELLO_DEMO_URL="http://${runner_ip}:4180" node tests/mcello-demo-flow.browser.mjs 2>&1 | tee /tmp/mcello-demo-browser.log
 
       - name: Capture database diagnostics
@@ -119,6 +121,7 @@ jobs:
           name: mcello-demo-diagnostics
           path: |
             /tmp/mcello-builder-browser.log
+            /tmp/mcello-builder-lifecycle.log
             /tmp/mcello-demo-browser.log
             /tmp/mcello-demo-preview.log
             /tmp/mcello-demo-lan-proxy.log
