@@ -19,11 +19,19 @@ test("presentation wrapper makes laptop host, smartphone customer and tablet sta
   assert.match(wrapper, /SMARTPHONE \/ CUSTOMER/);
   assert.match(wrapper, /TABLET \/ STAFF \+ ADMIN/);
   assert.match(wrapper, /LAPTOP \/ HOST — ALLE ANSICHTEN/);
-  assert.match(wrapper, /127\.0\.0\.1:4173\/\?presentation=mcello&reset=1/);
-  assert.match(wrapper, /127\.0\.0\.1:4173\/kds\.html/);
-  assert.match(wrapper, /127\.0\.0\.1:4173\/ops\.html/);
-  assert.match(wrapper, /127\.0\.0\.1:4173\/admin\.html/);
+  assert.match(wrapper, /hostPresentationBaseUrl = 'http:\/\/127\.0\.0\.1'/);
+  assert.match(wrapper, /\$hostPresentationBaseUrl\/\?presentation=mcello&reset=1/);
+  assert.match(wrapper, /\$hostPresentationBaseUrl\/kds\.html/);
+  assert.match(wrapper, /\$hostPresentationBaseUrl\/ops\.html/);
+  assert.match(wrapper, /\$hostPresentationBaseUrl\/admin\.html/);
+  assert.doesNotMatch(wrapper, /127\.0\.0\.1:4173\/\?presentation=mcello&reset=1/);
   assert.match(wrapper, /Start-Process \$view\.Url/);
+});
+
+test("presentation wrapper isolates laptop browser navigation from shared dev-port service workers", () => {
+  assert.match(wrapper, /service workers\/PWA caches/);
+  assert.match(wrapper, /LAN-Proxy auf Port 80/);
+  assert.doesNotMatch(wrapper, /Url = 'http:\/\/127\.0\.0\.1:4173/);
 });
 
 test("presentation wrapper installs the real local Builder fixtures after the LAN runtime", () => {
