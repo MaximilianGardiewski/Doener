@@ -1,4 +1,5 @@
 import { installPlaceholderMedia, placeholderSrc } from "./placeholder-media.js";
+import "./presentation-mode.js";
 import "./public-copy.js";
 import "./motion.js";
 import "./store-v2.js";

@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$publicUrl = 'http://127.0.0.1:4173/'
+$publicUrl = 'http://127.0.0.1:4173/?presentation=mcello&reset=1'
 $kdsUrl = 'http://127.0.0.1:4173/kds.html'
 $opsUrl = 'http://127.0.0.1:4173/ops.html'
 $adminUrl = 'http://127.0.0.1:4173/admin.html'
@@ -92,13 +92,14 @@ try {
   Write-Host "Admin:    $adminUrl"
   Write-Host ''
   Write-Host 'Local presentation shop state: force_open. This applies only to the disposable localhost Supabase stack.'
+  Write-Host 'The customer presentation starts with a clean local cart and keeps a visible presentation-only label.'
   Write-Host 'Presentation Builders: Pizza Mcello toppings + Döner/Yufka sauces (Curry, Knoblauch, Scharf).'
   Write-Host 'Recommended presentation: Customer page -> configure Pizza -> configure Döner/Yufka -> cart -> WhatsApp DEV key -> KDS accept -> Ready -> customer status.'
   Write-Host 'The local DEV key is shown in the checkout. It does not send a real WhatsApp message and never falls back to SMS.'
   Write-Host ''
 
   if (-not $NoBrowser) {
-    Write-Host 'Opening customer view and KDS...' -ForegroundColor Cyan
+    Write-Host 'Opening customer presentation and KDS...' -ForegroundColor Cyan
     Start-Process $publicUrl | Out-Null
     Start-Sleep -Milliseconds 700
     Start-Process $kdsUrl | Out-Null

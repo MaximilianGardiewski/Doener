@@ -5,6 +5,8 @@ on:
     paths:
       - "apps/mcello/**"
       - "tests/mcello-demo-flow.browser.mjs"
+      - "tests/mcello-presentation-mode.browser.mjs"
+      - "tests/mcello-presentation-mode.test.mjs"
       - "tests/mcello-presentation-builders.browser.mjs"
       - "tests/mcello-presentation-builder-lifecycle.browser.mjs"
       - "tests/mcello-demo-preparation.test.mjs"
@@ -100,6 +102,7 @@ jobs:
           curl --fail --silent "http://${runner_ip}:4180/__mcello_lan_health" >/dev/null
           curl --fail --silent http://127.0.0.1:4173/api/health >/dev/null
 
+          MCELLO_DEMO_URL="http://${runner_ip}:4180" node tests/mcello-presentation-mode.browser.mjs 2>&1 | tee /tmp/mcello-presentation-mode.log
           MCELLO_DEMO_URL="http://${runner_ip}:4180" node tests/mcello-presentation-builders.browser.mjs 2>&1 | tee /tmp/mcello-builder-browser.log
           MCELLO_DEMO_URL="http://${runner_ip}:4180" node tests/mcello-presentation-builder-lifecycle.browser.mjs 2>&1 | tee /tmp/mcello-builder-lifecycle.log
           MCELLO_DEMO_URL="http://${runner_ip}:4180" node tests/mcello-demo-flow.browser.mjs 2>&1 | tee /tmp/mcello-demo-browser.log
@@ -120,6 +123,7 @@ jobs:
         with:
           name: mcello-demo-diagnostics
           path: |
+            /tmp/mcello-presentation-mode.log
             /tmp/mcello-builder-browser.log
             /tmp/mcello-builder-lifecycle.log
             /tmp/mcello-demo-browser.log

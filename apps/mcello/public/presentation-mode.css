@@ -1,0 +1,25 @@
+html[data-presentation-mode="mcello"] #prototypeBanner[data-presentation-banner="true"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right));
+}
+
+html[data-presentation-mode="mcello"] .presentation-reset {
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+html[data-presentation-mode="mcello"] .presentation-reset:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}

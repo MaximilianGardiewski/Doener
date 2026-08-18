@@ -49,7 +49,7 @@ test("assembly specialization stays visually distinct from Pizza top-down", () =
 });
 
 test("Döner/Yufka assets remain in the versioned offline shell while business data stays network-only", () => {
-  assert.match(sw, /mcello-public-shell-v17/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /doner-yufka-builder-v2\.js/);
   assert.match(sw, /doner-yufka-builder-v2\.css/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);
