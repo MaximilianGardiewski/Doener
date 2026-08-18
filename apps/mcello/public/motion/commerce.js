@@ -6,6 +6,7 @@ export function createCommerceMotion(engine) {
   const activeTweens = new Set();
   let productTransition = null;
   let ingredientTransition = null;
+  let cartTransition = null;
   scope.context((tools) => {
     gsap = tools.gsap;
   });
@@ -48,6 +49,17 @@ export function createCommerceMotion(engine) {
       delete foodStage.dataset.motionIngredientEngine;
     }
     ingredientTransition = null;
+  }
+
+  function clearCartPresentation() {
+    if (!cartTransition) return;
+    const { timeline, sticky } = cartTransition;
+    timeline.kill();
+    activeTweens.delete(timeline);
+    gsap.set(sticky, { clearProps: "transform" });
+    delete sticky.dataset.motionCart;
+    delete sticky.dataset.motionCartEngine;
+    cartTransition = null;
   }
 
   function animateCategoryChange({ categoryId, stage, featuredGrid, menuList, activeChip }) {
@@ -206,11 +218,41 @@ export function createCommerceMotion(engine) {
     return true;
   }
 
+  function animateCartConfirmation(sticky) {
+    if (!sticky) return false;
+    clearCartPresentation();
+    sticky.dataset.motionCart = "added";
+    sticky.dataset.motionCartEngine = "gsap";
+
+    let timeline;
+    const finish = () => {
+      if (!cartTransition || cartTransition.timeline !== timeline) return;
+      gsap.set(sticky, { clearProps: "transform" });
+      delete sticky.dataset.motionCart;
+      delete sticky.dataset.motionCartEngine;
+      activeTweens.delete(timeline);
+      cartTransition = null;
+    };
+
+    timeline = gsap.timeline({
+      defaults: { overwrite: "auto" },
+      onComplete: finish,
+    });
+    cartTransition = { timeline, sticky };
+    track(timeline);
+    timeline
+      .to(sticky, { scale: 1.025, duration: 0.16, ease: "power2.out" })
+      .to(sticky, { scale: 1, duration: 0.2, ease: "power2.inOut" });
+    return true;
+  }
+
   return {
     animateCategoryChange,
     animateProductOpen,
     animateIngredientChange,
+    animateCartConfirmation,
     cleanup() {
+      clearCartPresentation();
       clearIngredientPresentation();
       clearProductPresentation();
       for (const tween of activeTweens) tween.kill();
