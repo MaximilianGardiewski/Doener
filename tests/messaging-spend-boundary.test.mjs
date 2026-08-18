@@ -14,6 +14,7 @@ const envExample = await readFile(new URL("infra/selfhost/app.env.example", root
 const server = await readFile(new URL("apps/mcello/server.mjs", root), "utf8");
 const publicIndex = await readFile(new URL("apps/mcello/public/index.html", root), "utf8");
 const preflightPath = fileURLToPath(new URL("infra/selfhost/preflight.sh", root));
+const bashPreflightPath = preflightPath.replaceAll("\\", "/");
 
 function includesAll(source, markers) {
   for (const marker of markers) assert.equal(source.includes(marker), true, `missing: ${marker}`);
@@ -39,7 +40,7 @@ async function runPreflight(extraLines = []) {
     "",
   ].join("\n"));
 
-  return spawnSync("bash", [preflightPath, envFile], {
+  return spawnSync("bash", [bashPreflightPath, envFile], {
     cwd: temp,
     env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
     encoding: "utf8",
