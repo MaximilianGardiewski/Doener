@@ -1,0 +1,102 @@
+name: Mcello Demo Diagnostics
+
+on:
+  pull_request:
+    paths:
+      - "apps/mcello/**"
+      - "tests/mcello-demo-flow.browser.mjs"
+      - "scripts/bootstrap-local-staff.mjs"
+      - "scripts/import-provisional-menu.mjs"
+      - "data/mcello/menu-seed.provisional.json"
+      - "supabase/**"
+      - ".github/workflows/mcello-demo-diagnostics.yml"
+
+concurrency:
+  group: mcello-demo-diagnostics-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  browser-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: latest
+
+      - name: Start clean local Supabase
+        run: |
+          supabase start
+          supabase db reset --local
+
+      - name: Prepare local presentation operators and menu
+        run: |
+          supabase status -o env \
+            --override-name api.url=SUPABASE_URL \
+            --override-name auth.anon_key=SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            | sed -E 's/^([^=]+)="(.*)"$/\1=\2/' \
+            > .env.local
+          node scripts/bootstrap-local-staff.mjs
+          node scripts/import-provisional-menu.mjs
+
+      - name: Install Chromium
+        timeout-minutes: 6
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install chromium
+
+      - name: Run full Mcello presentation browser flow
+        id: demo
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run preview:mcello > /tmp/mcello-demo-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/api/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4173/api/health >/dev/null
+          node tests/mcello-demo-flow.browser.mjs 2>&1 | tee /tmp/mcello-demo-browser.log
+
+      - name: Capture database diagnostics
+        if: always()
+        run: |
+          {
+            echo '--- Active demo orders ---'
+            docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select order_number||'|'||state||'|'||customer_first_name from public.orders order by submitted_at desc limit 10" || true
+            echo '--- Notification channel policy ---'
+            docker exec supabase_db_business-web-factory psql -U postgres -d postgres -Atc "select kind||'|'||preferred_channel||'|'||coalesce(fallback_channel,'NULL') from public.order_notification_outbox order by created_at desc limit 10" || true
+          } > /tmp/mcello-demo-db.log 2>&1
+
+      - name: Upload demo diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcello-demo-diagnostics
+          path: |
+            /tmp/mcello-demo-browser.log
+            /tmp/mcello-demo-preview.log
+            /tmp/mcello-demo-db.log
+          retention-days: 3
+          if-no-files-found: warn
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup || true

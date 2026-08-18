@@ -12,6 +12,7 @@ const dockerfile = await readFile(new URL("infra/selfhost/Dockerfile", root), "u
 const preflight = await readFile(new URL("infra/selfhost/preflight.sh", root), "utf8");
 const envExample = await readFile(new URL("infra/selfhost/app.env.example", root), "utf8");
 const server = await readFile(new URL("apps/mcello/server.mjs", root), "utf8");
+const publicIndex = await readFile(new URL("apps/mcello/public/index.html", root), "utf8");
 const preflightPath = fileURLToPath(new URL("infra/selfhost/preflight.sh", root));
 
 function includesAll(source, markers) {
@@ -54,6 +55,16 @@ test("D003/D064 keep local OTP development-only and Mcello V1 WhatsApp-only", ()
   ]);
   assert.doesNotMatch(server, /fallbackChannel:\s*["']sms["']/);
   assert.match(dockerfile, /ENV NODE_ENV=production/);
+});
+
+test("public checkout names WhatsApp as the only V1 verification channel", () => {
+  includesAll(publicIndex, [
+    "V1: WhatsApp-only.",
+    "WhatsApp-Code anfordern",
+    "WhatsApp-Bestätigungscode",
+    "keine echte Nachricht versendet",
+  ]);
+  assert.doesNotMatch(publicIndex, /SMS/i);
 });
 
 test("production gateway cannot expose development endpoints or create orders through local OTP", () => {
