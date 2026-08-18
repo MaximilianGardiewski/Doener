@@ -18,7 +18,8 @@
     "build:lebtig": "npm --workspace @business-web/lebtig run build",
     "preview:mcello": "node --experimental-strip-types apps/mcello/run.mjs",
     "preview:lebtig": "npm --workspace @business-web/lebtig run preview",
-    "demo:mcello:win": "pwsh -NoProfile -File scripts/demo-mcello.ps1"
+    "demo:mcello:win": "pwsh -NoProfile -File scripts/demo-mcello.ps1",
+    "demo:mcello:lan": "pwsh -NoProfile -File scripts/demo-mcello-lan.ps1"
   },
   "devDependencies": {
     "@types/node": "22.20.1",
