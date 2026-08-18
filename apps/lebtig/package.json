@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 4174",
     "build": "vite build",
-    "preview": "vite preview --port 4174"
+    "preview": "node --experimental-strip-types serve.mjs"
   },
   "dependencies": {
     "@business-web/auth": "0.0.1",
