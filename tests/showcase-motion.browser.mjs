@@ -15,6 +15,13 @@ async function computed(page, selector) {
   });
 }
 
+async function waitForAnimations(page, selector) {
+  await page.locator(selector).evaluate(async (node) => {
+    const animations = node.getAnimations();
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+  });
+}
+
 try {
   const normal = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "no-preference" });
   await normal.goto(baseUrl, { waitUntil: "networkidle" });
@@ -25,6 +32,7 @@ try {
     "normal-motion browser should enable progressive reveal",
   );
   await normal.waitForFunction(() => document.querySelector(".hero-copy")?.classList.contains("is-revealed"));
+  await waitForAnimations(normal, ".hero-copy");
   const revealed = await computed(normal, ".hero-copy");
   assert.equal(revealed.opacity, "1", "visible hero must finish fully opaque");
   assert.equal(revealed.transform, "none", "visible hero must finish without transform offset");
