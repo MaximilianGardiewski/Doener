@@ -1,3 +1,31 @@
+export type PublicationStatus = "draft" | "scheduled" | "published" | "archived";
+
+export interface PublicationWindow {
+  status: PublicationStatus;
+  publishAt?: string | null;
+  visibleFrom?: string | null;
+  visibleUntil?: string | null;
+}
+
+export function isPublishedAt(item: PublicationWindow, nowIso: string): boolean {
+  if (item.status !== "published") return false;
+  const now = Date.parse(nowIso);
+  if (!Number.isFinite(now)) return false;
+
+  const publishAt = item.publishAt ? Date.parse(item.publishAt) : -Infinity;
+  const visibleFrom = item.visibleFrom ? Date.parse(item.visibleFrom) : -Infinity;
+  const visibleUntil = item.visibleUntil ? Date.parse(item.visibleUntil) : Infinity;
+
+  return publishAt <= now && visibleFrom <= now && now <= visibleUntil;
+}
+
+export function filterPublishedAt<T extends PublicationWindow>(
+  items: readonly T[],
+  nowIso: string,
+): T[] {
+  return items.filter((item) => isPublishedAt(item, nowIso));
+}
+
 export type EditorialKind = "news" | "event" | "special" | "press";
 export type GalleryCategory = "food" | "venue" | "team" | "events";
 
