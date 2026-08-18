@@ -128,6 +128,12 @@ function syncCommerceEngineLabels() {
   document.documentElement.dataset.mcelloIngredientEngine = mode;
 }
 
+function activeFoodStage() {
+  return document.querySelector('#productModal.open [data-food-stage-v4="true"]')
+    || document.querySelector("#productModal.open [data-pizza-stage]")
+    || document.querySelector("#productModal.open .modal-hero");
+}
+
 function installCommerceMotionContracts() {
   syncCommerceEngineLabels();
   reducedMotion.addEventListener?.("change", syncCommerceEngineLabels);
@@ -190,7 +196,7 @@ function installCommerceMotionContracts() {
 
     const option = input.closest(".modifier-option");
     const selection = input.checked ? "added" : "removed";
-    const foodStage = document.querySelector("#productModal .modal-hero");
+    const foodStage = activeFoodStage();
     const handledByV3 = !reducedMotion.matches && Boolean(commerceMotionV3?.animateIngredientChange({
       option,
       foodStage,
