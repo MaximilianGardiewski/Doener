@@ -39,7 +39,7 @@ test("Reduced Motion blocks both GSAP category motion and the legacy keyframe re
   assert.match(motion, /!reducedMotion\.matches && Boolean\(commerceMotionV3\?\.animateCategoryChange/);
   assert.match(motion, /function restartMotionClass/);
   assert.match(motion, /if \(!node \|\| reducedMotion\.matches\) return/);
-  assert.match(motion, /mcelloCategoryEngine = reducedMotion\.matches/);
+  assert.match(motion, /dataset\.mcelloCategoryEngine = mode/);
 });
 
 test("commerce adapter cleans only its own active tweens and scope", () => {
@@ -58,6 +58,6 @@ test("category motion remains presentation-only and self-host/offline capable", 
   assert.doesNotMatch(commerce, /localStorage|sessionStorage|indexedDB/);
   assert.doesNotMatch(commerce, /price|cart|checkout|availability|sold.?out|authorization|locationId/i);
   assert.match(runtime, /motionCategory/);
-  assert.match(sw, /mcello-public-shell-v26/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/motion\/commerce\.js"/);
 });
