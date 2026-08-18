@@ -28,7 +28,10 @@ jobs:
         run: |
           $files = @(
             'scripts/dev-supabase.ps1',
-            'scripts/demo-mcello.ps1'
+            'scripts/demo-mcello.ps1',
+            'scripts/demo-mcello-lan.ps1',
+            'scripts/configure-mcello-lan-firewall.ps1',
+            'scripts/stop-mcello-lan.ps1'
           )
           foreach ($file in $files) {
             $tokens = $null
