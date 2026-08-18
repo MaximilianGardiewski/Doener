@@ -74,6 +74,7 @@
 #productModal [data-builder-modifiers="true"] {
   display: grid;
   gap: 12px;
+  counter-reset: builder-step;
 }
 
 #productModal .builder-step {
@@ -82,7 +83,7 @@
   position: relative;
   overflow: hidden;
   border: 1px solid var(--rule-subtle);
-  border-radius: var(--radius-control-lg);
+  border-radius: var(--radius-commerce-panel);
   background: color-mix(in srgb, var(--surface-base) 68%, var(--surface-raised));
 }
 
@@ -95,10 +96,6 @@
   color: color-mix(in srgb, var(--mcello-copper) 42%, transparent);
   font: 800 var(--type-meta)/1 var(--type-family-interface);
   letter-spacing: .08em;
-}
-
-#productModal [data-builder-modifiers="true"] {
-  counter-reset: builder-step;
 }
 
 #productModal .builder-step .modifier-head {
