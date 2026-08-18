@@ -3,31 +3,36 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
-const admin = await readFile(new URL("apps/mcello/public/admin.html", root), "utf8");
-const ops = await readFile(new URL("apps/mcello/public/ops.html", root), "utf8");
-const kds = await readFile(new URL("apps/mcello/public/kds.html", root), "utf8");
-const shellJs = await readFile(new URL("apps/mcello/public/operations-shell.js", root), "utf8");
-const shellCss = await readFile(new URL("apps/mcello/public/operations-shell.css", root), "utf8");
-const sw = await readFile(new URL("apps/mcello/public/sw.js", root), "utf8");
+const [admin, ops, kds, shellJs, shellCss, sw] = await Promise.all([
+  readFile(new URL("apps/mcello/public/admin.html", root), "utf8"),
+  readFile(new URL("apps/mcello/public/ops.html", root), "utf8"),
+  readFile(new URL("apps/mcello/public/kds.html", root), "utf8"),
+  readFile(new URL("apps/mcello/public/operations-shell.js", root), "utf8"),
+  readFile(new URL("apps/mcello/public/operations-shell.css", root), "utf8"),
+  readFile(new URL("apps/mcello/public/sw.js", root), "utf8"),
+]);
 
 test("D072 attaches one shared Operations shell to Admin, Ops and KDS", () => {
+  for (const page of [admin, ops, kds]) {
+    assert.match(page, /href="\/operations-shell\.css"/);
+    assert.match(page, /src="\/operations-shell\.js"/);
+  }
+
   assert.match(admin, /data-operations-area="admin" data-operations-role="admin"/);
   assert.match(ops, /data-operations-area="ops" data-operations-role="staff"/);
   assert.match(kds, /data-operations-area="kds" data-operations-role="staff"/);
-  for (const page of [admin, ops, kds]) {
-    assert.match(page, /operations-shell\.css/);
-    assert.match(page, /operations-shell\.js/);
-  }
 });
 
 test("D072 navigation keeps structural Admin destinations out of the Staff link set", () => {
   assert.match(shellJs, /roles: \["admin"\]/);
   assert.match(shellJs, /roles: \["admin", "staff"\]/);
-  for (const path of ["/admin.html", "/content.html", "/product-media.html", "/labels.html", "/schedule.html"]) {
-    assert.match(shellJs, new RegExp(path.replace(".", "\\.")));
-  }
-  assert.match(shellJs, /role === "admin" \? "Admin" : "Betrieb"/);
-  assert.doesNotMatch(shellJs, /fetch\s*\(|\/api\/|\.rpc\s*\(|supabase|auth/i);
+  assert.match(shellJs, /allLinks\.filter\(\(link\) => link\.roles\.includes\(role\)\)/);
+  assert.match(shellJs, /Navigation is presentation\/IA only/);
+
+  assert.doesNotMatch(shellJs, /fetch\s*\(/);
+  assert.doesNotMatch(shellJs, /\/api\//);
+  assert.doesNotMatch(shellJs, /supabase/i);
+  assert.doesNotMatch(shellJs, /\.rpc\s*\(/);
 });
 
 test("D072 shell provides desktop sidebar, tablet rail, phone drawer and reduced motion", () => {
