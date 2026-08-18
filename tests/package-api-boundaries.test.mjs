@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
@@ -36,7 +37,7 @@ test("every workspace package exposes one stable @business-web root API", async 
 test("package source never reaches into another package src directory by relative path", async () => {
   const offenders = [];
   for (const directory of await packageNames()) {
-    const src = new URL(`packages/${directory}/src/`, root);
+    const src = fileURLToPath(new URL(`packages/${directory}/src/`, root));
     for (const file of await collectTs(src)) {
       const source = await readFile(file, "utf8");
       if (/from\s+["']\.\.\/\.\.\/[^/"']+\/src\//.test(source)) offenders.push(file);
