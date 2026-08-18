@@ -48,11 +48,22 @@ try {
   const revealed = await computed(normal, ".hero-copy");
   assert.equal(revealed.opacity, "1", "visible hero must finish fully opaque");
   assert.equal(revealed.identityTransform, true, "visible hero must finish without transform offset");
-  assert.notEqual(
-    await normal.locator(".hero-photo").evaluate((node) => node.style.getPropertyValue("--motion-hero-depth-y")),
-    "",
-    "normal motion should provide a bounded food-stage depth variable",
-  );
+
+  await normal.waitForFunction(() => Boolean(document.documentElement.dataset.mcelloHeroEngine));
+  const heroMotion = await normal.evaluate(() => ({
+    engine: document.documentElement.dataset.mcelloHeroEngine,
+    legacyDepth: document.querySelector(".hero-photo")?.style.getPropertyValue("--motion-hero-depth-y") || "",
+    transitionDuration: getComputedStyle(document.querySelector(".hero-photo")).transitionDuration,
+    transform: getComputedStyle(document.querySelector(".hero-photo")).transform,
+  }));
+  assert.ok(["v2", "gsap"].includes(heroMotion.engine), `unexpected hero engine ${heroMotion.engine}`);
+  if (heroMotion.engine === "v2") {
+    assert.notEqual(heroMotion.legacyDepth, "", "V2 hero motion should provide its bounded depth variable");
+  } else {
+    assert.equal(heroMotion.legacyDepth, "", "GSAP hero ownership should remove the legacy depth variable");
+    assert.match(heroMotion.transitionDuration, /(^|, )0s(,|$)/, "GSAP hero frames must not contend with CSS transitions");
+    assert.notEqual(heroMotion.transform, "none", "GSAP hero ownership should provide a compositor transform");
+  }
 
   await normal.locator("#aktuelles").scrollIntoViewIfNeeded();
   await normal.waitForFunction(() => document.querySelector("#aktuelles .section-head")?.classList.contains("is-revealed"));
@@ -112,7 +123,7 @@ try {
     "reduced motion must not inject scroll-depth offsets",
   );
 
-  console.log("D058/V2 Chromium motion smoke passed for reveal, commerce feedback, and reduced-motion preferences.");
+  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, commerce feedback, and reduced-motion preferences.");
 } finally {
   await browser.close();
 }
