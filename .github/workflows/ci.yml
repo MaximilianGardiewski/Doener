@@ -23,6 +23,28 @@ jobs:
         run: npm install --ignore-scripts --package-lock=false
       - name: Run type domain schema and static checks
         run: npm run check
+      - name: Parse Mcello PowerShell launch scripts
+        shell: pwsh
+        run: |
+          $files = @(
+            'scripts/dev-supabase.ps1',
+            'scripts/demo-mcello.ps1'
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file).Path,
+              [ref]$tokens,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object {
+                Write-Error "${file}:$($_.Extent.StartLineNumber): $($_.Message)"
+              }
+              exit 1
+            }
+          }
       - name: Build Mcello preview
         run: npm run build:preview
       - name: Build Lebtig portable preview
