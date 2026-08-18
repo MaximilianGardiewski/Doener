@@ -1,4 +1,4 @@
-import type { AnalyticsEventInput, OrderAnalyticsContext } from "../../analytics/src/events.ts";
+import type { AnalyticsEventInput, OrderAnalyticsContext } from "@business-web/analytics";
 import type { RpcClient } from "./rest-rpc.ts";
 
 export class SupabaseAnalyticsRecorder {
