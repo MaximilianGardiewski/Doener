@@ -9,10 +9,13 @@ const importer = await readFile(new URL("scripts/import-mcello-presentation-buil
 const launcher = await readFile(new URL("scripts/demo-mcello.ps1", root), "utf8");
 
 const seedById = new Map(seed.items.map((item) => [item[0], item]));
+const groupByName = new Map(contract.donerYufka.groups.map((group) => [group.name, group]));
 
 test("presentation Builder data is explicitly local-only and never a production catalog", () => {
+  assert.equal(contract.version, 2);
   assert.equal(contract.status, "presentation-only-local-demo");
   assert.equal(contract.scope, "localhost-disposable-supabase-only");
+  assert.match(contract.notes.join("\n"), /presentation assumptions/i);
   assert.match(importer, /supabaseUrl\.protocol, "http:"/);
   assert.match(importer, /127\.0\.0\.1/);
   assert.match(importer, /localhost/);
@@ -32,9 +35,12 @@ test("Pizza Mcello presentation recipe is derived only from the provisional menu
   }
 });
 
-test("Döner/Yufka presentation sauces use only the user-confirmed Curry Knoblauch Scharf set", () => {
-  assert.deepEqual(contract.donerYufka.groups[0].options.map((option) => option.name), ["Curry", "Knoblauch", "Scharf"]);
-  assert.equal(contract.donerYufka.provenance, "owner-chat-confirmation:2026-08-18");
+test("Döner/Yufka showcase separates presentation assumptions from confirmed sauces", () => {
+  assert.deepEqual(groupByName.get("Basis").options.map((option) => option.name), ["Fleisch", "Falafel"]);
+  assert.deepEqual(groupByName.get("Gemüse").options.map((option) => option.name), ["Salat", "Tomate", "Gurke", "Zwiebel"]);
+  assert.deepEqual(groupByName.get("Soße").options.map((option) => option.name), ["Curry", "Knoblauch", "Scharf"]);
+  assert.match(contract.donerYufka.provenance, /presentation-assumption:user-request:2026-08-18/);
+  assert.match(contract.donerYufka.provenance, /sauces-owner-chat-confirmation:2026-08-18/);
   assert.deepEqual(contract.donerYufka.productSourceIds, ["warm-013", "warm-014", "warm-015", "warm-016", "warm-017", "warm-018"]);
   for (const id of contract.donerYufka.productSourceIds) assert.ok(seedById.has(id), `${id} must remain a real provisional menu product`);
 });
