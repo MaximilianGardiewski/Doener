@@ -27,6 +27,19 @@ test("app image runs non-root with a liveness probe and explicit container gatew
   assert.doesNotMatch(dockerfile, /COPY\s+\.\s+\./, "image should not indiscriminately copy the repository");
 });
 
+test("self-host image bakes the exact local Mcello GSAP vendor before switching to read-only runtime", () => {
+  includesAll(dockerfile, [
+    "scripts/vendor-mcello-gsap.mjs",
+    "npm install --omit=dev --ignore-scripts --package-lock=false",
+    "node scripts/vendor-mcello-gsap.mjs",
+    "USER node",
+  ]);
+  assert.ok(
+    dockerfile.indexOf("node scripts/vendor-mcello-gsap.mjs") < dockerfile.indexOf("USER node"),
+    "GSAP vendor assets must be generated into the image before the non-root/read-only runtime starts",
+  );
+});
+
 test("production compose keeps the host boundary on localhost and strips container privileges", () => {
   includesAll(compose, [
     '127.0.0.1:${MCELLO_APP_HOST_PORT:-4173}:8080',
