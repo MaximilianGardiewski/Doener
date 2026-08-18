@@ -1,7 +1,6 @@
 :root {
-  --motion-ease-out: cubic-bezier(.22,.8,.32,1);
-  --motion-fast: 180ms;
-  --motion-reveal: 620ms;
+  --motion-ease-out: var(--ease-emphasized, cubic-bezier(.22,.8,.32,1));
+  --motion-reveal: var(--motion-cinematic, 620ms);
 }
 
 .motion-ready [data-reveal] {
@@ -24,6 +23,12 @@
   will-change: auto;
 }
 
+.hero-media-v2 .hero-photo {
+  transform: translate3d(0,var(--motion-hero-depth-y,0px),0) scale(1.045);
+  transition: transform var(--motion-food,320ms) var(--motion-ease-out);
+  will-change: transform;
+}
+
 .food-card,
 .story-card,
 .recommendation-card,
@@ -36,6 +41,82 @@
     border-color var(--motion-fast) ease,
     background-color var(--motion-fast) ease,
     box-shadow var(--motion-fast) ease;
+}
+
+.motion-category-switch {
+  animation: mcello-category-shift var(--motion-ui,220ms) var(--motion-ease-out) both;
+}
+
+.motion-category-chip {
+  animation: mcello-category-chip var(--motion-ui,220ms) var(--motion-ease-out) both;
+}
+
+.motion-product-activate {
+  animation: mcello-product-activate var(--motion-ui,220ms) var(--motion-ease-out) both;
+}
+
+.motion-product-open {
+  animation: mcello-product-open var(--motion-food,320ms) var(--motion-ease-out) both;
+}
+
+.motion-ingredient-change {
+  animation: mcello-ingredient-choice var(--motion-food,320ms) var(--motion-ease-out) both;
+}
+
+.motion-ingredient-change[data-motion-selection="removed"] {
+  --motion-choice-scale: .985;
+}
+
+.motion-food-stage-change {
+  animation: mcello-food-stage-change var(--motion-food,320ms) var(--motion-ease-out) both;
+}
+
+.motion-food-stage-change[data-motion-ingredient="removed"] {
+  --motion-food-scale: .992;
+}
+
+.sticky-order.motion-cart-confirm {
+  animation: mcello-cart-confirm var(--motion-food,320ms) var(--motion-ease-out) both;
+}
+
+@keyframes mcello-category-shift {
+  from { opacity: .72; transform: translate3d(8px,0,0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes mcello-category-chip {
+  0% { transform: scale(1); }
+  48% { transform: scale(.96); }
+  100% { transform: scale(1); }
+}
+
+@keyframes mcello-product-activate {
+  0% { transform: scale(1); }
+  45% { transform: scale(.985); }
+  100% { transform: scale(1); }
+}
+
+@keyframes mcello-product-open {
+  from { opacity: .76; transform: translate3d(0,10px,0) scale(.988); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes mcello-ingredient-choice {
+  0% { transform: scale(1); }
+  45% { transform: scale(var(--motion-choice-scale,1.018)); }
+  100% { transform: scale(1); }
+}
+
+@keyframes mcello-food-stage-change {
+  0% { opacity: .88; transform: scale(1); }
+  45% { opacity: 1; transform: scale(var(--motion-food-scale,1.012)); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes mcello-cart-confirm {
+  0% { transform: translateX(-50%) scale(1); }
+  42% { transform: translateX(-50%) scale(1.025); }
+  100% { transform: translateX(-50%) scale(1); }
 }
 
 @media (hover:hover) and (pointer:fine) {
@@ -64,10 +145,24 @@
   .list-row,
   .primary,
   .pill,
-  .ghost-btn {
+  .ghost-btn,
+  .motion-category-switch,
+  .motion-category-chip,
+  .motion-product-activate,
+  .motion-product-open,
+  .motion-ingredient-change,
+  .motion-food-stage-change,
+  .sticky-order.motion-cart-confirm {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
     animation: none !important;
+  }
+
+  .hero-media-v2 .hero-photo {
+    transform: scale(1.035) !important;
+    transition: none !important;
+    animation: none !important;
+    will-change: auto;
   }
 }
