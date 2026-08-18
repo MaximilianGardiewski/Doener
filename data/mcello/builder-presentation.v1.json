@@ -8,9 +8,9 @@
     "Selection limits in this file are interaction policy for the local presentation, not an owner-confirmed production rule."
   ],
   "pizza": {
-    "productSourceId": "pizza-060",
+    "productSourceId": "pizza-076",
     "productName": "Pizza Mcello",
-    "provenance": "provisional:user-supplied-menu-card-images:pizza-060",
+    "provenance": "provisional:user-supplied-menu-card-images:pizza-076",
     "groups": [
       {
         "key": "pizza-mcello-belag",
