@@ -17,16 +17,10 @@ function isPrivateSslipHost(hostname) {
   return Boolean(match);
 }
 
-function presentationOriginKind() {
+function isPresentationOrigin() {
   const hostname = window.location.hostname;
-  if (window.location.protocol === "http:"
-      && (loopbackHosts.has(hostname) || isPrivateIpv4(hostname) || isPrivateSslipHost(hostname))) {
-    return "local";
-  }
-  if (window.location.protocol === "https:" && hostname.endsWith(".vercel.app")) {
-    return "hosted";
-  }
-  return null;
+  return window.location.protocol === "http:"
+    && (loopbackHosts.has(hostname) || isPrivateIpv4(hostname) || isPrivateSslipHost(hostname));
 }
 
 function presentationUrl({ reset = false } = {}) {
@@ -37,13 +31,13 @@ function presentationUrl({ reset = false } = {}) {
   return url;
 }
 
-function presentationKind() {
+function isLocalPresentation() {
   const params = new URLSearchParams(window.location.search);
-  return params.get(PRESENTATION_PARAM) === PRESENTATION_VALUE ? presentationOriginKind() : null;
+  return isPresentationOrigin() && params.get(PRESENTATION_PARAM) === PRESENTATION_VALUE;
 }
 
-function resetPresentationBrowserState() {
-  if (!presentationKind()) return false;
+function resetLocalPresentationBrowserState() {
+  if (!isLocalPresentation()) return false;
   const params = new URLSearchParams(window.location.search);
   if (params.get(RESET_PARAM) !== "1") return false;
 
@@ -63,25 +57,19 @@ function installPresentationStyles() {
   document.head.appendChild(stylesheet);
 }
 
-function decoratePresentation() {
-  const kind = presentationKind();
-  if (!kind) return;
+function decorateLocalPresentation() {
+  if (!isLocalPresentation()) return;
   installPresentationStyles();
   document.body.dataset.presentationMode = PRESENTATION_VALUE;
-  document.body.dataset.presentationHosting = kind;
   document.documentElement.dataset.presentationMode = PRESENTATION_VALUE;
-  document.documentElement.dataset.presentationHosting = kind;
 
   const banner = document.querySelector("#prototypeBanner");
   if (!banner) return;
   banner.dataset.presentationBanner = "true";
-  banner.dataset.presentationHosting = kind;
   banner.replaceChildren();
 
   const label = document.createElement("span");
-  label.textContent = kind === "hosted"
-    ? "MCELLO PRESENTATION · Hosted Showcase · Produktdaten teilweise vorläufig"
-    : "MCELLO PRESENTATION · lokale Demo · Produktdaten teilweise vorläufig";
+  label.textContent = "MCELLO PRESENTATION · lokale Demo · Produktdaten teilweise vorläufig";
 
   const reset = document.createElement("button");
   reset.type = "button";
@@ -93,4 +81,4 @@ function decoratePresentation() {
   banner.append(label, reset);
 }
 
-if (!resetPresentationBrowserState()) decoratePresentation();
+if (!resetLocalPresentationBrowserState()) decorateLocalPresentation();
