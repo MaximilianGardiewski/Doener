@@ -1,4 +1,4 @@
-import type { Order } from "../../ordering/src/model.ts";
+import type { Order } from "@business-web/ordering";
 import { mapDbOrder } from "./order-repository.ts";
 import type { RpcClient } from "./rest-rpc.ts";
 
