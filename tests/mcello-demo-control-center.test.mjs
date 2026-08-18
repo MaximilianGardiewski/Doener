@@ -64,8 +64,8 @@ test("automatic git update is fail-safe around local modifications", () => {
 });
 
 test("control center never contains a production deployment path", () => {
-  assert.match(combined, /kein Production Deployment|kein Production Deployment/i);
-  assert.doesNotMatch(combined, /vercel deploy|supabase link|supabase db push|production deploy/i);
+  assert.match(combined, /kein Production Deployment/i);
+  assert.doesNotMatch(combined, /vercel\s+deploy|supabase\s+link|supabase\s+db\s+push/i);
   assert.match(docs, /kein Production Deployment/i);
 });
 
