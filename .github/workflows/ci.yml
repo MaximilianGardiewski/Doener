@@ -71,6 +71,7 @@ jobs:
           curl --fail --silent http://127.0.0.1:4173/ >/dev/null
           node tests/public-navigation.browser.mjs
           node tests/showcase-motion.browser.mjs
+          node tests/mcello-gsap-adapter.browser.mjs
           node tests/mcello-store-v2.browser.mjs
           node tests/mcello-builder-core-v2.browser.mjs
           node tests/homepage-composition.browser.mjs

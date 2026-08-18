@@ -141,6 +141,35 @@ function installCommerceMotionContracts() {
   });
 }
 
+function publishMotionEngineMode(engine) {
+  document.documentElement.dataset.mcelloMotionEngine = engine?.mode || "fallback";
+  window.dispatchEvent(new CustomEvent("mcello:motion-engine", {
+    detail: {
+      mode: engine?.mode || "fallback",
+      version: engine?.version || null,
+    },
+  }));
+}
+
+async function primeMotionV3Adapter() {
+  try {
+    const { loadMcelloMotionEngine } = await import("./motion/engine.js");
+    publishMotionEngineMode(await loadMcelloMotionEngine());
+  } catch {
+    publishMotionEngineMode(null);
+  }
+}
+
+function scheduleMotionV3Adapter() {
+  const prime = () => void primeMotionV3Adapter();
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(prime, { timeout: 1500 });
+    return;
+  }
+  window.setTimeout(prime, 0);
+}
+
 installRevealMotion();
 installHeroFoodDepth();
 installCommerceMotionContracts();
+scheduleMotionV3Adapter();
