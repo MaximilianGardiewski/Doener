@@ -48,6 +48,9 @@ try {
     Write-Host 'Reusing the existing local backend state.' -ForegroundColor Cyan
   }
 
+  Write-Host 'Installing localhost-only Pizza + Döner/Yufka presentation Builder fixtures...' -ForegroundColor Cyan
+  node scripts/import-mcello-presentation-builders.mjs
+
   Write-Host 'Preparing localhost-only presentation shop state...' -ForegroundColor Cyan
   node scripts/prepare-mcello-demo.mjs
 
@@ -89,7 +92,8 @@ try {
   Write-Host "Admin:    $adminUrl"
   Write-Host ''
   Write-Host 'Local presentation shop state: force_open. This applies only to the disposable localhost Supabase stack.'
-  Write-Host 'Recommended presentation: Customer page -> order -> WhatsApp DEV key -> KDS accept -> Ready -> customer status.'
+  Write-Host 'Presentation Builders: Pizza Mcello toppings + Döner/Yufka sauces (Curry, Knoblauch, Scharf).'
+  Write-Host 'Recommended presentation: Customer page -> configure Pizza -> configure Döner/Yufka -> cart -> WhatsApp DEV key -> KDS accept -> Ready -> customer status.'
   Write-Host 'The local DEV key is shown in the checkout. It does not send a real WhatsApp message and never falls back to SMS.'
   Write-Host ''
 

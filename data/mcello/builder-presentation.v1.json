@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "status": "presentation-only-local-demo",
+  "scope": "localhost-disposable-supabase-only",
+  "notes": [
+    "This file is not a production catalog and must never be imported into a remote Supabase instance.",
+    "All price deltas are zero because no presentation-only surcharge should be represented as a real Mcello price.",
+    "Selection limits in this file are interaction policy for the local presentation, not an owner-confirmed production rule."
+  ],
+  "pizza": {
+    "productSourceId": "pizza-076",
+    "productName": "Pizza Mcello",
+    "provenance": "provisional:user-supplied-menu-card-images:pizza-076",
+    "groups": [
+      {
+        "key": "pizza-mcello-belag",
+        "name": "Belag",
+        "minSelections": 0,
+        "maxSelections": 5,
+        "sort": 20,
+        "policyStatus": "presentation-interaction-policy",
+        "options": [
+          { "key": "kebap-fleisch", "name": "Kebap Fleisch", "priceDeltaCents": 0, "defaultSelected": true, "sort": 10 },
+          { "key": "tomaten", "name": "Tomaten", "priceDeltaCents": 0, "defaultSelected": true, "sort": 20 },
+          { "key": "broccoli", "name": "Broccoli", "priceDeltaCents": 0, "defaultSelected": true, "sort": 30 },
+          { "key": "kaese", "name": "Käse", "priceDeltaCents": 0, "defaultSelected": true, "sort": 40 },
+          { "key": "zwiebeln", "name": "Zwiebeln", "priceDeltaCents": 0, "defaultSelected": true, "sort": 50 }
+        ]
+      }
+    ]
+  },
+  "donerYufka": {
+    "productSourceIds": ["warm-013", "warm-014", "warm-015", "warm-016", "warm-017", "warm-018"],
+    "provenance": "owner-chat-confirmation:2026-08-18",
+    "groups": [
+      {
+        "key": "doner-yufka-saucen",
+        "name": "Soße",
+        "minSelections": 0,
+        "maxSelections": 3,
+        "sort": 20,
+        "policyStatus": "presentation-interaction-policy",
+        "options": [
+          { "key": "curry", "name": "Curry", "priceDeltaCents": 0, "defaultSelected": false, "sort": 10 },
+          { "key": "knoblauch", "name": "Knoblauch", "priceDeltaCents": 0, "defaultSelected": false, "sort": 20 },
+          { "key": "scharf", "name": "Scharf", "priceDeltaCents": 0, "defaultSelected": false, "sort": 30 }
+        ]
+      }
+    ]
+  }
+}
