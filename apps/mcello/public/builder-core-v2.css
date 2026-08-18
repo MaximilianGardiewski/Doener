@@ -47,6 +47,10 @@
   border-block: 1px solid var(--rule-subtle);
 }
 
+.builder-context[hidden] {
+  display: none !important;
+}
+
 .builder-context > div {
   display: grid;
   gap: 4px;
