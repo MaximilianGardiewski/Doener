@@ -5,6 +5,7 @@ on:
     paths:
       - "apps/**"
       - "packages/**"
+      - "scripts/vendor-mcello-gsap.mjs"
       - "supabase/migrations/**"
       - "infra/selfhost/**"
       - "tests/selfhost-release.test.mjs"
@@ -17,6 +18,7 @@ on:
     paths:
       - "apps/**"
       - "packages/**"
+      - "scripts/vendor-mcello-gsap.mjs"
       - "supabase/migrations/**"
       - "infra/selfhost/**"
       - "tests/selfhost-release.test.mjs"
@@ -67,6 +69,9 @@ jobs:
             exit 1
           fi
           curl --fail --silent http://127.0.0.1:4174/ >/dev/null
+          curl --fail --silent http://127.0.0.1:4174/vendor/gsap/gsap.min.js >/dev/null
+          curl --fail --silent http://127.0.0.1:4174/vendor/gsap/ScrollTrigger.min.js >/dev/null
+          curl --fail --silent http://127.0.0.1:4174/vendor/gsap/Flip.min.js >/dev/null
           test "$(docker inspect -f '{{.Config.User}}' mcello-app-release-smoke)" = "node"
           test "$(docker inspect -f '{{.HostConfig.ReadonlyRootfs}}' mcello-app-release-smoke)" = "true"
 
