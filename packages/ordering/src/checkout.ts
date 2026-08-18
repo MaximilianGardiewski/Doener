@@ -1,18 +1,18 @@
-import { resolveShopCapabilities, type ShopStatusInput } from "../../core/src/shop-status.ts";
+import { resolveShopCapabilities, type ShopStatusInput } from "@business-web/core";
 import {
   calculateConfiguredPriceCents,
   validateConfiguration,
   type MenuProduct,
   type ProductSelection,
-} from "../../menu-engine/src/model.ts";
-import type { OtpProvider, OrderNotificationProvider } from "../../notifications/src/contracts.ts";
+} from "@business-web/menu-engine";
+import type { OtpProvider, OrderNotificationProvider } from "@business-web/notifications";
 import {
   PayOnSiteOnlyPaymentPolicy,
   PaymentBoundaryError,
   type PaymentMode,
   type PaymentPolicy,
   type PaymentSnapshot,
-} from "../../payments/src/contracts.ts";
+} from "@business-web/payments";
 import { hasSlotCapacity } from "./capacity.ts";
 import {
   FulfillmentBoundaryError,
