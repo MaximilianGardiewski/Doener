@@ -13,6 +13,13 @@ function identityTransform(transform) {
   return matrix.is2D && matrix.a === 1 && matrix.b === 0 && matrix.c === 0 && matrix.d === 1 && matrix.e === 0 && matrix.f === 0;
 }
 
+async function waitForAnimations(page, selector) {
+  await page.locator(selector).evaluate(async (node) => {
+    const animations = node.getAnimations();
+    await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+  });
+}
+
 async function normalScenario() {
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
@@ -76,6 +83,7 @@ async function fallbackScenario() {
     assert.equal(await page.locator("#aktuelles .section-head").getAttribute("data-motion-reveal-engine"), null);
     await page.locator("#aktuelles .section-head").scrollIntoViewIfNeeded();
     await page.waitForFunction(() => document.querySelector("#aktuelles .section-head")?.classList.contains("is-revealed"));
+    await waitForAnimations(page, "#aktuelles .section-head");
     assert.equal(await page.locator("#aktuelles .section-head").evaluate((node) => getComputedStyle(node).opacity), "1");
     console.log("Mcello GSAP reveal vendor-fallback scenario passed.");
   } finally {
