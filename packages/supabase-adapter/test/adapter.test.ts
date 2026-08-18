@@ -15,6 +15,11 @@ const dbOrder = {
   customer_first_name: "Maxi",
   mobile: "+491701234567",
   total_cents: 900,
+  payment_mode: "pay_on_site" as const,
+  payment_method: "cash_or_card" as const,
+  payment_status: "due_on_site" as const,
+  payment_currency: "EUR",
+  payment_provider_reference: null,
   submitted_at: "2026-08-14T18:00:00.000Z",
 };
 
@@ -78,6 +83,14 @@ test("order writer persists through the server-only atomic RPC", async () => {
     requestedPickupAt: null,
     totalCents: 900,
     submittedAt: "2026-08-14T18:00:00.000Z",
+    payment: {
+      mode: "pay_on_site",
+      method: "cash_or_card",
+      status: "due_on_site",
+      currency: "EUR",
+      amountCents: 900,
+      providerReference: null,
+    },
     items: [{
       productId: "product-1",
       productNameSnapshot: "Test",
@@ -92,6 +105,7 @@ test("order writer persists through the server-only atomic RPC", async () => {
   assert.equal(order.publicToken, "token-1");
   assert.equal(order.orderNumber, 42);
   assert.equal(order.state, "waiting_for_acceptance");
+  assert.equal(order.payment?.mode, "pay_on_site");
 });
 
 test("public reader only needs the random public token", async () => {

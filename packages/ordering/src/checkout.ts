@@ -335,6 +335,7 @@ export async function submitVerifiedPickupOrder(
       mobile,
       orderId: order.id,
       statusUrl: deps.statusUrlFor(order),
+      idempotencyKey: `order:${order.id}:received`,
     }).catch(() => undefined);
   }
 

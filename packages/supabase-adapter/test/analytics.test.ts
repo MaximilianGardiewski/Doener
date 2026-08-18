@@ -5,9 +5,9 @@ import { SupabaseAnalyticsRecorder } from "../src/analytics.ts";
 test("analytics adapter keeps public events behind the server RPC", async () => {
   const calls: Array<{ name: string; args: Record<string, unknown> }> = [];
   const recorder = new SupabaseAnalyticsRecorder({
-    async rpc(name, args) {
-      calls.push({ name, args });
-      return "event-id";
+    async rpc<T>(name: string, args?: Record<string, unknown>): Promise<T> {
+      calls.push({ name, args: args ?? {} });
+      return "event-id" as T;
     },
   });
   await recorder.record({
@@ -24,7 +24,10 @@ test("analytics adapter keeps public events behind the server RPC", async () => 
 test("submitted order attribution is server-only and order-linked", async () => {
   let args: Record<string, unknown> | undefined;
   const recorder = new SupabaseAnalyticsRecorder({
-    async rpc(_name, value) { args = value; return "event-id"; },
+    async rpc<T>(_name: string, value?: Record<string, unknown>): Promise<T> {
+      args = value;
+      return "event-id" as T;
+    },
   });
   await recorder.recordOrderSubmitted(
     "10000000-0000-4000-8000-000000000003",
