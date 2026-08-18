@@ -7,7 +7,8 @@ import {
   createRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 
 import {
   LEBTIG_PUBLIC_AUTH_ROUTES,
