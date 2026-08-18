@@ -25,21 +25,23 @@ Die technische V1-Basis ist weitgehend implementiert und getestet. Die folgenden
 - keine Adresse/Telefonnummer aus einer Suchmaschine ungeprüft als Production-Wahrheit übernehmen
 - keine Testnummer oder Platzhalteradresse veröffentlichen
 
-## 2. WhatsApp-/SMS-Production-Transport
+## 2. WhatsApp-Production-Transport
+
+Mcello V1 ist **WhatsApp-only**. SMS ist weder aktiver noch Fallback-Kanal in V1.
 
 **Benötigt**
-- explizite Owner-Freigabe, dass unvermeidbare Carrier-/Providerkosten akzeptiert werden
+- explizite Owner-Freigabe, dass unvermeidbare Carrier-/Providerkosten für WhatsApp akzeptiert werden
 - gewählter bzw. freigegebener WhatsApp-Transport
-- gewählter bzw. freigegebener SMS-Fallback
 - Absender-/Business-Verifikation und notwendige Credentials ausschließlich als Secrets
 
 **Entsperrt**
-- `D003` — WhatsApp OTP primary + SMS fallback
-- `D016` — Status-/Ready-Benachrichtigungen über WhatsApp/SMS
+- `D003` — WhatsApp-Verifikation mit einmaligem Key/Code
+- `D016` — Statuslink/-updates und Ready-Benachrichtigung über WhatsApp
 
 **Sicherheitsgrenze**
-- `D064` ist VERIFIED: Ohne ausdrückliche Freigabe darf kein Paid Provider still aktiviert werden.
-- Production-Checkout bleibt bis zur realen Messaging-Konfiguration fail-closed.
+- `D064` ist VERIFIED: Ohne ausdrückliche Freigabe darf kein Paid WhatsApp Provider still aktiviert werden.
+- Mcello V1 Production-Konfiguration darf keinen SMS-Provider akzeptieren.
+- Production-Checkout bleibt bis zur realen WhatsApp-Konfiguration fail-closed.
 - Keine Provider-Secrets in Git oder Browsercode.
 
 ## 3. Menü, Preise, Zutaten, Saucen und Extras
@@ -127,5 +129,6 @@ Danach gilt weiterhin:
 - D020, D044, D052, PWA, Self-host oder KDS erneut von Grund auf bauen.
 - offene Haken mit erfundenen Business-Fakten schließen.
 - einen Messaging-Provider aus Bequemlichkeit aktivieren.
+- SMS als Mcello-V1-Fallback ergänzen oder konfigurieren.
 - finales Branding ohne Original-Logo behaupten.
 - Production deployen, nur weil die technischen Gates grün sind.
