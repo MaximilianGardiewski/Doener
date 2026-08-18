@@ -4,6 +4,8 @@ Stand: 2026-08-18
 
 Status: **governed implementation note for Homepage/Commerce motion**. This document extends D058 and the D065–D070 design rebaseline; it does not create new domain authority.
 
+GSAP migration note: `GSAP_MOTION_V3.md` + D074 are now binding for the staged motion-engine migration. The five contracts and truth/accessibility boundaries below remain authoritative until each individual V2 contract is explicitly migrated and passes its V3 gate. V3 may replace the rendering engine; it may not weaken these boundaries.
+
 ## 1. Purpose
 
 Motion makes the Mcello experience feel food-first, tactile and app-fast without turning interaction into decoration. It is progressive enhancement over the existing first-party ordering flow.
