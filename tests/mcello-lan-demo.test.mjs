@@ -123,6 +123,15 @@ test("Windows hotspot discovery does not depend on one Wi-Fi Direct adapter name
   assert.match(launcher, /-LanAddress <address>/);
 });
 
+test("LAN launcher recovers only a stale Mcello listener on port 4173 and refuses unknown processes", () => {
+  assert.match(launcher, /Get-NetTCPConnection -State Listen -LocalPort 4173/);
+  assert.match(launcher, /apps\[\\\\\/\]mcello\[\\\\\/\]run\\\.mjs/);
+  assert.match(launcher, /Stop-Process -Id \$listener\.OwningProcess -Force/);
+  assert.match(launcher, /Found stale Mcello runtime on 127\.0\.0\.1:4173/);
+  assert.match(launcher, /Port 4173 is occupied by another process/);
+  assert.match(launcher, /Repair-StaleMcelloRuntime/);
+});
+
 test("LAN firewall is temporary and restricted to the hotspot address and local subnet", () => {
   assert.match(firewall, /Mcello LAN Demo/);
   assert.match(firewall, /-LocalPort 80/);
