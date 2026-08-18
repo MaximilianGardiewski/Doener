@@ -52,20 +52,22 @@ test("Motion V3 scopes provide GSAP context and matchMedia cleanup without globa
   assert.doesNotMatch(engine, /ScrollTrigger\.killAll|globalTimeline\.clear|gsap\.killTweensOf\("\*"\)/);
 });
 
-test("V2 contracts are installed before the V3 adapter can upgrade an eligible slice", () => {
+test("V2 contracts are installed before the V3 adapter can upgrade eligible slices", () => {
   assert.match(motion, /import\("\.\/motion\/engine\.js"\)/);
   assert.match(motion, /requestIdleCallback/);
-  assert.match(motion, /data.*mcelloMotionEngine|dataset\.mcelloMotionEngine/);
+  assert.match(motion, /dataset\.mcelloMotionEngine/);
   assert.doesNotMatch(motion, /\bgsap\s*\./);
   assert.doesNotMatch(motion, /ScrollTrigger|\bFlip\b/);
 
   const reveal = motion.indexOf("const revealController = installRevealMotion();");
-  const hero = motion.indexOf("installHeroFoodDepth();");
+  const hero = motion.indexOf("const heroController = installHeroFoodDepth();");
   const commerce = motion.indexOf("installCommerceMotionContracts();");
-  const prime = motion.indexOf("scheduleMotionV3Adapter(revealController);");
+  const prime = motion.indexOf("scheduleMotionV3Adapter(revealController, heroController);");
   assert.ok(reveal >= 0 && reveal < prime);
   assert.ok(hero >= 0 && hero < prime);
   assert.ok(commerce >= 0 && commerce < prime);
+  assert.match(motion, /upgradePendingRevealsToGsap\(engine, revealController\)/);
+  assert.match(motion, /upgradeHeroDepthToGsap\(engine, heroController\)/);
 });
 
 test("Motion V3 adapter modules and vendor runtime remain part of every refreshed offline shell", () => {
