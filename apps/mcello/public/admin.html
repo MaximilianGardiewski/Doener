@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#171715" />
   <title>Mcello Admin — Speisekarte</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/operations-shell.css" />
   <style>
     .admin-shell{width:min(calc(100% - 24px),1280px);margin:auto;padding:24px 0 90px}.admin-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:20px 0}.admin-top h1{font-size:42px;margin-right:auto}
     .status-dot{width:9px;height:9px;background:var(--green);border-radius:50%;display:inline-block}.status-dot.offline{background:#b96e62}
@@ -16,7 +17,7 @@
     @media(max-width:900px){.admin-grid{grid-template-columns:1fr}.admin-top h1{font-size:34px}.form-row,.form-row.three{grid-template-columns:1fr}.panel-wide{grid-column:auto}.option-row{grid-template-columns:1fr}.toolbar input{min-width:0;width:100%}}
   </style>
 </head>
-<body>
+<body data-operations-area="admin" data-operations-role="admin">
   <div class="prototype-banner">Lokaler Adminbereich · strukturelle Änderungen nur mit Admin-Rolle</div>
   <main class="admin-shell">
     <div class="admin-top">
@@ -55,6 +56,7 @@
       </section>
     </div>
   </main>
+  <script type="module" src="/operations-shell.js"></script>
   <script type="module" src="/admin.js"></script>
 </body>
 </html>
