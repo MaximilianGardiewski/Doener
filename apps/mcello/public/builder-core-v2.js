@@ -1,3 +1,5 @@
+import "./pizza-builder-v2.js";
+
 const stylesheet = document.createElement("link");
 stylesheet.rel = "stylesheet";
 stylesheet.href = "/builder-core-v2.css";
@@ -46,9 +48,7 @@ function decorateGroups() {
     section.dataset.builderStepIndex = String(index + 1);
     section.style.setProperty("--builder-step-index", String(index + 1));
     section.querySelector(".modifier-head")?.setAttribute("data-builder-step-label", `Schritt ${index + 1}`);
-    for (const option of section.querySelectorAll(".modifier-option")) {
-      option.dataset.builderOption = "true";
-    }
+    for (const option of section.querySelectorAll(".modifier-option")) option.dataset.builderOption = "true";
   });
 }
 
@@ -87,11 +87,8 @@ decorateBuilder();
 if (groups) {
   new MutationObserver(() => {
     decorateGroups();
-    if (modalBackdrop?.classList.contains("open") && !modalBackdrop.dataset.builderOriginalSelection) {
-      queueMicrotask(captureOriginalSelection);
-    }
+    if (modalBackdrop?.classList.contains("open") && !modalBackdrop.dataset.builderOriginalSelection) queueMicrotask(captureOriginalSelection);
   }).observe(groups, { childList: true, subtree: true });
-
   groups.addEventListener("change", () => queueMicrotask(updateSelectionState));
 }
 

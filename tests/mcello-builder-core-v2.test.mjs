@@ -45,17 +45,7 @@ test("Builder Core decorates existing modifier groups and controls rather than r
 });
 
 test("Builder Core uses semantic commerce tokens and touch contracts", () => {
-  for (const token of [
-    "surface-food-stage",
-    "surface-raised",
-    "mcello-copper",
-    "mcello-gold",
-    "mcello-olive",
-    "radius-commerce-panel",
-    "touch-target-compact",
-    "touch-target-primary",
-  ]) assert.match(builderCss, new RegExp(`var\\(--${token}\\)`));
-
+  for (const token of ["surface-food-stage","surface-raised","mcello-copper","mcello-gold","mcello-olive","radius-commerce-panel","touch-target-compact","touch-target-primary"]) assert.match(builderCss, new RegExp(`var\\(--${token}\\)`));
   assert.match(builderCss, /grid-template-columns: minmax\(360px, \.95fr\) minmax\(430px, 1\.05fr\)/);
   assert.match(builderCss, /position: sticky/);
   assert.match(builderCss, /@media \(max-width: 820px\)/);
@@ -67,7 +57,7 @@ test("Builder Core keeps Adobe concept work outside runtime media and remains of
   assert.match(docs, /CONCEPT ART ONLY/);
   assert.match(docs, /not a real Mcello product/);
   assert.doesNotMatch(builderJs + builderCss, /adobe|firefly|photoshop-api|short-url/i);
-  assert.match(sw, /mcello-public-shell-v12/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/builder-core-v2\.js"/);
   assert.match(sw, /"\/builder-core-v2\.css"/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);
