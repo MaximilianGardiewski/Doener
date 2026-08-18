@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "status": "presentation-release-candidate",
+  "runtimeBaseCommit": "6bd33c504b09c5fd3ae43c6e02f8a9136d6d05d5",
+  "deployment": "not-deployed-to-production",
+  "scope": "local-private-lan-demo",
+  "deviceMatrix": {
+    "desktop": "full-builder",
+    "tablet": "landscape-only-with-portrait-gate",
+    "smartphone": "landscape-only-with-portrait-gate"
+  },
+  "pizza": {
+    "sourceId": "pizza-076",
+    "name": "Pizza Mcello",
+    "presentationIngredients": [
+      "Kebap Fleisch",
+      "Tomaten",
+      "Broccoli",
+      "Käse",
+      "Zwiebeln"
+    ],
+    "pricePolicy": "existing-domain-authority-zero-demo-deltas"
+  },
+  "donerYufka": {
+    "sourceIds": [
+      "warm-013",
+      "warm-014",
+      "warm-015",
+      "warm-016",
+      "warm-017",
+      "warm-018"
+    ],
+    "confirmedSauces": [
+      "Curry",
+      "Knoblauch",
+      "Scharf"
+    ],
+    "productionSelectionPolicy": "unconfirmed",
+    "pricePolicy": "existing-domain-authority-zero-demo-deltas"
+  },
+  "mediaTruth": "schematic-browser-generated-presentation-visuals-not-documentary-mcello-photography",
+  "presentationMode": "?presentation=mcello&reset=1",
+  "launchers": [
+    "npm run demo:mcello:win",
+    "npm run demo:mcello:lan"
+  ]
+}
