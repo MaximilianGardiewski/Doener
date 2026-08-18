@@ -109,6 +109,59 @@ function Test-McelloHealth {
   }
 }
 
+function Get-LocalRuntimeListeners {
+  return @(Get-NetTCPConnection -State Listen -LocalPort 4173 -ErrorAction SilentlyContinue |
+    Sort-Object OwningProcess -Unique)
+}
+
+function Get-ProcessDetails([int]$ProcessId) {
+  return Get-CimInstance Win32_Process -Filter "ProcessId = $ProcessId" -ErrorAction SilentlyContinue | Select-Object -First 1
+}
+
+function Test-IsMcelloRuntimeProcess($ProcessInfo) {
+  if (-not $ProcessInfo) { return $false }
+  $commandLine = [string]$ProcessInfo.CommandLine
+  return $commandLine -match 'apps[\\/]mcello[\\/]run\.mjs' -or
+    $commandLine -match 'npm(?:\.cmd)?\s+run\s+preview:mcello'
+}
+
+function Repair-StaleMcelloRuntime {
+  if (Test-McelloHealth) { return }
+
+  $listeners = @(Get-LocalRuntimeListeners)
+  if ($listeners.Count -eq 0) { return }
+
+  $unknown = @()
+  foreach ($listener in $listeners) {
+    $processInfo = Get-ProcessDetails ([int]$listener.OwningProcess)
+    if (Test-IsMcelloRuntimeProcess $processInfo) {
+      Write-Warning "Found stale Mcello runtime on 127.0.0.1:4173 (PID $($listener.OwningProcess)). Restarting it for the current local demo state."
+      Stop-Process -Id $listener.OwningProcess -Force -ErrorAction Stop
+    } else {
+      $unknown += [PSCustomObject]@{
+        ProcessId = $listener.OwningProcess
+        Name = if ($processInfo) { $processInfo.Name } else { 'unknown' }
+        CommandLine = if ($processInfo) { $processInfo.CommandLine } else { '' }
+      }
+    }
+  }
+
+  if ($unknown.Count -gt 0) {
+    Write-Host ''
+    Write-Host 'TCP 4173 is occupied by a process that is not recognized as Mcello:' -ForegroundColor Red
+    foreach ($item in $unknown) {
+      Write-Host "  PID $($item.ProcessId)  $($item.Name)  $($item.CommandLine)"
+    }
+    throw 'Port 4173 is occupied by another process. Stop that process manually before starting the Mcello LAN demo.'
+  }
+
+  foreach ($attempt in 1..20) {
+    if (@(Get-LocalRuntimeListeners).Count -eq 0) { return }
+    Start-Sleep -Milliseconds 250
+  }
+  throw 'The stale Mcello runtime was stopped, but TCP 4173 did not become free in time.'
+}
+
 function Wait-ForHotspotAddress {
   $detected = Find-HotspotAddress
   if ($detected) { return $detected }
@@ -200,6 +253,8 @@ try {
   $preferredHost = Resolve-PreferredHost -Address $LanAddress -RequestedHost $DemoHost
   $preferredBaseUrl = "http://$preferredHost"
   $directBaseUrl = "http://$LanAddress"
+
+  Repair-StaleMcelloRuntime
 
   if (-not (Test-McelloHealth)) {
     $escapedRoot = $repoRoot.Replace("'", "''")
