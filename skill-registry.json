@@ -13,6 +13,11 @@
       "path": "skills/business-web-cms-builder/SKILL.md"
     },
     {
+      "name": "gastro-ordering-experience-designer",
+      "description": "Design and implement restaurant ordering experiences where structured menu configuration becomes a visual, enjoyable, mobile-first product builder without duplicating server-authoritative pricing, availability, modifier, allergen, capacity or checkout logic.",
+      "path": "skills/gastro-ordering-experience-designer/SKILL.md"
+    },
+    {
       "name": "cms-v1-accelerator",
       "description": "Rapidly scaffold a production-oriented CMS-backed business website V1 with reusable modules, role boundaries, recurring content, media, forms, and a vertical-slice-first implementation strategy.",
       "path": "skills/cms-v1-accelerator/SKILL.md"

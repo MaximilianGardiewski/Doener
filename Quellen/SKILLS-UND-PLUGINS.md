@@ -14,6 +14,7 @@ Aktueller operativer Default für Mcello-Engineering ist: **GitHub als Source of
 |---|---|---|
 | `business-website-discovery-interviewer` | strukturiertes Discovery-Interview, bestätigte Antworten in bindende Decisions überführen | `skills/business-website-discovery-interviewer/SKILL.md` |
 | `business-web-cms-builder` | moderne CMS-backed Business-Website mit Rollen, wiederkehrenden Inhalten, Migration, SEO, Accessibility | `skills/business-web-cms-builder/SKILL.md` |
+| `gastro-ordering-experience-designer` | visuelles, mobile-first Gastro-Bestellerlebnis über bestehender server-/domainautoritativer Menu-/Modifier-/Pricing-Logik; FoodStage, Originals, Tap-first, Visual-Integrity und Visual Gates | `skills/gastro-ordering-experience-designer/SKILL.md` |
 | `cms-v1-accelerator` | schnelle, produktionsorientierte V1-Vertical-Slices für CMS-Websites | `skills/cms-v1-accelerator/SKILL.md` |
 | `legacy-web-migration-engineer` | bestehende Websites/URLs/Inhalte/Forms/SEO sauber migrieren | `skills/legacy-web-migration-engineer/SKILL.md` |
 | `multi-page-business-site-architect` | klare route-basierte Informationsarchitektur statt überladener One-Pager | `skills/multi-page-business-site-architect/SKILL.md` |
@@ -71,7 +72,7 @@ Einsatz:
 - Prototyping
 - visuelle Exploration
 
-Regel: Keine Architektur darf Lovable zum zwingenden Build-/Runtime-/Deployment-Abhängigkeitspunkt machen (`D063`). Nutzbare Ergebnisse werden ins Git-Repo überführt.
+Regel: Keine Architektur darf Lovable zum zwingenden Build-/Runtime-/Deployment-Abhängigkeitspunkt machen (`D063`, `D070`). Nutzbare Ergebnisse werden ins Git-Repo überführt.
 
 ### Visual Truth — **optionaler visueller Code-Editor**
 
@@ -109,14 +110,18 @@ Regeln:
 ### Canva / Adobe — **optionale Asset- und Content-Workflows**
 
 Einsatz:
+- Art Direction/Moodboards und Brand-Exploration
 - freigegebene Marketing-/Social-/Bildassets
 - Varianten/Retusche/Formatanpassungen
+- Photography-/Ingredient-Asset-Aufbereitung für visuelle Ordering-Flows
 
 Regeln:
 - Medienrechte, Provenienz und Content-Integrity beachten.
 - keine erfundenen „authentischen“ Mcello-Bilder oder Claims.
+- Konzept-/AI-Food darf nicht als dokumentarisch echtes Mcello-Gericht ausgegeben werden (`D068`).
 - Assets müssen in den vorgesehenen Media-/CMS-Prozess überführt werden.
 - reale Produkt-/Venue-Fotos erst nach First-Party-/Rechtefreigabe als Mcello-Realität veröffentlichen.
+- kein Adobe-/Canva-Tool wird Runtime-Pflicht (`D070`).
 
 ## Empfohlene Skill-/Tool-Kombination je Phase
 
@@ -126,6 +131,7 @@ Regeln:
 | Domain/Vertical Slice | cms-v1-accelerator, portability-architect | GitHub, Supabase |
 | DB/Auth/RLS/Storage | supabase-rls-security-auditor | Supabase, GitHub CI |
 | Public IA/Migration | multi-page architect, legacy migration | GitHub, ggf. Figma |
+| Gastro Store / Interactive Builder | gastro-ordering-experience-designer + responsive QA + content-integrity | GitHub, Figma, Adobe, ggf. Canva/Lovable/Visual Truth |
 | Visual Polish | CMS builder + responsive QA | Figma, Lovable, Visual Truth, ggf. Adobe/Canva |
 | Content Release | public-content-integrity-auditor | CMS/Media-Workflow + First-Party-Quellen |
 | Launch | web-release-launch-engineer + responsive QA | GitHub CI, Self-host Release/DB Drill, optional Preview |
@@ -138,8 +144,9 @@ Für relevante Mcello-Slices wird je nach Scope kombiniert:
 - Supabase Integration: kompletter DB-Rebuild + reale PostgREST/RPC/Auth/RLS/Realtime/Storage-Flows
 - Self-host Release: non-root/read-only Container, Health, Production-Preflight
 - Self-host DB Drill: Migration-Dry-Run sowie echter Dump/Drop/Restore-Roundtrip
+- Design-Slices: zusätzlich reale Desktop/Mobile-Screenshots, Visual Acceptance und die in `DESIGN_ACCEPTANCE.md` definierten Gates
 
-Nicht jeder reine Dokumentations-Slice braucht alle vier Gates. Runtime-/DB-/Release-Änderungen müssen aber die jeweils betroffene Gegenprobe erhalten.
+Nicht jeder reine Dokumentations-Slice braucht alle Runtime-/DB-/Release-Gates. Runtime-/DB-/Release-Änderungen müssen aber die jeweils betroffene Gegenprobe erhalten. Ein grüner technischer Test ersetzt keine visuelle Abnahme; ein schönes Mockup ersetzt keinen technischen Nachweis (`D069`).
 
 ## Nicht verhandelbare Tool-Grenzen
 
@@ -150,3 +157,4 @@ Nicht jeder reine Dokumentations-Slice braucht alle vier Gates. Runtime-/DB-/Rel
 - Keine Production-Mutation ohne explizite Freigabe.
 - Keine ungeprüften Drittquellen als Production-Business-Wahrheit.
 - Jede relevante Builder-/Agentenänderung muss zurück in Git + Tests + Dokumentation.
+- Adobe/Figma/Canva/Lovable/Visual Truth und ähnliche Design-Clients bleiben optional und dürfen keine Parallelquelle bzw. Runtime-Pflicht werden (`D070`).

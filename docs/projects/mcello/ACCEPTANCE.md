@@ -1,6 +1,6 @@
 # Mcello V1 — Acceptance Criteria
 
-Every item maps back to the binding Decision Ledger. Detailed evidence and explicit partial blockers live in `V1_EVIDENCE.md`.
+Every item maps back to the binding Decision Ledger. Detailed evidence and explicit partial blockers live in `V1_EVIDENCE.md`. Visual/detail acceptance is additionally expanded in `DESIGN_ACCEPTANCE.md`.
 
 ## Brand/Public
 - [x] Modern Warm Premium visual system (`D001`)
@@ -11,6 +11,9 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Installable browser-compatible PWA (`D060`)
 - [x] Showcase-grade motion without harming usability (`D058`)
 - [x] Public copy tone: premium/quiet + warm/personal with restrained street-food moments (`D059`)
+- [ ] Public Experience and Commerce Mode are visually distinct but use one Mcello brand system (`D067`)
+- [ ] Concept/generated/stylized imagery is never presented as documentary Mcello reality; final real media has first-party provenance/rights (`D068`)
+- [ ] Required owner visual gates and Mobile/Desktop screenshot evidence are completed (`D069`)
 
 ## Menu/Configurator
 - [ ] Structured categories/products/variants/modifier groups with owner-confirmed Mcello configuration (`D007`, `D008`)
@@ -20,6 +23,9 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Timed availability (`D051`)
 - [x] Provisional supplied menu seed with provenance + owner-confirmation flag (`D036`)
 - [x] Curated/rule-based cross-sells (`D046`)
+- [ ] Interactive `FoodStage` reflects relevant structured choices while price/availability remain domain/server authoritative (`D065`)
+- [ ] Builder is complete with Tap-only interaction; drag-and-drop is never required (`D065`)
+- [ ] Mcello Originals support `Genau so` and prefilled `Anpassen` from the actual standard recipe (`D066`)
 
 ## Ordering
 - [x] Own independent first-party ordering core; no third-party marketplace required (`D002`)
@@ -70,6 +76,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Staging/production path is reproducible on self-hosted infrastructure from Git + migrations (`D063`)
 - [x] V1 does not depend on Lovable or Vercel to build, run or deploy (`D063`)
 - [x] Production self-host plan includes TLS, secrets, firewalling, backups, restore test and monitoring (`D063`)
+- [ ] Adobe/Figma/Canva/Lovable and similar tools remain optional clients; relevant outputs return to Git/Media/CMS and no design tool becomes runtime-critical (`D070`)
 
 ## Prepared now
 - [x] Payment provider boundary (`D004`)
