@@ -19,7 +19,8 @@ try {
 
   await page.goto(`${APP_URL}/?presentation=mcello&reset=1`, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => document.body?.dataset.presentationMode === "mcello" && !location.search.includes("reset=1"));
-  assert.equal(await page.evaluate((key) => localStorage.getItem(key), CART_KEY), null, "presentation reset must clear stale browser cart state");
+  const storedCart = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || "[]"), CART_KEY);
+  assert.deepEqual(storedCart, [], "presentation reset must remove stale cart items even after the app persists its clean empty cart");
   assert.equal((await page.locator("#cartCount").textContent())?.trim(), "0 Artikel");
   assert.match(page.url(), /presentation=mcello/);
   assert.doesNotMatch(page.url(), /reset=1/);
