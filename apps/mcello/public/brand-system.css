@@ -1,0 +1,121 @@
+/*
+ * Mcello Brand System V2 — semantic compatibility layer.
+ *
+ * This file intentionally contains NO new raw hex palette. The existing
+ * contrast-tested D001 raw tokens remain in styles.css until Visual Gate B
+ * approves a calibrated palette. Homepage/Store/Builder slices can migrate
+ * to these semantic roles without duplicating color decisions.
+ *
+ * Load after styles.css when a screen begins its V2 migration.
+ */
+
+:root {
+  /* Brand foundation — aliases over the verified D001 palette. */
+  --mcello-ink: var(--ink-1000);
+  --mcello-charcoal: var(--ink-950);
+  --mcello-coal: var(--ink-800);
+  --mcello-copper: var(--amber-650);
+  --mcello-gold: var(--amber-300);
+  --mcello-olive: var(--heritage-green);
+  --mcello-cream: var(--cream-50);
+  --mcello-bread: var(--cream-100);
+  --mcello-stone: var(--cream-300);
+
+  /* Surfaces — public experience, commerce and operations can diverge safely. */
+  --surface-cinematic: var(--mcello-ink);
+  --surface-base: var(--mcello-charcoal);
+  --surface-raised: var(--mcello-coal);
+  --surface-warm: var(--mcello-cream);
+  --surface-food-stage: var(--mcello-bread);
+  --surface-operational: var(--ink-900);
+
+  /* Content roles. */
+  --content-primary: var(--mcello-cream);
+  --content-secondary: var(--mcello-stone);
+  --content-inverse: var(--mcello-ink);
+  --content-accent: var(--mcello-gold);
+  --content-fresh: var(--mcello-olive);
+  --content-danger: var(--danger-300);
+
+  /* Rules and focus. */
+  --rule-subtle: var(--line-soft);
+  --rule-warm: var(--line);
+  --rule-strong: var(--line-strong);
+  --focus-ring: var(--mcello-gold);
+
+  /* Shape language — use by role, not one universal card radius. */
+  --radius-editorial-media: var(--radius-xl);
+  --radius-commerce-panel: var(--radius-md);
+  --radius-commerce-control: var(--radius-sm);
+  --radius-operational: 10px;
+  --radius-chip: var(--radius-pill);
+
+  /* Semantic media ratios. */
+  --ratio-hero: 16 / 10;
+  --ratio-signature: 4 / 5;
+  --ratio-product: 4 / 3;
+  --ratio-ingredient: 1 / 1;
+  --ratio-gallery-wide: 16 / 9;
+  --ratio-gallery-portrait: 4 / 5;
+
+  /* Type-role aliases. Final web font selection remains Gate-B dependent. */
+  --type-family-display: var(--font-display);
+  --type-family-interface: var(--font-body);
+  --type-display-hero: clamp(3.5rem, 7.5vw, 7rem);
+  --type-display-section: clamp(2.5rem, 5vw, 4.5rem);
+  --type-display-product: clamp(2rem, 4vw, 3.4rem);
+  --type-title: clamp(1.35rem, 2vw, 1.8rem);
+  --type-body-lg: 1.125rem;
+  --type-body: 1rem;
+  --type-label: .8125rem;
+  --type-meta: .75rem;
+  --type-price: 1.25rem;
+  --type-order-number: clamp(2.5rem, 8vw, 5rem);
+
+  /* Motion roles. */
+  --motion-fast: 120ms;
+  --motion-ui: 220ms;
+  --motion-food: 320ms;
+  --motion-cinematic: 620ms;
+  --ease-standard: cubic-bezier(.2, .7, .25, 1);
+  --ease-emphasized: cubic-bezier(.16, 1, .3, 1);
+
+  /* Touch and layout guards. */
+  --touch-target-primary: 48px;
+  --touch-target-compact: 44px;
+  --content-max-editorial: 1320px;
+  --content-max-commerce: 1180px;
+  --content-max-operational: 1440px;
+}
+
+/*
+ * These attributes are structural hooks for later slices. They deliberately
+ * do not restyle the current preview yet. Their presence lets components state
+ * their experience responsibility without coupling domain logic to design.
+ */
+[data-experience-mode="public"] {
+  --experience-surface: var(--surface-cinematic);
+  --experience-content: var(--content-primary);
+  --experience-max: var(--content-max-editorial);
+}
+
+[data-experience-mode="commerce"] {
+  --experience-surface: var(--surface-base);
+  --experience-content: var(--content-primary);
+  --experience-max: var(--content-max-commerce);
+}
+
+[data-experience-mode="operations"] {
+  --experience-surface: var(--surface-operational);
+  --experience-content: var(--content-primary);
+  --experience-max: var(--content-max-operational);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-ui: 0ms;
+    --motion-food: 0ms;
+    --motion-cinematic: 0ms;
+  }
+}
