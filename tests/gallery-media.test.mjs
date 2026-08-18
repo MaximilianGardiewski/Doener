@@ -33,7 +33,7 @@ test("gallery storage remains private and admin-scoped", () => {
 });
 
 test("public gallery has an honest empty state instead of bundled demo photos", () => {
-  const gallerySection = index.match(/<section class="section" id="galerie">[\s\S]*?<\/section>/)?.[0] || "";
+  const gallerySection = index.match(/<section\b[^>]*\bid="galerie"[^>]*>[\s\S]*?<\/section>/)?.[0] || "";
   assert.match(gallerySection, /id="galleryGrid"/);
   assert.match(gallerySection, /Noch keine freigegebenen Originalmedien/);
   assert.doesNotMatch(gallerySection, /placeholder\.svg/);

@@ -8,6 +8,8 @@
   <meta name="description" content="Mcello Showcase-PWA — Entwicklungsprototyp." />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/brand-system.css" />
+  <link rel="stylesheet" href="/homepage-v2.css" />
   <style>
     .field{display:grid;gap:7px;margin-top:12px}.field span{font-size:13px;color:var(--muted)}
     .field input,.field select,.field textarea{width:100%;background:#11110f;color:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;font:inherit}
@@ -35,10 +37,10 @@
     @media(max-width:620px){.nav{gap:8px}.header-order-cta{padding:10px 12px;font-size:13px}.mobile-nav summary{padding:10px 12px}.brand strong{font-size:16px}}
   </style>
 </head>
-<body>
+<body class="mcello-public-v2" data-experience-mode="public">
   <a class="skip-link" href="#bestellen">Direkt zur Speisekarte & Bestellung</a>
   <div class="prototype-banner" id="prototypeBanner">Entwicklungsprototyp · Preise vorläufig · Originalmedien noch nicht im öffentlichen Repo</div>
-  <header class="site-header">
+  <header class="site-header site-header-v2">
     <div class="shell nav">
       <a class="brand" href="#start" aria-label="Mcello Start"><div class="brand-mark">M</div><div><strong>MCELLO</strong><span>Kebap · Pizza · Bistro</span></div></a>
       <nav class="nav-links" aria-label="Hauptnavigation"><a href="#start">Start</a><a href="#bestellen">Speisekarte & Bestellen</a><a href="#ueber">Über Mcello</a><a href="#aktuelles">Aktuelles & Events</a><a href="#galerie">Galerie</a><a href="#kontakt">Kontakt & Anfahrt</a></nav>
@@ -58,18 +60,18 @@
     </div>
   </header>
   <main>
-    <section class="shell hero" id="start">
-      <div class="hero-copy">
+    <section class="shell hero hero-v2" id="start" data-experience-mode="public">
+      <div class="hero-copy hero-copy-v2">
         <div class="kicker">Bad Krozingen · Lokal zuerst</div>
-        <h1>Warm. Echt. <em>Mcello.</em></h1>
+        <h1><span>Warm.</span><span>Echt. <em>Mcello.</em></span></h1>
         <p>Bistro-Atmosphäre, Qualität und Community — digital so direkt wie an der Theke. Der Showcase verbindet Premium-Branding mit einem strukturierten Bestell- und Küchenfluss.</p>
-        <div class="hero-actions"><a class="primary" href="#bestellen" data-order-cta>Speisekarte entdecken</a><a class="pill" href="#ueber">Das Lokal erleben</a></div>
+        <div class="hero-actions"><a class="primary" href="#bestellen" data-order-cta>Speisekarte entdecken</a><a class="pill" href="#ueber">Mcello entdecken</a></div>
         <div class="meta-row"><span><strong>V1</strong> Abholung + Vorbestellung</span><span><strong>PWA</strong> Browser & Homescreen</span><span><strong>KDS</strong> Live für die Theke</span></div>
       </div>
-      <div class="hero-media"><img class="hero-photo" src="/media/placeholder.svg" alt="" /><div class="float-card"><small>Media Layer</small><strong>Freigegebene Mcello-Fotos kommen aus CMS/Storage.</strong></div></div>
+      <div class="hero-media hero-media-v2"><img class="hero-photo" src="/media/placeholder.svg" alt="" /><div class="float-card"><small>Media Layer</small><strong>Freigegebene Mcello-Fotos kommen aus CMS/Storage.</strong></div></div>
     </section>
 
-    <section class="section" id="bestellen">
+    <section class="section store-stage" id="bestellen" data-experience-mode="commerce">
       <div class="shell">
         <div class="section-head"><div><div class="kicker">Speisekarte & Bestellen</div><h2>App-schnell. Bistro-echt.</h2></div><p id="menuSourceText">Produkte und Preise sind aus bereitgestelltem Material vorläufig erfasst und bleiben bis zur Inhaber-Freigabe als unbestätigt markiert.</p></div>
         <div class="category-rail" id="categoryRail"></div>
@@ -78,10 +80,10 @@
       </div>
     </section>
 
-    <section class="section" id="ueber"><div class="shell two-col"><article class="story-card"><img src="/media/placeholder.svg" alt="" /><div class="story-copy"><div class="kicker">Das Lokal</div><h3>Mehr Treffpunkt als Bestellseite.</h3><p>Mcello wird als lokaler Ort mit Persönlichkeit, Atmosphäre und Auswahl inszeniert. Das Bestellsystem ist technisch stark, aber nicht die ganze Marke.</p></div></article><article class="story-card"><img src="/media/placeholder.svg" alt="" /><div class="story-copy"><div class="kicker">Qualität & Auswahl</div><h3>Food, Bistro, frische Säfte.</h3><p>Konkrete Claims und Originalmedien werden erst nach Freigabe aus dem CMS ausgespielt.</p></div></article></div></section>
-    <section class="section" id="aktuelles"><div class="shell"><div class="section-head"><div><div class="kicker">Aktuelles & Events</div><h2>Mcello passiert vor Ort.</h2></div><p>Veröffentlichte News, Events, Specials und Presse werden hier aus dem CMS ausgespielt.</p></div><div class="news-stack" id="newsStack"><div class="notice">Aktuell sind keine veröffentlichten Meldungen hinterlegt.</div></div></div></section>
-    <section class="section" id="galerie"><div class="shell"><div class="section-head"><div><div class="kicker">Galerie</div><h2>Echte Medien, sauber verwaltet.</h2></div><p>Food · Lokal · Team · Events. Hier erscheinen ausschließlich freigegebene Originalmedien mit bestätigten Bildrechten.</p></div><div class="gallery" id="galleryGrid"><div class="notice">Noch keine freigegebenen Originalmedien hinterlegt.</div></div></div></section>
-    <section class="section" id="kontakt"><div class="shell"><div class="section-head"><div><div class="kicker">Kontakt & Anfahrt</div><h2>Direkt zu Mcello.</h2></div><p>Adresse, Telefon, WhatsApp und Öffnungszeiten werden als dynamische Business-Daten gepflegt und vor Veröffentlichung bestätigt.</p></div><div class="story-card story-copy"><h3>Bad Krozingen</h3><p>Kontakt- und Öffnungsdaten werden first-party bestätigt, bevor Route/Telefon/WhatsApp öffentlich verdrahtet werden.</p><div class="hero-actions"><a class="pill" href="#bestellen">Speisekarte</a></div></div></div></section>
+    <section class="section venue-stage" id="ueber" data-experience-mode="public"><div class="shell two-col"><article class="story-card"><img src="/media/placeholder.svg" alt="" /><div class="story-copy"><div class="kicker">Das Lokal</div><h3>Mehr Treffpunkt als Bestellseite.</h3><p>Mcello wird als lokaler Ort mit Persönlichkeit, Atmosphäre und Auswahl inszeniert. Das Bestellsystem ist technisch stark, aber nicht die ganze Marke.</p></div></article><article class="story-card"><img src="/media/placeholder.svg" alt="" /><div class="story-copy"><div class="kicker">Qualität & Auswahl</div><h3>Food, Bistro, frische Säfte.</h3><p>Konkrete Claims und Originalmedien werden erst nach Freigabe aus dem CMS ausgespielt.</p></div></article></div></section>
+    <section class="section news-stage" id="aktuelles" data-experience-mode="public"><div class="shell"><div class="section-head"><div><div class="kicker">Aktuelles & Events</div><h2>Mcello passiert vor Ort.</h2></div><p>Veröffentlichte News, Events, Specials und Presse werden hier aus dem CMS ausgespielt.</p></div><div class="news-stack" id="newsStack"><div class="notice">Aktuell sind keine veröffentlichten Meldungen hinterlegt.</div></div></div></section>
+    <section class="section gallery-stage" id="galerie" data-experience-mode="public"><div class="shell"><div class="section-head"><div><div class="kicker">Galerie</div><h2>Echte Medien, sauber verwaltet.</h2></div><p>Food · Lokal · Team · Events. Hier erscheinen ausschließlich freigegebene Originalmedien mit bestätigten Bildrechten.</p></div><div class="gallery" id="galleryGrid"><div class="notice">Noch keine freigegebenen Originalmedien hinterlegt.</div></div></div></section>
+    <section class="section contact-stage" id="kontakt" data-experience-mode="public"><div class="shell"><div class="section-head"><div><div class="kicker">Kontakt & Anfahrt</div><h2>Direkt zu Mcello.</h2></div><p>Adresse, Telefon, WhatsApp und Öffnungszeiten werden als dynamische Business-Daten gepflegt und vor Veröffentlichung bestätigt.</p></div><div class="story-card story-copy"><h3>Bad Krozingen</h3><p>Kontakt- und Öffnungsdaten werden first-party bestätigt, bevor Route/Telefon/WhatsApp öffentlich verdrahtet werden.</p><div class="hero-actions"><a class="pill" href="#bestellen">Speisekarte</a></div></div></div></section>
   </main>
 
   <footer class="footer"><div class="shell footer-grid"><div class="brand"><div class="brand-mark">M</div><div><strong>MCELLO</strong><span>Showcase Preview</span></div></div><div><strong>Operativ</strong><p><a href="/kds.html">KDS Preview</a><br /><a href="/status.html">Bestellstatus</a></p></div></div></footer>

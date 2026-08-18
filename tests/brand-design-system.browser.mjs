@@ -4,6 +4,14 @@ import { chromium } from "playwright";
 const baseUrl = process.env.MCELLO_PREVIEW_URL || "http://127.0.0.1:4173";
 const browser = await chromium.launch({ headless: true });
 
+function alphaFromComputedColor(value) {
+  const slashAlpha = value.match(/\/\s*([0-9]*\.?[0-9]+)\s*\)$/);
+  if (slashAlpha) return Number(slashAlpha[1]);
+  const rgbaAlpha = value.match(/^rgba\([^)]*,\s*([0-9]*\.?[0-9]+)\s*\)$/i);
+  if (rgbaAlpha) return Number(rgbaAlpha[1]);
+  return 1;
+}
+
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await page.goto(baseUrl, { waitUntil: "networkidle" });
@@ -34,7 +42,7 @@ try {
     const heading = getComputedStyle(document.querySelector("h1"));
     const primary = getComputedStyle(document.querySelector(".hero .primary"));
     const heroPhoto = getComputedStyle(document.querySelector(".hero-photo"));
-    const story = getComputedStyle(document.querySelector(".story-card"));
+    const story = getComputedStyle(document.querySelector(".contact-stage .story-card"));
     const tag = getComputedStyle(document.querySelector(".tag"));
     return {
       bodyBackground: body.backgroundImage,
@@ -49,12 +57,14 @@ try {
   });
 
   assert.match(visualContract.bodyBackground, /radial-gradient/i, "warm ambient background must render");
-  assert.match(visualContract.headerBackground, /rgba?\(/i, "header must render as an anthracite glass surface");
+  assert.match(visualContract.headerBackground, /^(?:rgba?\(|color\(srgb\b)/i, "header must render as a resolved anthracite color");
+  const headerAlpha = alphaFromComputedColor(visualContract.headerBackground);
+  assert.ok(headerAlpha > 0 && headerAlpha < 1, "header glass surface must retain real translucency");
   assert.match(visualContract.headingFamily, /Iowan Old Style|Palatino|Book Antiqua|Georgia/i, "display typography must use the premium serif stack");
   assert.match(visualContract.primaryBackground, /linear-gradient/i, "primary CTA must render the amber gradient");
   assert.equal(visualContract.primaryRadius, "999px", "primary CTA must keep pill geometry");
   assert.equal(visualContract.heroRadius, "42px", "hero media must use the large premium radius");
-  assert.equal(visualContract.storyRadius, "30px", "story cards must retain the premium rounded surface");
+  assert.equal(visualContract.storyRadius, "30px", "rounded editorial panels must retain the premium surface radius where the V2 layout calls for them");
   assert.equal(visualContract.tagColor, "rgb(141, 184, 93)", "green must be used selectively for small semantic labels");
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
