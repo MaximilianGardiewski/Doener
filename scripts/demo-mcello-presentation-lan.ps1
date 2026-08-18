@@ -59,7 +59,7 @@ foreach ($view in $hostViews) {
   Write-Host ("  {0,-30} {1}" -f $view.Name, $view.Url)
 }
 Write-Host ''
-Write-Host 'Smartphone/Tablet Builder: Querformat. Hochformat zeigt die Rotate-Gate, Auswahl bleibt erhalten.' -ForegroundColor DarkGray
+Write-Host 'Smartphone/Tablet Builder: landscape-only / Querformat. Hochformat zeigt die Rotate-Gate, Auswahl bleibt erhalten.' -ForegroundColor DarkGray
 Write-Host 'Der Demo-Stack bleibt lokal/disposable. Die spätere Produktion bleibt VPS/Dedicated.' -ForegroundColor DarkGray
 
 if (-not $NoOpenHostViews) {
