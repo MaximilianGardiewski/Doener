@@ -11,7 +11,7 @@ const docs = await readFile(new URL("docs/projects/mcello/STORE_V2.md", root), "
 
 test("Store V2 is loaded as a presentation layer over the existing ordering UI", () => {
   assert.match(publicContent, /import "\.\/store-v2\.js";/);
-  assert.match(js, /data\.mcelloStoreV2/);
+  assert.match(js, /dataset\.mcelloStoreV2/);
   assert.match(js, /href = "\/store-v2\.css"/);
   assert.match(js, /data-store-version/);
   assert.match(js, /MutationObserver/);
