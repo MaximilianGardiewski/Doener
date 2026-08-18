@@ -1,4 +1,4 @@
-const CACHE = "mcello-public-shell-v20";
+const CACHE = "mcello-public-shell-v21";
 const APP_SHELL = [
   "/", "/styles.css", "/brand-system.css", "/homepage-v2.css", "/app.js",
   "/public-content.js", "/presentation-mode.js", "/presentation-mode.css", "/public-copy.js", "/placeholder-media.js", "/homepage-composition.js",
@@ -6,6 +6,7 @@ const APP_SHELL = [
   "/builder-core-v2.js", "/builder-core-v2.css", "/pizza-builder-v2.js", "/pizza-builder-v2.css",
   "/doner-yufka-builder-v2.js", "/doner-yufka-builder-v2.css",
   "/operations-shell.js", "/operations-shell.css",
+  "/handbook.html", "/handbook.js", "/handbook.css", "/handbook/shared.md", "/handbook/staff.md", "/handbook/admin.md",
   "/manifest.webmanifest", "/media/placeholder.svg", "/icons/pwa-192.png", "/icons/pwa-512.png",
 ];
 
@@ -22,7 +23,10 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/rest/") || url.pathname.startsWith("/auth/") || url.pathname.startsWith("/storage/")) return;
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).catch(async () => (await caches.match("/")) || Response.error()));
+    event.respondWith(fetch(request).catch(async () => {
+      if (url.pathname === "/handbook.html") return (await caches.match("/handbook.html")) || Response.error();
+      return (await caches.match("/")) || Response.error();
+    }));
     return;
   }
   if (APP_SHELL.includes(url.pathname)) event.respondWith(caches.match(request).then((cached) => cached || fetch(request)));
