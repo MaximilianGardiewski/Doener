@@ -19,15 +19,20 @@ Der Launcher:
 1. baut den lokalen Supabase-Stack frisch aus den Repo-Migrationen auf,
 2. importiert das vorläufige Mcello-Menü,
 3. erzeugt zufällige lokale Admin-/KDS-Zugänge ausschließlich in `.env.local`,
-4. startet die Mcello-Preview in einem eigenen PowerShell-Fenster,
-5. wartet auf einen echten Healthcheck mit lokalem Supabase und KDS-Staff,
-6. öffnet Kundenansicht und KDS automatisch.
+4. setzt **nur auf der geprüften Loopback-Supabase-Instanz** den Shop für die Demo auf `force_open`,
+5. startet die Mcello-Preview in einem eigenen PowerShell-Fenster,
+6. wartet auf einen echten Healthcheck mit lokalem Supabase und KDS-Staff,
+7. öffnet Kundenansicht und KDS automatisch.
 
-Für einen bereits vorbereiteten Stack kann optional verwendet werden:
+Die Demo-Vorbereitung verweigert Nicht-Loopback-Supabase-URLs und verwendet den lokalen Admin-Login statt eines Service-Role-Schreibzugriffs. Sie kann damit nicht versehentlich einen entfernten/Production-Shop auf `force_open` setzen.
+
+Für einen bereits vorbereiteten lokalen Stack kann optional verwendet werden:
 
 ```powershell
 pwsh -NoProfile -File scripts/demo-mcello.ps1 -ReuseLocalBackend
 ```
+
+Auch in diesem Modus wird vor dem Start erneut geprüft, dass die Supabase-URL lokal ist, bevor `force_open` gesetzt wird.
 
 Ohne automatisches Browser-Öffnen:
 
@@ -76,7 +81,7 @@ Zeigen:
 - 15-Minuten-Kapazitätslogik,
 - Öffnungs-/Pause-/Rush-/Cutoff-Grenzen.
 
-Für die Präsentation setzt der lokale Testpfad den Shop kontrolliert offen. Das ist keine Production-Konfiguration.
+Für die Präsentation setzt der Launcher ausschließlich den **disposable localhost-Stack** kontrolliert auf `force_open`. Das ist keine Production-Konfiguration und verändert den eigentlichen Öffnungsplan nicht.
 
 ### 4. WhatsApp-Key
 

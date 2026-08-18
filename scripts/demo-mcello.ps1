@@ -48,6 +48,9 @@ try {
     Write-Host 'Reusing the existing local backend state.' -ForegroundColor Cyan
   }
 
+  Write-Host 'Preparing localhost-only presentation shop state...' -ForegroundColor Cyan
+  node scripts/prepare-mcello-demo.mjs
+
   if (-not (Test-McelloHealth)) {
     $escapedRoot = $repoRoot.Replace("'", "''")
     $previewCommand = "Set-Location -LiteralPath '$escapedRoot'; npm run preview:mcello"
@@ -85,6 +88,7 @@ try {
   Write-Host "Ops:      $opsUrl"
   Write-Host "Admin:    $adminUrl"
   Write-Host ''
+  Write-Host 'Local presentation shop state: force_open. This applies only to the disposable localhost Supabase stack.'
   Write-Host 'Recommended presentation: Customer page -> order -> WhatsApp DEV key -> KDS accept -> Ready -> customer status.'
   Write-Host 'The local DEV key is shown in the checkout. It does not send a real WhatsApp message and never falls back to SMS.'
   Write-Host ''

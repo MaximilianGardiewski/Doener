@@ -5,8 +5,11 @@ on:
     paths:
       - "apps/mcello/**"
       - "tests/mcello-demo-flow.browser.mjs"
+      - "tests/mcello-demo-preparation.test.mjs"
       - "scripts/bootstrap-local-staff.mjs"
       - "scripts/import-provisional-menu.mjs"
+      - "scripts/prepare-mcello-demo.mjs"
+      - "scripts/demo-mcello.ps1"
       - "data/mcello/menu-seed.provisional.json"
       - "supabase/**"
       - ".github/workflows/mcello-demo-diagnostics.yml"
@@ -49,8 +52,12 @@ jobs:
             --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
             | sed -E 's/^([^=]+)="(.*)"$/\1=\2/' \
             > .env.local
+          echo 'MCELLO_LOCATION_ID=00000000-0000-4000-8000-000000000001' >> .env.local
           node scripts/bootstrap-local-staff.mjs
           node scripts/import-provisional-menu.mjs
+
+      - name: Prove localhost-only presentation shop preparation
+        run: node scripts/prepare-mcello-demo.mjs
 
       - name: Install Chromium
         timeout-minutes: 6
