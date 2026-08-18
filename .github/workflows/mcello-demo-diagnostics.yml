@@ -52,6 +52,7 @@ jobs:
             --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
             | sed -E 's/^([^=]+)="(.*)"$/\1=\2/' \
             > .env.local
+          echo 'MCELLO_LOCATION_ID=00000000-0000-4000-8000-000000000001' >> .env.local
           node scripts/bootstrap-local-staff.mjs
           node scripts/import-provisional-menu.mjs
 
