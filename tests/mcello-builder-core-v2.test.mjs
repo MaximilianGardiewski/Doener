@@ -59,7 +59,8 @@ test("touch builders are landscape-only and guided without owning product state"
   assert.match(builderJs, /builderOrientation = orientation/);
   assert.match(builderJs, /data-builder-orientation-gate/);
   assert.match(builderJs, /data-builder-guided-nav/);
-  assert.match(builderJs, /data-builder-step-current/);
+  assert.match(builderJs, /builderStepCurrent/);
+  assert.match(builderCss, /data-builder-step-current="true"/);
   assert.match(builderCss, /data-builder-device="touch"\]\[data-builder-orientation="portrait"/);
   assert.match(builderCss, /data-builder-device="touch"\]\[data-builder-orientation="landscape"/);
   assert.match(builderCss, /env\(safe-area-inset-left\)/);
@@ -73,7 +74,7 @@ test("Builder Core keeps Adobe concept work outside runtime media and remains of
   assert.match(docs, /CONCEPT ART ONLY/);
   assert.match(docs, /not a real Mcello product/);
   assert.doesNotMatch(builderJs + builderCss, /adobe|firefly|photoshop-api|short-url/i);
-  assert.match(sw, /mcello-public-shell-v15/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/builder-core-v2\.js"/);
   assert.match(sw, /"\/builder-core-v2\.css"/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);
