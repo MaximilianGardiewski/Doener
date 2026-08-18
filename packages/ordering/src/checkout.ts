@@ -79,21 +79,15 @@ export interface CatalogReader {
   isProductAvailable(productId: string, at: string): Promise<boolean>;
 }
 
-export interface ShopStateReader {
+export interface ShopReader {
   getShopState(locationId: string, at: string): Promise<ShopStatusInput>;
 }
 
 export interface SlotReader {
-  getSlotCapacity(locationId: string, pickupAt: string, excludeOrderId?: string): Promise<{
+  getSlotCapacity(locationId: string, pickupAt: string, options?: { excludeOrderId?: string }): Promise<{
     capacity: number;
     acceptedOrderCount: number;
   }>;
-}
-
-export interface PickupPreparationDependencies {
-  catalog: CatalogReader;
-  shop: ShopStateReader;
-  slots: SlotReader;
 }
 
 export interface OrderWriter {
@@ -105,7 +99,7 @@ export interface OrderWriter {
     customerFirstName: string;
     mobile: string;
     comment?: string;
-    requestedPickupAt?: string | null;
+    requestedPickupAt: string | null;
     totalCents: number;
     submittedAt: string;
     payment: PaymentSnapshot;
@@ -113,12 +107,15 @@ export interface OrderWriter {
   }): Promise<Order>;
 }
 
-export interface CheckoutDependencies extends PickupPreparationDependencies {
+export interface CheckoutDependencies {
   otp: OtpProvider;
+  catalog: CatalogReader;
+  shop: ShopReader;
+  slots: SlotReader;
   orders: OrderWriter;
+  notifications?: OrderNotificationProvider;
   fulfillment?: FulfillmentPolicy;
   payments?: PaymentPolicy;
-  notifications?: OrderNotificationProvider;
   statusUrlFor(order: Order): string;
 }
 
@@ -126,125 +123,94 @@ export class CheckoutError extends Error {
   readonly code:
     | "INVALID_CUSTOMER"
     | "EMPTY_CART"
-    | "FULFILLMENT_NOT_AVAILABLE"
     | "OTP_FAILED"
+    | "FULFILLMENT_NOT_AVAILABLE"
+    | "PAYMENT_NOT_AVAILABLE"
     | "SHOP_NOT_ACCEPTING"
-    | "INVALID_PICKUP_TIME"
-    | "PRODUCT_NOT_FOUND"
-    | "PRODUCT_UNAVAILABLE"
+    | "PRODUCT_NOT_AVAILABLE"
     | "INVALID_CONFIGURATION"
-    | "SLOT_FULL"
-    | "PAYMENT_NOT_AVAILABLE";
+    | "INVALID_QUANTITY"
+    | "INVALID_PICKUP_TIME"
+    | "SLOT_FULL";
 
-  constructor(
-    code:
-      | "INVALID_CUSTOMER"
-      | "EMPTY_CART"
-      | "FULFILLMENT_NOT_AVAILABLE"
-      | "OTP_FAILED"
-      | "SHOP_NOT_ACCEPTING"
-      | "INVALID_PICKUP_TIME"
-      | "PRODUCT_NOT_FOUND"
-      | "PRODUCT_UNAVAILABLE"
-      | "INVALID_CONFIGURATION"
-      | "SLOT_FULL"
-      | "PAYMENT_NOT_AVAILABLE",
-    message: string,
-  ) {
+  constructor(code: CheckoutError["code"], message: string) {
     super(message);
     this.name = "CheckoutError";
     this.code = code;
   }
 }
 
-function normalizeName(value: string): string {
-  return value.trim().replace(/\s+/g, " ");
-}
-
-function normalizeMobile(value: string): string {
-  return value.replace(/[\s()-]/g, "").trim();
-}
-
-function validateCustomer(firstName: string, mobile: string): void {
-  if (firstName.length < 1 || firstName.length > 80) {
-    throw new CheckoutError("INVALID_CUSTOMER", "Vorname ist erforderlich.");
+function assertCustomer(firstName: string, mobile: string) {
+  if (!firstName || firstName.length > 80) {
+    throw new CheckoutError("INVALID_CUSTOMER", "Vorname fehlt oder ist zu lang.");
   }
-  if (!/^\+?[0-9]{7,18}$/.test(mobile)) {
+  if (!/^\+?[0-9][0-9\s/-]{6,24}$/.test(mobile)) {
     throw new CheckoutError("INVALID_CUSTOMER", "Mobilnummer ist ungültig.");
   }
 }
 
-function validateCartShape(cart: readonly CheckoutCartLine[]): void {
-  if (cart.length === 0 || cart.some((line) => line.quantity < 1 || line.quantity > 99)) {
-    throw new CheckoutError("EMPTY_CART", "Warenkorb ist leer oder ungültig.");
-  }
+function assertCart(cart: CheckoutCartLine[]) {
+  if (!cart.length) throw new CheckoutError("EMPTY_CART", "Warenkorb ist leer.");
 }
 
-/**
- * Shared authoritative application preparation for both initial checkout and
- * token-scoped pre-accept edits. PostgreSQL independently revalidates the same
- * persistence invariants inside its transaction.
- */
+function safePickupTime(requestedPickupAt: string | null | undefined, nowIso: string): string | null {
+  if (!requestedPickupAt) return null;
+  const pickup = Date.parse(requestedPickupAt);
+  const now = Date.parse(nowIso);
+  if (!Number.isFinite(pickup) || pickup <= now) {
+    throw new CheckoutError("INVALID_PICKUP_TIME", "Abholzeit muss in der Zukunft liegen.");
+  }
+  return new Date(pickup).toISOString();
+}
+
+function configuredShopAcceptsOrders(input: ShopStatusInput) {
+  const state = resolveShopCapabilities(input);
+  return state.canSubmitOrder;
+}
+
 export async function preparePickupOrderDraft(
   request: PickupDraftRequest,
-  deps: PickupPreparationDependencies,
+  deps: Pick<CheckoutDependencies, "catalog" | "shop" | "slots">,
   nowIso = new Date().toISOString(),
 ): Promise<PreparedPickupOrderDraft> {
-  validateCartShape(request.cart);
-
-  const shopInput = await deps.shop.getShopState(request.locationId, nowIso);
-  const shop = resolveShopCapabilities(shopInput);
-  if (!shop.canSubmitOrder) {
-    throw new CheckoutError(
-      "SHOP_NOT_ACCEPTING",
-      `Online-Bestellungen sind aktuell nicht möglich (${shop.reason}).`,
-    );
+  assertCart(request.cart);
+  const pickupAt = safePickupTime(request.requestedPickupAt, nowIso);
+  const evaluationAt = pickupAt ?? nowIso;
+  const shopState = await deps.shop.getShopState(request.locationId, evaluationAt);
+  if (!configuredShopAcceptsOrders(shopState)) {
+    throw new CheckoutError("SHOP_NOT_ACCEPTING", "Online-Bestellungen sind aktuell nicht möglich.");
   }
 
-  const requestedPickupAt = request.requestedPickupAt ?? null;
-  const availabilityAt = requestedPickupAt ?? nowIso;
-  if (requestedPickupAt) {
-    const pickupEpoch = Date.parse(requestedPickupAt);
-    const nowEpoch = Date.parse(nowIso);
-    if (!Number.isFinite(pickupEpoch) || pickupEpoch <= nowEpoch) {
-      throw new CheckoutError("INVALID_PICKUP_TIME", "Der gewünschte Abholzeitpunkt muss in der Zukunft liegen.");
-    }
-
-    const futureShop = resolveShopCapabilities(
-      await deps.shop.getShopState(request.locationId, requestedPickupAt),
-    );
-    if (!futureShop.canSubmitOrder) {
-      throw new CheckoutError(
-        "INVALID_PICKUP_TIME",
-        "Der gewünschte Abholzeitpunkt liegt außerhalb der verfügbaren Bestellzeit.",
-      );
-    }
-
-    const slot = await deps.slots.getSlotCapacity(
-      request.locationId,
-      requestedPickupAt,
-      request.excludeOrderId,
-    );
-    if (!hasSlotCapacity(slot)) {
-      throw new CheckoutError("SLOT_FULL", "Der gewünschte Abholslot ist ausgelastet.");
+  if (pickupAt) {
+    const slot = await deps.slots.getSlotCapacity(request.locationId, pickupAt, {
+      excludeOrderId: request.excludeOrderId,
+    });
+    if (!hasSlotCapacity(slot.capacity, slot.acceptedOrderCount)) {
+      throw new CheckoutError("SLOT_FULL", "Der gewünschte Abholslot ist voll.");
     }
   }
 
   let totalCents = 0;
   const items: PreparedPickupOrderItem[] = [];
-
   for (const line of request.cart) {
-    const product = await deps.catalog.getProduct(line.productId, availabilityAt);
-    if (!product) {
-      throw new CheckoutError("PRODUCT_NOT_FOUND", `Produkt ${line.productId} wurde nicht gefunden.`);
+    if (!Number.isSafeInteger(line.quantity) || line.quantity < 1 || line.quantity > 50) {
+      throw new CheckoutError("INVALID_QUANTITY", "Ungültige Menge.");
     }
-    if (product.soldOut || !(await deps.catalog.isProductAvailable(product.id, availabilityAt))) {
-      throw new CheckoutError("PRODUCT_UNAVAILABLE", `${product.name} ist zum Abholzeitpunkt nicht verfügbar.`);
+    const product = await deps.catalog.getProduct(line.productId, evaluationAt);
+    if (!product || !product.orderableOnline) {
+      throw new CheckoutError("PRODUCT_NOT_AVAILABLE", "Produkt ist online nicht bestellbar.");
+    }
+    if (!(await deps.catalog.isProductAvailable(product.id, evaluationAt))) {
+      throw new CheckoutError("PRODUCT_NOT_AVAILABLE", "Produkt ist aktuell nicht verfügbar.");
     }
 
-    const config = validateConfiguration(product, line.selections);
-    if (!config.valid) {
-      throw new CheckoutError("INVALID_CONFIGURATION", config.errors.join(" "));
+    try {
+      validateConfiguration(product, line.selections);
+    } catch (error) {
+      throw new CheckoutError(
+        "INVALID_CONFIGURATION",
+        error instanceof Error ? error.message : "Ungültige Konfiguration.",
+      );
     }
 
     const unitPriceCents = calculateConfiguredPriceCents(product, line.selections);
@@ -258,14 +224,14 @@ export async function preparePickupOrderDraft(
       lineTotalCents,
       effortWeightSnapshot: product.effortWeight,
       selections: line.selections,
-      comment: line.comment?.trim() || undefined,
+      comment: line.comment,
     });
   }
 
   return {
     locationId: request.locationId,
-    comment: request.comment?.trim() || undefined,
-    requestedPickupAt,
+    comment: request.comment,
+    requestedPickupAt: pickupAt,
     totalCents,
     items,
   };
@@ -276,14 +242,14 @@ export async function submitVerifiedPickupOrder(
   deps: CheckoutDependencies,
   nowIso = new Date().toISOString(),
 ): Promise<Order> {
-  const firstName = normalizeName(request.firstName);
-  const mobile = normalizeMobile(request.mobile);
-  validateCustomer(firstName, mobile);
-  validateCartShape(request.cart);
+  const firstName = request.firstName.trim();
+  const mobile = request.mobile.trim();
+  assertCustomer(firstName, mobile);
+  assertCart(request.cart);
 
   let fulfillment;
   try {
-    fulfillment = await (deps.fulfillment ?? new PickupOnlyFulfillmentPolicy()).prepare({
+    fulfillment = await (deps.fulfillment ?? new PickupOnlyFulfillmentPolicy()).resolve({
       requestedType: request.fulfillmentType,
     });
   } catch (error) {
@@ -335,6 +301,7 @@ export async function submitVerifiedPickupOrder(
       mobile,
       orderId: order.id,
       statusUrl: deps.statusUrlFor(order),
+      idempotencyKey: `order:${order.id}:received`,
     }).catch(() => undefined);
   }
 
