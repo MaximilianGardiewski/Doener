@@ -112,6 +112,26 @@ test("LAN launcher keeps the application and mutation boundary local while expos
   assert.doesNotMatch(launcher, /SMS_PROVIDER\s*=/i);
 });
 
+test("Windows hotspot discovery does not depend on one Wi-Fi Direct adapter name", () => {
+  assert.match(launcher, /Get-PrivateIPv4Candidates/);
+  assert.match(launcher, /IPAddress -eq '192\.168\.137\.1'/);
+  assert.match(launcher, /Wi-\?Fi Direct\|Mobile Hotspot\|Hosted Network/);
+  assert.match(launcher, /Local Area Connection\\\*/);
+  assert.match(launcher, /Lokale Verbindung\\\*/);
+  assert.match(launcher, /Get-NetRoute/);
+  assert.match(launcher, /Show-PrivateIPv4Candidates/);
+  assert.match(launcher, /-LanAddress <address>/);
+});
+
+test("LAN launcher recovers only a stale Mcello listener on port 4173 and refuses unknown processes", () => {
+  assert.match(launcher, /Get-NetTCPConnection -State Listen -LocalPort 4173/);
+  assert.match(launcher, /apps\[\\\\\/\]mcello\[\\\\\/\]run\\\.mjs/);
+  assert.match(launcher, /Stop-Process -Id \$listener\.OwningProcess -Force/);
+  assert.match(launcher, /Found stale Mcello runtime on 127\.0\.0\.1:4173/);
+  assert.match(launcher, /Port 4173 is occupied by another process/);
+  assert.match(launcher, /Repair-StaleMcelloRuntime/);
+});
+
 test("LAN firewall is temporary and restricted to the hotspot address and local subnet", () => {
   assert.match(firewall, /Mcello LAN Demo/);
   assert.match(firewall, /-LocalPort 80/);
