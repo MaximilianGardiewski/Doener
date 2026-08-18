@@ -4,6 +4,25 @@ const RESET_PARAM = "reset";
 const CART_KEY = "mcello-preview-cart-v2";
 const loopbackHosts = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
 
+function isPrivateIpv4(hostname) {
+  const octets = hostname.split(".").map(Number);
+  if (octets.length !== 4 || octets.some((value) => !Number.isInteger(value) || value < 0 || value > 255)) return false;
+  return octets[0] === 10
+    || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31)
+    || (octets[0] === 192 && octets[1] === 168);
+}
+
+function isPrivateSslipHost(hostname) {
+  const match = hostname.match(/(?:^|\.)(10-\d{1,3}-\d{1,3}-\d{1,3}|192-168-\d{1,3}-\d{1,3}|172-(?:1[6-9]|2\d|3[01])-\d{1,3}-\d{1,3})\.sslip\.io$/i);
+  return Boolean(match);
+}
+
+function isPresentationOrigin() {
+  const hostname = window.location.hostname;
+  return window.location.protocol === "http:"
+    && (loopbackHosts.has(hostname) || isPrivateIpv4(hostname) || isPrivateSslipHost(hostname));
+}
+
 function presentationUrl({ reset = false } = {}) {
   const url = new URL(window.location.href);
   url.searchParams.set(PRESENTATION_PARAM, PRESENTATION_VALUE);
@@ -14,8 +33,7 @@ function presentationUrl({ reset = false } = {}) {
 
 function isLocalPresentation() {
   const params = new URLSearchParams(window.location.search);
-  return loopbackHosts.has(window.location.hostname)
-    && params.get(PRESENTATION_PARAM) === PRESENTATION_VALUE;
+  return isPresentationOrigin() && params.get(PRESENTATION_PARAM) === PRESENTATION_VALUE;
 }
 
 function resetLocalPresentationBrowserState() {
