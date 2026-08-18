@@ -20,7 +20,7 @@
         "sort": 20,
         "policyStatus": "presentation-interaction-policy",
         "options": [
-          { "key": "kebab-fleisch", "name": "Kebab Fleisch", "priceDeltaCents": 0, "defaultSelected": true, "sort": 10 },
+          { "key": "kebap-fleisch", "name": "Kebap Fleisch", "priceDeltaCents": 0, "defaultSelected": true, "sort": 10 },
           { "key": "tomaten", "name": "Tomaten", "priceDeltaCents": 0, "defaultSelected": true, "sort": 20 },
           { "key": "broccoli", "name": "Broccoli", "priceDeltaCents": 0, "defaultSelected": true, "sort": 30 },
           { "key": "kaese", "name": "Käse", "priceDeltaCents": 0, "defaultSelected": true, "sort": 40 },
