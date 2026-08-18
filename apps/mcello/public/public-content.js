@@ -1,3 +1,4 @@
+import { installPlaceholderMedia, placeholderSrc } from "./placeholder-media.js";
 import "./public-copy.js";
 import "./motion.js";
 import "./homepage-composition.js";
@@ -13,6 +14,8 @@ const knownSections = new Map([
 
 let productMedia = new Map();
 let productMediaObserver = null;
+
+installPlaceholderMedia();
 
 function esc(value = "") {
   return String(value).replace(/[&<>"']/g, (char) => ({
@@ -70,13 +73,12 @@ function renderEditorial(posts = []) {
     const eventTime = post.kind === "event" && post.eventStartsAt
       ? esc(dateLabel(post.eventStartsAt))
       : "";
+    const type = kindLabel(post.kind);
     return `<article class="news-card">
+      <img src="${placeholderSrc(post.title || type, "event")}" alt="" loading="lazy" decoding="async" data-placeholder-generated="true" />
       <div>
-        <div class="tag">${esc(kindLabel(post.kind))}</div>
-        ${eventTime ? `<small>${eventTime}</small>` : `<small>${post.pinned ? "Highlight" : "Neu bei Mcello"}</small>`}
-      </div>
-      <div>
-        ${post.pinned ? '<div class="tag">Highlight</div>' : ""}
+        <div class="tag">${esc(type)}${post.pinned ? " · Highlight" : ""}</div>
+        <small>${eventTime || (post.pinned ? "Highlight" : "Neu bei Mcello")}</small>
         <h3>${esc(post.title)}</h3>
         <p>${esc(post.teaser || post.content || "")}</p>
       </div>
@@ -88,7 +90,12 @@ function renderGallery(items = []) {
   const target = document.querySelector("#galleryGrid");
   if (!target) return;
   if (!items.length) {
-    target.innerHTML = '<div class="notice">Noch keine freigegebenen Fotos — hier bleibt es lieber ehrlich als künstlich gefüllt.</div>';
+    const placeholders = ["Food", "Lokal", "Team", "Events"];
+    target.innerHTML = placeholders.map((label, index) => `
+      <figure class="gallery-item ${index === 0 ? "featured" : ""}" data-placeholder-gallery>
+        <img src="${placeholderSrc(label, "gallery")}" alt="" loading="lazy" decoding="async" data-placeholder-generated="true" />
+        <figcaption>${esc(label)} · Platzhalter</figcaption>
+      </figure>`).join("");
     return;
   }
 
@@ -167,7 +174,8 @@ async function loadPublicContent() {
     renderGallery(snapshot.galleryItems || []);
     bindProductMedia(menuSnapshot.categories || []);
   } catch {
-    // Static preview remains safe without a local backend. No demo news or product media are injected.
+    // Static preview stays truthful: only labeled placeholders are shown, never invented documentary media.
+    renderGallery([]);
   }
 }
 
