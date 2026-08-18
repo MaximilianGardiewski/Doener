@@ -189,18 +189,24 @@ async function primeMotionV3Adapter(revealController, heroController) {
     publishMotionEngineMode(engine);
     if (!engine.available) return;
 
+    let homepageMotion;
     try {
-      const { upgradePendingRevealsToGsap } = await import("./motion/homepage.js");
-      if (revealController?.observer) upgradePendingRevealsToGsap(engine, revealController);
+      homepageMotion = await import("./motion/homepage.js");
     } catch {
-      // V2 observer remains authoritative if the optional V3 reveal module cannot load.
+      // V2 reveal and hero handlers remain authoritative if the optional V3 homepage module cannot load.
+      return;
     }
 
     try {
-      const { upgradeHeroDepthToGsap } = await import("./motion/homepage.js");
-      if (heroController) upgradeHeroDepthToGsap(engine, heroController);
+      if (revealController?.observer) homepageMotion.upgradePendingRevealsToGsap(engine, revealController);
     } catch {
-      // V2 hero scroll handler remains authoritative if the optional V3 hero slice cannot initialize.
+      // V2 observer remains authoritative if the V3 reveal slice cannot initialize.
+    }
+
+    try {
+      if (heroController) homepageMotion.upgradeHeroDepthToGsap(engine, heroController);
+    } catch {
+      // V2 hero scroll handler remains authoritative if the V3 hero slice cannot initialize.
     }
   } catch {
     publishMotionEngineMode(null);
