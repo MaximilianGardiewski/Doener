@@ -1,0 +1,13 @@
+project_id = "business-web-factory-lebtig"
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:4174"
+additional_redirect_urls = ["http://localhost:4174", "http://127.0.0.1:4174/admin"]
+
+[realtime]
+enabled = false
+
+[storage]
+enabled = true
+file_size_limit = "5MiB"
