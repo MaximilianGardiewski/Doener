@@ -1,4 +1,4 @@
-const CACHE = "mcello-public-shell-v24";
+const CACHE = "mcello-public-shell-v25";
 const APP_SHELL = [
   "/", "/styles.css", "/brand-system.css", "/homepage-v2.css", "/app.js",
   "/public-content.js", "/presentation-mode.js", "/presentation-mode.css", "/public-copy.js", "/placeholder-media.js", "/homepage-composition.js",
