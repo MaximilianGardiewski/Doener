@@ -9,8 +9,9 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 try {
   await page.goto(`${APP_URL}/?presentation=mcello`, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => document.body?.dataset.presentationMode === "mcello");
-  assert.match(await page.locator("#prototypeBanner").innerText(), /MCELLO PRESENTATION/);
-  assert.match(await page.locator("#prototypeBanner").innerText(), /Produktdaten teilweise vorläufig/);
+  const bannerText = await page.locator("#prototypeBanner").innerText();
+  assert.match(bannerText, /MCELLO PRESENTATION/i);
+  assert.match(bannerText, /Produktdaten teilweise vorläufig/i);
   assert.equal(await page.locator("[data-presentation-reset]").isVisible(), true);
 
   await page.evaluate((key) => localStorage.setItem(key, JSON.stringify([{ productId: "stale-demo-item", quantity: 9 }])), CART_KEY);
