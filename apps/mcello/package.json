@@ -5,5 +5,9 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "node --experimental-strip-types run.mjs"
+  },
+  "dependencies": {
+    "@business-web/notifications": "0.0.1",
+    "@business-web/supabase-adapter": "0.0.1"
   }
 }

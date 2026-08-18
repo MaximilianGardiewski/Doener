@@ -5,7 +5,7 @@ const containerPort = Number(process.env.MCELLO_CONTAINER_PORT || 8080);
 const productionRuntime = process.env.NODE_ENV === "production";
 
 process.env.PORT = String(internalPort);
-await import("../../apps/mcello/run.mjs");
+await import("../../apps/mcello/runtime/production.mjs");
 
 function sendJson(response, status, body) {
   response.writeHead(status, {

@@ -1,5 +1,5 @@
-import { DevOrderNotificationProvider } from "../../packages/notifications/src/dev-order-notifications.ts";
-import { SupabaseNotificationOutbox } from "../../packages/supabase-adapter/src/notification-outbox.ts";
+import { DevOrderNotificationProvider } from "@business-web/notifications/dev-order-notifications";
+import { SupabaseNotificationOutbox } from "@business-web/supabase-adapter";
 
 export function startLocalNotificationWorker({ rpcFactory, publicBaseUrl }) {
   let running = false;
