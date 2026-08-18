@@ -6,6 +6,7 @@ const root = new URL("../", import.meta.url);
 const motion = await readFile(new URL("apps/mcello/public/motion.js", root), "utf8");
 const commerce = await readFile(new URL("apps/mcello/public/motion/commerce.js", root), "utf8");
 const app = await readFile(new URL("apps/mcello/public/app.js", root), "utf8");
+const pizza = await readFile(new URL("apps/mcello/public/pizza-builder-v2.js", root), "utf8");
 const css = await readFile(new URL("apps/mcello/public/motion.css", root), "utf8");
 const sw = await readFile(new URL("apps/mcello/public/sw.js", root), "utf8");
 
@@ -18,6 +19,15 @@ test("Phase 3 ingredient migration observes application-validated modifier state
   assert.match(motion, /const selection = input\.checked \? "added" : "removed"/);
   assert.match(motion, /commerceMotionV3\?\.animateIngredientChange/);
   assert.doesNotMatch(commerce, /optionIds|maxSelections|minSelections|configurationValid|configuredPrice|state\./);
+});
+
+test("FoodStage targeting prefers the rich Doner/Yufka stage and never double-writes the Pizza stage", () => {
+  assert.match(motion, /function activeFoodStage\(\)/);
+  assert.match(motion, /data-food-stage-v4/);
+  assert.match(motion, /if \(document\.querySelector\("#productModal\.open \[data-pizza-stage\]"\)\) return null/);
+  assert.match(motion, /return document\.querySelector\("#productModal\.open \.modal-hero"\)/);
+  assert.match(pizza, /function pulseStage\(\)/);
+  assert.match(pizza, /foodStage\.animate\?\./);
 });
 
 test("GSAP ingredient feedback mirrors the bounded V2 option and FoodStage language", () => {
