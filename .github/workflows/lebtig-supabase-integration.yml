@@ -15,6 +15,7 @@ on:
       - "packages/cms/**"
       - "tests/lebtig-rls.integration.mjs"
       - "tests/lebtig-lunch-cms.integration.mjs"
+      - "tests/lebtig-lunch-cms.browser.mjs"
       - ".github/workflows/lebtig-supabase-integration.yml"
   push:
     branches:
@@ -32,6 +33,7 @@ on:
       - "packages/cms/**"
       - "tests/lebtig-rls.integration.mjs"
       - "tests/lebtig-lunch-cms.integration.mjs"
+      - "tests/lebtig-lunch-cms.browser.mjs"
       - ".github/workflows/lebtig-supabase-integration.yml"
 
 concurrency:
@@ -44,7 +46,7 @@ permissions:
 jobs:
   local-stack:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -83,12 +85,42 @@ jobs:
       - name: Prove Lebtig anon authenticated moderator admin and storage boundaries
         run: node tests/lebtig-rls.integration.mjs
 
-      - name: Reset local database before lunch CMS lifecycle
+      - name: Reset local database before lunch CMS adapter lifecycle
         working-directory: apps/lebtig
         run: supabase db reset --local
 
-      - name: Prove lunch edit preview publish public read archive and copy lifecycle
+      - name: Prove lunch adapter edit preview publish public read archive and copy lifecycle
         run: node --experimental-strip-types tests/lebtig-lunch-cms.integration.mjs
+
+      - name: Reset local database before lunch CMS browser lifecycle
+        working-directory: apps/lebtig
+        run: supabase db reset --local
+
+      - name: Install Chromium for local CMS browser lifecycle
+        timeout-minutes: 6
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install chromium
+
+      - name: Build configured Lebtig browser app
+        run: |
+          VITE_SUPABASE_URL="$SUPABASE_URL" \
+          VITE_SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+          npm run build:lebtig
+
+      - name: Prove real browser login edit preview publish public read copy and archive lifecycle
+        run: |
+          npm run preview:lebtig > /tmp/lebtig-cms-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4174/api/bootstrap-status >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4174/api/bootstrap-status >/dev/null
+          node tests/lebtig-lunch-cms.browser.mjs
 
       - name: Stop local Lebtig Supabase
         if: always()
