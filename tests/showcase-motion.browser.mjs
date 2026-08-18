@@ -48,6 +48,11 @@ try {
   const revealed = await computed(normal, ".hero-copy");
   assert.equal(revealed.opacity, "1", "visible hero must finish fully opaque");
   assert.equal(revealed.identityTransform, true, "visible hero must finish without transform offset");
+  assert.notEqual(
+    await normal.locator(".hero-photo").evaluate((node) => node.style.getPropertyValue("--motion-hero-depth-y")),
+    "",
+    "normal motion should provide a bounded food-stage depth variable",
+  );
 
   await normal.locator("#aktuelles").scrollIntoViewIfNeeded();
   await normal.waitForFunction(() => document.querySelector("#aktuelles .section-head")?.classList.contains("is-revealed"));
@@ -56,6 +61,38 @@ try {
     "section",
     "below-fold content should participate in reveal motion",
   );
+
+  await normal.locator("#bestellen").scrollIntoViewIfNeeded();
+  await normal.waitForFunction(() => document.querySelectorAll("#categoryRail [data-category]").length > 0);
+  const category = normal.locator("#categoryRail [data-category]").first();
+  const categoryId = await category.getAttribute("data-category");
+  await category.click();
+  await normal.waitForFunction(
+    (id) => document.querySelector(".store-stage")?.dataset.motionCategory === id,
+    categoryId,
+  );
+  await normal.waitForFunction(() => document.querySelector("#featuredGrid")?.classList.contains("motion-category-switch"));
+
+  const productButton = normal.locator('[data-product]:not([disabled])').first();
+  await productButton.click();
+  await normal.waitForFunction(() => document.querySelector("#productModal")?.classList.contains("open"));
+  await normal.waitForFunction(() => document.querySelector("#productModal .modal")?.classList.contains("motion-product-open"));
+
+  const modifierInput = normal.locator("#modifierGroups input:not(:disabled)").first();
+  if (await modifierInput.count()) {
+    const type = await modifierInput.getAttribute("type");
+    const wasChecked = await modifierInput.isChecked();
+    if (type === "checkbox" && wasChecked) await modifierInput.uncheck();
+    else if (!wasChecked) await modifierInput.check();
+    else await modifierInput.dispatchEvent("change");
+    await normal.waitForFunction(() => document.querySelector("#productModal .modal-hero")?.hasAttribute("data-motion-ingredient"));
+  }
+
+  const addToCart = normal.locator("#addToCart");
+  if (await addToCart.isEnabled()) {
+    await addToCart.click();
+    await normal.waitForFunction(() => document.querySelector(".sticky-order")?.dataset.motionCart === "added");
+  }
 
   const reduced = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, reducedMotion: "reduce" });
   await reduced.goto(baseUrl, { waitUntil: "networkidle" });
@@ -69,8 +106,13 @@ try {
   assert.equal(reducedHero.opacity, "1", "reduced motion must keep content visible");
   assert.equal(reducedHero.identityTransform, true, "reduced motion must remove motion transforms");
   assert.match(reducedHero.transitionDuration, /(^|, )0s(,|$)/, "reduced motion must disable transitions");
+  assert.equal(
+    await reduced.locator(".hero-photo").evaluate((node) => node.style.getPropertyValue("--motion-hero-depth-y")),
+    "",
+    "reduced motion must not inject scroll-depth offsets",
+  );
 
-  console.log("D058 Chromium motion smoke passed for normal and reduced-motion preferences.");
+  console.log("D058/V2 Chromium motion smoke passed for reveal, commerce feedback, and reduced-motion preferences.");
 } finally {
   await browser.close();
 }
