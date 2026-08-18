@@ -21,12 +21,12 @@ test("presentation Builder data is explicitly local-only and never a production 
 });
 
 test("Pizza Mcello presentation recipe is derived only from the provisional menu transcription", () => {
-  assert.equal(contract.pizza.productSourceId, "pizza-060");
-  const product = seedById.get("pizza-060");
-  assert.ok(product, "pizza-060 must remain present in the first-party provisional seed");
+  assert.equal(contract.pizza.productSourceId, "pizza-076");
+  const product = seedById.get("pizza-076");
+  assert.ok(product, "pizza-076 must remain present in the first-party provisional seed");
   assert.equal(product[2], "Pizza Mcello");
   for (const option of contract.pizza.groups[0].options) {
-    assert.match(product[3], new RegExp(option.name.replace("Käse", "Käse"), "i"), `${option.name} must be supported by the menu-card transcription`);
+    assert.match(product[3], new RegExp(option.name, "i"), `${option.name} must be supported by the menu-card transcription`);
     assert.equal(option.priceDeltaCents, 0);
     assert.equal(option.defaultSelected, true);
   }
