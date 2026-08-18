@@ -118,6 +118,8 @@ test("LAN firewall is temporary and restricted to the hotspot address and local 
   assert.match(firewall, /-LocalPort 54321/);
   assert.match(firewall, /-LocalAddress \$LanAddress/);
   assert.match(firewall, /-RemoteAddress LocalSubnet/);
-  assert.match(firewall, /-Remove/);
+  assert.match(firewall, /\[switch\]\$Remove/);
+  assert.match(firewall, /if \(\$Remove\)/);
+  assert.match(firewall, /Remove-NetFirewallRule/);
   assert.doesNotMatch(firewall, /RemoteAddress\s+Any/i);
 });
