@@ -6,10 +6,15 @@ on:
       - "apps/mcello/**"
       - "tests/mcello-demo-flow.browser.mjs"
       - "tests/mcello-demo-preparation.test.mjs"
+      - "tests/mcello-lan-demo.test.mjs"
       - "scripts/bootstrap-local-staff.mjs"
       - "scripts/import-provisional-menu.mjs"
       - "scripts/prepare-mcello-demo.mjs"
       - "scripts/demo-mcello.ps1"
+      - "scripts/demo-mcello-lan.ps1"
+      - "scripts/mcello-lan-proxy.mjs"
+      - "scripts/configure-mcello-lan-firewall.ps1"
+      - "scripts/stop-mcello-lan.ps1"
       - "data/mcello/menu-seed.provisional.json"
       - "supabase/**"
       - ".github/workflows/mcello-demo-diagnostics.yml"
@@ -65,22 +70,31 @@ jobs:
           npm install --no-save --package-lock=false playwright@1.55.0
           npx playwright install chromium
 
-      - name: Run full Mcello presentation browser flow
+      - name: Run full Mcello presentation flow through LAN ingress
         id: demo
         shell: bash
         run: |
           set -o pipefail
-          npm run preview:mcello > /tmp/mcello-demo-preview.log 2>&1 &
+          runner_ip="$(hostname -I | tr ' ' '\n' | grep -E '^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)' | head -n 1)"
+          test -n "$runner_ip"
+          echo "Using simulated LAN address: $runner_ip"
+
+          MCELLO_PUBLIC_BASE_URL="http://${runner_ip}:4180" npm run preview:mcello > /tmp/mcello-demo-preview.log 2>&1 &
           preview_pid=$!
-          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          MCELLO_LAN_ADDRESS="$runner_ip" MCELLO_LAN_PORT=4180 node scripts/mcello-lan-proxy.mjs > /tmp/mcello-demo-lan-proxy.log 2>&1 &
+          proxy_pid=$!
+          trap 'kill "$proxy_pid" "$preview_pid" 2>/dev/null || true' EXIT
+
           for attempt in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:4173/api/health >/dev/null; then
+            if curl --fail --silent "http://${runner_ip}:4180/__mcello_lan_health" >/dev/null; then
               break
             fi
             sleep 1
           done
+          curl --fail --silent "http://${runner_ip}:4180/__mcello_lan_health" >/dev/null
           curl --fail --silent http://127.0.0.1:4173/api/health >/dev/null
-          node tests/mcello-demo-flow.browser.mjs 2>&1 | tee /tmp/mcello-demo-browser.log
+
+          MCELLO_DEMO_URL="http://${runner_ip}:4180" node tests/mcello-demo-flow.browser.mjs 2>&1 | tee /tmp/mcello-demo-browser.log
 
       - name: Capture database diagnostics
         if: always()
@@ -100,6 +114,7 @@ jobs:
           path: |
             /tmp/mcello-demo-browser.log
             /tmp/mcello-demo-preview.log
+            /tmp/mcello-demo-lan-proxy.log
             /tmp/mcello-demo-db.log
           retention-days: 3
           if-no-files-found: warn
