@@ -35,7 +35,7 @@ test("closed paused or cutoff shop stays browsable while checkout remains fail-c
 });
 
 test("browser checkout sends only V1 customer fields plus order mechanics", () => {
-  const checkoutPayload = app.match(/fetch\("\/api\/checkout"[\s\S]*?body: JSON\.stringify\(\{([\s\S]*?)\n\s*\}\),\n\s*\}\);/);
+  const checkoutPayload = app.match(/fetch\("\/api\/checkout"[\s\S]*?body: JSON\.stringify\(\{([\s\S]*?)\r?\n\s*\}\),\r?\n\s*\}\);/);
   assert.ok(checkoutPayload, "checkout payload must remain explicit");
   const payload = checkoutPayload[1];
   assert.match(payload, /firstName:/);

@@ -6,6 +6,7 @@ dist/
 .DS_Store
 coverage/
 .playwright/
+supabase/.temp/
 
 # source evidence kept outside public runtime repo
 apps/mcello/public/media/menu-card-*.jpg
