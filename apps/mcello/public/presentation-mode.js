@@ -30,8 +30,18 @@ function resetLocalPresentationBrowserState() {
   return true;
 }
 
+function installPresentationStyles() {
+  if (document.head.querySelector('[data-presentation-styles="mcello"]')) return;
+  const stylesheet = document.createElement("link");
+  stylesheet.rel = "stylesheet";
+  stylesheet.href = "/presentation-mode.css";
+  stylesheet.dataset.presentationStyles = PRESENTATION_VALUE;
+  document.head.appendChild(stylesheet);
+}
+
 function decorateLocalPresentation() {
   if (!isLocalPresentation()) return;
+  installPresentationStyles();
   document.body.dataset.presentationMode = PRESENTATION_VALUE;
   document.documentElement.dataset.presentationMode = PRESENTATION_VALUE;
 
