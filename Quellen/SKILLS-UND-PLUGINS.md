@@ -8,6 +8,8 @@ Die **kanonischen Projekt-Skills** liegen im Repository und werden über `skill-
 
 Aktueller operativer Default für Mcello-Engineering ist: **GitHub als Source of Truth + Supabase/PostgreSQL als Adapter/Integrationsebene + Repo-Skills + automatisierte Node/Chromium-/Self-host-Gates**. Design-/Builder-Tools werden nur dort zugeschaltet, wo sie einen klaren Vorteil bringen; ihr Ergebnis muss zurück ins Repo.
 
+Für die aktuelle Mcello-Designphase gilt zusätzlich `docs/projects/mcello/DESIGN_PIPELINE_V5.md`: **Firefly Boards ist die bevorzugte visuelle Arbeitsfläche; Figma ist optional; Design-Tokens und Assets werden im Repo bzw. im kontrollierten Media/CMS-Pfad kanonisch gemacht.**
+
 ## Kanonische Repo-Skills
 
 | Skill | Aufgabe | Pfad |
@@ -55,15 +57,37 @@ Regeln:
 - Änderungen mit echtem lokalen Stack/Integrationstests beweisen.
 - Managed Supabase darf nicht still zur notwendigen kostenpflichtigen Voraussetzung werden; Self-Host-Pfad bleibt erhalten.
 
-### Figma — **Designsystem und High-Fidelity-Design**
+### Adobe Firefly / Adobe — **bevorzugte visuelle Arbeitsfläche + Asset-Tooling**
 
 Einsatz:
-- visuelle Richtung
-- Komponenten/Layouts
-- Designsystem-Übergabe
-- ggf. Design-to-Code-Referenz
+- Firefly Boards als Mcello Master-Board für Art Direction, Moodboards und visuelle Referenzen
+- Style-/Composition-Exploration für Food, Venue, Store, Builder und Operations
+- Firefly-Generationen und Varianten
+- Photoshop/Lightroom/Illustrator/Adobe Fonts dort, wo sie einen klaren Designvorteil bringen
+- Retusche, Formatvarianten und Asset-Aufbereitung
 
-Regel: Figma ist Designquelle, aber nicht alleinige Quelle für Produktentscheidungen oder Business-Inhalte. Relevante Tokens/Entscheidungen müssen in implementierbarer Form zurück ins Repo.
+Regeln:
+- Die vorhandene Adobe-Subscription macht Adobe/Firefly als Entwicklungs-/Designwerkzeug ausdrücklich zulässig.
+- Medienrechte, Provenienz und Content-Integrity beachten.
+- Konzept-/AI-Food darf nicht als dokumentarisch echtes Mcello-Gericht ausgegeben werden (`D068`).
+- Akzeptierte Assets müssen in Git oder den vorgesehenen Media-/CMS-Prozess überführt werden.
+- Keine Firefly-/Adobe-Abfrage darf zum normalen Mcello-Runtime-Renderpfad gehören.
+- Reale Produkt-/Venue-Fotos erst nach First-Party-/Rechtefreigabe als Mcello-Realität veröffentlichen.
+- Adobe bleibt trotz freigegebener Entwicklungsnutzung keine Runtime-Pflicht (`D070`).
+
+### Figma — **optionales Spezialwerkzeug, nicht Pflichtprozess**
+
+Einsatz nur bei klarem Zusatznutzen:
+- große High-Fidelity-Redesigns vor Code
+- komplexe Komponenten-/Designsystem-Exploration
+- kollaborative Prototyp-/Review-Situationen
+- spätere BusinessWebFactory-weite Designsystemarbeit
+
+Regeln:
+- Figma ist kein verpflichtender Zwischenschritt zwischen Firefly und GitHub.
+- Figma Variables/Tokens dürfen nicht zur Runtime- oder Build-Abhängigkeit werden.
+- Relevante Tokens/Entscheidungen müssen als repo-owned CSS/TS/JS/JSON bzw. implementierte Komponenten zurück ins Repo.
+- Wenn Figma keinen messbaren Vorteil bringt, wird direkt Firefly/Referenz → GitHub → Browser gearbeitet.
 
 ### Lovable — **optionaler UI-/Prototyping-Client**
 
@@ -107,21 +131,25 @@ Regeln:
 - wichtige Entscheidungen nicht nur im Chat behalten.
 - Branch/PR statt unreviewter Production-Änderung.
 
-### Canva / Adobe — **optionale Asset- und Content-Workflows**
+### Canva — **optionaler Content-/Marketing-Client**
 
 Einsatz:
-- Art Direction/Moodboards und Brand-Exploration
-- freigegebene Marketing-/Social-/Bildassets
-- Varianten/Retusche/Formatanpassungen
-- Photography-/Ingredient-Asset-Aufbereitung für visuelle Ordering-Flows
+- Social-/Marketingvarianten
+- Präsentationsmaterial
+- zusätzliche Brand-Exploration, wenn sinnvoll
 
-Regeln:
-- Medienrechte, Provenienz und Content-Integrity beachten.
-- keine erfundenen „authentischen“ Mcello-Bilder oder Claims.
-- Konzept-/AI-Food darf nicht als dokumentarisch echtes Mcello-Gericht ausgegeben werden (`D068`).
-- Assets müssen in den vorgesehenen Media-/CMS-Prozess überführt werden.
-- reale Produkt-/Venue-Fotos erst nach First-Party-/Rechtefreigabe als Mcello-Realität veröffentlichen.
-- kein Adobe-/Canva-Tool wird Runtime-Pflicht (`D070`).
+Regel: Wie alle Design-Clients keine Parallelquelle und keine Mcello-Runtime-Pflicht.
+
+## Design-Token-Regel
+
+Design-Tokens gehören nach Akzeptanz ins Repository. Zulässige kanonische Formen sind insbesondere:
+
+- CSS Custom Properties;
+- TypeScript/JavaScript-Konstanten;
+- JSON-Token-Dateien;
+- app-owned Asset-/Font-Metadaten.
+
+Nicht zulässig als Pflichtpfad sind Figma-/Firefly-/Lovable-Remote-Tokens oder andere externe Designzustände, die zur Laufzeit oder für einen reproduzierbaren Self-host-Build erreichbar sein müssen.
 
 ## Empfohlene Skill-/Tool-Kombination je Phase
 
@@ -130,9 +158,10 @@ Regeln:
 | Discovery/Scope | discovery-interviewer | GitHub, optional Recherche |
 | Domain/Vertical Slice | cms-v1-accelerator, portability-architect | GitHub, Supabase |
 | DB/Auth/RLS/Storage | supabase-rls-security-auditor | Supabase, GitHub CI |
-| Public IA/Migration | multi-page architect, legacy migration | GitHub, ggf. Figma |
-| Gastro Store / Interactive Builder | gastro-ordering-experience-designer + responsive QA + content-integrity | GitHub, Figma, Adobe, ggf. Canva/Lovable/Visual Truth |
-| Visual Polish | CMS builder + responsive QA | Figma, Lovable, Visual Truth, ggf. Adobe/Canva |
+| Public IA/Migration | multi-page architect, legacy migration | GitHub, optional Figma |
+| Art Direction / Food Language | gastro-ordering-experience-designer + content-integrity | Adobe Firefly Boards, Adobe, GitHub |
+| Gastro Store / Interactive Builder | gastro-ordering-experience-designer + responsive QA + content-integrity | GitHub, Adobe/Firefly; Figma nur bei Zusatznutzen |
+| Visual Polish | CMS builder + responsive QA | echter Browser + Adobe/Firefly; optional Visual Truth/Figma/Lovable |
 | Content Release | public-content-integrity-auditor | CMS/Media-Workflow + First-Party-Quellen |
 | Launch | web-release-launch-engineer + responsive QA | GitHub CI, Self-host Release/DB Drill, optional Preview |
 
@@ -146,15 +175,17 @@ Für relevante Mcello-Slices wird je nach Scope kombiniert:
 - Self-host DB Drill: Migration-Dry-Run sowie echter Dump/Drop/Restore-Roundtrip
 - Design-Slices: zusätzlich reale Desktop/Mobile-Screenshots, Visual Acceptance und die in `DESIGN_ACCEPTANCE.md` definierten Gates
 
-Nicht jeder reine Dokumentations-Slice braucht alle Runtime-/DB-/Release-Gates. Runtime-/DB-/Release-Änderungen müssen aber die jeweils betroffene Gegenprobe erhalten. Ein grüner technischer Test ersetzt keine visuelle Abnahme; ein schönes Mockup ersetzt keinen technischen Nachweis (`D069`).
+Nicht jeder reine Dokumentations-Slice braucht alle Runtime-/DB-/Release-Gates. Runtime-/DB-/Release-Änderungen müssen aber die jeweils betroffene Gegenprobe erhalten. Ein grüner technischer Test ersetzt keine visuelle Abnahme; ein schönes Mockup oder Firefly Board ersetzt keinen technischen Nachweis (`D069`).
 
 ## Nicht verhandelbare Tool-Grenzen
 
 - Kein Tool darf bestätigte `IMPLEMENT_V1`-Decisions still streichen.
 - `PREPARE_NOW_IMPLEMENT_LATER` heißt: Boundary/Contract/Data Model jetzt, Future-UI später.
 - Keine Provider-Credentials oder Secrets in Git/Frontend.
-- Keine Pflichtkosten ohne explizite Entscheidung/Freigabe.
+- Keine neue Pflichtkosten-/SaaS-Runtime ohne explizite Entscheidung/Freigabe.
+- Bereits abonnierte Entwicklungs-/Designwerkzeuge dürfen eingesetzt werden, sofern sie keine Runtime-Abhängigkeit erzeugen.
 - Keine Production-Mutation ohne explizite Freigabe.
 - Keine ungeprüften Drittquellen als Production-Business-Wahrheit.
 - Jede relevante Builder-/Agentenänderung muss zurück in Git + Tests + Dokumentation.
-- Adobe/Figma/Canva/Lovable/Visual Truth und ähnliche Design-Clients bleiben optional und dürfen keine Parallelquelle bzw. Runtime-Pflicht werden (`D070`).
+- Adobe/Figma/Canva/Lovable/Visual Truth und ähnliche Design-Clients dürfen keine Parallelquelle bzw. Runtime-Pflicht werden (`D070`).
+- Der endgültige Self-host-Build muss ohne Zugriff auf Firefly, Figma, Lovable oder Vercel reproduzierbar bleiben.
