@@ -22,6 +22,7 @@ Der verifizierte Donor-Stand ist das verbundene Lovable-Projekt `18d92034-aaee-4
 - [`PORTING_BASELINE.md`](./PORTING_BASELINE.md) — belegter Ist-Stand, Grenzen und nächste sichere Port-Slices.
 - [`PORTING_ACCEPTANCE.md`](./PORTING_ACCEPTANCE.md) — technische Acceptance für die Konsolidierung in die BusinessWebFactory.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — app-owned und provider-neutrale Zielgrenzen.
+- [`SCHEMA_RLS_COMPARE.md`](./SCHEMA_RLS_COMPARE.md) — effektiver Donor-Schema-/RLS-Stand und sichere app-spezifische Migrationsgrenze.
 - [`../../../apps/lebtig/README.md`](../../../apps/lebtig/README.md) — aktueller Code-/Consumer-Stand.
 
 ## Bewusst kein `DECISIONS.md`
