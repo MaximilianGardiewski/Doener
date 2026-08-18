@@ -91,9 +91,20 @@ try {
   }
 
   const productButton = normal.locator('[data-product]:not([disabled])').first();
+  const productEngine = await normal.evaluate(() => document.documentElement.dataset.mcelloProductEngine);
+  assert.ok(["v2", "gsap"].includes(productEngine), `unexpected product engine ${productEngine}`);
   await productButton.click();
   await normal.waitForFunction(() => document.querySelector("#productModal")?.classList.contains("open"));
-  await normal.waitForFunction(() => document.querySelector("#productModal .modal")?.classList.contains("motion-product-open"));
+  if (productEngine === "v2") {
+    await normal.waitForFunction(() => document.querySelector("#productModal .modal")?.classList.contains("motion-product-open"));
+  } else {
+    await normal.waitForTimeout(20);
+    assert.equal(
+      await normal.locator("#productModal .modal").evaluate((node) => node.classList.contains("motion-product-open")),
+      false,
+      "GSAP product-open path must not start the legacy modal keyframe",
+    );
+  }
 
   const modifierInput = normal.locator("#modifierGroups input:not(:disabled)").first();
   if (await modifierInput.count()) {
@@ -129,7 +140,7 @@ try {
     "reduced motion must not inject scroll-depth offsets",
   );
 
-  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, category, remaining commerce feedback, and reduced-motion preferences.");
+  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, category, product-open, remaining commerce feedback, and reduced-motion preferences.");
 } finally {
   await browser.close();
 }
