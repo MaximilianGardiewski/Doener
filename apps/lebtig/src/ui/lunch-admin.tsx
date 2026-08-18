@@ -110,17 +110,18 @@ export function LebtigLunchAdminPage() {
 
   const selected = weeks.find((week) => week.id === selectedId) ?? null;
 
+  // Keep reload stable so changing the selected week does not re-run the auth
+  // bootstrap effect and asynchronously replace the editor draft while typing.
   const reload = useCallback(async (preferredId?: string) => {
     if (!runtime.port) return;
     const loaded = await runtime.port.listStaffWeeks();
     setWeeks(loaded);
-    const nextId = preferredId && loaded.some((week) => week.id === preferredId)
-      ? preferredId
-      : selectedId && loaded.some((week) => week.id === selectedId)
-        ? selectedId
-        : loaded[0]?.id ?? null;
-    setSelectedId(nextId);
-  }, [runtime.port, selectedId]);
+    setSelectedId((currentId) => {
+      if (preferredId && loaded.some((week) => week.id === preferredId)) return preferredId;
+      if (currentId && loaded.some((week) => week.id === currentId)) return currentId;
+      return loaded[0]?.id ?? null;
+    });
+  }, [runtime.port]);
 
   useEffect(() => {
     document.title = "Mittagstisch – Redaktion · Metzgerei Lebtig";
