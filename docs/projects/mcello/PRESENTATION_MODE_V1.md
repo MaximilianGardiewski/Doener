@@ -33,6 +33,10 @@ A normal `scripts/demo-mcello.ps1` run still creates a fresh disposable local Su
 
 The presentation helper also accepts RFC1918 and the LAN launcher's private-IP `sslip.io` hostname pattern so the same labeled presentation experience can run on tablet and smartphone over the private demo network. Builder Responsive V3 remains responsible for portrait gating and landscape interaction.
 
+The recommended `npm run demo:mcello:lan` command now routes through `scripts/demo-mcello-presentation-lan.ps1`. That wrapper starts the proven private LAN runtime first and then installs the localhost-only Pizza/Döner/Yufka Builder fixtures. This keeps the original LAN infrastructure script reusable while making the default presentation command Builder-ready in one invocation.
+
+For the customer device, append `?presentation=mcello&reset=1` to the customer URL printed by the LAN launcher. The reset flag is consumed once and removed from the address after browser-local state is cleared.
+
 ## PWA
 
 `presentation-mode.js` and `presentation-mode.css` are cached in the public shell. The mode itself remains opt-in; caching the assets does not activate presentation behavior.
