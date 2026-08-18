@@ -69,6 +69,7 @@ jobs:
             --override-name api.url=SUPABASE_URL \
             --override-name auth.anon_key=SUPABASE_ANON_KEY \
             --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            | sed -E 's/^([^=]+)="(.*)"$/\1=\2/' \
             >> "$GITHUB_ENV"
 
       - name: Prove Lebtig anon authenticated moderator admin and storage boundaries
