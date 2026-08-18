@@ -34,6 +34,10 @@ html[data-mcello-reveal-engine="gsap"].motion-ready [data-reveal] {
   will-change: transform;
 }
 
+html[data-mcello-hero-engine="gsap"] .hero-media-v2 .hero-photo {
+  transition: none;
+}
+
 .food-card,
 .story-card,
 .recommendation-card,
