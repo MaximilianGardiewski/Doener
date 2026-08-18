@@ -9,7 +9,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test:domain": "node --experimental-strip-types --test packages/*/test/*.test.ts",
-    "test:lebtig": "node --experimental-strip-types --test apps/lebtig/test/consumer.test.ts",
+    "test:lebtig": "node --experimental-strip-types --test apps/lebtig/test/*.test.ts",
     "test:schema": "node --test tests/*.test.mjs",
     "check:static": "node scripts/check-static.mjs",
     "audit:db": "node scripts/audit-db-v1.mjs",
