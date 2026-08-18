@@ -12,7 +12,9 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "packages/**/*.ts"
+    "packages/**/*.ts",
+    "apps/lebtig/src/**/*.ts",
+    "apps/lebtig/test/**/*.ts"
   ],
   "exclude": [
     "node_modules",
