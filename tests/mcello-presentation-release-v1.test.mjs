@@ -64,7 +64,7 @@ test("release keeps the explicit presentation mode and both one-command launcher
 });
 
 test("release presentation story is backed by the real Builder checkout KDS lifecycle test", () => {
-  for (const term of ["Pizza Mcello", "Drehspieß im Yufka", "Zwiebeln", "Knoblauch", "Scharf", "received", "preparing", "ready", "completed"]) {
+  for (const term of ["Pizza Mcello", "Drehspieß im Yufka", "Zwiebeln", "Knoblauch", "Scharf", "Eingegangen", "In Zubereitung", "Abholbereit", "Abgeholt"]) {
     assert.match(lifecycle, new RegExp(term));
   }
   assert.match(lifecycle, /submitOrder/);
