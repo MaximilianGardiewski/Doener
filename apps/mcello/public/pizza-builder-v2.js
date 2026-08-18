@@ -1,3 +1,5 @@
+import "./doner-yufka-builder-v2.js";
+
 const stylesheet = document.createElement("link");
 stylesheet.rel = "stylesheet";
 stylesheet.href = "/pizza-builder-v2.css";
@@ -14,7 +16,7 @@ function activeCategoryId() {
 
 function clearPizzaStage() {
   if (!modal) return;
-  delete modal.dataset.productBuilder;
+  if (modal.dataset.productBuilder === "pizza") delete modal.dataset.productBuilder;
   delete modal.dataset.pizzaVisualLayers;
   foodStage?.removeAttribute("data-pizza-stage");
 }
@@ -22,8 +24,6 @@ function clearPizzaStage() {
 function applyPizzaStage() {
   if (!modal?.classList.contains("open") || !pendingPizza) return;
   modal.dataset.productBuilder = "pizza";
-  // Current first-party pizza data has no ingredient-layer semantics.
-  // Keep the visual layer count explicitly truthful until governed data exists.
   modal.dataset.pizzaVisualLayers = "0";
   foodStage?.setAttribute("data-pizza-stage", "top-down");
 }
