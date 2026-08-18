@@ -1,6 +1,6 @@
 # Mcello — Binding Decision Ledger
 
-Source: interactive discovery interview, 2026-08-14; D003/D016/D064 clarified by owner on 2026-08-18; D065-D070 confirmed by owner through the 2026-08-18 design-rebaseline/masterplan continuation; D071-D073 confirmed by owner on 2026-08-18 through the Presentation UX V4 rebaseline.
+Source: interactive discovery interview, 2026-08-14; D003/D016/D064 clarified by owner on 2026-08-18; D065-D070 confirmed by owner through the 2026-08-18 design-rebaseline/masterplan continuation; D071-D073 confirmed by owner on 2026-08-18 through the Presentation UX V4 rebaseline; D074 confirmed by owner on 2026-08-18 after the GSAP research/implementation-plan review.
 
 Status semantics:
 - `IMPLEMENT_V1`: must be implemented before V1 is considered complete.
@@ -70,7 +70,7 @@ Status semantics:
 | D059 | Tone | Copy tone: premium/quiet + warm/personal with occasional relaxed street-food moments. | `IMPLEMENT_V1` |
 | D060 | Public PWA | Public Mcello experience is installable PWA while remaining fully usable in browser. | `IMPLEMENT_V1` |
 | D061 | Future Loyalty | Favorites/reorder/push/loyalty may use the PWA foundation later. | `LATER_OPTION` |
-| D062 | Scope Rule | Every confirmed interview/design decision D001-D073 is binding according to its explicit V1/prepared/later status, and CI must enforce ledger coverage/status discipline. | `IMPLEMENT_V1` |
+| D062 | Scope Rule | Every confirmed interview/design decision D001-D074 is binding according to its explicit V1/prepared/later status, and CI must enforce ledger coverage/status discipline. | `IMPLEMENT_V1` |
 | D063 | Infrastructure Cost | Development and deployment must introduce no mandatory new monthly SaaS cost. Use local Supabase via Docker for development and a self-hosted Supabase/app deployment on already-available infrastructure for staging/production. GitHub is source of truth; Vercel/Lovable are optional clients only. | `IMPLEMENT_V1` |
 | D064 | External Messaging Spend | Mcello V1 messaging is WhatsApp-only. No paid WhatsApp provider may be silently enabled; development uses the local OTP provider, while production WhatsApp activation requires explicit owner approval of unavoidable carrier/provider charges. SMS must not be configured, exposed or invoked by Mcello V1. | `IMPLEMENT_V1` |
 | D065 | Interactive Food Builder | Mcello V1 turns structured product configuration into a visual food-building experience. Relevant ingredient/sauce/extra selections update a `FoodStage`, while existing domain/server pricing, availability and modifier rules remain authoritative. Tap is always sufficient; drag-and-drop may only be optional progressive enhancement. | `IMPLEMENT_V1` |
@@ -82,3 +82,4 @@ Status semantics:
 | D071 | Cartoon Food Visual Language | The interactive Builder uses a coherent warm editorial cartoon-food language for presentation and V1 visual layers: appetizing, lightly playful and adult rather than childish. Generated/stylized assets remain clearly illustrative and never claim to document the real Mcello dish. | `IMPLEMENT_V1` |
 | D072 | Operations Information Architecture | Admin, Ops and KDS use a shared adaptive Mcello Operations shell and information architecture while preserving strict role/RLS boundaries. Staff remains operational-only; Admin retains structural catalog/CMS authority. | `IMPLEMENT_V1` |
 | D073 | Integrated Handbook | Mcello provides an integrated, searchable, versioned handbook/help experience for Admin and Staff. Canonical handbook content lives in Git/Markdown and may be rendered into the local/self-hosted app without introducing an external wiki/runtime dependency. | `IMPLEMENT_V1` |
+| D074 | GSAP Motion Runtime | Mcello adopts GSAP as a presentation-only motion runtime behind a Mcello-owned adapter. Initial V1 admission is exact-version local/self-hosted GSAP Core + ScrollTrigger + Flip only; no CDN/runtime Webflow dependency. Motion never owns price, modifier validity, availability, cart, checkout, KDS, auth, role/RLS or location truth. Reduced-motion and GSAP-unavailable paths remain fully functional; additional plugins require explicit staged gates. | `IMPLEMENT_V1` |
