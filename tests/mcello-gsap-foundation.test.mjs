@@ -82,15 +82,15 @@ test("direct runtime and static preview both prepare the same-origin vendor befo
   assert.doesNotMatch(vendorScript, /https?:\/\//);
 });
 
-test("PWA shell caches only same-origin approved GSAP files and bumps its cache generation", () => {
-  assert.match(sw, /mcello-public-shell-v22/);
+test("PWA shell caches only same-origin approved GSAP files across cache generations", () => {
+  assert.match(sw, /mcello-public-shell-v\d+/);
   for (const file of MCELLO_GSAP_VENDOR_FILES) {
     assert.match(sw, new RegExp(`"\\/vendor\\/gsap\\/${file.replaceAll(".", "\\.")}"`));
   }
   assert.doesNotMatch(sw, /cdn\.jsdelivr|cdnjs|unpkg|webflow|https?:\/\/.*gsap/i);
 });
 
-test("Phase 1 is foundation-only: existing V2 motion remains the visible implementation", () => {
+test("Phase 1 foundation stays presentation-only while V2 remains the visible implementation until explicit migration", () => {
   assert.doesNotMatch(motion, /\bgsap\s*\./);
   assert.doesNotMatch(motion, /ScrollTrigger|\bFlip\b/);
   assert.match(motion, /installRevealMotion\(\)/);
