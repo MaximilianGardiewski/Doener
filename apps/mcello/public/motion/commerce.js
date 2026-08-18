@@ -5,6 +5,7 @@ export function createCommerceMotion(engine) {
   let gsap = null;
   const activeTweens = new Set();
   let productTransition = null;
+  let ingredientTransition = null;
   scope.context((tools) => {
     gsap = tools.gsap;
   });
@@ -29,6 +30,24 @@ export function createCommerceMotion(engine) {
       delete node.dataset.motionProductEngine;
     }
     productTransition = null;
+  }
+
+  function clearIngredientPresentation() {
+    if (!ingredientTransition) return;
+    const { timeline, option, foodStage } = ingredientTransition;
+    timeline.kill();
+    activeTweens.delete(timeline);
+    if (option) {
+      gsap.set(option, { clearProps: "opacity,transform" });
+      delete option.dataset.motionSelection;
+      delete option.dataset.motionIngredientEngine;
+    }
+    if (foodStage) {
+      gsap.set(foodStage, { clearProps: "opacity,transform" });
+      delete foodStage.dataset.motionIngredient;
+      delete foodStage.dataset.motionIngredientEngine;
+    }
+    ingredientTransition = null;
   }
 
   function animateCategoryChange({ categoryId, stage, featuredGrid, menuList, activeChip }) {
@@ -128,10 +147,71 @@ export function createCommerceMotion(engine) {
     return true;
   }
 
+  function animateIngredientChange({ option, foodStage, selection }) {
+    if (!option && !foodStage) return false;
+    if (selection !== "added" && selection !== "removed") return false;
+
+    clearIngredientPresentation();
+    if (option) {
+      option.dataset.motionSelection = selection;
+      option.dataset.motionIngredientEngine = "gsap";
+    }
+    if (foodStage) {
+      foodStage.dataset.motionIngredient = selection;
+      foodStage.dataset.motionIngredientEngine = "gsap";
+    }
+
+    const optionScale = selection === "added" ? 1.018 : 0.985;
+    const foodScale = selection === "added" ? 1.012 : 0.992;
+    let timeline;
+    const finish = () => {
+      if (!ingredientTransition || ingredientTransition.timeline !== timeline) return;
+      if (option) {
+        gsap.set(option, { clearProps: "opacity,transform" });
+        delete option.dataset.motionSelection;
+        delete option.dataset.motionIngredientEngine;
+      }
+      if (foodStage) {
+        gsap.set(foodStage, { clearProps: "opacity,transform" });
+        delete foodStage.dataset.motionIngredient;
+        delete foodStage.dataset.motionIngredientEngine;
+      }
+      activeTweens.delete(timeline);
+      ingredientTransition = null;
+    };
+
+    timeline = gsap.timeline({
+      defaults: { overwrite: "auto" },
+      onComplete: finish,
+    });
+    ingredientTransition = { timeline, option, foodStage };
+    track(timeline);
+
+    if (option) {
+      timeline
+        .to(option, { scale: optionScale, duration: 0.16, ease: "power2.out" }, 0)
+        .to(option, { scale: 1, duration: 0.16, ease: "power2.inOut" }, 0.16);
+    }
+
+    if (foodStage) {
+      timeline
+        .fromTo(
+          foodStage,
+          { opacity: 0.88, scale: 1 },
+          { opacity: 1, scale: foodScale, duration: 0.16, ease: "power2.out" },
+          0,
+        )
+        .to(foodStage, { opacity: 1, scale: 1, duration: 0.2, ease: "power2.inOut" }, 0.16);
+    }
+    return true;
+  }
+
   return {
     animateCategoryChange,
     animateProductOpen,
+    animateIngredientChange,
     cleanup() {
+      clearIngredientPresentation();
       clearProductPresentation();
       for (const tween of activeTweens) tween.kill();
       activeTweens.clear();
