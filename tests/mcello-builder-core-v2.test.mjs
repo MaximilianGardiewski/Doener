@@ -66,8 +66,8 @@ test("touch builders are landscape-only and guided without owning product state"
   assert.match(builderCss, /env\(safe-area-inset-left\)/);
   assert.match(builderCss, /env\(safe-area-inset-right\)/);
   assert.doesNotMatch(builderJs, /\.checked\s*=|\.value\s*=|dispatchEvent\(new Event\("change"/);
-  assert.match(responsiveDocs, /Smartphone und Tablet.*Querformat/s);
-  assert.match(responsiveDocs, /kein Reload.*kein Verlust/s);
+  assert.match(responsiveDocs, /Smartphone and Tablet.*Querformat/s);
+  assert.match(responsiveDocs, /kein Reload und kein Verlust/s);
 });
 
 test("Builder Core keeps Adobe concept work outside runtime media and remains offline-capable", () => {
