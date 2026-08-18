@@ -1,5 +1,17 @@
 {
-  "name": "@business-web-factory/supabase-adapter",
+  "name": "@business-web/supabase-adapter",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "version": "0.0.1",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@business-web/analytics": "0.0.1",
+    "@business-web/core": "0.0.1",
+    "@business-web/menu-engine": "0.0.1",
+    "@business-web/notifications": "0.0.1",
+    "@business-web/ordering": "0.0.1",
+    "@business-web/payments": "0.0.1"
+  }
 }

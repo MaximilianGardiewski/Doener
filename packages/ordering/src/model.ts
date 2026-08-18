@@ -1,4 +1,4 @@
-import type { PaymentSnapshot } from "../../payments/src/contracts.ts";
+import type { PaymentSnapshot } from "@business-web/payments";
 
 export type OrderState =
   | "draft"

@@ -1,8 +1,6 @@
-import type { PreparedPickupOrderDraft } from "../../ordering/src/checkout.ts";
-import type { OrderWriter } from "../../ordering/src/checkout.ts";
-import type { Order, OrderState } from "../../ordering/src/model.ts";
-import type { PaymentMethod, PaymentMode, PaymentStatus } from "../../payments/src/contracts.ts";
-import type { ProductSelection } from "../../menu-engine/src/model.ts";
+import type { Order, OrderState, OrderWriter, PreparedPickupOrderDraft } from "@business-web/ordering";
+import type { PaymentMethod, PaymentMode, PaymentStatus } from "@business-web/payments";
+import type { ProductSelection } from "@business-web/menu-engine";
 import type { RpcClient } from "./rest-rpc.ts";
 
 interface DbOrder {

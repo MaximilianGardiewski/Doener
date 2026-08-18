@@ -1,4 +1,4 @@
-import type { OrderNotificationKind, OrderNotificationProvider } from "../../notifications/src/contracts.ts";
+import type { OrderNotificationKind, OrderNotificationProvider } from "@business-web/notifications";
 import type { RpcClient } from "./rest-rpc.ts";
 
 export interface NotificationOutboxJob {

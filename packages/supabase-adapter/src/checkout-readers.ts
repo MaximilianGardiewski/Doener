@@ -1,6 +1,6 @@
-import type { ShopStatusInput } from "../../core/src/shop-status.ts";
-import type { MenuProduct } from "../../menu-engine/src/model.ts";
-import type { CatalogReader, ShopStateReader, SlotReader } from "../../ordering/src/checkout.ts";
+import type { ShopStatusInput } from "@business-web/core";
+import type { MenuProduct } from "@business-web/menu-engine";
+import type { CatalogReader, ShopStateReader, SlotReader } from "@business-web/ordering";
 import type { RpcClient } from "./rest-rpc.ts";
 
 export class SupabaseCatalogReader implements CatalogReader {

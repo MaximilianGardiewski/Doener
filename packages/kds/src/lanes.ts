@@ -1,4 +1,4 @@
-import type { Order, OrderState } from "../../ordering/src/model.ts";
+import type { Order, OrderState } from "@business-web/ordering";
 
 export type KdsLane = "incoming" | "planned" | "preparing" | "ready" | "archive";
 

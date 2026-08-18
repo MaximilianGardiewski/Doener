@@ -2,5 +2,10 @@
   "name": "@business-web/notifications",
   "private": true,
   "type": "module",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "exports": {
+    ".": "./src/index.ts",
+    "./dev-otp": "./src/dev-otp.ts",
+    "./dev-order-notifications": "./src/dev-order-notifications.ts"
+  }
 }
