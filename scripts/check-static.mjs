@@ -1,9 +1,10 @@
 import { readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { extname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import process from "node:process";
 
-const root = resolve(new URL("../", import.meta.url).pathname);
+const root = resolve(fileURLToPath(new URL("../", import.meta.url)));
 const roots = ["apps", "scripts"];
 const extensions = new Set([".js", ".mjs", ".cjs"]);
 const ignoredDirectories = new Set(["node_modules", "dist", ".git"]);
