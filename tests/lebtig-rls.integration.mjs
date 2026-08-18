@@ -130,17 +130,30 @@ try {
   });
   assertNoError(adminPageWrite.error, "admin structural page write");
 
+  // UPDATE can be denied by RLS as an empty target set rather than an API error.
   const moderatorSettingsWrite = await moderator.client
     .from("site_settings")
     .update({ value: { fixture: false } })
-    .eq("key", `ci-${suffix}`);
-  assertDenied(moderatorSettingsWrite.error, "moderator site settings write");
+    .eq("key", `ci-${suffix}`)
+    .select("key");
+  assertNoError(moderatorSettingsWrite.error, "moderator site settings update request");
+  assert.equal(moderatorSettingsWrite.data?.length, 0, "moderator must not update site settings");
+
+  const settingAfterModerator = await service
+    .from("site_settings")
+    .select("value")
+    .eq("key", `ci-${suffix}`)
+    .single();
+  assertNoError(settingAfterModerator.error, "verify blocked moderator settings update");
+  assert.deepEqual(settingAfterModerator.data.value, { fixture: true });
 
   const adminSettingsWrite = await admin.client
     .from("site_settings")
     .update({ value: { fixture: "admin-updated" } })
-    .eq("key", `ci-${suffix}`);
+    .eq("key", `ci-${suffix}`)
+    .select("key");
   assertNoError(adminSettingsWrite.error, "admin site settings write");
+  assert.equal(adminSettingsWrite.data?.length, 1, "admin settings update should affect one row");
 
   // Editorial roots are moderator/admin writable; role-less users are not.
   const plainNewsWrite = await plain.client.from("news").insert({
@@ -182,10 +195,7 @@ try {
   ]);
   assertNoError(newsInsert.error, "insert news visibility fixtures");
 
-  const anonNews = await anon
-    .from("news")
-    .select("slug")
-    .like("slug", `%${suffix}`);
+  const anonNews = await anon.from("news").select("slug").like("slug", `%${suffix}`);
   assertNoError(anonNews.error, "anon news read");
   assert.deepEqual((anonNews.data ?? []).map((row) => row.slug), [`visible-${suffix}`]);
 
@@ -271,7 +281,8 @@ try {
 
   // Media metadata and objects remain private/staff-only with DB upload invariants.
   const plainMediaRead = await plain.client.from("media").select("id");
-  assertDenied(plainMediaRead.error, "role-less media metadata read");
+  assertNoError(plainMediaRead.error, "role-less media metadata read request");
+  assert.equal(plainMediaRead.data?.length, 0, "role-less user must not see private media metadata");
 
   const moderatorMedia = await moderator.client.from("media").insert({
     url: `/media/${suffix}`,
