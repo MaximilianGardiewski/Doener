@@ -23,6 +23,7 @@ test("D058 obeys the user's reduced-motion preference", () => {
   assert.match(css, /transform: none !important/);
   assert.match(js, /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/);
   assert.match(js, /if \(reducedMotion\.matches \|\| !\("IntersectionObserver" in window\)\)/);
+  assert.match(js, /if \(!node \|\| reducedMotion\.matches\) return/);
 });
 
 test("public motion is progressive enhancement and part of the offline shell", () => {
@@ -32,4 +33,42 @@ test("public motion is progressive enhancement and part of the offline shell", (
   assert.match(sw, /"\/motion\.js"/);
   assert.match(sw, /"\/motion\.css"/);
   assert.match(sw, /mcello-public-shell-v\d+/);
+});
+
+test("V2 motion covers hero food, product, category, ingredient and cart feedback without owning commerce state", () => {
+  assert.match(js, /installHeroFoodDepth/);
+  assert.match(js, /--motion-hero-depth-y/);
+  assert.match(js, /\[data-category\]/);
+  assert.match(js, /motion-category-switch/);
+  assert.match(js, /\[data-product\], \[data-recommended-product\]/);
+  assert.match(js, /motion-product-open/);
+  assert.match(js, /#modifierGroups input/);
+  assert.match(js, /input\.checked \? "added" : "removed"/);
+  assert.match(js, /motion-food-stage-change/);
+  assert.match(js, /#addToCart/);
+  assert.match(js, /motion-cart-confirm/);
+
+  for (const keyframe of [
+    "mcello-category-shift",
+    "mcello-product-open",
+    "mcello-ingredient-choice",
+    "mcello-food-stage-change",
+    "mcello-cart-confirm",
+  ]) assert.match(css, new RegExp(`@keyframes ${keyframe}`));
+
+  assert.doesNotMatch(js, /\bstate\b|basePrice|unitPrice|configuredPrice|localStorage|fetch\s*\(/);
+});
+
+test("builder-ready ingredient feedback is visual only and already reduced-motion safe", () => {
+  assert.match(css, /\[data-motion-selection="removed"\]/);
+  assert.match(css, /\[data-motion-ingredient="removed"\]/);
+  const reduced = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"));
+  for (const selector of [
+    "motion-category-switch",
+    "motion-product-open",
+    "motion-ingredient-change",
+    "motion-food-stage-change",
+    "motion-cart-confirm",
+  ]) assert.match(reduced, new RegExp(selector));
+  assert.match(reduced, /\.hero-media-v2 \.hero-photo/);
 });
