@@ -53,55 +53,95 @@ async function stageState(page) {
   });
 }
 
-async function armGsapOwnershipTrace(page) {
-  await page.evaluate(() => {
-    window.__mcelloIngredientTrace = [];
+async function armIngredientTrace(page, stage) {
+  await page.evaluate(({ kind, selector }) => {
     window.__mcelloIngredientTraceObserver?.disconnect?.();
-    const root = document.querySelector("#modifierGroups");
+    window.__mcelloIngredientTrace = {
+      option: null,
+      optionSawInlineTransform: false,
+      stage: null,
+      stageSawInlineTransform: false,
+      pizzaPulseCount: 0,
+    };
+
+    const root = document.querySelector("#productModal.open");
     if (!root) return;
-    const seen = new WeakSet();
+    const trace = window.__mcelloIngredientTrace;
+    const stageNode = document.querySelector(selector);
+
+    if (kind === "pizza" && stageNode?.animate) {
+      const originalAnimate = stageNode.animate.bind(stageNode);
+      stageNode.animate = (...args) => {
+        trace.pizzaPulseCount += 1;
+        return originalAnimate(...args);
+      };
+    }
+
     const capture = () => {
-      for (const node of root.querySelectorAll(".modifier-option[data-motion-ingredient-engine='gsap']")) {
-        if (seen.has(node)) continue;
-        seen.add(node);
-        const input = node.querySelector("input");
-        requestAnimationFrame(() => {
-          const style = getComputedStyle(node);
-          window.__mcelloIngredientTrace.push({
+      const ownedOption = root.querySelector(".modifier-option[data-motion-ingredient-engine='gsap']");
+      if (ownedOption) {
+        const input = ownedOption.querySelector("input");
+        if (!trace.option) {
+          trace.option = {
             groupId: input?.dataset.groupId || null,
             value: input?.value || null,
             checked: Boolean(input?.checked),
-            selection: node.dataset.motionSelection || null,
-            owner: node.dataset.motionIngredientEngine || null,
-            inlineTransform: node.style.transform,
-            transitionDuration: style.transitionDuration,
-            fallbackClass: node.classList.contains("motion-ingredient-change"),
-          });
-        });
+            selection: ownedOption.dataset.motionSelection || null,
+            owner: ownedOption.dataset.motionIngredientEngine || null,
+            fallbackClass: ownedOption.classList.contains("motion-ingredient-change"),
+            transitionDuration: getComputedStyle(ownedOption).transitionDuration,
+          };
+        }
+        if (ownedOption.style.transform) trace.optionSawInlineTransform = true;
+      }
+
+      if (kind !== "pizza" && stageNode?.dataset.motionIngredientEngine === "gsap") {
+        if (!trace.stage) {
+          trace.stage = {
+            owner: stageNode.dataset.motionIngredientEngine,
+            selection: stageNode.dataset.motionIngredient || null,
+            fallbackClass: stageNode.classList.contains("motion-food-stage-change"),
+            transitionDuration: getComputedStyle(stageNode).transitionDuration,
+          };
+        }
+        if (stageNode.style.transform || stageNode.style.opacity) trace.stageSawInlineTransform = true;
       }
     };
+
     const observer = new MutationObserver(capture);
-    observer.observe(root, { subtree: true, attributes: true, attributeFilter: ["data-motion-ingredient-engine"] });
+    observer.observe(root, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-motion-ingredient-engine", "data-motion-selection", "data-motion-ingredient", "style", "class"],
+    });
     window.__mcelloIngredientTraceObserver = observer;
-  });
+    capture();
+  }, stage);
 }
 
 async function triggerModifier(page) {
   const unchecked = page.locator("#modifierGroups input:not(:disabled):not(:checked)").first();
   const checkedCheckbox = page.locator('#modifierGroups input[type="checkbox"]:not(:disabled):checked').first();
   let input;
+  let action;
 
-  if (await unchecked.count()) input = unchecked;
-  else if (await checkedCheckbox.count()) input = checkedCheckbox;
-  else input = page.locator("#modifierGroups input:not(:disabled)").first();
+  if (await unchecked.count()) {
+    input = unchecked;
+    action = "click";
+  } else if (await checkedCheckbox.count()) {
+    input = checkedCheckbox;
+    action = "click";
+  } else {
+    input = page.locator("#modifierGroups input:not(:disabled)").first();
+    action = "dispatch";
+  }
 
   const identity = await input.evaluate((node) => ({
     groupId: node.dataset.groupId || null,
     value: node.value,
   }));
 
-  if (await unchecked.count()) await input.click();
-  else if (await checkedCheckbox.count()) await input.click();
+  if (action === "click") await input.click();
   else await input.dispatchEvent("change");
 
   const checked = await input.isChecked();
@@ -125,30 +165,38 @@ async function normalScenario() {
     await openConfigurableProduct(page);
     await waitForProductOpenPresentation(page);
     const stage = await stageState(page);
-    await armGsapOwnershipTrace(page);
+    await armIngredientTrace(page, stage);
 
     const { input, option, checked, identity } = await triggerModifier(page);
-    await page.waitForFunction(() => Array.isArray(window.__mcelloIngredientTrace) && window.__mcelloIngredientTrace.length > 0);
-    const optionDuring = await page.evaluate(() => window.__mcelloIngredientTrace[0]);
+    await page.waitForFunction(() => Boolean(window.__mcelloIngredientTrace?.option));
+    await page.waitForTimeout(20);
+    const trace = await page.evaluate(() => structuredClone(window.__mcelloIngredientTrace));
+    console.log(`Ingredient normal trace: ${JSON.stringify({ stage, identity, checked, trace })}`);
 
-    assert.equal(optionDuring.groupId, identity.groupId, `GSAP must own the modifier group that actually changed: ${JSON.stringify({ optionDuring, identity })}`);
-    assert.equal(optionDuring.value, identity.value, `GSAP must own the modifier option that actually changed: ${JSON.stringify({ optionDuring, identity })}`);
-    assert.equal(optionDuring.owner, "gsap");
-    assert.equal(optionDuring.selection, checked ? "added" : "removed");
-    assert.equal(optionDuring.checked, checked, "GSAP ownership snapshot must observe the application-validated checked state");
-    assert.equal(optionDuring.fallbackClass, false);
-    assert.ok(optionDuring.inlineTransform, `GSAP should own an option transform frame: ${JSON.stringify(optionDuring)}`);
-    assert.match(optionDuring.transitionDuration, /(^|, )0s(,|$)/);
+    assert.equal(trace.option.groupId, identity.groupId, `GSAP must own the modifier group that actually changed: ${JSON.stringify({ trace, identity })}`);
+    assert.equal(trace.option.value, identity.value, `GSAP must own the modifier option that actually changed: ${JSON.stringify({ trace, identity })}`);
+    assert.equal(trace.option.owner, "gsap");
+    assert.equal(trace.option.selection, checked ? "added" : "removed");
+    assert.equal(trace.option.checked, checked, "GSAP ownership snapshot must observe the application-validated checked state");
+    assert.equal(trace.option.fallbackClass, false);
+    assert.match(trace.option.transitionDuration, /(^|, )0s(,|$)/);
+    assert.equal(trace.optionSawInlineTransform, true, `GSAP must render at least one option transform frame: ${JSON.stringify(trace)}`);
 
     const stageLocator = page.locator(stage.selector).first();
     if (stage.kind === "pizza") {
-      assert.equal(await stageLocator.getAttribute("data-motion-ingredient-engine"), null, "Pizza stage must stay owned by its builder pulse, not GSAP");
+      assert.equal(trace.stage, null, "Pizza stage must never be marked as GSAP-owned");
+      assert.ok(trace.pizzaPulseCount >= 1, `Pizza builder should retain its own stage pulse: ${JSON.stringify(trace)}`);
+      assert.equal(await stageLocator.getAttribute("data-motion-ingredient-engine"), null);
       assert.equal(await stageLocator.evaluate((node) => node.classList.contains("motion-food-stage-change")), false);
-      const activeAnimations = await stageLocator.evaluate((node) => node.getAnimations().length);
-      assert.ok(activeAnimations >= 1, "Pizza builder should retain its own stage pulse while GSAP owns only the modifier option");
     } else {
-      await page.waitForFunction((selector) => document.querySelector(selector)?.dataset.motionIngredientEngine === "gsap", stage.selector);
-      assert.equal(await stageLocator.evaluate((node) => node.classList.contains("motion-food-stage-change")), false);
+      await page.waitForFunction(() => Boolean(window.__mcelloIngredientTrace?.stage));
+      const stageTrace = await page.evaluate(() => structuredClone(window.__mcelloIngredientTrace));
+      console.log(`Ingredient normal stage trace: ${JSON.stringify(stageTrace)}`);
+      assert.equal(stageTrace.stage.owner, "gsap");
+      assert.equal(stageTrace.stage.selection, checked ? "added" : "removed");
+      assert.equal(stageTrace.stage.fallbackClass, false);
+      assert.match(stageTrace.stage.transitionDuration, /(^|, )0s(,|$)/);
+      assert.equal(stageTrace.stageSawInlineTransform, true, `GSAP must render the FoodStage frame: ${JSON.stringify(stageTrace)}`);
     }
 
     await page.waitForFunction(() => !document.querySelector(".modifier-option[data-motion-ingredient-engine='gsap']"));
@@ -180,14 +228,18 @@ async function fallbackScenario() {
     assert.equal(await page.evaluate(() => document.documentElement.dataset.mcelloIngredientEngine), "v2");
     await openConfigurableProduct(page);
     const stage = await stageState(page);
+    await armIngredientTrace(page, stage);
     const { input, option, checked } = await triggerModifier(page);
     await page.waitForFunction(() => document.querySelector(".modifier-option.motion-ingredient-change"));
     assert.equal(await option.getAttribute("data-motion-ingredient-engine"), null);
 
     const stageLocator = page.locator(stage.selector).first();
     if (stage.kind === "pizza") {
+      await page.waitForFunction(() => window.__mcelloIngredientTrace?.pizzaPulseCount >= 1);
+      const trace = await page.evaluate(() => structuredClone(window.__mcelloIngredientTrace));
+      console.log(`Ingredient fallback trace: ${JSON.stringify({ stage, checked, trace })}`);
       assert.equal(await stageLocator.evaluate((node) => node.classList.contains("motion-food-stage-change")), false);
-      assert.ok(await stageLocator.evaluate((node) => node.getAnimations().length) >= 1, "Pizza fallback keeps its builder-owned pulse");
+      assert.ok(trace.pizzaPulseCount >= 1, "Pizza fallback keeps its builder-owned pulse");
     } else {
       await page.waitForFunction((selector) => document.querySelector(selector)?.classList.contains("motion-food-stage-change"), stage.selector);
     }
@@ -212,16 +264,21 @@ async function reducedScenario() {
     assert.equal(await page.locator('script[data-mcello-gsap-vendor]').count(), 0);
     await openConfigurableProduct(page);
     const stage = await stageState(page);
+    await armIngredientTrace(page, stage);
     const { input, option, checked } = await triggerModifier(page);
     await page.waitForTimeout(40);
 
+    const trace = await page.evaluate(() => structuredClone(window.__mcelloIngredientTrace));
+    console.log(`Ingredient reduced trace: ${JSON.stringify({ stage, checked, trace })}`);
+    assert.equal(trace.option, null);
+    assert.equal(trace.stage, null);
+    assert.equal(trace.pizzaPulseCount, 0);
     assert.equal(await option.evaluate((node) => node.classList.contains("motion-ingredient-change")), false);
     assert.equal(await option.getAttribute("data-motion-ingredient-engine"), null);
     const stageLocator = page.locator(stage.selector).first();
     assert.equal(await stageLocator.evaluate((node) => node.classList.contains("motion-food-stage-change")), false);
     assert.equal(await stageLocator.getAttribute("data-motion-ingredient-engine"), null);
     assert.equal(await input.isChecked(), checked);
-    if (stage.kind === "pizza") assert.equal(await stageLocator.evaluate((node) => node.getAnimations().length), 0);
     console.log(`Mcello GSAP ingredient reduced-motion scenario passed (${stage.kind} stage).`);
   } finally {
     await context.close();
