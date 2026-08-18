@@ -55,7 +55,7 @@ test("cartoon assembly has distinct ingredient layers and purposeful lightweight
 });
 
 test("Döner/Yufka presentation code remains in refreshed offline shell while business data stays network-only", () => {
-  assert.match(sw, /mcello-public-shell-v20/);
+  assert.match(sw, /mcello-public-shell-v21/);
   assert.match(sw, /doner-yufka-builder-v2\.js/);
   assert.match(sw, /doner-yufka-builder-v2\.css/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);
