@@ -156,6 +156,9 @@ async function mobileRotationFlow() {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), true);
 
   const freshGroup = await modifierGroup(page, "Gemüse");
+  await page.locator("[data-builder-step-next]").click();
+  await freshGroup.waitFor({ state: "visible" });
+  assert.equal((await page.locator("[data-builder-step-name]").textContent())?.trim(), "Gemüse");
   const onions = await optionInput(freshGroup, "Zwiebel");
   await onions.uncheck();
   await waitDataset(page, "assemblyVisualLayers", "4");
@@ -167,6 +170,7 @@ async function mobileRotationFlow() {
   await waitDataset(page, "builderOrientation", "landscape");
   await waitDataset(page, "assemblyVisualLayers", "4");
   assert.equal(await onions.isChecked(), false, "real modifier selection must survive portrait/landscape rotation without reload");
+  assert.equal(await freshGroup.isVisible(), true, "guided Builder step must survive portrait/landscape rotation without reset");
   assert.deepEqual(errors, [], errors.join("\n"));
   await context.close();
 }
