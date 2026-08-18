@@ -129,9 +129,10 @@ function syncCommerceEngineLabels() {
 }
 
 function activeFoodStage() {
-  return document.querySelector('#productModal.open [data-food-stage-v4="true"]')
-    || document.querySelector("#productModal.open [data-pizza-stage]")
-    || document.querySelector("#productModal.open .modal-hero");
+  const donerYufkaStage = document.querySelector('#productModal.open [data-food-stage-v4="true"]');
+  if (donerYufkaStage) return donerYufkaStage;
+  if (document.querySelector("#productModal.open [data-pizza-stage]")) return null;
+  return document.querySelector("#productModal.open .modal-hero");
 }
 
 function installCommerceMotionContracts() {
