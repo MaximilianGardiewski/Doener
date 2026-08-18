@@ -4,6 +4,16 @@ Status: **LOCAL / PRIVATE-LAN PRESENTATION BOOTSTRAP**
 
 `Mcello-Demo.ps1` ist der eine Einstiegspunkt für einen neuen oder bereits eingerichteten Windows-11-Demo-Rechner. Das Bootstrap darf als einzelne Datei außerhalb des Repositories liegen: standardmäßig richtet es `C:\AI\Doener` ein, installiert bei Bedarf PowerShell 7 und Git über `winget`, klont das Repository und übergibt anschließend an `scripts/demo-mcello-control-center.ps1`.
 
+## Primärer Präsentationsaufbau
+
+Für Kundentermine ist die **LAN-Demo der Hauptweg**:
+
+- **Laptop = Host**: Docker, lokales Supabase, Mcello-Runtime und LAN-Proxy. Auf dem Laptop können Customer, KDS, Ops und Admin gleichzeitig geöffnet werden.
+- **Smartphone = Customer/Client**: Shop, Warenkorb und visueller Builder.
+- **Tablet = Staff/Admin**: KDS, Ops und Admin.
+
+Der Präsentations-Wrapper öffnet nach erfolgreichem Start standardmäßig alle vier lokalen Host-Ansichten. Der Smartphone-/Tablet-Zugriff erfolgt über die vom LAN-Launcher ausgegebenen privaten URLs. Vercel gehört nicht zu diesem Präsentationspfad. Die spätere Produktion bleibt VPS/Dedicated.
+
 ## Start
 
 Von einer heruntergeladenen Einzeldatei:
@@ -16,6 +26,12 @@ Wenn das Repository bereits vorhanden ist:
 
 ```powershell
 npm run demo:mcello
+```
+
+Direkt komplett vorbereiten und die LAN-Präsentation starten:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\Mcello-Demo.ps1 -Mode Lan
 ```
 
 Komplette Vorbereitung ohne direkt eine Präsentation zu starten:
@@ -35,14 +51,14 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\Mcello-Demo.ps1 -Workspace 'D:\D
 Das Control Center bietet:
 
 1. vollständige Vorbereitung + Desktop-Demo,
-2. vollständige Vorbereitung + LAN-Demo für PC/Tablet/Smartphone,
+2. vollständige Vorbereitung + LAN-Demo für Laptop/Tablet/Smartphone,
 3. reine Vorbereitung / Vorladen,
 4. schnellen Desktop-Start nach bereits erfolgter Vorbereitung,
 5. schnellen LAN-Start,
 6. System- und Repository-Status,
 7. Repository-Update + `npm ci`,
 8. Supabase/Docker-Warm-up,
-9. Öffnen der lokalen Demo-Seiten,
+9. Öffnen aller lokalen Host-Demo-Seiten,
 10. Stop/Cleanup der lokalen Demo-Umgebung.
 
 ## Vollständige Vorbereitung
@@ -67,6 +83,7 @@ Der erste Supabase-Warm-up darf mehrere Minuten dauern, weil dabei die benötigt
 - Die LAN-Demo fordert nur dann Administratorrechte an, wenn die bestehenden LocalSubnet-Firewallregeln benötigt werden.
 - Der Stop-Befehl beendet nur erkannte Mcello-Runtime-Prozesse auf den Demo-Ports und den lokalen Supabase-Stack; fremde Prozesse werden nicht blind beendet.
 - Die eigentliche Mcello-Demo bleibt weiterhin in den bereits getesteten Launchern `demo-mcello.ps1` und `demo-mcello-presentation-lan.ps1`. Das Control Center orchestriert Vorbereitung und Bedienung, dupliziert aber keine Shop-/Checkout-/KDS-Logik.
+- Präsentationsdaten bleiben lokal/disposable und werden nicht als produktive Wahrheit behandelt.
 
 ## Logs
 
