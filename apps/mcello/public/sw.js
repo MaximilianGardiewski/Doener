@@ -1,23 +1,19 @@
-const CACHE = "mcello-public-shell-v13";
+const CACHE = "mcello-public-shell-v14";
 const APP_SHELL = [
   "/", "/styles.css", "/brand-system.css", "/homepage-v2.css", "/app.js",
   "/public-content.js", "/public-copy.js", "/placeholder-media.js", "/homepage-composition.js",
   "/motion.js", "/motion.css", "/store-v2.js", "/store-v2.css",
   "/builder-core-v2.js", "/builder-core-v2.css", "/pizza-builder-v2.js", "/pizza-builder-v2.css",
+  "/doner-yufka-builder-v2.js", "/doner-yufka-builder-v2.css",
   "/manifest.webmanifest", "/media/placeholder.svg", "/icons/pwa-192.png", "/icons/pwa-512.png",
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL)));
 });
-
 self.addEventListener("activate", (event) => {
-  event.waitUntil(Promise.all([
-    self.clients.claim(),
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))),
-  ]));
+  event.waitUntil(Promise.all([self.clients.claim(), caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))]));
 });
-
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
