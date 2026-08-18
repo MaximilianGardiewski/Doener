@@ -80,6 +80,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] V1 does not depend on Lovable or Vercel to build, run or deploy (`D063`)
 - [x] Production self-host plan includes TLS, secrets, firewalling, backups, restore test and monitoring (`D063`)
 - [ ] Adobe/Figma/Canva/Lovable and similar tools remain optional clients; relevant outputs return to Git/Media/CMS and no design tool becomes runtime-critical (`D070`)
+- [ ] GSAP motion runtime is exact-version, local/self-hosted and progressive-only: initial Core + ScrollTrigger + Flip whitelist, no CDN/Webflow runtime dependency, full reduced-motion/GSAP-unavailable functional parity and no commerce/security authority (`D074`)
 
 ## Prepared now
 - [x] Payment provider boundary (`D004`)

@@ -10,8 +10,14 @@ const worker = await readFile(new URL("apps/mcello/notification-worker.mjs", roo
 const gateway = await readFile(new URL("infra/selfhost/container-entrypoint.mjs", root), "utf8");
 const manifest = JSON.parse(await readFile(new URL("apps/mcello/package.json", root), "utf8"));
 
-test("local run entrypoint delegates only to the development composition root", () => {
-  assert.equal(run.trim(), 'await import("./runtime/development.mjs");');
+test("local run entrypoint performs local static preparation then delegates to the development composition root", () => {
+  assert.match(run, /prepareMcelloGsapVendor/);
+  assert.match(run, /await import\("\.\/runtime\/development\.mjs"\)/);
+  assert.ok(
+    run.indexOf("prepareMcelloGsapVendor()") < run.indexOf('import("./runtime/development.mjs")'),
+    "local same-origin static vendor preparation must finish before the development server starts",
+  );
+  assert.doesNotMatch(run, /runtime\/production|notification-worker|server\.mjs/);
   assert.match(development, /startLocalNotificationWorker/);
   assert.match(development, /loadEnv\(path\.join\(repoRoot, "\.env\.local"\)\)/);
   assert.match(development, /@business-web\/supabase-adapter/);

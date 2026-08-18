@@ -2,10 +2,13 @@ import { cp, mkdir, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
+import { prepareMcelloGsapVendor } from "./vendor-mcello-gsap.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const source = path.join(root, "apps", "mcello", "public");
 const out = path.join(root, "dist");
 
+await prepareMcelloGsapVendor();
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
 await cp(source, out, { recursive: true });

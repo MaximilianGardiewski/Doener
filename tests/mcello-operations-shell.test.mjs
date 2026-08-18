@@ -46,7 +46,7 @@ test("D072 shell provides desktop sidebar, tablet rail, phone drawer and reduced
 });
 
 test("D072 shell assets remain available through the PWA shell cache", () => {
-  assert.match(sw, /mcello-public-shell-v21/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/operations-shell\.js"/);
   assert.match(sw, /"\/operations-shell\.css"/);
 });

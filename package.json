@@ -14,6 +14,7 @@
     "check:static": "node scripts/check-static.mjs",
     "audit:db": "node scripts/audit-db-v1.mjs",
     "check": "npm run typecheck && npm run test:domain && npm run test:lebtig && npm run test:schema && npm run audit:db && npm run check:static",
+    "vendor:mcello:gsap": "node scripts/vendor-mcello-gsap.mjs",
     "build:preview": "node scripts/build-preview.mjs",
     "build:lebtig": "npm --workspace @business-web/lebtig run build",
     "preview:mcello": "node --experimental-strip-types apps/mcello/run.mjs",
