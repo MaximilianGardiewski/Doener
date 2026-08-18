@@ -95,7 +95,7 @@ const order = await createOrder("Outbox Lifecycle");
 let jobs = await outboxFor(order.id);
 assert.deepEqual(jobs.map((job) => job.kind), ["received"]);
 assert.equal(jobs[0].preferred_channel, "whatsapp");
-assert.equal(jobs[0].fallback_channel, "sms");
+assert.equal(jobs[0].fallback_channel, null);
 assert.equal(jobs[0].status, "pending");
 
 const anonymousRead = await request("/rest/v1/order_notification_outbox?select=id,kind");
@@ -144,16 +144,20 @@ assert.equal(completed.response.ok, true, JSON.stringify(completed.data));
 jobs = await outboxFor(order.id);
 assert.deepEqual(jobs.map((job) => job.kind), ["received", "accepted", "delayed", "ready"]);
 assert.equal(jobs.some((job) => job.kind === "completed"), false);
+for (const job of jobs) {
+  assert.equal(job.preferred_channel, "whatsapp");
+  assert.equal(job.fallback_channel, null);
+}
 const delayedJob = jobs.find((job) => job.kind === "delayed");
 assert.ok(delayedJob, "custom delay must enqueue a customer update");
-assert.equal(delayedJob.preferred_channel, "whatsapp");
-assert.equal(delayedJob.fallback_channel, "sms");
 assert.equal(new Date(delayedJob.payload.acceptedPickupAt).toISOString(), expectedDelayedPickupAt);
 
 const cancelledOrder = await createOrder("Outbox Cancel");
 const cancelled = await rpc("customer_cancel_pending_order", { _public_token: cancelledOrder.public_token });
 assert.equal(cancelled.response.ok, true, JSON.stringify(cancelled.data));
-assert.deepEqual((await outboxFor(cancelledOrder.id)).map((job) => job.kind), ["received", "cancelled"]);
+const cancelledJobs = await outboxFor(cancelledOrder.id);
+assert.deepEqual(cancelledJobs.map((job) => job.kind), ["received", "cancelled"]);
+assert.equal(cancelledJobs.every((job) => job.preferred_channel === "whatsapp" && job.fallback_channel === null), true);
 
 const rejectedOrder = await createOrder("Outbox Reject");
 const rejected = await rpc(
@@ -163,12 +167,14 @@ const rejected = await rpc(
   staffToken,
 );
 assert.equal(rejected.response.ok, true, JSON.stringify(rejected.data));
-assert.deepEqual((await outboxFor(rejectedOrder.id)).map((job) => job.kind), ["received", "rejected"]);
+const rejectedJobs = await outboxFor(rejectedOrder.id);
+assert.deepEqual(rejectedJobs.map((job) => job.kind), ["received", "rejected"]);
+assert.equal(rejectedJobs.every((job) => job.preferred_channel === "whatsapp" && job.fallback_channel === null), true);
 
 console.log("Notification outbox lifecycle passed:", {
   customerFlow: ["received", "accepted", `delayed+${customDelayMinutes}`, "ready"],
   customDelayedPickupAt: expectedDelayedPickupAt,
   cancelFlow: ["received", "cancelled"],
   rejectFlow: ["received", "rejected"],
-  channelPolicy: "whatsapp -> sms",
+  channelPolicy: "whatsapp-only",
 });
