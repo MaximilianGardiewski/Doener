@@ -27,6 +27,18 @@ Git, Migrationen, Tests, Decision Ledgers und Repo-Dokumentation sind kanonisch.
 7. **Produktionsschutz** — kein Production-Deploy und keine Produktionsmutation ohne ausdrückliche Freigabe.
 8. **Evidence vor Haken** — Acceptance erst auf VERIFIED setzen, wenn Runtime-/DB-/Browser-Evidenz den bindenden Decision-Scope abdeckt.
 
+## Standalone-/Design-Tool-Grenze
+
+Mcello muss als eigenständige, self-hostbare Anwendung funktionieren. Lovable, Figma, Adobe/Firefly, Vercel, ChatGPT, Claude, Codex und ähnliche Werkzeuge dürfen Entwicklung oder Design beschleunigen, sind aber keine Runtime-Voraussetzung.
+
+- Design-Tokens sind repo-owned (z. B. CSS Custom Properties, TypeScript/JavaScript oder JSON), nicht remote aus Figma/Firefly/Lovable geladen.
+- Adobe Firefly Boards ist für die aktuelle Designphase als primäre visuelle Arbeitsfläche freigegeben; die vorhandene Adobe-Subscription macht die Entwicklungsnutzung akzeptabel.
+- Akzeptierte Firefly-/Adobe-Ergebnisse müssen als portable Assets bzw. Entscheidungen zurück in Git oder den kontrollierten Media/CMS-Pfad.
+- Figma bleibt optionales Spezialwerkzeug, nicht verpflichtender Zwischenschritt.
+- Der Browser bzw. die echte Mcello-Runtime ist das letzte UI-Acceptance-Ziel, nicht ein externes Mockup.
+
+Kanonische Detailregel: `docs/projects/mcello/DESIGN_PIPELINE_V5.md`.
+
 ## Aktuelle Kernpakete
 
 - `packages/core` — gemeinsame Plattform-/Shop-Invarianten, inklusive Location Context.
@@ -45,7 +57,7 @@ Git, Migrationen, Tests, Decision Ledgers und Repo-Dokumentation sind kanonisch.
 Die vollständige Wahrheit steht in `docs/projects/mcello/DECISIONS.md`. Besonders wichtig für weitere Arbeit:
 
 - eigenes Website-Bestellsystem, kein Marketplace als Kern (`D002`)
-- WhatsApp OTP primär, SMS als Fallback; Entwicklung ohne still aktivierte Providerkosten (`D003`, `D064`)
+- **WhatsApp-only** für V1-Verifikation und relevante Status-/Ready-Nachrichten; kein SMS-Fallback; Entwicklung ohne still aktivierte Providerkosten (`D003`, `D016`, `D064`)
 - **Zahlung in V1 nur vor Ort, bar oder Karte; Online-Payment nur vorbereitet (`D004`)**
 - Pickup + Vorbestellung; Delivery nur vorbereitet (`D005`, `D006`)
 - strukturierter Konfigurator und serverseitige Preis-/Verfügbarkeitsprüfung (`D007`, `D008`)
@@ -53,7 +65,7 @@ Die vollständige Wahrheit steht in `docs/projects/mcello/DECISIONS.md`. Besonde
 - Multi-Device-KDS, Statusfluss, Rush/Pause/Snooze (`D010`–`D017`, `D049`)
 - Single-Location-Mcello, aber wiederverwendbarer Location-Boundary (`D057`)
 - PWA + hochwertige, warme Premium-Darstellung (`D001`, `D029`, `D058`, `D060`)
-- kein verpflichtender neuer monatlicher SaaS-Posten; Self-Hosting-Pfad muss erhalten bleiben (`D063`)
+- kein verpflichtender neuer monatlicher Runtime-SaaS-Posten; Self-Hosting-Pfad muss erhalten bleiben (`D063`)
 
 ## Stand der technischen V1-Basis
 
@@ -87,7 +99,7 @@ Für jede weitere PREPARE_NOW-Entscheidung gilt: Contract + Datenmodell/Boundary
 Nicht mit Placeholdern oder ungeprüfter Recherche schließen:
 
 - bestätigte Adresse, Telefon-/WhatsApp-Kontakt und Maps-Ziel
-- explizite WhatsApp-/SMS-Provider-/Kostenfreigabe
+- explizite WhatsApp-Provider-/Kostenfreigabe für Production Messaging
 - owner-bestätigte reale Menü-/Ingredient-/Sauce-/Extra-Konfiguration
 - finales originales Mcello-Logo/Recognition-Asset
 - echte freigegebene Mcello-Fotos, Rechte und Owner-/Team-/Story-Fakten
@@ -98,6 +110,8 @@ Details: `Quellen/V1-GO-LIVE-INPUTS.md`.
 ## Kosten- und Vendor-Regel
 
 Neue Dienste dürfen nicht allein aus Bequemlichkeit zu einer unvermeidbaren Runtime-Abhängigkeit werden. Der vorgesehene Produktionspfad bleibt auf vorhandener/self-hostbarer Infrastruktur reproduzierbar. Optional verwendete Design-, Preview- oder Coding-Tools ändern diese Grenze nicht.
+
+Bereits vorhandene/gebuchte Entwicklungswerkzeuge dürfen genutzt werden, wenn sie keine neue Runtime-Pflicht erzeugen. Für Adobe/Firefly ist die Entwicklungs-/Designnutzung ausdrücklich freigegeben; akzeptierte Ergebnisse werden anschließend in portable, repo-/app-eigene Assets und Entscheidungen überführt.
 
 ## Definition of done für einen Baustein
 
