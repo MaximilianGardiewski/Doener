@@ -19,7 +19,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run domain and schema checks
+      - name: Install check dependencies
+        run: npm install --ignore-scripts --package-lock=false
+      - name: Run type domain schema and static checks
         run: npm run check
       - name: Build Mcello preview
         run: npm run build:preview
