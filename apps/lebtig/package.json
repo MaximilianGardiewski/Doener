@@ -1,0 +1,10 @@
+{
+  "name": "@business-web/lebtig",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "dependencies": {
+    "@business-web/auth": "0.0.1",
+    "@business-web/cms": "0.0.1"
+  }
+}
