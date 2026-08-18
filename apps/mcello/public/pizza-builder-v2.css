@@ -1,0 +1,35 @@
+/* Pizza Builder V2 — truth-gated visual specialization of Builder Core. */
+
+#productModal[data-product-builder="pizza"] [data-builder-food-stage="true"] {
+  object-fit: contain;
+  object-position: center;
+  padding: clamp(24px, 5vw, 64px);
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--mcello-bread) 94%, white) 0 43%, transparent 44%),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--mcello-copper) 18%, transparent), transparent 64%),
+    var(--surface-food-stage);
+  transform: none;
+}
+
+#productModal[data-product-builder="pizza"] [data-builder-food-stage="true"]::before {
+  content: "";
+}
+
+#productModal[data-product-builder="pizza"] .builder-context::after {
+  content: "Top-down FoodStage · Zutaten-Layer folgen erst aus strukturierten Produktdaten";
+  display: block;
+  max-width: 34ch;
+  color: var(--content-secondary);
+  font-size: var(--type-meta);
+  line-height: 1.4;
+}
+
+#productModal[data-product-builder="pizza"][data-pizza-visual-layers="0"] .builder-context::after {
+  color: color-mix(in srgb, var(--mcello-gold) 72%, var(--content-secondary));
+}
+
+@media (max-width: 820px) {
+  #productModal[data-product-builder="pizza"] [data-builder-food-stage="true"] {
+    padding: clamp(18px, 8vw, 38px);
+  }
+}
