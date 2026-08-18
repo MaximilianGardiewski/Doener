@@ -57,7 +57,7 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0
           npx playwright install chromium
-      - name: Run Mcello public browser smokes
+      - name: Run existing Mcello public browser smokes
         run: |
           python3 -m http.server 4173 --directory dist > /tmp/mcello-preview.log 2>&1 &
           preview_pid=$!
@@ -72,12 +72,24 @@ jobs:
           node tests/public-navigation.browser.mjs
           node tests/showcase-motion.browser.mjs
           node tests/mcello-gsap-adapter.browser.mjs
-          node tests/mcello-gsap-reveal.browser.mjs
           node tests/mcello-store-v2.browser.mjs
           node tests/mcello-builder-core-v2.browser.mjs
           node tests/homepage-composition.browser.mjs
           node tests/brand-design-system.browser.mjs
           node tests/public-copy-tone.browser.mjs
+      - name: Run Mcello GSAP reveal browser gate
+        run: |
+          python3 -m http.server 4173 --directory dist > /tmp/mcello-gsap-reveal.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          node tests/mcello-gsap-reveal.browser.mjs
       - name: Run Lebtig public auth browser smoke
         run: |
           npm run preview:lebtig > /tmp/lebtig-preview.log 2>&1 &
