@@ -19,6 +19,49 @@ const publicPaths = [
   "/impressum",
 ];
 
+async function expectRedirect(pathname, status, location) {
+  const response = await fetch(`${baseUrl}${pathname}`, { redirect: "manual" });
+  assert.equal(response.status, status, `${pathname} should return ${status}`);
+  assert.equal(response.headers.get("location"), location, `${pathname} should redirect to ${location}`);
+}
+
+async function verifyHttpContracts() {
+  await expectRedirect("/Startseite", 308, "/");
+  await expectRedirect("/Ueber-Uns/", 308, "/ueber-uns");
+  await expectRedirect("/Unser-Sortiment", 308, "/sortiment");
+  await expectRedirect("/Kontakt/Oeffnungszeiten", 308, "/kontakt");
+  await expectRedirect("/Mittagstisch/?utm_source=flyer", 308, "/mittagstisch?utm_source=flyer");
+  await expectRedirect("/Rezepte/Wiener-Tafelspitz/", 308, "/rezepte");
+  await expectRedirect("/admin", 307, "/auth");
+  await expectRedirect("/admin/benutzer", 307, "/auth");
+
+  const sitemap = await fetch(`${baseUrl}/sitemap.xml`);
+  assert.equal(sitemap.status, 200, "/sitemap.xml should return 200");
+  assert.match(sitemap.headers.get("content-type") || "", /application\/xml/);
+  const xml = await sitemap.text();
+  for (const pathname of [
+    "/mittagstisch",
+    "/wochenangebote",
+    "/partyservice",
+    "/kontakt",
+    "/sortiment",
+    "/ueber-uns",
+    "/aktuelles",
+    "/rezepte",
+    "/datenschutz",
+    "/impressum",
+  ]) {
+    assert.ok(xml.includes(`${pathname}</loc>`), `sitemap should contain ${pathname}`);
+  }
+  assert.ok(!xml.includes("/auth</loc>"), "sitemap must not expose auth as indexable content");
+
+  const media = await fetch(`${baseUrl}/media/not-configured`, { redirect: "manual" });
+  assert.equal(media.status, 404, "portable shell must fail closed for unconfigured media backend");
+
+  const unknown = await fetch(`${baseUrl}/gibt-es-nicht-xyz`, { redirect: "manual" });
+  assert.equal(unknown.status, 404, "unknown direct requests should return a real 404");
+}
+
 async function verifyViewport(browser, viewport) {
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
@@ -46,9 +89,23 @@ async function verifyViewport(browser, viewport) {
   const authOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   assert.ok(authOverflow <= 1, `/auth should not overflow horizontally (delta ${authOverflow})`);
 
+  if (viewport.width <= 390) {
+    await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+    const menuSummary = page.locator(".mobile-menu > summary");
+    assert.equal(await menuSummary.count(), 1, "mobile navigation control should render");
+    await menuSummary.click();
+    const lunchLink = page.locator(".mobile-panel a[href='/mittagstisch']");
+    assert.equal(await lunchLink.count(), 1, "mobile navigation should expose Mittagstisch");
+    await lunchLink.click();
+    await page.waitForURL(`${baseUrl}/mittagstisch`);
+    assert.equal(await page.locator("h1").count(), 1, "mobile navigation target should render");
+  }
+
   assert.deepEqual(consoleErrors, [], `browser console/page errors: ${consoleErrors.join(" | ")}`);
   await context.close();
 }
+
+await verifyHttpContracts();
 
 const browser = await chromium.launch({ headless: true });
 try {
@@ -58,4 +115,4 @@ try {
   await browser.close();
 }
 
-console.log("Lebtig public/auth browser smoke passed");
+console.log("Lebtig public/auth HTTP and browser smoke passed");
