@@ -23,8 +23,8 @@ test("base provisional Pizza remains modifier-empty while localhost presentation
   assert.ok(pizzaItems.every((item) => Array.isArray(item[5]) && item[5].length === 0));
   assert.equal(presentation.pizza.productSourceId, "pizza-076");
   assert.equal(seed.items.find((item) => item[0] === "pizza-076")?.[2], "Pizza Mcello");
-  assert.deepEqual(presentation.pizza.groups[0].options.map((option) => option.name), ["Kebab Fleisch", "Tomaten", "Broccoli", "Käse", "Zwiebeln"]);
-  assert.match(js, /Kebab Fleisch.*Tomaten.*Broccoli.*Käse.*Zwiebeln/s);
+  assert.deepEqual(presentation.pizza.groups[0].options.map((option) => option.name), ["Kebap Fleisch", "Tomaten", "Broccoli", "Käse", "Zwiebeln"]);
+  assert.match(js, /Kebap Fleisch.*Tomaten.*Broccoli.*Käse.*Zwiebeln/s);
 });
 
 test("Pizza presentation compositor derives visual layer count from existing checked inputs without owning selections", () => {
