@@ -14,7 +14,7 @@ Presentation target: first-party provisional source item `pizza-076`, **Pizza Mc
 
 The five visual/toggle ingredients come from the existing user-supplied menu-card transcription for this exact product:
 
-- Kebab Fleisch
+- Kebap Fleisch
 - Tomaten
 - Broccoli
 - Käse
