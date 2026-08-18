@@ -491,7 +491,6 @@ async function handleApi(req, res, url) {
     const challenge = await otp.sendOtp({
       mobile: normalizeMobile(mobile),
       preferredChannel: "whatsapp",
-      fallbackChannel: "sms",
     });
     sendJson(res, 200, {
       ...challenge,

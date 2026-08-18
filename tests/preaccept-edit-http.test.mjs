@@ -60,7 +60,7 @@ test("dedicated editor contains only mutable customer order fields", () => {
   }
 });
 
-test("server routes edit through service-role-only RPCs and never consumes identity fields in edit routes", () => {
+test("server routes edit through service-role-only RPCs and keeps V1 OTP WhatsApp-only", () => {
   const editRoutes = editRouteSource();
   requireTokens(editRoutes, [
     'url.pathname === "/api/order-edit"',
@@ -71,7 +71,8 @@ test("server routes edit through service-role-only RPCs and never consumes ident
   for (const forbidden of ['body.mobile', 'body.paymentMode', 'body.fulfillmentType', 'body.source']) {
     assert.equal(editRoutes.includes(forbidden), false, `edit route must not consume ${forbidden}`);
   }
-  requireTokens(server, ['preferredChannel: "whatsapp"', 'fallbackChannel: "sms"']);
+  requireTokens(server, ['preferredChannel: "whatsapp"']);
+  assert.doesNotMatch(server, /fallbackChannel:\s*["']sms["']/);
 });
 
 test("database edit context is privacy-minimal and V1-scoped", () => {

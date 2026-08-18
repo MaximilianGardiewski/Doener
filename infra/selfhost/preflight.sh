@@ -42,8 +42,14 @@ require_https SUPABASE_URL
 [[ ${#SUPABASE_ANON_KEY} -ge 40 ]] || fail "SUPABASE_ANON_KEY looks too short"
 [[ ${#SUPABASE_SERVICE_ROLE_KEY} -ge 40 ]] || fail "SUPABASE_SERVICE_ROLE_KEY looks too short"
 
-if [[ -n "${WHATSAPP_PROVIDER:-}${SMS_PROVIDER:-}" ]]; then
-  [[ "${ALLOW_PAID_MESSAGING:-NO}" == "YES" ]] || fail "messaging provider configured without ALLOW_PAID_MESSAGING=YES"
+# Mcello V1 is WhatsApp-only. Reject stale or accidental SMS configuration
+# instead of silently turning a future-capability boundary into a V1 fallback.
+if [[ -n "${SMS_PROVIDER:-}${SMS_API_TOKEN:-}${SMS_SENDER_ID:-}" ]]; then
+  fail "SMS messaging is outside Mcello V1; configure WhatsApp only"
+fi
+
+if [[ -n "${WHATSAPP_PROVIDER:-}" ]]; then
+  [[ "${ALLOW_PAID_MESSAGING:-NO}" == "YES" ]] || fail "WhatsApp provider configured without ALLOW_PAID_MESSAGING=YES"
 fi
 
 if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then

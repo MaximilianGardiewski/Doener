@@ -1,6 +1,6 @@
 # Mcello — Binding Decision Ledger
 
-Source: interactive discovery interview, 2026-08-14.
+Source: interactive discovery interview, 2026-08-14; D003/D016/D064 clarified by owner on 2026-08-18.
 
 Status semantics:
 - `IMPLEMENT_V1`: must be implemented before V1 is considered complete.
@@ -11,7 +11,7 @@ Status semantics:
 |---|---|---|---|
 | D001 | Brand | Modern Warm Premium: darker anthracite layout, warm premium accents, large warm real food photography, clean fast-casual usability. | `IMPLEMENT_V1` |
 | D002 | Ordering | Own independent ordering system on the Mcello website; no third-party marketplace required for the core flow. | `IMPLEMENT_V1` |
-| D003 | Verification | WhatsApp OTP is primary anti-fake verification; SMS OTP fallback must also be supported. | `IMPLEMENT_V1` |
+| D003 | Verification | Mcello V1 uses WhatsApp only for anti-fake verification: the customer receives a one-time key/code through WhatsApp and must verify it before order submission. There is no SMS fallback in V1. | `IMPLEMENT_V1` |
 | D004 | Payment | V1 is pay on pickup/on-site (cash/card). Payment architecture must allow online payment later. | `PREPARE_NOW_IMPLEMENT_LATER` |
 | D005 | Fulfillment | V1 supports pickup plus preorder for later pickup. Delivery comes later. | `IMPLEMENT_V1` |
 | D006 | Delivery | Delivery zones/PLZ/radius must be architecturally possible later without rewriting the order core. | `PREPARE_NOW_IMPLEMENT_LATER` |
@@ -24,7 +24,7 @@ Status semantics:
 | D013 | Item Snooze | Staff can mark products or ingredients sold out for today with one click. | `IMPLEMENT_V1` |
 | D014 | KDS Alarm | Incoming order emits repeating audible alert until actively handled; handling on one device clears the alert on synced devices. | `IMPLEMENT_V1` |
 | D015 | Customer Status | After OTP/order submission customer lands on live status page with progress, order number, summary and pickup address. | `IMPLEMENT_V1` |
-| D016 | Customer Push | WhatsApp sends confirmation/status link and final ready notification; SMS can act as fallback channel. | `IMPLEMENT_V1` |
+| D016 | Customer Push | Mcello V1 sends customer confirmation/status links, relevant status updates and the final ready notification through WhatsApp only. SMS is not an active or fallback channel in V1. | `IMPLEMENT_V1` |
 | D017 | Status Actions | Live status page includes Google Maps route button and call-Mcello button. | `IMPLEMENT_V1` |
 | D018 | Checkout Data | V1 checkout asks for first name, mobile number and optional free-order comment only. | `IMPLEMENT_V1` |
 | D019 | Customer Accounts | Email receipts/accounts/favorites/reorder are later options, not V1 blockers. | `LATER_OPTION` |
@@ -72,4 +72,4 @@ Status semantics:
 | D061 | Future Loyalty | Favorites/reorder/push/loyalty may use the PWA foundation later. | `LATER_OPTION` |
 | D062 | Scope Rule | Every confirmed interview decision is binding according to its explicit V1/prepared/later status. | `IMPLEMENT_V1` |
 | D063 | Infrastructure Cost | Development and deployment must introduce no mandatory new monthly SaaS cost. Use local Supabase via Docker for development and a self-hosted Supabase/app deployment on already-available infrastructure for staging/production. GitHub is source of truth; Vercel/Lovable are optional clients only. | `IMPLEMENT_V1` |
-| D064 | External Messaging Spend | No paid SMS/WhatsApp provider may be silently enabled. Keep the binding WhatsApp-primary/SMS-fallback contracts and use a local OTP provider in development; production messaging provider activation requires explicit owner approval of unavoidable carrier/provider charges. | `IMPLEMENT_V1` |
+| D064 | External Messaging Spend | Mcello V1 messaging is WhatsApp-only. No paid WhatsApp provider may be silently enabled; development uses the local OTP provider, while production WhatsApp activation requires explicit owner approval of unavoidable carrier/provider charges. SMS must not be configured, exposed or invoked by Mcello V1. | `IMPLEMENT_V1` |

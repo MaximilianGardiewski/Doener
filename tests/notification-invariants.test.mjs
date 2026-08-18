@@ -4,13 +4,19 @@ import { readFile } from "node:fs/promises";
 
 const outbox = await readFile(new URL("../supabase/migrations/20260814191200_notification_outbox.sql", import.meta.url), "utf8");
 const priority = await readFile(new URL("../supabase/migrations/20260814191300_notification_priority.sql", import.meta.url), "utf8");
+const whatsappOnly = await readFile(
+  new URL("../supabase/migrations/20260818020000_mcello_v1_whatsapp_only_notifications.sql", import.meta.url),
+  "utf8",
+);
 
-test("order state changes enqueue durable WhatsApp-first jobs with SMS fallback", () => {
+test("notification history remains provider-neutral but effective Mcello V1 state is WhatsApp-only", () => {
   assert.match(outbox, /preferred_channel[\s\S]*default 'whatsapp'/i);
   assert.match(outbox, /fallback_channel/i);
-  assert.match(outbox, /'whatsapp',[\s\n]*'sms'/i);
+  assert.match(whatsappOnly, /preferred_channel = 'whatsapp' and fallback_channel is null/i);
+  assert.match(whatsappOnly, /'whatsapp',[\s\n]*null,/i);
+  assert.doesNotMatch(whatsappOnly, /'whatsapp',[\s\n]*'sms'/i);
   for (const kind of ["received", "accepted", "delayed", "ready", "rejected", "cancelled"]) {
-    assert.match(outbox, new RegExp(`'${kind}'`, "i"));
+    assert.match(whatsappOnly, new RegExp(`'${kind}'`, "i"));
   }
 });
 

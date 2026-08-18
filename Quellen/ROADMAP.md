@@ -4,6 +4,12 @@ Stand: 2026-08-18
 
 Diese Roadmap ist eine Arbeitsreihenfolge. Bindend bleibt das Decision Ledger. Ein offener Acceptance-Haken bedeutet nicht automatisch fehlende Architektur; vorhandene Implementierung wird gegen Tests und `V1_EVIDENCE.md` abgeglichen, bevor etwas neu gebaut oder als fertig markiert wird.
 
+## Kurzfristige Priorität — erste Mcello-Vorstellung am 2026-08-18
+
+Bis zur ersten Vorstellung wird Mcello gegenüber weiterem Lebtig-Featureausbau priorisiert. Ziel ist kein vorgetäuschter Production-Go-live, sondern ein stabiler, ehrlicher und zusammenhängender Demo-Flow mit grünen Browser-/Integrationsgates. Präsentationskritische Fehler, unklare UX und sichtbare technische Brüche haben Vorrang vor neuen Feature-Slices.
+
+Kanonischer Demo-Ablauf: `Homepage → Speisekarte/Konfigurator → Warenkorb/Pickup → WhatsApp-Key → Bestellung empfangen → KDS akzeptieren/Status ändern → Live-Status → optional Admin/CMS`.
+
 ## P0 — PREPARE_NOW-Plattformgrenzen abgeschlossen
 
 - [x] D004 Payment Boundary — V1 pay-on-site; Online-Payment provider-neutral vorbereitet.
@@ -63,15 +69,16 @@ Kanonische Detail-Evidenz: `docs/projects/mcello/V1_EVIDENCE.md`
 - [x] D063 — lokaler Supabase-CLI/Docker-Backendpfad.
 - [x] D063 — reproduzierbarer Self-host-Releasepfad ohne Lovable-/Vercel-Runtime-Zwang.
 - [x] D063 — non-root/read-only App-Container, Migration-Dry-Run, Backup/Restore-Drill, TLS/Secrets/Firewall/Monitoring-Runbook.
-- [x] D064 — Development-OTP ohne Paid Provider + Production Spend/Runtime Guard.
+- [x] D064 — Development-OTP ohne Paid Provider + Production Spend/Runtime Guard; Mcello V1 ist WhatsApp-only und verweigert SMS-Konfiguration.
 
 ## P2 — Verbleibende V1-Blocker: echte Inputs/Freigaben
 
 Operative Quelle: [`V1-GO-LIVE-INPUTS.md`](./V1-GO-LIVE-INPUTS.md)
 
 1. **D003/D016 — Production Messaging**
-   - WhatsApp primary + SMS fallback technisch vorbereitet.
-   - Aktivierung erst nach expliziter Provider-/Carrier-Kostenfreigabe.
+   - Mcello V1 ist WhatsApp-only: Verifikations-Key/Code, Statuslink/-updates und Ready-Nachricht laufen ausschließlich über WhatsApp.
+   - Kein SMS-Fallback in V1.
+   - Aktivierung eines realen WhatsApp-Transports erst nach expliziter Provider-/Carrier-Kostenfreigabe.
 
 2. **D015/D017/D037 — Kontakt, Pickup-Adresse, Route, Call und Closed-Fallback**
    - Status-/Closed-UI technisch vorhanden.
@@ -99,7 +106,7 @@ Priorität:
 1. Kontakt-/Adressdaten, weil sie D015/D017/D037 gleichzeitig entsperren.
 2. Menü-/Ingredient-/Sauce-Bestätigung, weil sie den realen Ordering-Go-live entsperrt.
 3. Logo + echte Medien/Story für finale Brand-/Venue-Abnahme.
-4. Paid Messaging erst nach expliziter Kostenfreigabe.
+4. Paid WhatsApp Messaging erst nach expliziter Kostenfreigabe.
 
 ## P4 — Go-live Hardening
 
@@ -109,7 +116,7 @@ Die technische Release-Basis ist bereits automatisiert; vor echtem Production-Go
 - [ ] bestätigte Öffnungszeiten/Sonderzeiten/Cutoff/Kapazität/Rush-Werte
 - [ ] bestätigte Adresse/Telefon/WhatsApp-Fallback
 - [ ] finales Logo + reale Media-Rechte
-- [ ] Production Messaging nur bei expliziter Freigabe
+- [ ] Production WhatsApp Messaging nur bei expliziter Freigabe
 - [ ] Auth/RLS-/Storage-Audit auf finalem Datenstand
 - [ ] Secrets-/Environment-Audit
 - [ ] leerer DB-Rebuild aus finalen Migrationen
