@@ -9,7 +9,9 @@ ENV NODE_ENV=production \
 COPY --chown=node:node package.json ./package.json
 COPY --chown=node:node apps ./apps
 COPY --chown=node:node packages ./packages
-RUN npm install --omit=dev --ignore-scripts --package-lock=false
+COPY --chown=node:node scripts/vendor-mcello-gsap.mjs ./scripts/vendor-mcello-gsap.mjs
+RUN npm install --omit=dev --ignore-scripts --package-lock=false \
+    && node scripts/vendor-mcello-gsap.mjs
 COPY --chown=node:node infra/selfhost/container-entrypoint.mjs ./infra/selfhost/container-entrypoint.mjs
 
 USER node
