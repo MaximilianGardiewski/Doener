@@ -83,7 +83,7 @@ test("Homepage V2 provides a true reduced-motion path", () => {
 });
 
 test("V2 brand and homepage assets remain part of the offline public shell", () => {
-  assert.match(sw, /mcello-public-shell-v10/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/brand-system\.css"/);
   assert.match(sw, /"\/homepage-v2\.css"/);
 });

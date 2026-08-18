@@ -1,0 +1,250 @@
+/* Mcello Store V2 — presentation layer over the existing ordering domain. */
+
+.store-stage[data-store-version="v2"] {
+  --store-food-stage: var(--surface-food-stage);
+  --store-rule: color-mix(in srgb, var(--mcello-copper) 20%, transparent);
+}
+
+.store-stage[data-store-version="v2"] #featuredGrid {
+  grid-template-columns: minmax(0, 1.18fr) minmax(300px, .82fr);
+  grid-auto-flow: row;
+  align-items: stretch;
+  gap: clamp(14px, 2vw, 22px);
+}
+
+.store-stage[data-store-version="v2"] .food-card {
+  min-height: 0;
+  border-radius: var(--radius-commerce-panel);
+  background: var(--surface-raised);
+  box-shadow: none;
+}
+
+.store-stage[data-store-version="v2"] .food-card img {
+  background: var(--store-food-stage);
+}
+
+.store-stage[data-store-version="v2"] .signature-product {
+  grid-row: span 2;
+  min-height: 620px;
+  display: grid;
+  grid-template-rows: minmax(390px, 1fr) auto;
+  overflow: hidden;
+  border-color: var(--store-rule);
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--mcello-copper) 8%, transparent), transparent 42%),
+    var(--surface-raised);
+}
+
+.store-stage[data-store-version="v2"] .signature-product img {
+  width: 100%;
+  height: 100%;
+  min-height: 390px;
+  object-fit: cover;
+  aspect-ratio: var(--ratio-product);
+}
+
+.store-stage[data-store-version="v2"] .signature-product .food-body {
+  padding: clamp(22px, 3vw, 32px);
+}
+
+.store-stage[data-store-version="v2"] .signature-product h3 {
+  max-width: 14ch;
+  font-size: var(--type-display-product);
+  line-height: .98;
+  letter-spacing: -.035em;
+}
+
+.store-stage[data-store-version="v2"] .signature-product p {
+  max-width: 52ch;
+}
+
+.store-stage[data-store-version="v2"] .signature-product .bestseller {
+  border-color: var(--store-rule);
+  color: var(--mcello-gold);
+  background: color-mix(in srgb, var(--mcello-ink) 88%, transparent);
+}
+
+.store-stage[data-store-version="v2"] .support-product {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(128px, 36%) 1fr;
+  align-items: stretch;
+}
+
+.store-stage[data-store-version="v2"] .support-product img {
+  width: 100%;
+  height: 100%;
+  min-height: 218px;
+  object-fit: cover;
+}
+
+.store-stage[data-store-version="v2"] .support-product .food-body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 18px;
+}
+
+.store-stage[data-store-version="v2"] .support-product h3 {
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+}
+
+.store-stage[data-store-version="v2"] .support-product p {
+  display: -webkit-box;
+  min-height: 0;
+  margin-block: 10px 12px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.store-stage[data-store-version="v2"] .support-product .availability-badge {
+  align-self: flex-start;
+  margin-top: 0;
+}
+
+.store-stage[data-store-version="v2"] .support-product .price-row {
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.store-stage[data-store-version="v2"] #menuList {
+  margin-top: clamp(28px, 4vw, 46px);
+  overflow: visible;
+  border: 0;
+  border-top: 1px solid var(--store-rule);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.store-stage[data-store-version="v2"] .compact-product {
+  min-height: 78px;
+  padding: 16px 2px;
+  border-bottom-color: var(--rule-subtle);
+  background: transparent;
+}
+
+.store-stage[data-store-version="v2"] .compact-product > div:first-child {
+  min-width: 0;
+}
+
+.store-stage[data-store-version="v2"] .compact-product > div:first-child > strong {
+  font-family: var(--type-family-interface);
+  font-size: var(--type-body-lg);
+}
+
+.store-stage[data-store-version="v2"] .compact-product small {
+  max-width: 68ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.store-stage[data-store-version="v2"] .price {
+  color: var(--mcello-gold);
+  font-size: var(--type-price);
+}
+
+.store-stage[data-store-version="v2"] :is(.ghost-btn, .category-rail button) {
+  min-height: var(--touch-target-compact);
+}
+
+.store-stage[data-store-version="v2"] .category-rail[data-store-navigation="categories"] {
+  scroll-snap-type: x proximity;
+  border-bottom: 1px solid color-mix(in srgb, var(--mcello-copper) 14%, transparent);
+}
+
+.store-stage[data-store-version="v2"] .category-rail[data-store-navigation="categories"] button {
+  scroll-snap-align: start;
+}
+
+.store-stage[data-store-version="v2"] .category-rail[data-store-navigation="categories"] button.active {
+  color: var(--content-inverse);
+  background: var(--mcello-gold);
+}
+
+.sticky-order[data-store-cart="sticky"] {
+  min-height: 58px;
+  border-color: color-mix(in srgb, var(--mcello-copper) 34%, transparent);
+  background: color-mix(in srgb, var(--mcello-ink) 94%, transparent);
+}
+
+.sticky-order[data-store-cart="sticky"] .primary {
+  min-height: var(--touch-target-primary);
+}
+
+@media (max-width: 980px) {
+  .store-stage[data-store-version="v2"] #featuredGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .store-stage[data-store-version="v2"] .signature-product {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    min-height: 0;
+    grid-template-columns: 1.05fr .95fr;
+    grid-template-rows: auto;
+  }
+
+  .store-stage[data-store-version="v2"] .signature-product img {
+    min-height: 330px;
+  }
+
+  .store-stage[data-store-version="v2"] .support-product {
+    grid-template-columns: 1fr;
+  }
+
+  .store-stage[data-store-version="v2"] .support-product img {
+    height: 220px;
+  }
+}
+
+@media (max-width: 680px) {
+  .store-stage[data-store-version="v2"] #featuredGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .store-stage[data-store-version="v2"] .signature-product {
+    grid-column: auto;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .store-stage[data-store-version="v2"] .signature-product img {
+    min-height: 0;
+    aspect-ratio: 4 / 3;
+  }
+
+  .store-stage[data-store-version="v2"] .support-product {
+    grid-template-columns: 112px 1fr;
+  }
+
+  .store-stage[data-store-version="v2"] .support-product img {
+    height: 100%;
+    min-height: 180px;
+  }
+
+  .store-stage[data-store-version="v2"] .support-product .food-body {
+    padding: 14px;
+  }
+
+  .store-stage[data-store-version="v2"] .support-product p {
+    -webkit-line-clamp: 1;
+  }
+
+  .store-stage[data-store-version="v2"] .compact-product {
+    grid-template-columns: 1fr auto;
+    gap: 8px 12px;
+  }
+
+  .store-stage[data-store-version="v2"] .compact-product .ghost-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .store-stage[data-store-version="v2"] .compact-product small {
+    white-space: normal;
+  }
+}
