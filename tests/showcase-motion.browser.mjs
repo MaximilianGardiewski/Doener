@@ -7,9 +7,21 @@ const browser = await chromium.launch({ headless: true });
 async function computed(page, selector) {
   return page.locator(selector).evaluate((node) => {
     const style = getComputedStyle(node);
+    const transform = style.transform;
+    const matrix = transform === "none" ? new DOMMatrix() : new DOMMatrix(transform);
+    const identityTransform =
+      matrix.is2D &&
+      matrix.a === 1 &&
+      matrix.b === 0 &&
+      matrix.c === 0 &&
+      matrix.d === 1 &&
+      matrix.e === 0 &&
+      matrix.f === 0;
+
     return {
       opacity: style.opacity,
-      transform: style.transform,
+      transform,
+      identityTransform,
       transitionDuration: style.transitionDuration,
     };
   });
@@ -35,7 +47,7 @@ try {
   await waitForAnimations(normal, ".hero-copy");
   const revealed = await computed(normal, ".hero-copy");
   assert.equal(revealed.opacity, "1", "visible hero must finish fully opaque");
-  assert.equal(revealed.transform, "none", "visible hero must finish without transform offset");
+  assert.equal(revealed.identityTransform, true, "visible hero must finish without transform offset");
 
   await normal.locator("#aktuelles").scrollIntoViewIfNeeded();
   await normal.waitForFunction(() => document.querySelector("#aktuelles .section-head")?.classList.contains("is-revealed"));
@@ -55,7 +67,7 @@ try {
   );
   const reducedHero = await computed(reduced, ".hero-copy");
   assert.equal(reducedHero.opacity, "1", "reduced motion must keep content visible");
-  assert.equal(reducedHero.transform, "none", "reduced motion must remove motion transforms");
+  assert.equal(reducedHero.identityTransform, true, "reduced motion must remove motion transforms");
   assert.match(reducedHero.transitionDuration, /(^|, )0s(,|$)/, "reduced motion must disable transitions");
 
   console.log("D058 Chromium motion smoke passed for normal and reduced-motion preferences.");
