@@ -16,21 +16,30 @@ Der verbundene Lovable-Connector stellt die vollständige Projekt-Dateistruktur 
 
 Die Source wird **nicht blind als zweiter Monolith kopiert**. Jeder Port-Slice muss zeigen, welche Logik wirklich generisch ist und welche bewusst Lebtig-spezifisch bleiben soll.
 
-## Erster echter Consumer-Slice
+## Bereits echte Shared-Consumer-Slices
 
 Lebtig konsumiert im Repo jetzt:
 
-- `@business-web/auth` für den generischen Permission-Policy-Mechanismus
+- `@business-web/auth` für generische Permission-Policies und den provider-neutralen OAuth-Port
 - `@business-web/cms` für gemeinsame Publication-Status-/Zeitfenster-Semantik
 
-Lebtig behält dabei seine echte, bestätigte Rollen-Sprache:
-
-- `admin`
-- `moderator`
-
-Der Shared Auth Core wird also **nicht** um eine Lebtig-Sonderrolle hartcodiert. Stattdessen definiert Lebtig seine eigene Policy auf dem generischen Contract.
+Lebtig behält dabei seine echte Rollen-Sprache `admin|moderator`; Mcello behält `admin|staff`. Die Shared Packages kennen keine Lebtig-Sonderrolle und keine Mcello-spezifische Moderator-Interpretation.
 
 Gleiches gilt für CMS: Mittagstisch, Wochenangebote, Rezepte und Lebtig-Seiten bleiben Lebtig-Domain; nur gemeinsame Publishing-Primitiven liegen im Shared Package.
+
+## OAuth-Portabilität
+
+Der aktuelle Lovable-Source nutzt für den Google-Button `@lovable.dev/cloud-auth-js`, während E-Mail/Passwort, Session und Rollen bereits direkt über den normalen Supabase-Client laufen.
+
+Die BusinessWebFactory-Grenze ist deshalb bewusst klein:
+
+- `@business-web/auth` definiert nur `OAuthPort`, Provider, Request und Navigationsergebnis.
+- `apps/lebtig/src/auth/native-supabase-oauth.ts` ist der portable Default-Adapter.
+- `apps/lebtig/src/auth/lovable-oauth-adapter.ts` kapselt den bestehenden Lovable-Broker nur als Übergangspfad.
+- `createLebtigOAuthPort(...)` wählt standardmäßig native Supabase-OAuth; Lovable wird nur bei explizitem `useLegacyLovableBroker` benutzt.
+- Shared Auth importiert weder Supabase noch Lovable und bleibt damit provider-neutral.
+
+Der vollständige UI-Login wird erst beim kontrollierten Route-Import auf diesen Port umgestellt. Bis dahin wird der vorhandene Lovable-Source nicht mutiert.
 
 ## Rollenboundary aus dem aktuellen Lebtig-Stand
 
@@ -52,7 +61,7 @@ Datenbank/RLS bleibt dabei die eigentliche Sicherheitsgrenze; UI-/Domain-Permiss
 
 Aus `docs/platform-exit-audit.md` und dem aktuellen Source-Audit:
 
-1. `@lovable.dev/cloud-auth-js` / `src/integrations/lovable/index.ts` für OAuth-Broker
+1. `@lovable.dev/cloud-auth-js` / `src/integrations/lovable/index.ts` für OAuth-Broker — jetzt hinter dem neuen Auth-Port isolierbar
 2. `@lovable.dev/vite-tanstack-config` in der Build-Konfiguration
 3. Preview-spezifisches Error Reporting (`lovable-error-reporting.ts`)
 4. Hosting/Deployment auf Lovable
@@ -62,13 +71,12 @@ Provider-neutrale Teile existieren bereits umfangreich: TanStack-Source, Supabas
 
 ## Nächste Port-Slices
 
-1. **Portability Manifest / Source Inventory** — Quellpfade und Vendor-Kopplungen im Repo festhalten.
-2. **Auth-Port** — Lovable OAuth-Broker hinter einen provider-neutralen Auth-Port verschieben; native Supabase-OAuth als portabler Default vorbereiten.
-3. **CMS-/Media-Port** — gemeinsame Publication-/Media-Primitiven nutzen, Lebtig-spezifische Wochen-/Rezepte-/Page-Modelle erhalten.
-4. **UI-/Route-Import** — Public-/Admin-Routen schrittweise übernehmen, nicht als unreviewten Dump.
-5. **E2E übernehmen** — Public/Auth/Admin/Mobile-/Legacy-Redirect-Tests im Repo reproduzierbar machen.
-6. **Supabase-Schema vergleichen** — Lebtig-Migrationen gegen BusinessWebFactory-Auth/CMS/Media-Boundaries abgleichen; keine Mcello-Gastro-Ordering-Tabellen aufzwingen.
-7. **Lovable Runtime entfernen** — erst wenn Build/Auth/Error-Reporting/Hosting portabel nachgewiesen sind.
+1. **CMS-/Media-Port** — gemeinsame Publication-/Media-Primitiven nutzen, Lebtig-spezifische Wochen-/Rezepte-/Page-Modelle erhalten.
+2. **UI-/Route-Import** — Public/Auth/Admin-Routen schrittweise übernehmen; OAuth-Aufrufer auf `OAuthPort` umstellen, nicht als unreviewten Dump.
+3. **E2E übernehmen** — Public/Auth/Admin/Mobile-/Legacy-Redirect-Tests im Repo reproduzierbar machen.
+4. **Supabase-Schema vergleichen** — Lebtig-Migrationen gegen BusinessWebFactory-Auth/CMS/Media-Boundaries abgleichen; keine Mcello-Gastro-Ordering-Tabellen aufzwingen.
+5. **Build-/Preview-Vendorgrenzen** — Lovable Vite-Preset und Preview-Error-Reporting aus dem portablen Buildpfad entfernen.
+6. **Lovable Runtime entfernen** — erst wenn Build/Auth/Error-Reporting/Hosting portabel nachgewiesen sind.
 
 ## Nicht verhandelbar
 
