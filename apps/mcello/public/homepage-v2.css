@@ -4,7 +4,7 @@
  */
 
 .mcello-public-v2 {
-  background: var(--surface-cinematic);
+  background-color: var(--surface-cinematic);
 }
 
 .mcello-public-v2 main {
@@ -147,7 +147,6 @@
   border-radius: calc(var(--radius-editorial-media) - 10px);
   pointer-events: none;
 }
-
 .mcello-public-v2 .hero-media-v2::after {
   content: "CONCEPT / ORIGINAL MEDIA PENDING";
   position: absolute;
