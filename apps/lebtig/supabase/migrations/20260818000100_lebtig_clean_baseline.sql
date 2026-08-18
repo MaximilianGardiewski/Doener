@@ -20,39 +20,23 @@ create table public.user_roles (
 );
 
 create or replace function public.has_role(_user_id uuid, _role public.app_role)
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
+returns boolean language sql stable security definer set search_path = '' as $$
   select exists (
-    select 1
-    from public.user_roles
-    where user_id = _user_id and role = _role
+    select 1 from public.user_roles where user_id = _user_id and role = _role
   )
 $$;
 
 create or replace function public.is_staff()
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
+returns boolean language sql stable security definer set search_path = '' as $$
   select exists (
-    select 1
-    from public.user_roles
+    select 1 from public.user_roles
     where user_id = auth.uid()
       and role in ('admin'::public.app_role, 'moderator'::public.app_role)
   )
 $$;
 
 create or replace function public.touch_updated_at()
-returns trigger
-language plpgsql
-set search_path = ''
-as $$
+returns trigger language plpgsql set search_path = '' as $$
 begin
   new.updated_at = now();
   return new;
@@ -60,11 +44,7 @@ end;
 $$;
 
 create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   insert into public.profiles (id, email, display_name)
   values (
@@ -76,7 +56,6 @@ begin
 
   -- Exactly one first account may win bootstrap admin, including concurrent signups.
   perform pg_advisory_xact_lock(hashtext('public.user_roles:bootstrap_admin'));
-
   if not exists (select 1 from public.user_roles) then
     insert into public.user_roles (user_id, role) values (new.id, 'admin');
   end if;
@@ -87,46 +66,37 @@ end;
 $$;
 
 create or replace function public.is_bootstrap_open()
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
+returns boolean language sql stable security definer set search_path = '' as $$
   select not exists (select 1 from public.user_roles)
 $$;
 
 create or replace function public.protect_last_admin()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 declare
   admin_count integer;
 begin
   if old.role <> 'admin'::public.app_role then
-    return case when tg_op = 'DELETE' then old else new end;
+    if tg_op = 'DELETE' then return old; end if;
+    return new;
   end if;
 
   if tg_op = 'UPDATE'
-    and new.role = 'admin'::public.app_role
-    and new.user_id = old.user_id then
+     and new.role = 'admin'::public.app_role
+     and new.user_id = old.user_id then
     return new;
   end if;
 
   perform pg_advisory_xact_lock(hashtext('public.user_roles:last_admin'));
-
   select count(*) into admin_count
-  from public.user_roles
-  where role = 'admin'::public.app_role;
+  from public.user_roles where role = 'admin'::public.app_role;
 
   if admin_count <= 1 then
     raise exception 'Die letzte Administrator-Rolle kann nicht entfernt oder geändert werden.'
       using errcode = 'check_violation';
   end if;
 
-  return case when tg_op = 'DELETE' then old else new end;
+  if tg_op = 'DELETE' then return old; end if;
+  return new;
 end;
 $$;
 
@@ -144,7 +114,6 @@ grant execute on function public.is_bootstrap_open() to service_role;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
-
 create trigger t_user_roles_protect_last_admin
   before update or delete on public.user_roles
   for each row execute function public.protect_last_admin();
@@ -153,27 +122,21 @@ create trigger t_user_roles_protect_last_admin
 grant select, insert, update on public.profiles to authenticated;
 grant all on public.profiles to service_role;
 alter table public.profiles enable row level security;
-
-create policy profiles_read_staff_or_self
-  on public.profiles for select to authenticated
-  using (public.is_staff() or id = auth.uid());
-create policy profiles_insert_self
-  on public.profiles for insert to authenticated
-  with check (id = auth.uid());
-create policy profiles_update_self
-  on public.profiles for update to authenticated
-  using (id = auth.uid())
-  with check (id = auth.uid());
+create policy profiles_read_staff_or_self on public.profiles
+  for select to authenticated using (public.is_staff() or id = auth.uid());
+create policy profiles_insert_self on public.profiles
+  for insert to authenticated with check (id = auth.uid());
+create policy profiles_update_self on public.profiles
+  for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
 
 grant select, insert, update, delete on public.user_roles to authenticated;
 grant all on public.user_roles to service_role;
 alter table public.user_roles enable row level security;
-
-create policy user_roles_read_self_or_admin
-  on public.user_roles for select to authenticated
+create policy user_roles_read_self_or_admin on public.user_roles
+  for select to authenticated
   using (user_id = auth.uid() or public.has_role(auth.uid(), 'admin'));
-create policy user_roles_admin_manage
-  on public.user_roles for all to authenticated
+create policy user_roles_admin_manage on public.user_roles
+  for all to authenticated
   using (public.has_role(auth.uid(), 'admin'))
   with check (public.has_role(auth.uid(), 'admin'));
 
@@ -183,21 +146,17 @@ create table public.site_settings (
   value jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
-
 grant select on public.site_settings to anon, authenticated;
 grant insert, update, delete on public.site_settings to authenticated;
 grant all on public.site_settings to service_role;
 alter table public.site_settings enable row level security;
-
-create policy site_settings_public_read
-  on public.site_settings for select to anon, authenticated using (true);
-create policy site_settings_admin_manage
-  on public.site_settings for all to authenticated
+create policy site_settings_public_read on public.site_settings
+  for select to anon, authenticated using (true);
+create policy site_settings_admin_manage on public.site_settings
+  for all to authenticated
   using (public.has_role(auth.uid(), 'admin'))
   with check (public.has_role(auth.uid(), 'admin'));
-
-create trigger t_site_settings_updated
-  before update on public.site_settings
+create trigger t_site_settings_updated before update on public.site_settings
   for each row execute function public.touch_updated_at();
 
 -- Media metadata + private storage ------------------------------------------
@@ -214,30 +173,20 @@ create table public.media (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 grant select, insert, update, delete on public.media to authenticated;
 grant all on public.media to service_role;
 alter table public.media enable row level security;
-
--- Metadata and object storage stay editorial/private. Public delivery is the
--- app-owned /media/:id server boundary, which can resolve only approved usage.
-create policy media_staff_read
-  on public.media for select to authenticated using (public.is_staff());
-create policy media_staff_manage
-  on public.media for all to authenticated
-  using (public.is_staff())
-  with check (public.is_staff());
-
-create trigger t_media_updated
-  before update on public.media
+-- Metadata and objects remain editorial/private; public delivery is /media/:id.
+create policy media_staff_read on public.media
+  for select to authenticated using (public.is_staff());
+create policy media_staff_manage on public.media
+  for all to authenticated using (public.is_staff()) with check (public.is_staff());
+create trigger t_media_updated before update on public.media
   for each row execute function public.touch_updated_at();
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
-  'media',
-  'media',
-  false,
-  5242880,
+  'media', 'media', false, 5242880,
   array['image/jpeg', 'image/png', 'image/webp', 'image/avif']::text[]
 )
 on conflict (id) do update set
@@ -245,19 +194,16 @@ on conflict (id) do update set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
-create policy lebtig_media_objects_staff_read
-  on storage.objects for select to authenticated
-  using (bucket_id = 'media' and public.is_staff());
-create policy lebtig_media_objects_staff_insert
-  on storage.objects for insert to authenticated
-  with check (bucket_id = 'media' and public.is_staff());
-create policy lebtig_media_objects_staff_update
-  on storage.objects for update to authenticated
+create policy lebtig_media_objects_staff_read on storage.objects
+  for select to authenticated using (bucket_id = 'media' and public.is_staff());
+create policy lebtig_media_objects_staff_insert on storage.objects
+  for insert to authenticated with check (bucket_id = 'media' and public.is_staff());
+create policy lebtig_media_objects_staff_update on storage.objects
+  for update to authenticated
   using (bucket_id = 'media' and public.is_staff())
   with check (bucket_id = 'media' and public.is_staff());
-create policy lebtig_media_objects_staff_delete
-  on storage.objects for delete to authenticated
-  using (bucket_id = 'media' and public.is_staff());
+create policy lebtig_media_objects_staff_delete on storage.objects
+  for delete to authenticated using (bucket_id = 'media' and public.is_staff());
 
 -- CMS -----------------------------------------------------------------------
 create table public.pages (
@@ -381,110 +327,110 @@ create table public.party_requests (
   updated_at timestamptz not null default now()
 );
 
--- Pages: public readers see published content; only admins change structure.
+-- Public page content; structural editing is admin-only.
 grant select on public.pages to anon, authenticated;
 grant insert, update, delete on public.pages to authenticated;
 grant all on public.pages to service_role;
 alter table public.pages enable row level security;
-create policy pages_public_read
-  on public.pages for select to anon, authenticated
+create policy pages_public_read on public.pages for select to anon, authenticated
   using (status = 'published' and (publish_at is null or publish_at <= now()));
-create policy pages_staff_read
-  on public.pages for select to authenticated using (public.is_staff());
-create policy pages_admin_manage
-  on public.pages for all to authenticated
+create policy pages_staff_read on public.pages for select to authenticated
+  using (public.is_staff());
+create policy pages_admin_manage on public.pages for all to authenticated
   using (public.has_role(auth.uid(), 'admin'))
   with check (public.has_role(auth.uid(), 'admin'));
-create trigger t_pages_updated
-  before update on public.pages
+create trigger t_pages_updated before update on public.pages
   for each row execute function public.touch_updated_at();
 
--- Editorial roots: moderators and admins manage; public reads published data.
-do $$
-declare
-  t text;
-begin
-  foreach t in array array['lunch_weeks', 'offer_weeks', 'news', 'recipes'] loop
-    execute format('grant select on public.%I to anon, authenticated', t);
-    execute format('grant insert, update, delete on public.%I to authenticated', t);
-    execute format('grant all on public.%I to service_role', t);
-    execute format('alter table public.%I enable row level security', t);
-    execute format(
-      'create policy %I on public.%I for select to anon, authenticated using (status = ''published'' and (publish_at is null or publish_at <= now()))',
-      t || '_public_read', t
-    );
-    execute format(
-      'create policy %I on public.%I for select to authenticated using (public.is_staff())',
-      t || '_staff_read', t
-    );
-    execute format(
-      'create policy %I on public.%I for all to authenticated using (public.is_staff()) with check (public.is_staff())',
-      t || '_staff_manage', t
-    );
-    execute format(
-      'create trigger %I before update on public.%I for each row execute function public.touch_updated_at()',
-      't_' || t || '_updated', t
-    );
-  end loop;
-end
-$$;
+-- Editorial roots: moderator + admin may manage them.
+grant select on public.lunch_weeks to anon, authenticated;
+grant insert, update, delete on public.lunch_weeks to authenticated;
+grant all on public.lunch_weeks to service_role;
+alter table public.lunch_weeks enable row level security;
+create policy lunch_weeks_public_read on public.lunch_weeks for select to anon, authenticated
+  using (status = 'published' and (publish_at is null or publish_at <= now()));
+create policy lunch_weeks_staff_read on public.lunch_weeks for select to authenticated
+  using (public.is_staff());
+create policy lunch_weeks_staff_manage on public.lunch_weeks for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+create trigger t_lunch_weeks_updated before update on public.lunch_weeks
+  for each row execute function public.touch_updated_at();
 
--- News additionally respects its visibility window at the DB/public boundary.
-drop policy news_public_read on public.news;
-create policy news_public_read
-  on public.news for select to anon, authenticated
+grant select on public.offer_weeks to anon, authenticated;
+grant insert, update, delete on public.offer_weeks to authenticated;
+grant all on public.offer_weeks to service_role;
+alter table public.offer_weeks enable row level security;
+create policy offer_weeks_public_read on public.offer_weeks for select to anon, authenticated
+  using (status = 'published' and (publish_at is null or publish_at <= now()));
+create policy offer_weeks_staff_read on public.offer_weeks for select to authenticated
+  using (public.is_staff());
+create policy offer_weeks_staff_manage on public.offer_weeks for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+create trigger t_offer_weeks_updated before update on public.offer_weeks
+  for each row execute function public.touch_updated_at();
+
+grant select on public.news to anon, authenticated;
+grant insert, update, delete on public.news to authenticated;
+grant all on public.news to service_role;
+alter table public.news enable row level security;
+create policy news_public_read on public.news for select to anon, authenticated
   using (
     status = 'published'
     and (publish_at is null or publish_at <= now())
     and (start_at is null or start_at <= now())
     and (end_at is null or end_at >= now())
   );
+create policy news_staff_read on public.news for select to authenticated
+  using (public.is_staff());
+create policy news_staff_manage on public.news for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+create trigger t_news_updated before update on public.news
+  for each row execute function public.touch_updated_at();
+
+grant select on public.recipes to anon, authenticated;
+grant insert, update, delete on public.recipes to authenticated;
+grant all on public.recipes to service_role;
+alter table public.recipes enable row level security;
+create policy recipes_public_read on public.recipes for select to anon, authenticated
+  using (status = 'published' and (publish_at is null or publish_at <= now()));
+create policy recipes_staff_read on public.recipes for select to authenticated
+  using (public.is_staff());
+create policy recipes_staff_manage on public.recipes for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+create trigger t_recipes_updated before update on public.recipes
+  for each row execute function public.touch_updated_at();
 
 -- Child rows are public only through a currently published parent week.
-foreach_child: do $$
-begin
-  grant select on public.lunch_items to anon, authenticated;
-  grant insert, update, delete on public.lunch_items to authenticated;
-  grant all on public.lunch_items to service_role;
-  alter table public.lunch_items enable row level security;
-
-  grant select on public.offer_items to anon, authenticated;
-  grant insert, update, delete on public.offer_items to authenticated;
-  grant all on public.offer_items to service_role;
-  alter table public.offer_items enable row level security;
-end
-$$;
-
-create policy lunch_items_public_read
-  on public.lunch_items for select to anon, authenticated
-  using (
-    exists (
-      select 1 from public.lunch_weeks w
-      where w.id = lunch_items.week_id
-        and w.status = 'published'
-        and (w.publish_at is null or w.publish_at <= now())
-    )
-  );
-create policy lunch_items_staff_read
-  on public.lunch_items for select to authenticated using (public.is_staff());
-create policy lunch_items_staff_manage
-  on public.lunch_items for all to authenticated
+grant select on public.lunch_items to anon, authenticated;
+grant insert, update, delete on public.lunch_items to authenticated;
+grant all on public.lunch_items to service_role;
+alter table public.lunch_items enable row level security;
+create policy lunch_items_public_read on public.lunch_items for select to anon, authenticated
+  using (exists (
+    select 1 from public.lunch_weeks w
+    where w.id = lunch_items.week_id
+      and w.status = 'published'
+      and (w.publish_at is null or w.publish_at <= now())
+  ));
+create policy lunch_items_staff_read on public.lunch_items for select to authenticated
+  using (public.is_staff());
+create policy lunch_items_staff_manage on public.lunch_items for all to authenticated
   using (public.is_staff()) with check (public.is_staff());
 
-create policy offer_items_public_read
-  on public.offer_items for select to anon, authenticated
-  using (
-    exists (
-      select 1 from public.offer_weeks w
-      where w.id = offer_items.week_id
-        and w.status = 'published'
-        and (w.publish_at is null or w.publish_at <= now())
-    )
-  );
-create policy offer_items_staff_read
-  on public.offer_items for select to authenticated using (public.is_staff());
-create policy offer_items_staff_manage
-  on public.offer_items for all to authenticated
+grant select on public.offer_items to anon, authenticated;
+grant insert, update, delete on public.offer_items to authenticated;
+grant all on public.offer_items to service_role;
+alter table public.offer_items enable row level security;
+create policy offer_items_public_read on public.offer_items for select to anon, authenticated
+  using (exists (
+    select 1 from public.offer_weeks w
+    where w.id = offer_items.week_id
+      and w.status = 'published'
+      and (w.publish_at is null or w.publish_at <= now())
+  ));
+create policy offer_items_staff_read on public.offer_items for select to authenticated
+  using (public.is_staff());
+create policy offer_items_staff_manage on public.offer_items for all to authenticated
   using (public.is_staff()) with check (public.is_staff());
 
 -- Party requests: anyone may submit, staff operate, only admin may delete.
@@ -492,18 +438,15 @@ grant insert on public.party_requests to anon;
 grant select, insert, update, delete on public.party_requests to authenticated;
 grant all on public.party_requests to service_role;
 alter table public.party_requests enable row level security;
-create policy party_requests_submit
-  on public.party_requests for insert to anon, authenticated with check (true);
-create policy party_requests_staff_read
-  on public.party_requests for select to authenticated using (public.is_staff());
-create policy party_requests_staff_update
-  on public.party_requests for update to authenticated
-  using (public.is_staff()) with check (public.is_staff());
-create policy party_requests_admin_delete
-  on public.party_requests for delete to authenticated
-  using (public.has_role(auth.uid(), 'admin'));
-create trigger t_party_requests_updated
-  before update on public.party_requests
+create policy party_requests_submit on public.party_requests
+  for insert to anon, authenticated with check (true);
+create policy party_requests_staff_read on public.party_requests
+  for select to authenticated using (public.is_staff());
+create policy party_requests_staff_update on public.party_requests
+  for update to authenticated using (public.is_staff()) with check (public.is_staff());
+create policy party_requests_admin_delete on public.party_requests
+  for delete to authenticated using (public.has_role(auth.uid(), 'admin'));
+create trigger t_party_requests_updated before update on public.party_requests
   for each row execute function public.touch_updated_at();
 
 -- Useful read-path indexes.
