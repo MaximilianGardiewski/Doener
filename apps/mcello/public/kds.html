@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#171715" />
   <title>Mcello KDS — Local Development</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/operations-shell.css" />
   <style>
     .kds-shell{width:min(calc(100% - 24px),1500px);margin:auto;padding:24px 0 70px}
     .kds-top{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:20px 0}
@@ -39,7 +40,7 @@
     @media(max-width:600px){.kds-grid{grid-template-columns:1fr}.kds-top h1{font-size:36px}}
   </style>
 </head>
-<body>
+<body data-operations-area="kds" data-operations-role="staff">
   <div class="prototype-banner">Lokales KDS · authentifiziertes Multi-Device-Realtime · keine Produktionsbestellungen</div>
   <main class="kds-shell">
     <div class="kds-top">
@@ -60,6 +61,7 @@
       <section class="lane"><h2>Abholbereit <span class="lane-count" id="readyCount">0</span></h2><div id="ready"></div></section>
     </div>
   </main>
+  <script type="module" src="/operations-shell.js"></script>
   <script type="module" src="/kds.js"></script>
 </body>
 </html>

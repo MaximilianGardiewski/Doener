@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#171715" />
   <title>Mcello Betrieb — Verfügbarkeit</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/operations-shell.css" />
   <style>
     .ops-shell{width:min(calc(100% - 24px),1180px);margin:auto;padding:24px 0 80px}
     .ops-top{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:20px 0}.ops-top h1{font-size:42px;margin-right:auto}
@@ -19,7 +20,7 @@
     @media(max-width:760px){.ops-grid{grid-template-columns:1fr}.ops-panel-wide{grid-column:auto}.ops-top h1{font-size:34px}.shop-control{grid-template-columns:1fr}.shop-actions{justify-content:flex-start}}
   </style>
 </head>
-<body>
+<body data-operations-area="ops" data-operations-role="staff">
   <div class="prototype-banner">Lokaler Mitarbeiterbereich · Staff-Rolle · keine Preis-/Strukturänderungen</div>
   <main class="ops-shell">
     <div class="ops-top">
@@ -52,6 +53,7 @@
       <section class="ops-panel"><h2>Zutaten & Optionen</h2><div id="modifierOps"></div></section>
     </div>
   </main>
+  <script type="module" src="/operations-shell.js"></script>
   <script type="module" src="/ops.js"></script>
 </body>
 </html>

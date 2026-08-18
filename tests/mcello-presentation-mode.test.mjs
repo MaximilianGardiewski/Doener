@@ -41,7 +41,7 @@ test("presentation mode remains visibly labeled instead of masquerading as produ
 
 test("desktop launcher opens a clean presentation URL and shell caches presentation assets", () => {
   assert.match(launcher, /\?presentation=mcello&reset=1/);
-  assert.match(sw, /mcello-public-shell-v19/);
+  assert.match(sw, /mcello-public-shell-v20/);
   assert.match(sw, /"\/presentation-mode\.js"/);
   assert.match(sw, /"\/presentation-mode\.css"/);
 });
