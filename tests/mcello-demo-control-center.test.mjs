@@ -69,7 +69,17 @@ test("control center never contains a production deployment path", () => {
   assert.match(docs, /kein Production Deployment/i);
 });
 
-test("package scripts expose the interactive entry point and prepare-only mode", () => {
+test("package scripts expose interactive, prepare-only and one-command LAN presentation entry points", () => {
   assert.equal(packageJson.scripts["demo:mcello"], "pwsh -NoProfile -ExecutionPolicy Bypass -File Mcello-Demo.ps1");
   assert.match(packageJson.scripts["demo:mcello:prepare"], /Mcello-Demo\.ps1 -Mode Prepare/);
+  assert.match(packageJson.scripts["demo:mcello:presentation"], /Mcello-Demo\.ps1 -Mode Lan/);
+  assert.match(packageJson.scripts["demo:mcello:lan"], /demo-mcello-presentation-lan\.ps1/);
+});
+
+test("documentation makes laptop host smartphone client and tablet staff/admin the primary presentation topology", () => {
+  assert.match(docs, /Laptop = Host/i);
+  assert.match(docs, /Smartphone = Customer\/Client/i);
+  assert.match(docs, /Tablet = Staff\/Admin/i);
+  assert.match(docs, /Vercel gehört nicht zu diesem Präsentationspfad/i);
+  assert.match(docs, /VPS\/Dedicated/i);
 });
