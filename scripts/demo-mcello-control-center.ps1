@@ -215,9 +215,16 @@ function Update-Repository {
 function Install-NodeDependencies {
   Push-Location $Workspace
   try {
-    Write-Info 'Installiere exakt die gelockten npm-Abhängigkeiten (npm ci) ...'
-    & npm ci
-    if ($LASTEXITCODE -ne 0) { throw "npm ci fehlgeschlagen (Exit $LASTEXITCODE)." }
+    $lockFile = Join-Path $Workspace 'package-lock.json'
+    if (Test-Path $lockFile) {
+      Write-Info 'package-lock.json gefunden; installiere reproduzierbar mit npm ci ...'
+      & npm ci --no-audit --no-fund
+      if ($LASTEXITCODE -ne 0) { throw "npm ci fehlgeschlagen (Exit $LASTEXITCODE)." }
+    } else {
+      Write-Warn 'Im Repository gibt es aktuell keine package-lock.json. Verwende für den Demo-Clone npm install ohne Lockfile-Schreibzugriff ...'
+      & npm install --package-lock=false --no-audit --no-fund
+      if ($LASTEXITCODE -ne 0) { throw "npm install fehlgeschlagen (Exit $LASTEXITCODE)." }
+    }
     Write-Ok 'npm-Abhängigkeiten installiert.'
   } finally {
     Pop-Location
@@ -349,7 +356,7 @@ function Start-QuickPresentation([ValidateSet('Desktop', 'Lan')] [string]$Target
     Set-ProgressStep 'Repository / installierte Abhängigkeiten prüfen'
     Assert-Workspace
     if (-not (Test-Path (Join-Path $Workspace 'node_modules'))) {
-      Write-Warn 'node_modules fehlt; führe npm ci automatisch aus.'
+      Write-Warn 'node_modules fehlt; installiere npm-Abhängigkeiten automatisch.'
       Install-NodeDependencies
     } else {
       Write-Ok 'node_modules vorhanden.'
