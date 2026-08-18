@@ -74,16 +74,22 @@ try {
 
   await openNamedProduct(customer, "Drehspieß im Yufka");
   await customer.waitForFunction(() => document.querySelector("#productModal")?.dataset.assemblyPresentation === "true");
+  await customer.waitForFunction(() => document.querySelector("#productModal")?.dataset.assemblyVisualLayers === "5");
   const sauceGroup = await modifierGroup(customer, "Soße");
   await (await optionInput(sauceGroup, "Knoblauch")).check();
   await (await optionInput(sauceGroup, "Scharf")).check();
-  await customer.waitForFunction(() => document.querySelector("#productModal")?.dataset.assemblyVisualLayers === "2");
+  await customer.waitForFunction(() => document.querySelector("#productModal")?.dataset.assemblyVisualLayers === "7");
   await customer.locator("#addToCart").click();
   await customer.locator("#cartDrawer").waitFor({ state: "visible" });
 
   const cartText = await customer.locator("#cartItems").innerText();
   assert.match(cartText, /Pizza Mcello/);
   assert.match(cartText, /Drehspieß im Yufka/);
+  assert.match(cartText, /Fleisch/);
+  assert.match(cartText, /Salat/);
+  assert.match(cartText, /Tomate/);
+  assert.match(cartText, /Gurke/);
+  assert.match(cartText, /Zwiebel/);
   assert.match(cartText, /Soße: Knoblauch/);
   assert.match(cartText, /Soße: Scharf/);
   assert.doesNotMatch(cartText, /Zwiebeln/, "removed Pizza topping must not be submitted as selected");
@@ -91,7 +97,7 @@ try {
 
   await customer.locator("#checkoutFirstName").fill("Builder Demo");
   await customer.locator("#checkoutMobile").fill("+491701234567");
-  await customer.locator("#checkoutComment").fill("Presentation Builder Lifecycle V1");
+  await customer.locator("#checkoutComment").fill("Presentation Builder Lifecycle V4");
   await customer.locator("#requestOtp").click();
   await customer.locator("#otpPanel").waitFor({ state: "visible" });
   await customer.locator("#devOtpHint").waitFor({ state: "visible" });
@@ -121,6 +127,11 @@ try {
   assert.match(kdsText, /Käse/);
   assert.doesNotMatch(kdsText, /Zwiebeln/, "KDS snapshot must preserve the Pizza topping removal");
   assert.match(kdsText, /Drehspieß im Yufka/);
+  assert.match(kdsText, /Fleisch/);
+  assert.match(kdsText, /Salat/);
+  assert.match(kdsText, /Tomate/);
+  assert.match(kdsText, /Gurke/);
+  assert.match(kdsText, /Zwiebel/);
   assert.match(kdsText, /Knoblauch/);
   assert.match(kdsText, /Scharf/);
 
@@ -141,13 +152,7 @@ try {
   await customer.locator("#statusTitle").filter({ hasText: "Abgeholt" }).waitFor({ state: "visible", timeout: 15_000 });
 
   assert.deepEqual(pageErrors, [], pageErrors.join("\n"));
-  console.log("Mcello Builder presentation lifecycle passed", {
-    orderNumber,
-    products: ["Pizza Mcello", "Drehspieß im Yufka"],
-    pizza: "Zwiebeln removed",
-    sauces: ["Knoblauch", "Scharf"],
-    lifecycle: ["received", "preparing", "ready", "completed"],
-  });
+  console.log("Mcello Builder presentation lifecycle V4 passed", { orderNumber });
 } finally {
   await browser.close();
 }
@@ -163,12 +168,7 @@ async function forceOpenForDemo() {
   assert.ok(login.access_token, "local demo admin login must return an access token");
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/admin_set_shop_override`, {
     method: "POST",
-    headers: {
-      apikey: anonKey,
-      authorization: `Bearer ${login.access_token}`,
-      "content-type": "application/json",
-      accept: "application/json",
-    },
+    headers: { apikey: anonKey, authorization: `Bearer ${login.access_token}`, "content-type": "application/json", accept: "application/json" },
     body: JSON.stringify({ _location_id: LOCATION_ID, _override: "force_open", _operator_message: "Lokaler Builder-Präsentationsmodus" }),
   });
   const body = await response.text();
