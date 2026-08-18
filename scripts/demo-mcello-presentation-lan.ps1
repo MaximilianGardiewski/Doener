@@ -37,11 +37,16 @@ try {
   Pop-Location
 }
 
+# Important: the laptop browser must use the LAN proxy origin too. Opening the
+# internal runtime origin on :4173 can collide with service workers/PWA caches
+# from unrelated local projects that previously used the same development port.
+# TCP 80 is the presentation ingress already verified by demo-mcello-lan.ps1.
+$hostPresentationBaseUrl = 'http://127.0.0.1'
 $hostViews = @(
-  [PSCustomObject]@{ Name = 'Customer / Smartphone-Ansicht'; Url = 'http://127.0.0.1:4173/?presentation=mcello&reset=1' },
-  [PSCustomObject]@{ Name = 'KDS / Staff'; Url = 'http://127.0.0.1:4173/kds.html' },
-  [PSCustomObject]@{ Name = 'Ops / Staff'; Url = 'http://127.0.0.1:4173/ops.html' },
-  [PSCustomObject]@{ Name = 'Admin'; Url = 'http://127.0.0.1:4173/admin.html' }
+  [PSCustomObject]@{ Name = 'Customer / Smartphone-Ansicht'; Url = "$hostPresentationBaseUrl/?presentation=mcello&reset=1" },
+  [PSCustomObject]@{ Name = 'KDS / Staff'; Url = "$hostPresentationBaseUrl/kds.html" },
+  [PSCustomObject]@{ Name = 'Ops / Staff'; Url = "$hostPresentationBaseUrl/ops.html" },
+  [PSCustomObject]@{ Name = 'Admin'; Url = "$hostPresentationBaseUrl/admin.html" }
 )
 
 Write-Host ''
@@ -59,6 +64,7 @@ foreach ($view in $hostViews) {
   Write-Host ("  {0,-30} {1}" -f $view.Name, $view.Url)
 }
 Write-Host ''
+Write-Host 'Laptop-Ansichten laufen absichtlich über den LAN-Proxy auf Port 80, nicht direkt über den internen Dev-Port 4173.' -ForegroundColor DarkGray
 Write-Host 'Smartphone/Tablet Builder: landscape-only / Querformat. Hochformat zeigt die Rotate-Gate, Auswahl bleibt erhalten.' -ForegroundColor DarkGray
 Write-Host 'Der Demo-Stack bleibt lokal/disposable. Die spätere Produktion bleibt VPS/Dedicated.' -ForegroundColor DarkGray
 
