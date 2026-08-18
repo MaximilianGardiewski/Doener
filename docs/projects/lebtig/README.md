@@ -13,6 +13,8 @@ Es gelten dieselben Prioritäten wie projektweit:
 3. verifizierte Portierungs-Evidence.
 4. diese abgeleitete Projektdokumentation.
 
+`main` ist der kanonische Integrationsbranch; Lebtig-Portierungen werden auf reviewbaren Feature-/Konsolidierungsbranches entwickelt und erst nach grünen Gates integriert.
+
 Der verifizierte Donor-Stand ist das verbundene Lovable-Projekt `18d92034-aaee-4d76-8209-393d47b3949c` mit Snapshot `abb54c73f42b784d7c66cd1e1d468b532a67f065`. Lovable bleibt dabei read-only Donor/optionaler Client, nicht Source of Truth und nicht notwendige Runtime.
 
 ## Wichtige Dateien
