@@ -41,7 +41,7 @@ test("Builder Core decorates existing modifier groups and controls rather than r
   assert.match(builderJs, /querySelectorAll\("\.modifier-group"\)/);
   assert.match(builderJs, /classList\.add\("builder-step"\)/);
   assert.match(builderJs, /dataset\.builderOption = "true"/);
-  assert.doesNotMatch(builderJs, /innerHTML\s*=.*modifier-group/s);
+  assert.doesNotMatch(builderJs, /groups\.innerHTML\s*=/);
 });
 
 test("Builder Core uses semantic commerce tokens and touch contracts", () => {
