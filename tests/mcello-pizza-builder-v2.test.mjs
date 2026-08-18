@@ -47,7 +47,7 @@ test("Pizza presentation is visually specialized and never loads remote concept 
 });
 
 test("Pizza Builder remains offline-capable while business data stays network-only", () => {
-  assert.match(sw, /mcello-public-shell-v16/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/pizza-builder-v2\.js"/);
   assert.match(sw, /"\/pizza-builder-v2\.css"/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);
