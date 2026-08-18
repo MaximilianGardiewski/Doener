@@ -199,24 +199,38 @@ try {
   assertNoError(anonNews.error, "anon news read");
   assert.deepEqual((anonNews.data ?? []).map((row) => row.slug), [`visible-${suffix}`]);
 
-  // Child public rows inherit publication from their parent week.
+  // Child public rows inherit publication from their parent week. Build the
+  // published fixture through the same completeness invariant as production.
   const publicLunch = await service.from("lunch_weeks").insert({
     week_start: "2035-01-01",
     week_end: "2035-01-05",
-    status: "published",
+    status: "draft",
   }).select("id").single();
-  assertNoError(publicLunch.error, "insert public lunch fixture");
+  assertNoError(publicLunch.error, "insert draft public lunch candidate");
   const draftLunch = await service.from("lunch_weeks").insert({
     week_start: "2035-01-08",
     week_end: "2035-01-12",
     status: "draft",
   }).select("id").single();
   assertNoError(draftLunch.error, "insert draft lunch fixture");
+
   const lunchItemsInsert = await service.from("lunch_items").insert([
     { week_id: publicLunch.data.id, weekday: 1, dish: `public-dish-${suffix}` },
+    { week_id: publicLunch.data.id, weekday: 2, dish: "CI public filler 2" },
+    { week_id: publicLunch.data.id, weekday: 3, dish: "CI public filler 3" },
+    { week_id: publicLunch.data.id, weekday: 4, dish: "CI public filler 4" },
+    { week_id: publicLunch.data.id, weekday: 5, dish: "CI public filler 5" },
     { week_id: draftLunch.data.id, weekday: 1, dish: `draft-dish-${suffix}` },
   ]);
   assertNoError(lunchItemsInsert.error, "insert lunch child fixtures");
+
+  const publishLunch = await service
+    .from("lunch_weeks")
+    .update({ status: "published" })
+    .eq("id", publicLunch.data.id)
+    .select("id")
+    .single();
+  assertNoError(publishLunch.error, "publish complete lunch fixture");
 
   const anonLunchItems = await anon.from("lunch_items").select("dish").like("dish", `%${suffix}`);
   assertNoError(anonLunchItems.error, "anon lunch child read");

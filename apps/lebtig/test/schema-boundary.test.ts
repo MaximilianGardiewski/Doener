@@ -37,12 +37,25 @@ test("Lebtig has an explicit app-owned database boundary before schema import", 
   assert.match(boundary, /Business-\/Seed-Inhalte werden nicht Teil/);
 });
 
-test("Lebtig clean install uses one app-owned baseline instead of replaying donor history", async () => {
+test("Lebtig migration history starts from one clean baseline and never replays donor history", async () => {
   const migrationDir = path.join(lebtigSupabaseRoot, "migrations");
-  const filenames = (await readdir(migrationDir)).filter((filename) => filename.endsWith(".sql"));
-  assert.deepEqual(filenames, ["20260818000100_lebtig_clean_baseline.sql"]);
+  const filenames = (await readdir(migrationDir))
+    .filter((filename) => filename.endsWith(".sql"))
+    .sort();
+
+  assert.ok(filenames.length >= 1, "Lebtig must keep an app-owned migration history");
+  assert.equal(
+    filenames[0],
+    "20260818000100_lebtig_clean_baseline.sql",
+    "the first Lebtig migration must remain the reviewed clean-install baseline",
+  );
+
   for (const donorId of DONOR_MIGRATION_IDS) {
-    assert.equal(filenames.some((filename) => filename.includes(donorId)), false);
+    assert.equal(
+      filenames.some((filename) => filename.includes(donorId)),
+      false,
+      `historical donor migration ${donorId} must never enter the app-owned history`,
+    );
   }
 });
 
