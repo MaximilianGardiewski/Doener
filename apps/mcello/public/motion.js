@@ -61,11 +61,14 @@ function restartMotionClass(node, className, duration = 420) {
 function installHeroFoodDepth() {
   const hero = document.querySelector(".hero-v2");
   const foodVisual = document.querySelector(".hero-media-v2 .hero-photo");
-  if (!hero || !foodVisual) return;
+  if (!hero || !foodVisual) return null;
 
   let frame = 0;
+  let active = true;
+
   const update = () => {
     frame = 0;
+    if (!active) return;
     if (reducedMotion.matches) {
       foodVisual.style.removeProperty("--motion-hero-depth-y");
       return;
@@ -76,15 +79,40 @@ function installHeroFoodDepth() {
     const normalized = Math.max(-1, Math.min(1, (viewportCenter - heroCenter) / Math.max(window.innerHeight, 1)));
     foodVisual.style.setProperty("--motion-hero-depth-y", `${(normalized * 10).toFixed(2)}px`);
   };
+
   const schedule = () => {
-    if (frame) return;
+    if (!active || frame) return;
     frame = requestAnimationFrame(update);
   };
 
+  const handlePreferenceChange = () => {
+    document.documentElement.dataset.mcelloHeroEngine = reducedMotion.matches ? "reduced" : "v2";
+    schedule();
+  };
+
+  document.documentElement.dataset.mcelloHeroEngine = reducedMotion.matches ? "reduced" : "v2";
   update();
   window.addEventListener("scroll", schedule, { passive: true });
   window.addEventListener("resize", schedule, { passive: true });
-  reducedMotion.addEventListener?.("change", schedule);
+  reducedMotion.addEventListener?.("change", handlePreferenceChange);
+
+  return {
+    hero,
+    foodVisual,
+    get reduced() {
+      return reducedMotion.matches;
+    },
+    cleanup() {
+      if (!active) return;
+      active = false;
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      reducedMotion.removeEventListener?.("change", handlePreferenceChange);
+      foodVisual.style.removeProperty("--motion-hero-depth-y");
+    },
+  };
 }
 
 function installCommerceMotionContracts() {
@@ -154,26 +182,39 @@ function publishMotionEngineMode(engine) {
   }));
 }
 
-async function primeMotionV3Adapter(revealController) {
+async function primeMotionV3Adapter(revealController, heroController) {
   try {
     const { loadMcelloMotionEngine } = await import("./motion/engine.js");
     const engine = await loadMcelloMotionEngine();
     publishMotionEngineMode(engine);
-    if (!engine.available || !revealController?.observer) return;
+    if (!engine.available) return;
+
+    let homepageMotion;
+    try {
+      homepageMotion = await import("./motion/homepage.js");
+    } catch {
+      // V2 reveal and hero handlers remain authoritative if the optional V3 homepage module cannot load.
+      return;
+    }
 
     try {
-      const { upgradePendingRevealsToGsap } = await import("./motion/homepage.js");
-      upgradePendingRevealsToGsap(engine, revealController);
+      if (revealController?.observer) homepageMotion.upgradePendingRevealsToGsap(engine, revealController);
     } catch {
-      // V2 observer remains authoritative if the optional V3 reveal module cannot load.
+      // V2 observer remains authoritative if the V3 reveal slice cannot initialize.
+    }
+
+    try {
+      if (heroController) homepageMotion.upgradeHeroDepthToGsap(engine, heroController);
+    } catch {
+      // V2 hero scroll handler remains authoritative if the V3 hero slice cannot initialize.
     }
   } catch {
     publishMotionEngineMode(null);
   }
 }
 
-function scheduleMotionV3Adapter(revealController) {
-  const prime = () => void primeMotionV3Adapter(revealController);
+function scheduleMotionV3Adapter(revealController, heroController) {
+  const prime = () => void primeMotionV3Adapter(revealController, heroController);
   if (typeof window.requestIdleCallback === "function") {
     window.requestIdleCallback(prime, { timeout: 1500 });
     return;
@@ -182,6 +223,6 @@ function scheduleMotionV3Adapter(revealController) {
 }
 
 const revealController = installRevealMotion();
-installHeroFoodDepth();
+const heroController = installHeroFoodDepth();
 installCommerceMotionContracts();
-scheduleMotionV3Adapter(revealController);
+scheduleMotionV3Adapter(revealController, heroController);

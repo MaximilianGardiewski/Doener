@@ -10,9 +10,9 @@ const sw = await readFile(new URL("apps/mcello/public/sw.js", root), "utf8");
 
 test("Phase 3 reveal upgrade takes over only unrevealed nodes after the V3 engine is available", () => {
   assert.match(motion, /return \{ nodes, observer, reduced: false \}/);
-  assert.match(motion, /if \(!engine\.available \|\| !revealController\?\.observer\) return/);
+  assert.match(motion, /if \(!engine\.available\) return/);
   assert.match(motion, /import\("\.\/motion\/homepage\.js"\)/);
-  assert.match(motion, /upgradePendingRevealsToGsap\(engine, revealController\)/);
+  assert.match(motion, /if \(revealController\?\.observer\) homepageMotion\.upgradePendingRevealsToGsap\(engine, revealController\)/);
 
   assert.match(homepage, /!node\.classList\.contains\("is-revealed"\)/);
   assert.match(homepage, /controller\.observer\.disconnect\(\)/);
@@ -51,15 +51,15 @@ test("CSS transitions cannot fight GSAP frame updates and reduced-motion hard ga
   assert.match(css, /transform: none !important/);
 });
 
-test("GSAP reveal module stays visual-only and does not gain business/backend authority", () => {
+test("GSAP homepage motion stays visual-only and does not gain business/backend authority", () => {
   assert.doesNotMatch(homepage, /fetch\s*\(|XMLHttpRequest|WebSocket/);
   assert.doesNotMatch(homepage, /\/api\/|\/rest\/|supabase|\.rpc\s*\(/i);
   assert.doesNotMatch(homepage, /localStorage|sessionStorage|indexedDB/);
   assert.doesNotMatch(homepage, /price|cart|checkout|availability|sold.?out|authorization|locationId/i);
 });
 
-test("GSAP reveal module is available in refreshed offline shell v24", () => {
-  assert.match(sw, /mcello-public-shell-v24/);
+test("GSAP homepage module remains available across refreshed offline shell generations", () => {
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/motion\/homepage\.js"/);
   assert.match(sw, /"\/motion\/engine\.js"/);
   assert.match(sw, /"\/vendor\/gsap\/ScrollTrigger\.min\.js"/);

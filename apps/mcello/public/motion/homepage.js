@@ -70,3 +70,44 @@ export function upgradePendingRevealsToGsap(engine, controller) {
     return { active: false, cleanup() {} };
   }
 }
+
+export function upgradeHeroDepthToGsap(engine, controller) {
+  if (!engine?.available || !controller?.hero || !controller?.foodVisual || controller.reduced) {
+    return { active: false, cleanup() {} };
+  }
+
+  const { hero, foodVisual } = controller;
+  const scope = engine.createScope(hero);
+
+  try {
+    scope.matchMedia(engine.media.normal, ({ gsap }) => {
+      gsap.fromTo(foodVisual,
+        { y: -10, scale: 1.045 },
+        {
+          y: 10,
+          scale: 1.045,
+          ease: "none",
+          overwrite: true,
+          scrollTrigger: {
+            trigger: hero,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+    });
+
+    controller.cleanup();
+    document.documentElement.dataset.mcelloHeroEngine = "gsap";
+    return {
+      active: true,
+      cleanup() {
+        scope.cleanup();
+      },
+    };
+  } catch {
+    scope.cleanup();
+    document.documentElement.dataset.mcelloHeroEngine = controller.reduced ? "reduced" : "v2";
+    return { active: false, cleanup() {} };
+  }
+}
