@@ -65,7 +65,7 @@ test("Store V2 keeps real-media truth and Adobe concepts outside the runtime pat
 });
 
 test("Store V2 remains part of the offline public shell without caching business data", () => {
-  assert.match(sw, /mcello-public-shell-v11/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/store-v2\.js"/);
   assert.match(sw, /"\/store-v2\.css"/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);

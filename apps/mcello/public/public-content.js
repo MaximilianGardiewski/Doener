@@ -2,6 +2,7 @@ import { installPlaceholderMedia, placeholderSrc } from "./placeholder-media.js"
 import "./public-copy.js";
 import "./motion.js";
 import "./store-v2.js";
+import "./builder-core-v2.js";
 import "./homepage-composition.js";
 
 const knownSections = new Map([
