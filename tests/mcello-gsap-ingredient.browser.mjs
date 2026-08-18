@@ -174,7 +174,7 @@ async function normalScenario() {
 
     const { input, option, checked, identity } = await triggerModifier(page);
     await page.waitForFunction(() => Boolean(window.__mcelloIngredientTrace?.option));
-    await page.waitForTimeout(20);
+    await page.waitForFunction(() => window.__mcelloIngredientTrace?.optionSawInlineTransform === true);
     const trace = await page.evaluate(() => structuredClone(window.__mcelloIngredientTrace));
     console.log(`Ingredient normal trace: ${JSON.stringify({ stage, identity, checked, trace })}`);
 
@@ -189,12 +189,15 @@ async function normalScenario() {
 
     const stageLocator = page.locator(stage.selector).first();
     if (stage.kind === "pizza") {
-      assert.equal(trace.stage, null, "Pizza stage must never be marked as GSAP-owned");
-      assert.ok(trace.pizzaPulseCount >= 1, `Pizza builder should retain its own stage pulse: ${JSON.stringify(trace)}`);
+      await page.waitForFunction(() => window.__mcelloIngredientTrace?.pizzaPulseCount >= 1);
+      const pizzaTrace = await page.evaluate(() => structuredClone(window.__mcelloIngredientTrace));
+      assert.equal(pizzaTrace.stage, null, "Pizza stage must never be marked as GSAP-owned");
+      assert.ok(pizzaTrace.pizzaPulseCount >= 1, `Pizza builder should retain its own stage pulse: ${JSON.stringify(pizzaTrace)}`);
       assert.equal(await stageLocator.getAttribute("data-motion-ingredient-engine"), null);
       assert.equal(await stageLocator.evaluate((node) => node.classList.contains("motion-food-stage-change")), false);
     } else {
       await page.waitForFunction(() => Boolean(window.__mcelloIngredientTrace?.stage));
+      await page.waitForFunction(() => window.__mcelloIngredientTrace?.stageSawInlineTransform === true);
       const stageTrace = await page.evaluate(() => structuredClone(window.__mcelloIngredientTrace));
       console.log(`Ingredient normal stage trace: ${JSON.stringify(stageTrace)}`);
       assert.equal(stageTrace.stage.owner, "gsap");
