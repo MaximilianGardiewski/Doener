@@ -91,11 +91,12 @@ function installCommerceMotionContracts() {
 
     const category = target.closest("[data-category]");
     if (category) {
+      const categoryId = category.dataset.category || "selected";
       const stage = document.querySelector(".store-stage");
-      if (stage) stage.dataset.motionCategory = category.dataset.category || "selected";
+      if (stage) stage.dataset.motionCategory = categoryId;
       restartMotionClass(document.querySelector("#featuredGrid"), "motion-category-switch", 320);
       restartMotionClass(document.querySelector("#menuList"), "motion-category-switch", 320);
-      restartMotionClass(category, "motion-category-chip", 260);
+      restartMotionClass(document.querySelector(`[data-category="${CSS.escape(categoryId)}"]`), "motion-category-chip", 260);
     }
 
     const productTrigger = target.closest("[data-product], [data-recommended-product]");
