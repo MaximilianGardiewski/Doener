@@ -26,6 +26,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [ ] Interactive `FoodStage` reflects relevant structured choices while price/availability remain domain/server authoritative (`D065`)
 - [ ] Builder is complete with Tap-only interaction; drag-and-drop is never required (`D065`)
 - [ ] Mcello Originals support `Genau so` and prefilled `Anpassen` from the actual standard recipe (`D066`)
+- [ ] Builder presentation layers use one coherent warm editorial cartoon-food language and remain explicitly illustrative rather than documentary Mcello media (`D071`)
 
 ## Ordering
 - [x] Own independent first-party ordering core; no third-party marketplace required (`D002`)
@@ -53,6 +54,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Rush/pause and item/ingredient snooze (`D012`, `D013`)
 - [x] Planned future lane + configurable activation lead (`D055`)
 - [x] +5/+10/+15/custom delay + customer update (`D056`)
+- [ ] KDS, Ops and Admin use one adaptive Mcello Operations information architecture without weakening role/RLS boundaries (`D072`)
 
 ## Customer status
 - [ ] Live status/order summary/pickup location (`D015`)
@@ -67,6 +69,7 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [x] Event/Special/Presse/News scheduling + pinning (`D032`)
 - [x] Gallery categories + featured media (`D033`)
 - [x] Server/database role enforcement for admin/staff boundaries (`D020`, `D021`)
+- [ ] Searchable integrated Admin/Staff handbook is rendered from versioned Git/Markdown content with contextual help and no external wiki runtime dependency (`D073`)
 
 ## Infrastructure / Portability
 - [x] Reuse documented Lebtig foundations through shared packages without app-to-app coupling (`D022`)

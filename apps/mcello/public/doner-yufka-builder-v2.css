@@ -1,51 +1,156 @@
-/* Döner/Yufka Builder V2 + local presentation compositor — 3/4 assembly, schematic, truth-bound. */
+/* Mcello Döner/Yufka Presentation FoodStage V4.
+   Repo-native vector illustration: deliberately stylized, never documentary food photography. */
 
-#productModal[data-product-builder="doner-yufka"] [data-builder-food-stage="true"] {
-  object-fit: contain;
-  object-position: 50% 52%;
-  padding: clamp(26px, 5vw, 70px);
-  background:
-    radial-gradient(ellipse at 50% 58%, color-mix(in srgb, var(--mcello-bread) 92%, white), transparent 46%),
-    linear-gradient(145deg, color-mix(in srgb, var(--mcello-olive) 8%, transparent), transparent 40%),
-    var(--surface-food-stage);
-  transform: perspective(900px) rotateX(2deg) rotateY(-4deg);
-  transition: filter 180ms ease;
+#productModal[data-product-builder="doner-yufka"] .modal {
+  overflow: hidden;
 }
 
-#productModal[data-product-builder="doner-yufka"][data-assembly-presentation="true"] [data-builder-food-stage="true"] {
-  filter: drop-shadow(0 20px 34px color-mix(in srgb, var(--mcello-ink) 24%, transparent));
+/* Author-level img display rules can override the browser's default hidden rendering.
+   Keep the legacy product image out of layout whenever FoodStage V4 owns the visual stage. */
+#productModal[data-product-builder="doner-yufka"] #modalImage[hidden] {
+  display: none;
+}
+
+#productModal[data-product-builder="doner-yufka"] .mc-food-stage-v4 {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  min-height: clamp(430px, 62vh, 720px);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: clamp(20px, 3.5vw, 54px);
+  color: var(--content-primary);
+  background:
+    radial-gradient(circle at 54% 43%, rgba(255, 244, 207, .96) 0 18%, rgba(238, 215, 166, .7) 40%, transparent 67%),
+    radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--mcello-ember) 18%, transparent), transparent 36%),
+    linear-gradient(155deg, #f5ead1 0%, #e9d4ad 56%, #d5ad78 100%);
+}
+
+.mc-food-stage-v4__halo {
+  position: absolute;
+  width: min(78%, 540px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(72, 54, 34, .12);
+  box-shadow: 0 0 0 28px rgba(255,255,255,.11), 0 0 0 66px rgba(255,255,255,.06);
+  transform: translateY(-4%);
+  pointer-events: none;
+}
+
+.mc-food-stage-v4__art {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 690px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 24px 28px rgba(74, 44, 22, .2));
+}
+
+.mc-food-layer {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 340ms cubic-bezier(.22,.85,.28,1.18);
+}
+
+.mc-food-layer[data-active="true"] { opacity: 1; transform: translate3d(0,0,0) rotate(0) scale(1); }
+.mc-food-layer--protein { transform: translate3d(0,-34px,0) scale(.84) rotate(-4deg); }
+.mc-food-layer--salat { transform: translate3d(-10px,18px,0) scale(.82,.68) rotate(-3deg); transition-duration: 320ms; }
+.mc-food-layer--tomate { transform: translate3d(0,-44px,0) scale(.76) rotate(7deg); }
+.mc-food-layer--gurke { transform: translate3d(12px,-34px,0) scale(.72) rotate(-8deg); transition-delay: 25ms; }
+.mc-food-layer--zwiebel { transform: translate3d(-8px,-30px,0) scale(.7) rotate(12deg); transition-delay: 45ms; }
+.mc-food-layer--sauce { transform: translate3d(-18px,0,0) scaleX(.72); transform-origin: left center; transition-duration: 300ms; }
+.mc-food-layer--curry { transition-delay: 20ms; }
+.mc-food-layer--knoblauch { transition-delay: 50ms; }
+.mc-food-layer--scharf { transition-delay: 80ms; }
+
+.mc-food-stage-v4__caption {
+  position: absolute;
+  z-index: 2;
+  left: clamp(16px, 3vw, 38px);
+  right: clamp(16px, 3vw, 38px);
+  bottom: clamp(16px, 2.5vw, 30px);
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr);
+  gap: 3px 12px;
+  align-items: baseline;
+  padding: 13px 16px;
+  border: 1px solid rgba(69, 47, 28, .13);
+  border-radius: 18px;
+  color: #35261c;
+  background: rgba(255, 249, 232, .76);
+  box-shadow: 0 12px 38px rgba(86, 51, 24, .11);
+  backdrop-filter: blur(12px);
+}
+
+.mc-food-stage-v4__caption > span {
+  color: #667a39;
+  font: 800 .7rem/1 system-ui,sans-serif;
+  letter-spacing: .14em;
+}
+
+.mc-food-stage-v4__caption > strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(.8rem, 1.2vw, .95rem);
+}
+
+.mc-food-stage-v4__caption > small {
+  grid-column: 1/-1;
+  color: #755f4c;
+  font: 500 .7rem/1.35 system-ui,sans-serif;
 }
 
 #productModal[data-product-builder="doner-yufka"] .builder-context::after {
-  content: "3/4 Assembly FoodStage · interaktive schematische Vorschau";
+  content: "Dein Mcello · Basis, Frische und Soße direkt auf der FoodStage erleben";
   display: block;
-  max-width: 34ch;
-  color: var(--content-secondary);
+  max-width: 42ch;
+  color: color-mix(in srgb, var(--mcello-olive) 76%, var(--content-secondary));
   font-size: var(--type-meta);
   line-height: 1.4;
 }
 
-#productModal[data-product-builder="doner-yufka"][data-assembly-presentation="true"] .builder-context::after {
-  content: "Visualisierung · Curry, Knoblauch und Scharf direkt auf der FoodStage erleben";
-  color: color-mix(in srgb, var(--mcello-olive) 78%, var(--content-secondary));
+#productModal[data-product-builder="doner-yufka"] .modifier-group {
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+#productModal[data-product-builder="doner-yufka"] .modifier-option:has(input:checked) {
+  border-color: color-mix(in srgb, var(--mcello-olive) 52%, var(--border-default));
+  background: color-mix(in srgb, var(--mcello-olive) 9%, var(--surface-raised));
 }
 
 @media (max-width: 820px) {
-  #productModal[data-product-builder="doner-yufka"] [data-builder-food-stage="true"] {
-    padding: clamp(18px, 6vw, 38px);
-    transform: none;
+  #productModal[data-product-builder="doner-yufka"] .mc-food-stage-v4 {
+    min-height: 330px;
+    padding: 10px 14px 54px;
   }
+  .mc-food-stage-v4__art { width: min(100%, 520px); }
+  .mc-food-stage-v4__caption { padding: 9px 11px; border-radius: 14px; }
+  .mc-food-stage-v4__caption > small { display: none; }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {
-  #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"] [data-builder-food-stage="true"] {
-    padding: clamp(10px, 3vh, 18px);
+  #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"] .mc-food-stage-v4 {
+    min-height: 100%;
+    height: 100%;
+    padding: 2px 8px 44px;
+  }
+  #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"] .mc-food-stage-v4__art {
+    width: min(100%, 410px);
+    max-height: calc(100dvh - 58px);
+  }
+  #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"] .mc-food-stage-v4__caption {
+    left: 8px; right: 8px; bottom: 7px; padding: 7px 9px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #productModal[data-product-builder="doner-yufka"] [data-builder-food-stage="true"] {
-    transform: none;
-    transition: none;
-  }
+  .mc-food-layer { transition: none !important; }
+  .mc-food-stage-v4__art { filter: none; }
 }

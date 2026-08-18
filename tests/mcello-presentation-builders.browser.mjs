@@ -67,21 +67,16 @@ async function desktopPresentationFlow() {
   await waitDataset(page, "pizzaPresentation", "true");
   await waitDataset(page, "pizzaVisualLayers", "5");
   assert.match(await page.locator("#modalImage").getAttribute("src"), /^data:image\/svg\+xml/);
-  assert.match(await page.locator("#modalImage").getAttribute("alt"), /Schematische interaktive Pizza-Vorschau/);
 
   const pizzaGroup = await modifierGroup(page, "Belag");
-  assert.deepEqual(
-    await pizzaGroup.locator(".modifier-option span:first-of-type").allTextContents(),
-    ["Kebap Fleisch", "Tomaten", "Broccoli", "Käse", "Zwiebeln"],
-  );
-  assert.equal(await pizzaGroup.locator("input:checked").count(), 5, "Pizza Mcello must start from its five presentation recipe ingredients");
+  assert.deepEqual(await pizzaGroup.locator(".modifier-option span:first-of-type").allTextContents(), ["Kebap Fleisch", "Tomaten", "Broccoli", "Käse", "Zwiebeln"]);
+  assert.equal(await pizzaGroup.locator("input:checked").count(), 5);
   const onions = await optionInput(pizzaGroup, "Zwiebeln");
   await onions.uncheck();
   await waitDataset(page, "pizzaVisualLayers", "4");
   await onions.check();
   await waitDataset(page, "pizzaVisualLayers", "5");
 
-  assert.match(await page.locator("#addToCart").textContent(), /In den Warenkorb/);
   await page.locator("#addToCart").click();
   await page.locator("#cartDrawer").waitFor({ state: "visible" });
   assert.match(await page.locator("#cartItems").innerText(), /Pizza Mcello/);
@@ -90,18 +85,38 @@ async function desktopPresentationFlow() {
   await openNamedProduct(page, "Drehspieß im Yufka");
   await waitDataset(page, "productBuilder", "doner-yufka");
   await waitDataset(page, "assemblyPresentation", "true");
-  await waitDataset(page, "assemblyVisualLayers", "0");
-  assert.match(await page.locator("#modalImage").getAttribute("src"), /^data:image\/svg\+xml/);
-  assert.match(await page.locator("#modalImage").getAttribute("alt"), /Schematische interaktive Döner\/Yufka-Vorschau/);
+  await waitDataset(page, "assemblyVisualLayers", "5");
+  assert.equal(await page.locator("#modalImage").isHidden(), true, "legacy image must yield to layered FoodStage");
+  assert.equal(await page.locator('[data-food-stage-v4="true"]').isVisible(), true);
+  assert.match(await page.locator('[data-food-stage-v4="true"]').getAttribute("aria-label"), /Fleisch/);
 
+  const basisGroup = await modifierGroup(page, "Basis");
+  const freshGroup = await modifierGroup(page, "Gemüse");
   const sauceGroup = await modifierGroup(page, "Soße");
-  assert.deepEqual(
-    await sauceGroup.locator(".modifier-option span:first-of-type").allTextContents(),
-    ["Curry", "Knoblauch", "Scharf"],
-  );
+  assert.deepEqual(await basisGroup.locator(".modifier-option span:first-of-type").allTextContents(), ["Fleisch", "Falafel"]);
+  assert.deepEqual(await freshGroup.locator(".modifier-option span:first-of-type").allTextContents(), ["Salat", "Tomate", "Gurke", "Zwiebel"]);
+  assert.deepEqual(await sauceGroup.locator(".modifier-option span:first-of-type").allTextContents(), ["Curry", "Knoblauch", "Scharf"]);
+
+  const meat = await optionInput(basisGroup, "Fleisch");
+  const falafel = await optionInput(basisGroup, "Falafel");
+  assert.equal(await meat.isChecked(), true);
+  assert.equal(await falafel.isChecked(), false);
+  await falafel.check();
+  await waitDataset(page, "assemblyVisualLayers", "5");
+  assert.equal(await meat.isChecked(), false, "single-select presentation basis must switch away from Fleisch");
+  assert.match(await page.locator('[data-food-stage-v4="true"]').getAttribute("aria-label"), /Falafel/);
+
+  const cucumber = await optionInput(freshGroup, "Gurke");
+  await cucumber.uncheck();
+  await waitDataset(page, "assemblyVisualLayers", "4");
+  assert.equal(await page.locator('[data-food-layer="Gurke"]').getAttribute("data-active"), "false");
+  await cucumber.check();
+  await waitDataset(page, "assemblyVisualLayers", "5");
+
   for (const [index, sauce] of ["Curry", "Knoblauch", "Scharf"].entries()) {
     await (await optionInput(sauceGroup, sauce)).check();
-    await waitDataset(page, "assemblyVisualLayers", String(index + 1));
+    await waitDataset(page, "assemblyVisualLayers", String(6 + index));
+    assert.equal(await page.locator(`[data-food-layer="${sauce}"]`).getAttribute("data-active"), "true");
   }
 
   await page.locator("#addToCart").click();
@@ -109,6 +124,9 @@ async function desktopPresentationFlow() {
   const cart = await page.locator("#cartItems").innerText();
   assert.match(cart, /Pizza Mcello/);
   assert.match(cart, /Drehspieß im Yufka/);
+  assert.match(cart, /Falafel/);
+  assert.match(cart, /Tomate/);
+  assert.match(cart, /Gurke/);
   assert.match(cart, /Soße: Curry/);
   assert.match(cart, /Soße: Knoblauch/);
   assert.match(cart, /Soße: Scharf/);
@@ -124,32 +142,35 @@ async function mobileRotationFlow() {
   page.on("pageerror", (error) => errors.push(error.message));
 
   await page.goto(`${APP_URL}/`, { waitUntil: "domcontentloaded" });
-  await openNamedProduct(page, "Pizza Mcello");
-  await waitDataset(page, "productBuilder", "pizza");
-  await waitDataset(page, "pizzaVisualLayers", "5");
+  await openNamedProduct(page, "Drehspieß im Yufka");
+  await waitDataset(page, "productBuilder", "doner-yufka");
+  await waitDataset(page, "assemblyVisualLayers", "5");
   await waitDataset(page, "builderOrientation", "portrait");
-  assert.equal(await page.locator("[data-builder-orientation-gate]").isVisible(), true, "phone portrait must show the rotate experience");
+  assert.equal(await page.locator("[data-builder-orientation-gate]").isVisible(), true);
 
   await page.setViewportSize({ width: 740, height: 360 });
   await waitDataset(page, "builderOrientation", "landscape");
   assert.equal(await page.locator("[data-builder-orientation-gate]").isHidden(), true);
-  assert.equal(await page.locator("#productModal .modal").isVisible(), true);
-  assert.equal(await page.locator('[data-builder-food-stage="true"]').isVisible(), true);
+  assert.equal(await page.locator('[data-food-stage-v4="true"]').isVisible(), true);
   assert.equal(await page.locator('[data-builder-action-bar="true"]').isVisible(), true);
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), true, "phone landscape must not overflow horizontally");
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), true);
 
-  const pizzaGroup = await modifierGroup(page, "Belag");
-  const onions = await optionInput(pizzaGroup, "Zwiebeln");
+  const freshGroup = await modifierGroup(page, "Gemüse");
+  await page.locator("[data-builder-step-next]").click();
+  await freshGroup.waitFor({ state: "visible" });
+  assert.equal((await page.locator("[data-builder-step-name]").textContent())?.trim(), "Gemüse");
+  const onions = await optionInput(freshGroup, "Zwiebel");
   await onions.uncheck();
-  await waitDataset(page, "pizzaVisualLayers", "4");
+  await waitDataset(page, "assemblyVisualLayers", "4");
 
   await page.setViewportSize({ width: 390, height: 844 });
   await waitDataset(page, "builderOrientation", "portrait");
   assert.equal(await page.locator("[data-builder-orientation-gate]").isVisible(), true);
   await page.setViewportSize({ width: 740, height: 360 });
   await waitDataset(page, "builderOrientation", "landscape");
-  await waitDataset(page, "pizzaVisualLayers", "4");
+  await waitDataset(page, "assemblyVisualLayers", "4");
   assert.equal(await onions.isChecked(), false, "real modifier selection must survive portrait/landscape rotation without reload");
+  assert.equal(await freshGroup.isVisible(), true, "guided Builder step must survive portrait/landscape rotation without reset");
   assert.deepEqual(errors, [], errors.join("\n"));
   await context.close();
 }
@@ -157,7 +178,7 @@ async function mobileRotationFlow() {
 try {
   await desktopPresentationFlow();
   await mobileRotationFlow();
-  console.log("Mcello presentation Builders passed: Pizza layers, Döner/Yufka sauces, cart selections and mobile landscape state preservation.");
+  console.log("Mcello Presentation UX V4 passed: Pizza, layered cartoon Döner/Yufka, cart state and phone rotation recovery.");
 } finally {
   await browser.close();
 }

@@ -8,48 +8,54 @@ const css = await readFile(new URL("apps/mcello/public/doner-yufka-builder-v2.cs
 const sw = await readFile(new URL("apps/mcello/public/sw.js", root), "utf8");
 const seed = JSON.parse(await readFile(new URL("data/mcello/menu-seed.provisional.json", root), "utf8"));
 const presentation = JSON.parse(await readFile(new URL("data/mcello/builder-presentation.v1.json", root), "utf8"));
-const docs = await readFile(new URL("docs/projects/mcello/DONER_YUFKA_PRESENTATION_BUILDER_V1.md", root), "utf8");
 
 const ids = ["warm-013","warm-014","warm-015","warm-016","warm-017","warm-018"];
+const groupByName = new Map(presentation.donerYufka.groups.map((group) => [group.name, group]));
 
 test("Döner/Yufka presentation remains scoped by exact local fixture product links", () => {
   const seeded = new Map(seed.items.map((item) => [item[0], item]));
   assert.deepEqual(presentation.donerYufka.productSourceIds, ids);
   for (const id of ids) assert.ok(seeded.has(id));
-  assert.match(js, /presentationSauceGroup/);
+  assert.match(js, /presentationGroupMap/);
   assert.match(js, /dataset\.productBuilder = "doner-yufka"/);
+  assert.match(js, /Basis/);
+  assert.match(js, /Gemüse/);
+  assert.match(js, /Soße/);
 });
 
-test("base provisional products stay modifier-empty while local presentation data contains only confirmed sauces", () => {
+test("local presentation adds basis and fresh assumptions without mutating provisional production seed", () => {
   const selected = seed.items.filter((item) => ids.includes(item[0]));
   assert.ok(selected.every((item) => Array.isArray(item[5]) && item[5].length === 0));
-  assert.deepEqual(presentation.donerYufka.groups[0].options.map((option) => option.name), ["Curry", "Knoblauch", "Scharf"]);
-  assert.match(js, /Curry.*Knoblauch.*Scharf/s);
+  assert.deepEqual(groupByName.get("Basis").options.map((option) => option.name), ["Fleisch", "Falafel"]);
+  assert.deepEqual(groupByName.get("Gemüse").options.map((option) => option.name), ["Salat", "Tomate", "Gurke", "Zwiebel"]);
+  assert.deepEqual(groupByName.get("Soße").options.map((option) => option.name), ["Curry", "Knoblauch", "Scharf"]);
+  assert.match(presentation.notes.join("\n"), /presentation assumptions/i);
 });
 
-test("assembly compositor reads real checked sauce inputs and does not own commerce state", () => {
-  assert.match(js, /selectedPresentationSauces/);
-  assert.match(js, /querySelector\("input"\)\?\.checked/);
-  assert.match(js, /dataset\.assemblyVisualLayers = String\(selected\.size\)/);
-  assert.match(js, /assemblyPreview = "schematic"/);
-  assert.match(js, /data:image\/svg\+xml/);
+test("FoodStage mirrors actual checked modifier inputs and never owns commerce state", () => {
+  assert.match(js, /querySelector\("input"\)/);
+  assert.match(js, /input\?\.checked/);
+  assert.match(js, /data-food-layer/);
+  assert.match(js, /dataset\.assemblyVisualLayers/);
+  assert.match(js, /Stilisierte Präsentationsillustration/);
   assert.doesNotMatch(js, /\.checked\s*=|localStorage|sessionStorage|fetch\s*\(|cart\s*=|configuredPrice|configurationValid/);
-  assert.match(docs, /Curry/);
-  assert.match(docs, /Knoblauch/);
-  assert.match(docs, /Scharf/);
 });
 
-test("assembly specialization stays visually distinct from Pizza top-down", () => {
-  assert.match(css, /data-product-builder="doner-yufka"/);
-  assert.match(css, /perspective\(900px\)/);
-  assert.match(css, /data-assembly-presentation="true"/);
-  assert.doesNotMatch(css, /data-pizza-stage|top-down/);
+test("cartoon assembly has distinct ingredient layers and purposeful lightweight motion", () => {
+  for (const ingredient of ["Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"]) {
+    assert.match(js, new RegExp(`data-food-layer=\\"${ingredient}\\"`));
+  }
+  assert.match(css, /mc-food-stage-v4/);
+  assert.match(css, /transform/);
+  assert.match(css, /opacity/);
+  assert.match(css, /prefers-reduced-motion: reduce/);
+  assert.match(css, /Stilisierte|illustration/i);
   assert.doesNotMatch(js + css, /https:\/\//i);
-  assert.doesNotMatch(js + css, /adobe|firefly|photoshop-api|short-url/i);
+  assert.doesNotMatch(js + css, /firefly|photoshop-api|short-url/i);
 });
 
-test("Döner/Yufka assets remain in the versioned offline shell while business data stays network-only", () => {
-  assert.match(sw, /mcello-public-shell-v\d+/);
+test("Döner/Yufka presentation code remains in refreshed offline shell while business data stays network-only", () => {
+  assert.match(sw, /mcello-public-shell-v19/);
   assert.match(sw, /doner-yufka-builder-v2\.js/);
   assert.match(sw, /doner-yufka-builder-v2\.css/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);

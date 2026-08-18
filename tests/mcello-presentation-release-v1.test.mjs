@@ -11,6 +11,8 @@ const presentationMode = await readFile(new URL("apps/mcello/public/presentation
 const lifecycle = await readFile(new URL("tests/mcello-presentation-builder-lifecycle.browser.mjs", root), "utf8");
 const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
 
+const donerGroups = new Map(presentationData.donerYufka.groups.map((group) => [group.name, group]));
+
 test("presentation release pins the merged functional runtime and remains non-production", () => {
   assert.equal(release.status, "presentation-release-candidate");
   assert.equal(release.runtimeBaseCommit, "6bd33c504b09c5fd3ae43c6e02f8a9136d6d05d5");
@@ -27,11 +29,20 @@ test("release Pizza contract matches the localhost presentation data exactly", (
   assert.ok(presentationData.pizza.groups[0].options.every((option) => option.priceDeltaCents === 0));
 });
 
-test("release Döner/Yufka contract contains only the confirmed sauces and keeps production selection policy unconfirmed", () => {
+test("historical release Döner/Yufka contract remains sauce-only while V4 adds separately labeled local assumptions", () => {
+  const sauceGroup = donerGroups.get("Soße");
+  const basisGroup = donerGroups.get("Basis");
+  const freshGroup = donerGroups.get("Gemüse");
+  assert.ok(sauceGroup && basisGroup && freshGroup);
   assert.deepEqual(release.donerYufka.confirmedSauces, ["Curry", "Knoblauch", "Scharf"]);
-  assert.deepEqual(release.donerYufka.confirmedSauces, presentationData.donerYufka.groups[0].options.map((option) => option.name));
+  assert.deepEqual(release.donerYufka.confirmedSauces, sauceGroup.options.map((option) => option.name));
+  assert.deepEqual(basisGroup.options.map((option) => option.name), ["Fleisch", "Falafel"]);
+  assert.deepEqual(freshGroup.options.map((option) => option.name), ["Salat", "Tomate", "Gurke", "Zwiebel"]);
   assert.equal(release.donerYufka.productionSelectionPolicy, "unconfirmed");
-  assert.ok(presentationData.donerYufka.groups[0].options.every((option) => option.priceDeltaCents === 0));
+  assert.ok(sauceGroup.options.every((option) => option.priceDeltaCents === 0));
+  assert.ok(basisGroup.options.every((option) => option.priceDeltaCents === 0));
+  assert.ok(freshGroup.options.every((option) => option.priceDeltaCents === 0));
+  assert.match(presentationData.notes.join("\n"), /presentation assumptions/i);
   assert.match(releaseDocs, /single-vs-multiple sauce selection is \*\*still unconfirmed\*\*/);
 });
 
@@ -53,7 +64,7 @@ test("release keeps the explicit presentation mode and both one-command launcher
 });
 
 test("release presentation story is backed by the real Builder checkout KDS lifecycle test", () => {
-  for (const term of ["Pizza Mcello", "Drehspieß im Yufka", "Zwiebeln", "Knoblauch", "Scharf", "received", "preparing", "ready", "completed"]) {
+  for (const term of ["Pizza Mcello", "Drehspieß im Yufka", "Zwiebeln", "Knoblauch", "Scharf", "Eingegangen", "In Zubereitung", "Abholbereit", "Abgeholt"]) {
     assert.match(lifecycle, new RegExp(term));
   }
   assert.match(lifecycle, /submitOrder/);
