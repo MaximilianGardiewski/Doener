@@ -141,6 +141,39 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:4173/ >/dev/null
           node tests/mcello-gsap-product-open.browser.mjs all
+      - name: GSAP ingredient — normal
+        run: |
+          python3 -m http.server 4173 --directory dist > /tmp/mcello-gsap-ingredient-normal.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          node tests/mcello-gsap-ingredient.browser.mjs normal
+      - name: GSAP ingredient — vendor fallback
+        run: |
+          python3 -m http.server 4173 --directory dist > /tmp/mcello-gsap-ingredient-fallback.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          node tests/mcello-gsap-ingredient.browser.mjs fallback
+      - name: GSAP ingredient — reduced motion
+        run: |
+          python3 -m http.server 4173 --directory dist > /tmp/mcello-gsap-ingredient-reduced.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          node tests/mcello-gsap-ingredient.browser.mjs reduced
       - name: Run Lebtig public auth browser smoke
         run: |
           npm run preview:lebtig > /tmp/lebtig-preview.log 2>&1 &

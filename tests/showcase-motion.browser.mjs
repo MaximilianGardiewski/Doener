@@ -108,12 +108,20 @@ try {
 
   const modifierInput = normal.locator("#modifierGroups input:not(:disabled)").first();
   if (await modifierInput.count()) {
+    const ingredientEngine = await normal.evaluate(() => document.documentElement.dataset.mcelloIngredientEngine);
+    assert.ok(["v2", "gsap"].includes(ingredientEngine), `unexpected ingredient engine ${ingredientEngine}`);
+    const modifierOption = modifierInput.locator("xpath=ancestor::*[contains(@class,'modifier-option')][1]");
     const type = await modifierInput.getAttribute("type");
     const wasChecked = await modifierInput.isChecked();
     if (type === "checkbox" && wasChecked) await modifierInput.uncheck();
     else if (!wasChecked) await modifierInput.check();
     else await modifierInput.dispatchEvent("change");
-    await normal.waitForFunction(() => document.querySelector("#productModal .modal-hero")?.hasAttribute("data-motion-ingredient"));
+    if (ingredientEngine === "v2") {
+      await normal.waitForFunction(() => document.querySelector(".modifier-option.motion-ingredient-change"));
+    } else {
+      await normal.waitForFunction(() => document.querySelector(".modifier-option[data-motion-ingredient-engine='gsap']"));
+      assert.equal(await modifierOption.evaluate((node) => node.classList.contains("motion-ingredient-change")), false);
+    }
   }
 
   const addToCart = normal.locator("#addToCart");
@@ -140,7 +148,7 @@ try {
     "reduced motion must not inject scroll-depth offsets",
   );
 
-  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, category, product-open, remaining commerce feedback, and reduced-motion preferences.");
+  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, category, product-open, ingredient feedback, cart feedback, and reduced-motion preferences.");
 } finally {
   await browser.close();
 }
