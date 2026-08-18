@@ -77,19 +77,39 @@ jobs:
           node tests/homepage-composition.browser.mjs
           node tests/brand-design-system.browser.mjs
           node tests/public-copy-tone.browser.mjs
-      - name: Run Mcello GSAP reveal browser gate
+      - name: GSAP reveal — normal takeover
         run: |
-          python3 -m http.server 4173 --directory dist > /tmp/mcello-gsap-reveal.log 2>&1 &
+          python3 -m http.server 4173 --directory dist > /tmp/mcello-gsap-reveal-normal.log 2>&1 &
           preview_pid=$!
           trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
-              break
-            fi
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
             sleep 1
           done
           curl --fail --silent http://127.0.0.1:4173/ >/dev/null
-          node tests/mcello-gsap-reveal.browser.mjs
+          node tests/mcello-gsap-reveal.browser.mjs normal
+      - name: GSAP reveal — vendor fallback
+        run: |
+          python3 -m http.server 4173 --directory dist > /tmp/mcello-gsap-reveal-fallback.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          node tests/mcello-gsap-reveal.browser.mjs fallback
+      - name: GSAP reveal — reduced motion
+        run: |
+          python3 -m http.server 4173 --directory dist > /tmp/mcello-gsap-reveal-reduced.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+          node tests/mcello-gsap-reveal.browser.mjs reduced
       - name: Run Lebtig public auth browser smoke
         run: |
           npm run preview:lebtig > /tmp/lebtig-preview.log 2>&1 &
