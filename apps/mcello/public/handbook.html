@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello Handbuch</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/operations-shell.css" />
+  <link rel="stylesheet" href="/handbook.css" />
+</head>
+<body data-operations-area="handbook" data-operations-role="staff">
+  <div class="prototype-banner">Lokales Mcello-Handbuch · Git/Markdown-kanonisch · offline verfügbar</div>
+  <main class="handbook-shell">
+    <header class="handbook-head">
+      <div>
+        <p class="eyebrow">Operations Wissen</p>
+        <h1>Mcello Handbuch</h1>
+        <p class="handbook-intro">Durchsuchbare Hilfe für Betrieb, KDS und Admin. Die angezeigten Inhalte stammen aus versionierten Markdown-Dateien im Repository.</p>
+      </div>
+      <label class="handbook-search">Suchen
+        <input id="handbookSearch" type="search" placeholder="z. B. Rush, Bestellung, Bilder …" autocomplete="off" />
+      </label>
+    </header>
+    <div class="handbook-meta">
+      <span id="handbookRole" class="pill">Staff</span>
+      <span class="pill">Git/Markdown</span>
+      <span class="pill">Self-hosted / Offline</span>
+    </div>
+    <nav class="handbook-tabs" id="handbookTabs" aria-label="Handbuchbereiche"></nav>
+    <p id="handbookStatus" class="handbook-status" aria-live="polite"></p>
+    <section id="handbookResults" class="handbook-results"></section>
+  </main>
+  <script type="module" src="/operations-shell.js"></script>
+  <script type="module" src="/handbook.js"></script>
+</body>
+</html>

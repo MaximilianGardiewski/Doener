@@ -14,6 +14,7 @@ if (area && role) {
       { key: "schedule", href: "/schedule.html", mark: "ZE", label: "Zeiten", meta: "Öffnung & Bestellbetrieb", roles: ["admin"] },
       { key: "ops", href: "/ops.html", mark: "BE", label: "Betrieb", meta: "Rush, Pause, Verfügbarkeit", roles: ["admin", "staff"] },
       { key: "kds", href: "/kds.html", mark: "KD", label: "KDS", meta: "Bestellungen steuern", roles: ["admin", "staff"] },
+      { key: "handbook", href: `/handbook.html?role=${role}`, mark: "HB", label: "Handbuch", meta: "Suche & Hilfe", roles: ["admin", "staff"] },
     ];
 
     // Navigation is presentation/IA only. Backend authorization, RLS and page guards remain authoritative.
