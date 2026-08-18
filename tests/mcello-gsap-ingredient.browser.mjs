@@ -119,27 +119,32 @@ async function armIngredientTrace(page, stage) {
   }, stage);
 }
 
+function stableInputSelector(identity) {
+  return `#modifierGroups input[data-group-id=${JSON.stringify(identity.groupId)}][value=${JSON.stringify(identity.value)}]`;
+}
+
 async function triggerModifier(page) {
   const unchecked = page.locator("#modifierGroups input:not(:disabled):not(:checked)").first();
   const checkedCheckbox = page.locator('#modifierGroups input[type="checkbox"]:not(:disabled):checked').first();
-  let input;
+  let candidate;
   let action;
 
   if (await unchecked.count()) {
-    input = unchecked;
+    candidate = unchecked;
     action = "click";
   } else if (await checkedCheckbox.count()) {
-    input = checkedCheckbox;
+    candidate = checkedCheckbox;
     action = "click";
   } else {
-    input = page.locator("#modifierGroups input:not(:disabled)").first();
+    candidate = page.locator("#modifierGroups input:not(:disabled)").first();
     action = "dispatch";
   }
 
-  const identity = await input.evaluate((node) => ({
+  const identity = await candidate.evaluate((node) => ({
     groupId: node.dataset.groupId || null,
     value: node.value,
   }));
+  const input = page.locator(stableInputSelector(identity));
 
   if (action === "click") await input.click();
   else await input.dispatchEvent("change");
