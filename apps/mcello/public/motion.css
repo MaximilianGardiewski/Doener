@@ -52,7 +52,8 @@ html[data-mcello-hero-engine="gsap"] .hero-media-v2 .hero-photo {
     box-shadow var(--motion-fast) ease;
 }
 
-[data-motion-product-engine="gsap"] {
+[data-motion-product-engine="gsap"],
+[data-motion-ingredient-engine="gsap"] {
   transition: none !important;
   animation: none !important;
   will-change: opacity, transform;
