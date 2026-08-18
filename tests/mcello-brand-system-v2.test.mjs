@@ -75,7 +75,7 @@ test("owner references keep cinematic food dominant while materially increasing 
   assert.match(artDirection, /A bestimmt Food-Wärme, Atmosphäre und Fotografie/);
   assert.match(artDirection, /C bestimmt Ordering-Struktur, Builder und Mobile Commerce/);
   assert.match(artDirection, /B liefert deutlich mehr Eigenständigkeit, Typografie, Farbe und grafische Spannung/);
-  assert.match(userReferences, /weniger ruhiges "Dark Luxury"/);
+  assert.match(userReferences, /zu ernsten "Dark Luxury Restaurant"-Ästhetik/);
   assert.match(userReferences, /Food ist Hero, nicht Dekoration/);
 });
 
