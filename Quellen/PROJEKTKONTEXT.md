@@ -14,7 +14,7 @@ Doener ist nicht nur eine einzelne Restaurant-Website. Im Repository entsteht ei
 
 Git, Migrationen, Tests, Decision Ledgers und Repo-Dokumentation sind kanonisch. Builder und Coding-Agents sind Clients/Assistenten.
 
-Aktiver Integrationszweig zum Stand dieser Notiz: `bootstrap/business-web-factory`. `main` bildet derzeit nicht zwingend den vollständigen Entwicklungsstand ab. Dieser Hinweis ist ein Snapshot und darf nicht als dauerhafte Branch-Regel interpretiert werden.
+**`main` ist der kanonische Integrationsbranch.** Feature-/Konsolidierungsarbeit erfolgt auf reviewbaren Branches und wird erst nach Diff, Tests und Review in `main` integriert. Historische Branch-Hinweise sind kein alternativer Source-of-Truth-Pfad.
 
 ## Architekturprinzipien
 
