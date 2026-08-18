@@ -46,7 +46,10 @@ test("package source never reaches into another package src directory by relativ
   assert.deepEqual(offenders, [], `cross-package source imports must use public package APIs: ${offenders.join(", ")}`);
 });
 
-test("package dependency graph declares the public APIs used by ordering and Supabase adapter", async () => {
+test("package dependency graph declares the public APIs used by KDS ordering and Supabase adapter", async () => {
+  const kds = JSON.parse(await readFile(new URL("packages/kds/package.json", root), "utf8"));
+  assert.deepEqual(kds.dependencies, { "@business-web/ordering": "0.0.1" });
+
   const ordering = JSON.parse(await readFile(new URL("packages/ordering/package.json", root), "utf8"));
   assert.deepEqual(Object.keys(ordering.dependencies || {}).sort(), [
     "@business-web/core",
