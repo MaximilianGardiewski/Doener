@@ -1,0 +1,3 @@
+-- Intentionally empty.
+-- Lebtig business/contact/opening-hours/menu/news/recipe data is not owner-confirmed
+-- in this repository and therefore must not be installed as a database default.
