@@ -2,5 +2,14 @@
   "name": "@business-web/ordering",
   "private": true,
   "type": "module",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@business-web/core": "0.0.1",
+    "@business-web/menu-engine": "0.0.1",
+    "@business-web/notifications": "0.0.1",
+    "@business-web/payments": "0.0.1"
+  }
 }
