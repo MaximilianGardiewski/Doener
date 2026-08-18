@@ -53,25 +53,60 @@ async function stageState(page) {
   });
 }
 
+async function armGsapOwnershipTrace(page) {
+  await page.evaluate(() => {
+    window.__mcelloIngredientTrace = [];
+    window.__mcelloIngredientTraceObserver?.disconnect?.();
+    const root = document.querySelector("#modifierGroups");
+    if (!root) return;
+    const seen = new WeakSet();
+    const capture = () => {
+      for (const node of root.querySelectorAll(".modifier-option[data-motion-ingredient-engine='gsap']")) {
+        if (seen.has(node)) continue;
+        seen.add(node);
+        const input = node.querySelector("input");
+        requestAnimationFrame(() => {
+          const style = getComputedStyle(node);
+          window.__mcelloIngredientTrace.push({
+            groupId: input?.dataset.groupId || null,
+            value: input?.value || null,
+            checked: Boolean(input?.checked),
+            selection: node.dataset.motionSelection || null,
+            owner: node.dataset.motionIngredientEngine || null,
+            inlineTransform: node.style.transform,
+            transitionDuration: style.transitionDuration,
+            fallbackClass: node.classList.contains("motion-ingredient-change"),
+          });
+        });
+      }
+    };
+    const observer = new MutationObserver(capture);
+    observer.observe(root, { subtree: true, attributes: true, attributeFilter: ["data-motion-ingredient-engine"] });
+    window.__mcelloIngredientTraceObserver = observer;
+  });
+}
+
 async function triggerModifier(page) {
   const unchecked = page.locator("#modifierGroups input:not(:disabled):not(:checked)").first();
   const checkedCheckbox = page.locator('#modifierGroups input[type="checkbox"]:not(:disabled):checked').first();
   let input;
 
-  if (await unchecked.count()) {
-    input = unchecked;
-    await input.click();
-  } else if (await checkedCheckbox.count()) {
-    input = checkedCheckbox;
-    await input.click();
-  } else {
-    input = page.locator("#modifierGroups input:not(:disabled)").first();
-    await input.dispatchEvent("change");
-  }
+  if (await unchecked.count()) input = unchecked;
+  else if (await checkedCheckbox.count()) input = checkedCheckbox;
+  else input = page.locator("#modifierGroups input:not(:disabled)").first();
+
+  const identity = await input.evaluate((node) => ({
+    groupId: node.dataset.groupId || null,
+    value: node.value,
+  }));
+
+  if (await unchecked.count()) await input.click();
+  else if (await checkedCheckbox.count()) await input.click();
+  else await input.dispatchEvent("change");
 
   const checked = await input.isChecked();
-  const option = input.locator("xpath=ancestor::*[contains(@class,'modifier-option')][1]");
-  return { input, option, checked };
+  const option = input.locator("xpath=..");
+  return { input, option, checked, identity };
 }
 
 async function normalScenario() {
@@ -90,19 +125,17 @@ async function normalScenario() {
     await openConfigurableProduct(page);
     await waitForProductOpenPresentation(page);
     const stage = await stageState(page);
+    await armGsapOwnershipTrace(page);
 
-    const { input, option, checked } = await triggerModifier(page);
-    await page.waitForFunction(() => document.querySelector(".modifier-option[data-motion-ingredient-engine='gsap']"));
+    const { input, option, checked, identity } = await triggerModifier(page);
+    await page.waitForFunction(() => Array.isArray(window.__mcelloIngredientTrace) && window.__mcelloIngredientTrace.length > 0);
+    const optionDuring = await page.evaluate(() => window.__mcelloIngredientTrace[0]);
 
-    const optionDuring = await option.evaluate((node) => ({
-      owner: node.dataset.motionIngredientEngine,
-      selection: node.dataset.motionSelection,
-      inlineTransform: node.style.transform,
-      fallbackClass: node.classList.contains("motion-ingredient-change"),
-      transitionDuration: getComputedStyle(node).transitionDuration,
-    }));
+    assert.equal(optionDuring.groupId, identity.groupId, `GSAP must own the modifier group that actually changed: ${JSON.stringify({ optionDuring, identity })}`);
+    assert.equal(optionDuring.value, identity.value, `GSAP must own the modifier option that actually changed: ${JSON.stringify({ optionDuring, identity })}`);
     assert.equal(optionDuring.owner, "gsap");
     assert.equal(optionDuring.selection, checked ? "added" : "removed");
+    assert.equal(optionDuring.checked, checked, "GSAP ownership snapshot must observe the application-validated checked state");
     assert.equal(optionDuring.fallbackClass, false);
     assert.ok(optionDuring.inlineTransform, `GSAP should own an option transform frame: ${JSON.stringify(optionDuring)}`);
     assert.match(optionDuring.transitionDuration, /(^|, )0s(,|$)/);
