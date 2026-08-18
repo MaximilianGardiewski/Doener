@@ -11,7 +11,8 @@
     "test:domain": "node --experimental-strip-types --test packages/*/test/*.test.ts",
     "test:schema": "node --test tests/*.test.mjs",
     "check:static": "node scripts/check-static.mjs",
-    "check": "npm run typecheck && npm run test:domain && npm run test:schema && npm run check:static",
+    "audit:db": "node scripts/audit-db-v1.mjs",
+    "check": "npm run typecheck && npm run test:domain && npm run test:schema && npm run audit:db && npm run check:static",
     "build:preview": "node scripts/build-preview.mjs",
     "preview:mcello": "node --experimental-strip-types apps/mcello/run.mjs"
   },
