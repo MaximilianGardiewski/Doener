@@ -32,17 +32,72 @@ function Test-PrivateIPv4([string]$Value) {
     ($bytes[0] -eq 192 -and $bytes[1] -eq 168)
 }
 
-function Find-HotspotAddress {
-  $adapters = @(Get-NetAdapter -IncludeHidden -ErrorAction SilentlyContinue | Where-Object {
-    $_.Status -eq 'Up' -and $_.InterfaceDescription -match 'Wi-Fi Direct Virtual Adapter'
+function Get-PrivateIPv4Candidates {
+  $result = @()
+  $addresses = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object {
+    $_.AddressState -ne 'Duplicate' -and $_.IPAddress -and (Test-PrivateIPv4 $_.IPAddress)
   })
-  foreach ($adapter in $adapters) {
-    $addresses = @(Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue)
-    foreach ($address in $addresses) {
-      if (Test-PrivateIPv4 $address.IPAddress) { return $address.IPAddress }
+
+  foreach ($address in $addresses) {
+    $adapter = Get-NetAdapter -InterfaceIndex $address.InterfaceIndex -IncludeHidden -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $adapter -or $adapter.Status -ne 'Up') { continue }
+
+    $defaultRoute = @(Get-NetRoute -InterfaceIndex $address.InterfaceIndex -AddressFamily IPv4 -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue)
+    $result += [PSCustomObject]@{
+      IPAddress = $address.IPAddress
+      PrefixLength = $address.PrefixLength
+      InterfaceIndex = $address.InterfaceIndex
+      InterfaceAlias = $address.InterfaceAlias
+      InterfaceDescription = $adapter.InterfaceDescription
+      HasDefaultRoute = $defaultRoute.Count -gt 0
     }
   }
+
+  return @($result | Sort-Object IPAddress -Unique)
+}
+
+function Find-HotspotAddress {
+  $candidates = @(Get-PrivateIPv4Candidates)
+
+  # Windows Internet Connection Sharing / Mobile Hotspot commonly assigns
+  # 192.168.137.1 to the host-side interface. Prefer that authoritative
+  # address regardless of the localized/driver-specific adapter name.
+  $icsDefault = $candidates | Where-Object { $_.IPAddress -eq '192.168.137.1' } | Select-Object -First 1
+  if ($icsDefault) { return $icsDefault.IPAddress }
+
+  # Driver names differ across Windows 11 builds and languages. Match both
+  # descriptions and aliases instead of requiring one exact English string.
+  $namedHotspot = $candidates | Where-Object {
+    $identity = "$($_.InterfaceAlias) $($_.InterfaceDescription)"
+    $identity -match 'Wi-?Fi Direct|Mobile Hotspot|Hosted Network|Local Area Connection\*|Lokale Verbindung\*|Drahtlosnetzwerkverbindung\*'
+  } | Select-Object -First 1
+  if ($namedHotspot) { return $namedHotspot.IPAddress }
+
+  # Last-resort automatic candidate: an up private interface without a
+  # default route, excluding common VM/container/VPN interfaces. A hotspot
+  # host interface normally has no Internet default route of its own.
+  $isolated = @($candidates | Where-Object {
+    $identity = "$($_.InterfaceAlias) $($_.InterfaceDescription)"
+    -not $_.HasDefaultRoute -and
+    $identity -notmatch 'Docker|WSL|Hyper-V|vEthernet|VMware|VirtualBox|Tailscale|ZeroTier|WireGuard|OpenVPN'
+  })
+  if ($isolated.Count -eq 1) { return $isolated[0].IPAddress }
+
   return $null
+}
+
+function Show-PrivateIPv4Candidates {
+  $candidates = @(Get-PrivateIPv4Candidates)
+  if ($candidates.Count -eq 0) {
+    Write-Host 'No active private IPv4 interfaces were found.' -ForegroundColor DarkGray
+    return
+  }
+
+  Write-Host 'Active private IPv4 interfaces detected:' -ForegroundColor Yellow
+  foreach ($candidate in $candidates) {
+    $route = if ($candidate.HasDefaultRoute) { 'default-route' } else { 'no-default-route' }
+    Write-Host "  $($candidate.IPAddress)/$($candidate.PrefixLength)  [$($candidate.InterfaceAlias)]  $($candidate.InterfaceDescription)  ($route)"
+  }
 }
 
 function Test-McelloHealth {
@@ -58,7 +113,7 @@ function Wait-ForHotspotAddress {
   $detected = Find-HotspotAddress
   if ($detected) { return $detected }
 
-  Write-Host 'Windows Mobile Hotspot is not active yet.' -ForegroundColor Yellow
+  Write-Host 'Windows Mobile Hotspot is not active yet or its adapter could not be identified.' -ForegroundColor Yellow
   Write-Host 'Opening Settings. Turn on Mobile hotspot and keep this terminal open.'
   Start-Process 'ms-settings:network-mobilehotspot' | Out-Null
   foreach ($attempt in 1..120) {
@@ -66,7 +121,11 @@ function Wait-ForHotspotAddress {
     $detected = Find-HotspotAddress
     if ($detected) { return $detected }
   }
-  throw 'No active Windows Mobile Hotspot adapter was detected within 120 seconds. You can also pass -LanAddress manually.'
+
+  Write-Host ''
+  Show-PrivateIPv4Candidates
+  Write-Host ''
+  throw 'No Windows Mobile Hotspot address was identified within 120 seconds. Read the IPv4 address shown in Windows Mobile Hotspot > Properties and rerun with -LanAddress <address>.'
 }
 
 function Resolve-PreferredHost([string]$Address, [string]$RequestedHost) {
