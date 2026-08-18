@@ -52,24 +52,24 @@ test("Motion V3 scopes provide GSAP context and matchMedia cleanup without globa
   assert.doesNotMatch(engine, /ScrollTrigger\.killAll|globalTimeline\.clear|gsap\.killTweensOf\("\*"\)/);
 });
 
-test("existing V2 motion primes V3 only after installing its current visual contracts", () => {
+test("V2 contracts are installed before the V3 adapter can upgrade an eligible slice", () => {
   assert.match(motion, /import\("\.\/motion\/engine\.js"\)/);
   assert.match(motion, /requestIdleCallback/);
   assert.match(motion, /data.*mcelloMotionEngine|dataset\.mcelloMotionEngine/);
   assert.doesNotMatch(motion, /\bgsap\s*\./);
   assert.doesNotMatch(motion, /ScrollTrigger|\bFlip\b/);
 
-  const reveal = motion.indexOf("installRevealMotion();");
+  const reveal = motion.indexOf("const revealController = installRevealMotion();");
   const hero = motion.indexOf("installHeroFoodDepth();");
   const commerce = motion.indexOf("installCommerceMotionContracts();");
-  const prime = motion.indexOf("scheduleMotionV3Adapter();");
+  const prime = motion.indexOf("scheduleMotionV3Adapter(revealController);");
   assert.ok(reveal >= 0 && reveal < prime);
   assert.ok(hero >= 0 && hero < prime);
   assert.ok(commerce >= 0 && commerce < prime);
 });
 
-test("Motion V3 adapter modules and vendor runtime are all part of the offline shell", () => {
-  assert.match(sw, /mcello-public-shell-v23/);
+test("Motion V3 adapter modules and vendor runtime remain part of every refreshed offline shell", () => {
+  assert.match(sw, /mcello-public-shell-v\d+/);
   for (const asset of [
     "/motion/engine.js",
     "/motion/accessibility.js",

@@ -23,6 +23,11 @@
   will-change: auto;
 }
 
+html[data-mcello-reveal-engine="gsap"].motion-ready [data-reveal] {
+  transition: none;
+  transition-delay: 0ms;
+}
+
 .hero-media-v2 .hero-photo {
   transform: translate3d(0,var(--motion-hero-depth-y,0px),0) scale(1.045);
   transition: transform var(--motion-food,320ms) var(--motion-ease-out);
