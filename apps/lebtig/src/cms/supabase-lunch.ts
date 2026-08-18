@@ -121,6 +121,10 @@ export function createSupabaseLunchCmsPort(client: SupabaseClient): LebtigLunchC
     },
 
     async saveWeek(weekId: string, draft: LunchWeekDraft) {
+      if (draft.items.some((item) => item.price !== null && !Number.isFinite(item.price))) {
+        throw new Error("Bitte prüfen Sie die Preise. Erlaubt sind Zahlen oder ein leeres Preisfeld.");
+      }
+
       const items = draft.items.map((item) => ({
         weekday: item.weekday,
         dish: item.dish,
