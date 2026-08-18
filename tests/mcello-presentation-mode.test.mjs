@@ -9,6 +9,8 @@ const publicContent = await readFile(new URL("apps/mcello/public/public-content.
 const app = await readFile(new URL("apps/mcello/public/app.js", root), "utf8");
 const sw = await readFile(new URL("apps/mcello/public/sw.js", root), "utf8");
 const launcher = await readFile(new URL("scripts/demo-mcello.ps1", root), "utf8");
+const lanWrapper = await readFile(new URL("scripts/demo-mcello-presentation-lan.ps1", root), "utf8");
+const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
 
 test("presentation mode is explicit and restricted to local/private HTTP demo origins", () => {
   assert.match(mode, /PRESENTATION_VALUE = "mcello"/);
@@ -37,9 +39,19 @@ test("presentation mode remains visibly labeled instead of masquerading as produ
   assert.match(publicContent, /import "\.\/presentation-mode\.js";/);
 });
 
-test("launcher opens a clean presentation URL and shell caches presentation assets", () => {
+test("desktop launcher opens a clean presentation URL and shell caches presentation assets", () => {
   assert.match(launcher, /\?presentation=mcello&reset=1/);
   assert.match(sw, /mcello-public-shell-v18/);
   assert.match(sw, /"\/presentation-mode\.js"/);
   assert.match(sw, /"\/presentation-mode\.css"/);
+});
+
+test("recommended LAN command installs Builder fixtures after the private LAN runtime is ready", () => {
+  assert.match(packageJson.scripts["demo:mcello:lan"], /demo-mcello-presentation-lan\.ps1/);
+  const runtimeIndex = lanWrapper.indexOf('demo-mcello-lan.ps1');
+  const builderIndex = lanWrapper.indexOf('import-mcello-presentation-builders.mjs');
+  assert.ok(runtimeIndex >= 0);
+  assert.ok(builderIndex > runtimeIndex);
+  assert.match(lanWrapper, /\?presentation=mcello&reset=1/);
+  assert.match(lanWrapper, /landscape-only/);
 });
