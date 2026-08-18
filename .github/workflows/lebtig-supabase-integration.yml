@@ -1,0 +1,80 @@
+name: Lebtig Supabase Integration
+
+on:
+  pull_request:
+    paths:
+      - "apps/lebtig/supabase/**"
+      - "apps/lebtig/src/auth/**"
+      - "apps/lebtig/src/domain/cms.ts"
+      - "apps/lebtig/src/domain/media.ts"
+      - "apps/lebtig/src/domain/roles.ts"
+      - "packages/auth/**"
+      - "packages/cms/**"
+      - "tests/lebtig-rls.integration.mjs"
+      - ".github/workflows/lebtig-supabase-integration.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/lebtig/supabase/**"
+      - "apps/lebtig/src/auth/**"
+      - "apps/lebtig/src/domain/cms.ts"
+      - "apps/lebtig/src/domain/media.ts"
+      - "apps/lebtig/src/domain/roles.ts"
+      - "packages/auth/**"
+      - "packages/cms/**"
+      - "tests/lebtig-rls.integration.mjs"
+      - ".github/workflows/lebtig-supabase-integration.yml"
+
+concurrency:
+  group: lebtig-supabase-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  local-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install repository dependencies
+        run: npm install --ignore-scripts --package-lock=false
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: latest
+
+      - name: Start isolated Lebtig Supabase stack
+        working-directory: apps/lebtig
+        run: supabase start
+
+      - name: Rebuild Lebtig database from clean migration and empty seed
+        working-directory: apps/lebtig
+        run: supabase db reset --local
+
+      - name: Export local API credentials
+        working-directory: apps/lebtig
+        run: |
+          supabase status -o env \
+            --override-name api.url=SUPABASE_URL \
+            --override-name auth.anon_key=SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            >> "$GITHUB_ENV"
+
+      - name: Prove Lebtig anon authenticated moderator admin and storage boundaries
+        run: node tests/lebtig-rls.integration.mjs
+
+      - name: Stop local Lebtig Supabase
+        if: always()
+        working-directory: apps/lebtig
+        run: supabase stop --no-backup || true
