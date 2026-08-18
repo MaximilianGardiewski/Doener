@@ -32,8 +32,22 @@ async function verifyHttpContracts() {
   await expectRedirect("/Kontakt/Oeffnungszeiten", 308, "/kontakt");
   await expectRedirect("/Mittagstisch/?utm_source=flyer", 308, "/mittagstisch?utm_source=flyer");
   await expectRedirect("/Rezepte/Wiener-Tafelspitz/", 308, "/rezepte");
-  await expectRedirect("/admin", 307, "/auth");
-  await expectRedirect("/admin/benutzer", 307, "/auth");
+
+  for (const pathname of ["/admin", "/admin/mittagstisch"]) {
+    const response = await fetch(`${baseUrl}${pathname}`, { redirect: "manual" });
+    assert.equal(response.status, 200, `${pathname} should serve the app-owned admin SPA shell`);
+    assert.match(response.headers.get("content-type") || "", /text\/html/);
+  }
+
+  const bootstrap = await fetch(`${baseUrl}/api/bootstrap-status`);
+  assert.equal(bootstrap.status, 200, "bootstrap status should be a server-owned JSON endpoint");
+  assert.match(bootstrap.headers.get("content-type") || "", /application\/json/);
+  const bootstrapPayload = await bootstrap.json();
+  assert.deepEqual(
+    bootstrapPayload,
+    { configured: false, bootstrapOpen: false },
+    "unconfigured preview must expose only a fail-closed bootstrap result",
+  );
 
   const sitemap = await fetch(`${baseUrl}/sitemap.xml`);
   assert.equal(sitemap.status, 200, "/sitemap.xml should return 200");
@@ -54,6 +68,7 @@ async function verifyHttpContracts() {
     assert.ok(xml.includes(`${pathname}</loc>`), `sitemap should contain ${pathname}`);
   }
   assert.ok(!xml.includes("/auth</loc>"), "sitemap must not expose auth as indexable content");
+  assert.ok(!xml.includes("/admin</loc>"), "sitemap must not expose admin as indexable content");
 
   const media = await fetch(`${baseUrl}/media/not-configured`, { redirect: "manual" });
   assert.equal(media.status, 404, "portable shell must fail closed for unconfigured media backend");
@@ -89,6 +104,10 @@ async function verifyViewport(browser, viewport) {
   const authOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   assert.ok(authOverflow <= 1, `/auth should not overflow horizontally (delta ${authOverflow})`);
 
+  await page.goto(`${baseUrl}/admin`, { waitUntil: "networkidle" });
+  await page.waitForURL(`${baseUrl}/auth`);
+  assert.equal(await page.getByLabel("Passwort").count(), 1, "unconfigured admin route should fail closed to auth");
+
   if (viewport.width <= 390) {
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
     const menuSummary = page.locator(".mobile-menu > summary");
@@ -115,4 +134,4 @@ try {
   await browser.close();
 }
 
-console.log("Lebtig public/auth HTTP and browser smoke passed");
+console.log("Lebtig public/auth/admin HTTP and browser smoke passed");
