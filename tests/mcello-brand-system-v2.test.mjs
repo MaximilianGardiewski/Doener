@@ -6,6 +6,7 @@ const root = new URL("../", import.meta.url);
 const css = await readFile(new URL("apps/mcello/public/brand-system.css", root), "utf8");
 const artDirection = await readFile(new URL("docs/projects/mcello/ART_DIRECTION.md", root), "utf8");
 const brandSystem = await readFile(new URL("docs/projects/mcello/BRAND_SYSTEM.md", root), "utf8");
+const userReferences = await readFile(new URL("docs/projects/mcello/USER_REFERENCE_SYNTHESIS.md", root), "utf8");
 
 function expectToken(name, source) {
   assert.match(css, new RegExp(`--${name}:\\s*var\\(--${source}\\)\\s*;`), `missing ${name} -> ${source} alias`);
@@ -67,13 +68,15 @@ test("reduced motion collapses all semantic motion durations without changing st
   }
 });
 
-test("art direction keeps A dominant C functional and B accent-only", () => {
-  assert.match(artDirection, /58 % Cinematic Urban Bistro/);
-  assert.match(artDirection, /28 % Warm Future Hospitality/);
-  assert.match(artDirection, /14 % Editorial Street Luxury/);
-  assert.match(artDirection, /A bestimmt Atmosphäre und Fotografie/);
-  assert.match(artDirection, /C bestimmt Ordering-Struktur und Builder/);
-  assert.match(artDirection, /B liefert Eigenständigkeit/);
+test("owner references keep cinematic food dominant while materially increasing editorial energy", () => {
+  assert.match(artDirection, /45 % Cinematic Food \/ Urban Bistro/);
+  assert.match(artDirection, /30 % Warm Future Hospitality \/ Commerce Precision/);
+  assert.match(artDirection, /25 % Editorial Street-Food Energy/);
+  assert.match(artDirection, /A bestimmt Food-Wärme, Atmosphäre und Fotografie/);
+  assert.match(artDirection, /C bestimmt Ordering-Struktur, Builder und Mobile Commerce/);
+  assert.match(artDirection, /B liefert deutlich mehr Eigenständigkeit, Typografie, Farbe und grafische Spannung/);
+  assert.match(userReferences, /weniger ruhiges "Dark Luxury"/);
+  assert.match(userReferences, /Food ist Hero, nicht Dekoration/);
 });
 
 test("art direction and brand system keep concept imagery separate from real Mcello media", () => {
