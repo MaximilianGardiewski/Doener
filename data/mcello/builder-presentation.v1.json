@@ -1,11 +1,12 @@
 {
-  "version": 1,
+  "version": 2,
   "status": "presentation-only-local-demo",
   "scope": "localhost-disposable-supabase-only",
   "notes": [
     "This file is not a production catalog and must never be imported into a remote Supabase instance.",
     "All price deltas are zero because no presentation-only surcharge should be represented as a real Mcello price.",
-    "Selection limits in this file are interaction policy for the local presentation, not an owner-confirmed production rule."
+    "Selection limits in this file are interaction policy for the local presentation, not an owner-confirmed production rule.",
+    "Döner/Yufka basis and vegetable options are presentation assumptions requested for the showcase. They must not silently become production truth."
   ],
   "pizza": {
     "productSourceId": "pizza-076",
@@ -31,14 +32,40 @@
   },
   "donerYufka": {
     "productSourceIds": ["warm-013", "warm-014", "warm-015", "warm-016", "warm-017", "warm-018"],
-    "provenance": "owner-chat-confirmation:2026-08-18",
+    "provenance": "presentation-assumption:user-request:2026-08-18;sauces-owner-chat-confirmation:2026-08-18",
     "groups": [
+      {
+        "key": "doner-yufka-basis",
+        "name": "Basis",
+        "minSelections": 1,
+        "maxSelections": 1,
+        "sort": 10,
+        "policyStatus": "presentation-interaction-policy",
+        "options": [
+          { "key": "fleisch", "name": "Fleisch", "priceDeltaCents": 0, "defaultSelected": true, "sort": 10 },
+          { "key": "falafel", "name": "Falafel", "priceDeltaCents": 0, "defaultSelected": false, "sort": 20 }
+        ]
+      },
+      {
+        "key": "doner-yufka-gemuese",
+        "name": "Gemüse",
+        "minSelections": 0,
+        "maxSelections": 4,
+        "sort": 20,
+        "policyStatus": "presentation-interaction-policy",
+        "options": [
+          { "key": "salat", "name": "Salat", "priceDeltaCents": 0, "defaultSelected": true, "sort": 10 },
+          { "key": "tomate", "name": "Tomate", "priceDeltaCents": 0, "defaultSelected": true, "sort": 20 },
+          { "key": "gurke", "name": "Gurke", "priceDeltaCents": 0, "defaultSelected": true, "sort": 30 },
+          { "key": "zwiebel", "name": "Zwiebel", "priceDeltaCents": 0, "defaultSelected": true, "sort": 40 }
+        ]
+      },
       {
         "key": "doner-yufka-saucen",
         "name": "Soße",
         "minSelections": 0,
         "maxSelections": 3,
-        "sort": 20,
+        "sort": 30,
         "policyStatus": "presentation-interaction-policy",
         "options": [
           { "key": "curry", "name": "Curry", "priceDeltaCents": 0, "defaultSelected": false, "sort": 10 },
