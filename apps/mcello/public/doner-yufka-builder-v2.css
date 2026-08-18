@@ -5,6 +5,12 @@
   overflow: hidden;
 }
 
+/* Author-level img display rules can override the browser's default hidden rendering.
+   Keep the legacy product image out of layout whenever FoodStage V4 owns the visual stage. */
+#productModal[data-product-builder="doner-yufka"] #modalImage[hidden] {
+  display: none;
+}
+
 #productModal[data-product-builder="doner-yufka"] .mc-food-stage-v4 {
   position: relative;
   isolation: isolate;
