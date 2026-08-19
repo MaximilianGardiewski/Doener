@@ -279,7 +279,8 @@ h1 em { color: var(--gold-2); font-style: italic; text-shadow: 0 10px 40px rgba(
 .food-body { padding: 20px; }
 .food-card h3 { font-size: 27px; line-height: 1.05; }
 .food-card p { color: var(--muted); min-height: 42px; line-height: 1.5; }
-.price-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.price-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.price-row .ghost-btn { min-width: 0; }
 .price { color: var(--gold-2); font-size: 20px; font-weight: 850; font-variant-numeric: tabular-nums; }
 .ghost-btn { padding: 9px 13px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: #24231c; color: var(--text); font-weight: 720; }
 .ghost-btn:hover { border-color: var(--line-strong); background: #2a281f; }
@@ -317,11 +318,13 @@ h1 em { color: var(--gold-2); font-style: italic; text-shadow: 0 10px 40px rgba(
 .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 30px; }
 .footer strong { color: var(--cream-100); }
 
+body { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
 .sticky-order {
   position: fixed;
   z-index: 80;
   left: 50%;
-  bottom: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -351,7 +354,8 @@ h1 em { color: var(--gold-2); font-style: italic; text-shadow: 0 10px 40px rgba(
 .recommendation-box h3, .cart-recommendations h3 { font-size: 20px; margin-bottom: 4px; }
 .recommendation-box > p, .cart-recommendations > p { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
 .recommendation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
-.recommendation-card { min-width: 0; display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 11px 12px; border-radius: 14px; background: #29271f; border: 1px solid var(--line-soft); }
+.recommendation-card { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 11px 12px; border-radius: 14px; background: #29271f; border: 1px solid var(--line-soft); }
+.recommendation-card .ghost-btn { min-width: 0; }
 .recommendation-card strong, .recommendation-card small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recommendation-card small { display: block; color: var(--gold-2); margin-top: 3px; }
 .recommendation-card .ghost-btn { padding: 7px 9px; }
@@ -365,9 +369,18 @@ h1 em { color: var(--gold-2); font-style: italic; text-shadow: 0 10px 40px rgba(
 .cart-item { padding: 14px; border: 1px solid var(--line-soft); background: var(--panel); border-radius: 16px; display: flex; justify-content: space-between; gap: 16px; }
 .cart-recommendations { margin: 0 0 18px; padding: 14px; border: 1px solid rgba(241, 202, 117, .2); border-radius: 18px; background: #1d1c16; }
 .cart-recommendations .recommendation-grid { grid-template-columns: 1fr; }
+.cart-line-detail { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 1.45; }
 .cart-total { display: flex; justify-content: space-between; font-size: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
 .closed-note { margin-top: 18px; padding: 14px; border-radius: 16px; background: #281b18; color: var(--danger); border: 1px solid rgba(239, 176, 165, .2); }
 .mobile-only { display: none; }
+
+@media (max-width: 560px) {
+  .price-row { align-items: stretch; }
+  .price-row .ghost-btn { flex: 1 1 100%; min-height: 44px; }
+  .recommendation-grid { grid-template-columns: minmax(0, 1fr); }
+  .recommendation-card { grid-template-columns: minmax(0, 1fr); }
+  .recommendation-card .ghost-btn { justify-self: stretch; min-height: 44px; }
+}
 
 @media (max-width: 900px) {
   .nav-links { display: none; }
