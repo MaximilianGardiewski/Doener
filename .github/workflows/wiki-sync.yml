@@ -1,0 +1,61 @@
+name: Sync GitHub Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/wiki/**"
+      - ".github/workflows/wiki-sync.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: github-wiki-sync
+  cancel-in-progress: false
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Prepare wiki tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f docs/wiki/Home.md
+          test -f docs/wiki/_Sidebar.md
+          mkdir -p "$RUNNER_TEMP/wiki"
+          cp -a docs/wiki/. "$RUNNER_TEMP/wiki/"
+          find "$RUNNER_TEMP/wiki" -maxdepth 1 -type f -print | sort
+
+      - name: Publish docs/wiki to GitHub Wiki
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WIKI_REMOTE: https://github.com/${{ github.repository }}.wiki.git
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          wiki_dir="$RUNNER_TEMP/wiki"
+          cd "$wiki_dir"
+          git init -b master
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "Sync wiki from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+
+          auth_header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c http.extraheader="$auth_header" push --force "$WIKI_REMOTE" HEAD:master
+
+      - name: Explain initialization failure
+        if: failure()
+        shell: bash
+        run: |
+          echo "::error::GitHub did not accept the wiki push. If this repository has never had a Wiki page, create the initial Home page once in the GitHub Wiki UI; subsequent syncs are fully automated from docs/wiki/."
