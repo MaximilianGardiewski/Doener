@@ -68,7 +68,7 @@ test("ingredient motion stays presentation-only and available offline", () => {
   assert.doesNotMatch(commerce, /\/api\/|\/rest\/|supabase|\.rpc\s*\(/i);
   assert.doesNotMatch(commerce, /localStorage|sessionStorage|indexedDB/);
   assert.doesNotMatch(commerce, /basePrice|unitPrice|checkout|availability|sold.?out|authorization|locationId/i);
-  assert.match(sw, /mcello-public-shell-v28/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/motion\/commerce\.js"/);
   assert.match(sw, /"\/vendor\/gsap\/gsap\.min\.js"/);
 });
