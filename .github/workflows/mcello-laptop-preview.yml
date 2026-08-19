@@ -1,0 +1,79 @@
+name: Mcello Laptop Preview
+
+on:
+  pull_request:
+    paths:
+      - "Mcello-Laptop-Preview.cmd"
+      - "scripts/preview-mcello-laptop.mjs"
+      - "scripts/build-cloudflare-preview.mjs"
+      - "apps/mcello/**"
+      - "data/mcello/builder-presentation.v1.json"
+      - "tests/mcello-laptop-preview-contract.test.mjs"
+      - "tests/mcello-gsap-product-open.browser.mjs"
+      - "tests/mcello-gsap-ingredient.browser.mjs"
+      - "package.json"
+      - ".github/workflows/mcello-laptop-preview.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "Mcello-Laptop-Preview.cmd"
+      - "scripts/preview-mcello-laptop.mjs"
+      - "scripts/build-cloudflare-preview.mjs"
+      - "apps/mcello/**"
+      - "data/mcello/builder-presentation.v1.json"
+      - "tests/mcello-laptop-preview-contract.test.mjs"
+      - "tests/mcello-gsap-product-open.browser.mjs"
+      - "tests/mcello-gsap-ingredient.browser.mjs"
+      - "package.json"
+      - ".github/workflows/mcello-laptop-preview.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  laptop-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --ignore-scripts --package-lock=false
+      - name: Run laptop preview contract
+        run: node --test tests/mcello-laptop-preview-contract.test.mjs
+      - name: Install Chromium
+        timeout-minutes: 6
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install chromium
+      - name: Start exact laptop preview server
+        env:
+          MCELLO_NO_BROWSER: "1"
+        run: |
+          npm run preview:mcello:laptop > /tmp/mcello-laptop-preview.log 2>&1 &
+          echo $! > /tmp/mcello-laptop-preview.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:4173/api/menu >/tmp/mcello-laptop-menu.json; then break; fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:4173/configurator-preview.html?presentation=mcello >/dev/null
+          node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync("/tmp/mcello-laptop-menu.json")); if(m.locationId!=="laptop-preview-read-only") process.exit(1); const warm=m.categories.find(c=>c.slug==="warm"); const p=warm?.products.find(p=>p.id==="warm-013"); if(!p||p.modifierGroups.length<3) process.exit(1);'
+      - name: Prove Product Open GSAP on laptop server
+        env:
+          MCELLO_PREVIEW_URL: "http://127.0.0.1:4173/?presentation=mcello#bestellen"
+        run: node tests/mcello-gsap-product-open.browser.mjs normal
+      - name: Prove Ingredient FoodStage GSAP on laptop server
+        env:
+          MCELLO_PREVIEW_URL: "http://127.0.0.1:4173/?presentation=mcello#bestellen"
+        run: node tests/mcello-gsap-ingredient.browser.mjs normal
+      - name: Stop laptop preview server
+        if: always()
+        run: |
+          if [ -f /tmp/mcello-laptop-preview.pid ]; then
+            kill "$(cat /tmp/mcello-laptop-preview.pid)" 2>/dev/null || true
+          fi
+          cat /tmp/mcello-laptop-preview.log 2>/dev/null || true
