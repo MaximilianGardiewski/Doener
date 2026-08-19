@@ -1,0 +1,27 @@
+name: Mcello Cloudflare Preview Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  preview-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --ignore-scripts --package-lock=false
+      - name: Build Cloudflare preview mirror without deployment
+        run: npm run build:preview:cloudflare
+      - name: Guard generated read-only configurator fixture
+        run: node scripts/check-cloudflare-preview-build.mjs

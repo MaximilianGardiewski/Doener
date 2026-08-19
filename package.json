@@ -16,6 +16,7 @@
     "check": "npm run typecheck && npm run test:domain && npm run test:lebtig && npm run test:schema && npm run audit:db && npm run check:static",
     "vendor:mcello:gsap": "node scripts/vendor-mcello-gsap.mjs",
     "build:preview": "node scripts/build-preview.mjs",
+    "build:preview:cloudflare": "node scripts/build-cloudflare-preview.mjs",
     "build:lebtig": "npm --workspace @business-web/lebtig run build",
     "preview:mcello": "node --experimental-strip-types apps/mcello/run.mjs",
     "preview:mcello:configurator": "node scripts/preview-mcello-configurator.mjs",
