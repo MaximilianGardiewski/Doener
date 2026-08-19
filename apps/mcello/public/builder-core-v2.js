@@ -15,6 +15,24 @@ const footer = modal?.querySelector(".modal-footer");
 const addButton = document.querySelector("#addToCart");
 let guidedStepIndex = 0;
 
+const OPTION_SELECTOR = ".modifier-option";
+
+function optionLabelName(option) {
+  return option?.dataset.optionName || option?.querySelector("span")?.textContent?.trim() || "";
+}
+
+function optionPriceLabel(option) {
+  return option?.querySelector("span:last-child")?.textContent?.trim() || "";
+}
+
+function allOptions() {
+  return groups ? [...groups.querySelectorAll(OPTION_SELECTOR)] : [];
+}
+
+function joinNames(names) {
+  return names.join(" · ");
+}
+
 function currentSelectionSignature() {
   if (!groups) return "[]";
   return JSON.stringify([...groups.querySelectorAll("input:checked")]
@@ -31,14 +49,113 @@ function ensureBuilderContext() {
   context.className = "builder-context";
   context.dataset.builderContext = "true";
   context.innerHTML = `
-    <div>
-      <span class="builder-context-label">Mcello Original</span>
-      <strong>Dein Ausgangspunkt</strong>
+    <p class="builder-context-label" data-builder-context-kicker>Mcello Original</p>
+    <p class="builder-recipe-line" data-builder-recipe-line></p>
+    <div class="builder-recipe-actions">
+      <button class="primary" type="button" data-builder-accept-recipe>Genau so</button>
+      <button class="pill" type="button" data-builder-customize>Anpassen</button>
     </div>
     <small data-builder-selection-state>Standardauswahl · anpassbar</small>
   `;
+  context.querySelector("[data-builder-accept-recipe]")?.addEventListener("click", () => {
+    if (addButton?.disabled) return;
+    addButton?.click();
+  });
+  context.querySelector("[data-builder-customize]")?.addEventListener("click", () => enterCustomizeMode({ focus: true }));
   groups.before(context);
   return context;
+}
+
+function enterCustomizeMode({ focus = false } = {}) {
+  if (!modalBackdrop) return;
+  modalBackdrop.dataset.builderEntry = "custom";
+  if (!focus) return;
+  const first = stepSections()[guidedStepIndex] || stepSections()[0];
+  first?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  first?.querySelector("input:not(:disabled)")?.focus({ preventScroll: true });
+}
+
+function ensureRecipeSummary() {
+  if (!content || !groups) return null;
+  let summary = content.querySelector("[data-builder-summary]");
+  if (summary) return summary;
+
+  summary = document.createElement("section");
+  summary.className = "builder-summary";
+  summary.dataset.builderSummary = "true";
+  summary.setAttribute("aria-live", "polite");
+  summary.innerHTML = `
+    <span class="builder-context-label">Dein Mcello</span>
+    <dl data-builder-summary-list></dl>
+  `;
+  groups.after(summary);
+  return summary;
+}
+
+function summaryEntries() {
+  const withNames = [];
+  const withoutNames = [];
+  const extras = [];
+
+  for (const section of stepSections()) {
+    for (const option of section.querySelectorAll(OPTION_SELECTOR)) {
+      const input = option.querySelector("input");
+      const name = optionLabelName(option);
+      if (!name) continue;
+      if (input?.checked) {
+        if (option.dataset.paid === "true") extras.push(`${name} ${optionPriceLabel(option)}`.trim());
+        else withNames.push(name);
+      } else if (option.dataset.defaultSelected === "true") {
+        withoutNames.push(name);
+      }
+    }
+  }
+
+  const entries = [];
+  if (withNames.length) entries.push(["Mit", joinNames(withNames)]);
+  if (withoutNames.length) entries.push(["Ohne", joinNames(withoutNames)]);
+  if (extras.length) entries.push(["Extras", joinNames(extras)]);
+  return entries;
+}
+
+function renderRecipeSummary() {
+  const summary = ensureRecipeSummary();
+  if (!summary) return;
+  const entries = summaryEntries();
+  summary.hidden = entries.length === 0;
+  summary.querySelector("[data-builder-summary-list]").innerHTML = entries
+    .map(([term, detail]) => `<div><dt>${term}</dt><dd>${detail}</dd></div>`)
+    .join("");
+}
+
+function renderRecipeEntry() {
+  const context = ensureBuilderContext();
+  if (!context || !modalBackdrop) return;
+  const sections = stepSections();
+  const defaults = allOptions().filter((option) => option.dataset.defaultSelected === "true");
+  const hasRecipe = sections.length > 0 && defaults.length > 0;
+
+  context.hidden = sections.length === 0;
+  modalBackdrop.dataset.builderRecipe = hasRecipe ? "available" : "none";
+
+  const kicker = context.querySelector("[data-builder-context-kicker]");
+  if (kicker) kicker.textContent = sections.length > 1 ? "Mcello Original" : "Standardauswahl";
+
+  const line = context.querySelector("[data-builder-recipe-line]");
+  if (line) {
+    line.textContent = hasRecipe
+      ? joinNames(defaults.map(optionLabelName).filter(Boolean))
+      : "Dieses Gericht baust du dir selbst zusammen.";
+  }
+
+  const accept = context.querySelector("[data-builder-accept-recipe]");
+  if (accept) {
+    const blocked = Boolean(addButton?.disabled);
+    accept.disabled = blocked;
+    accept.textContent = blocked
+      ? "Pflichtauswahl fehlt"
+      : `Genau so · ${addButton?.textContent?.split("·").pop()?.trim() || ""}`;
+  }
 }
 
 function ensureGuidedNavigation() {
@@ -137,6 +254,7 @@ function syncGuidedSteps({ reset = false } = {}) {
 function moveGuidedStep(direction) {
   const sections = stepSections();
   if (!sections.length) return;
+  enterCustomizeMode();
   if (direction > 0 && guidedStepIndex === sections.length - 1) {
     addButton?.focus({ preventScroll: true });
     addButton?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -170,16 +288,20 @@ function updateSelectionState() {
   const isOriginal = current === original;
   modalBackdrop.dataset.builderRecipeState = isOriginal ? "original" : "customized";
   state.textContent = isOriginal ? "Standardauswahl · anpassbar" : "Angepasst · Preis wird live aktualisiert";
+  if (!isOriginal) modalBackdrop.dataset.builderEntry = "custom";
+  renderRecipeEntry();
+  renderRecipeSummary();
 }
 
 function captureOriginalSelection() {
   if (!modalBackdrop?.classList.contains("open")) return;
   decorateGroups();
-  const context = ensureBuilderContext();
-  if (context) context.hidden = groups?.querySelectorAll(".modifier-group").length === 0;
+  modalBackdrop.dataset.builderEntry = "recipe";
   modalBackdrop.dataset.builderOriginalSelection = currentSelectionSignature();
   modalBackdrop.dataset.builderRecipeState = "original";
   syncGuidedSteps({ reset: true });
+  renderRecipeEntry();
+  renderRecipeSummary();
   updateSelectionState();
   updateViewportContract();
 }
@@ -192,6 +314,7 @@ function decorateBuilder() {
   footer?.setAttribute("data-builder-action-bar", "true");
   ensureOrientationGate();
   ensureGuidedNavigation();
+  ensureRecipeSummary();
   decorateGroups();
   updateViewportContract();
 }
@@ -215,6 +338,8 @@ if (modalBackdrop) {
     }
     delete modalBackdrop.dataset.builderOriginalSelection;
     delete modalBackdrop.dataset.builderRecipeState;
+    delete modalBackdrop.dataset.builderEntry;
+    delete modalBackdrop.dataset.builderRecipe;
     guidedStepIndex = 0;
     updateViewportContract();
   }).observe(modalBackdrop, { attributes: true, attributeFilter: ["class"] });
