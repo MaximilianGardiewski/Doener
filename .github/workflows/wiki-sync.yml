@@ -7,6 +7,7 @@ on:
     paths:
       - "docs/wiki/**"
       - ".github/workflows/wiki-sync.yml"
+  gollum:
   workflow_dispatch:
 
 permissions:
