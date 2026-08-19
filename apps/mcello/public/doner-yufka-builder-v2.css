@@ -15,49 +15,56 @@
   position: relative;
   isolation: isolate;
   min-width: 0;
-  min-height: clamp(430px, 62vh, 720px);
+  min-height: clamp(380px, 56vh, 680px);
   display: grid;
   place-items: center;
   overflow: hidden;
   padding: clamp(20px, 3.5vw, 54px);
   color: var(--content-primary);
   background:
-    radial-gradient(circle at 54% 43%, rgba(255, 244, 207, .96) 0 18%, rgba(238, 215, 166, .7) 40%, transparent 67%),
-    radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--mcello-ember) 18%, transparent), transparent 36%),
-    linear-gradient(155deg, #f5ead1 0%, #e9d4ad 56%, #d5ad78 100%);
+    radial-gradient(circle at 54% 40%, rgba(255, 246, 214, .95) 0 20%, rgba(240, 218, 172, .62) 44%, transparent 70%),
+    radial-gradient(circle at 16% 14%, rgba(198, 124, 52, .22), transparent 38%),
+    linear-gradient(155deg, #f6ecd5 0%, #ead6b0 56%, #d3ab77 100%);
 }
 
 .mc-food-stage-v4__halo {
   position: absolute;
-  width: min(78%, 540px);
-  aspect-ratio: 1;
+  width: min(92%, 660px);
+  aspect-ratio: 1.35;
   border-radius: 50%;
-  border: 1px solid rgba(72, 54, 34, .12);
-  box-shadow: 0 0 0 28px rgba(255,255,255,.11), 0 0 0 66px rgba(255,255,255,.06);
-  transform: translateY(-4%);
+  background: radial-gradient(closest-side, rgba(255, 251, 236, .72), rgba(255, 251, 236, 0) 72%);
+  transform: translateY(-2%);
   pointer-events: none;
 }
 
 .mc-food-stage-v4__art {
   position: relative;
   z-index: 1;
-  width: min(100%, 690px);
+  width: min(100%, 760px);
   height: auto;
   overflow: visible;
-  filter: drop-shadow(0 24px 28px rgba(74, 44, 22, .2));
+  filter: drop-shadow(0 22px 26px rgba(74, 44, 22, .22));
 }
 
+/* Exit is decisive: an ingredient that was taken out should leave, not bounce out. */
 .mc-food-layer {
   opacity: 0;
   transform-box: fill-box;
   transform-origin: center;
   pointer-events: none;
   transition:
+    opacity 140ms ease,
+    transform 200ms cubic-bezier(.4,0,1,1);
+}
+
+/* Entry keeps the settling overshoot that makes an added ingredient feel placed. */
+.mc-food-layer[data-active="true"] {
+  opacity: 1;
+  transform: translate3d(0,0,0) rotate(0) scale(1);
+  transition:
     opacity 180ms ease,
     transform 340ms cubic-bezier(.22,.85,.28,1.18);
 }
-
-.mc-food-layer[data-active="true"] { opacity: 1; transform: translate3d(0,0,0) rotate(0) scale(1); }
 .mc-food-layer--protein { transform: translate3d(0,-34px,0) scale(.84) rotate(-4deg); }
 .mc-food-layer--salat { transform: translate3d(-10px,18px,0) scale(.82,.68) rotate(-3deg); transition-duration: 320ms; }
 .mc-food-layer--tomate { transform: translate3d(0,-44px,0) scale(.76) rotate(7deg); }
@@ -105,15 +112,6 @@
   grid-column: 1/-1;
   color: #755f4c;
   font: 500 .7rem/1.35 system-ui,sans-serif;
-}
-
-#productModal[data-product-builder="doner-yufka"] .builder-context::after {
-  content: "Dein Mcello · Basis, Frische und Soße direkt auf der FoodStage erleben";
-  display: block;
-  max-width: 42ch;
-  color: color-mix(in srgb, var(--mcello-olive) 76%, var(--content-secondary));
-  font-size: var(--type-meta);
-  line-height: 1.4;
 }
 
 #productModal[data-product-builder="doner-yufka"] .modifier-group {
