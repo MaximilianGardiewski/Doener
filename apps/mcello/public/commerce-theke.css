@@ -1,0 +1,566 @@
+/*
+ * Mcello Commerce — "Theke" art direction layer.
+ *
+ * Executes the Editorial Street-Food Energy share of ART_DIRECTION.md that the
+ * commerce surfaces were missing, and removes the shortcuts that file forbids:
+ * generic black-and-gold luxury, SaaS card walls, gradient pills, one universal
+ * radius and blur on every surface.
+ *
+ * Principles, all sourced from ART_DIRECTION.md / USER_REFERENCE_SYNTHESIS.md:
+ *   - warm paper surfaces carry the menu; ink is a stage, not an endless card wall;
+ *   - hard rules and boxed cells instead of glass and glow;
+ *   - plakative numbers and labels as graphic objects;
+ *   - copper reads as heat and material, never as a luxury gradient;
+ *   - the food and the price are the only things allowed to be big;
+ *   - the round shapes belong to the food, not to the controls.
+ *
+ * Colour comes exclusively from the verified brand tokens. No raw hex here.
+ * Loads after store-v2.css and builder-core-v2.css.
+ */
+
+:root {
+  /* Shape language for commerce: printed, not inflated. */
+  --theke-edge: 2px;
+  --theke-rule: 1px;
+  --theke-paper: color-mix(in srgb, var(--mcello-bread) 96%, var(--mcello-copper));
+  --theke-paper-sunk: color-mix(in srgb, var(--mcello-bread) 88%, var(--mcello-copper));
+  --theke-ink-rule: color-mix(in srgb, var(--mcello-ink) 16%, transparent);
+  --theke-ink-rule-strong: color-mix(in srgb, var(--mcello-ink) 34%, transparent);
+}
+
+/* ------------------------------------------------------------------ 1. Type
+ * Numbers are the interface. Prices, quantities and step markers get tabular
+ * figures, tight tracking and real size; labels get wide tracking and caps.
+ * The final typeface pairing is still Gate B, so this works through weight,
+ * case, tracking and scale rather than a font nobody has licensed yet.
+ */
+
+[data-experience-mode="commerce"] .price,
+[data-experience-mode="commerce"] #cartTotal,
+[data-experience-mode="commerce"] #cartAmount,
+.theke-price,
+#productModal .price,
+#productModal [data-builder-action-bar="true"] .primary,
+.sticky-order #cartAmount {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -.01em;
+}
+
+.theke-label,
+[data-experience-mode="commerce"] .kicker,
+.builder-context-label,
+#productModal .builder-step .modifier-head::before,
+#productModal .builder-step .modifier-head small {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------ 2. Controls: flat, printed
+ * No gradient, no glow, no pill. A solid block of copper reads more premium
+ * and far less generated than a gradient capsule.
+ */
+
+[data-experience-mode="commerce"] .primary,
+#productModal .primary,
+.cart-drawer .primary,
+.sticky-order .primary {
+  border: 0;
+  border-radius: var(--theke-edge);
+  background: var(--mcello-copper);
+  background-image: none;
+  box-shadow: none;
+  color: var(--content-inverse);
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+
+[data-experience-mode="commerce"] .primary:hover:not(:disabled),
+#productModal .primary:hover:not(:disabled),
+.cart-drawer .primary:hover:not(:disabled),
+.sticky-order .primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mcello-copper) 84%, var(--mcello-cream));
+}
+
+[data-experience-mode="commerce"] .pill,
+#productModal .pill,
+.cart-drawer .pill {
+  border: var(--theke-rule) solid color-mix(in srgb, var(--content-primary) 40%, transparent);
+  border-radius: var(--theke-edge);
+  background: none;
+  box-shadow: none;
+  color: var(--content-primary);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+[data-experience-mode="commerce"] .ghost-btn,
+#productModal .ghost-btn {
+  border-radius: var(--theke-edge);
+  background: none;
+  border: var(--theke-rule) solid color-mix(in srgb, var(--content-primary) 34%, transparent);
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------- 3. Category rail: a sign, not chips */
+
+.store-stage[data-store-version="v2"] .category-rail[data-store-navigation="categories"] {
+  gap: 0;
+  border-block: var(--theke-rule) solid color-mix(in srgb, var(--mcello-copper) 30%, transparent);
+}
+
+.store-stage[data-store-version="v2"] .category-rail[data-store-navigation="categories"] button {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 14px 18px;
+  color: color-mix(in srgb, var(--content-secondary) 88%, transparent);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.store-stage[data-store-version="v2"] .category-rail[data-store-navigation="categories"] button.active {
+  background: none;
+  box-shadow: inset 0 -3px 0 var(--mcello-copper);
+  color: var(--mcello-gold);
+}
+
+/* --------------------------------------- 4. The menu becomes a printed price list
+ * The dark row-cards were the "endlose Card-Wand" the art direction rules out.
+ * A warm paper panel with hairline rules is the opposite move, and it gives the
+ * store the light/dark rhythm the owner references asked for.
+ */
+
+.store-stage[data-store-version="v2"] #menuList {
+  margin-top: clamp(28px, 4vw, 46px);
+  padding: 0;
+  border: var(--theke-rule) solid var(--theke-ink-rule-strong);
+  border-radius: 0;
+  background: var(--theke-paper);
+  box-shadow: none;
+}
+
+.store-stage[data-store-version="v2"] #menuList .list-row {
+  gap: 18px;
+  align-items: center;
+  min-height: 0;
+  margin: 0;
+  padding: 18px 20px;
+  border: 0;
+  border-bottom: var(--theke-rule) solid var(--theke-ink-rule);
+  border-radius: 0;
+  background: none;
+}
+
+.store-stage[data-store-version="v2"] #menuList .list-row:last-child {
+  border-bottom: 0;
+}
+
+.store-stage[data-store-version="v2"] #menuList .list-row:nth-child(even) {
+  background: color-mix(in srgb, var(--mcello-ink) 4%, transparent);
+}
+
+.store-stage[data-store-version="v2"] #menuList .list-row > div:first-child > strong {
+  color: var(--content-inverse);
+  font-family: var(--type-family-display);
+  font-size: var(--type-body-lg);
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+
+.store-stage[data-store-version="v2"] #menuList .list-row small {
+  display: block;
+  margin-top: 3px;
+  color: color-mix(in srgb, var(--mcello-ink) 62%, transparent);
+  line-height: 1.45;
+}
+
+.store-stage[data-store-version="v2"] #menuList .price {
+  color: var(--content-inverse);
+  font-size: var(--type-price);
+  font-weight: 800;
+}
+
+.store-stage[data-store-version="v2"] #menuList .ghost-btn {
+  min-height: var(--touch-target-compact);
+  border-color: var(--theke-ink-rule-strong);
+  color: var(--content-inverse);
+}
+
+.store-stage[data-store-version="v2"] #menuList .ghost-btn:hover:not(:disabled) {
+  background: var(--mcello-copper);
+  border-color: var(--mcello-copper);
+  color: var(--content-inverse);
+}
+
+.store-stage[data-store-version="v2"] #menuList .ghost-btn:disabled {
+  border-style: dashed;
+  color: color-mix(in srgb, var(--mcello-ink) 48%, transparent);
+}
+
+/*
+ * On paper the availability badge stops being a dark pill and becomes a printed
+ * caption, which also lets the rows sit much denser.
+ */
+.store-stage[data-store-version="v2"] #menuList .availability-badge {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: color-mix(in srgb, var(--mcello-ink) 58%, transparent);
+  font-size: var(--type-meta);
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.store-stage[data-store-version="v2"] #menuList .availability-badge.good {
+  color: color-mix(in srgb, var(--mcello-olive) 62%, var(--mcello-ink));
+}
+
+.store-stage[data-store-version="v2"] #menuList .availability-badge.bad {
+  color: color-mix(in srgb, var(--danger-300) 52%, var(--mcello-ink));
+}
+
+.store-stage[data-store-version="v2"] #menuList .list-row > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+/* ------------------------------------------ 5. Signature product: editorial, not a card */
+
+.store-stage[data-store-version="v2"] .food-card {
+  border-radius: 0;
+  box-shadow: none;
+  border: var(--theke-rule) solid color-mix(in srgb, var(--mcello-copper) 22%, transparent);
+  background: color-mix(in srgb, var(--surface-base) 82%, var(--mcello-ink));
+}
+
+.store-stage[data-store-version="v2"] .food-card img {
+  border-radius: 0;
+}
+
+.store-stage[data-store-version="v2"] .food-card h3 {
+  letter-spacing: -.015em;
+}
+
+.store-stage[data-store-version="v2"] .food-card .price {
+  font-size: var(--type-price);
+  font-weight: 800;
+  color: var(--mcello-gold);
+}
+
+.store-stage[data-store-version="v2"] .food-card .bestseller {
+  top: 0;
+  left: 0;
+  border-radius: 0;
+  background: var(--mcello-copper);
+  color: var(--content-inverse);
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------- 6. Sticky order bar: a counter edge
+ * Full width, flat, one hard copper rule. The floating blurred capsule was the
+ * single most template-looking element on the page.
+ */
+
+.sticky-order,
+.sticky-order[data-store-cart="sticky"] {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  transform: none;
+  gap: 16px;
+  padding:
+    12px max(18px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  border: 0;
+  border-top: 2px solid var(--mcello-copper);
+  border-radius: 0;
+  background: var(--mcello-ink);
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.sticky-order > span {
+  font-size: var(--type-meta);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.sticky-order .primary {
+  min-height: var(--touch-target-primary);
+  padding-inline: 22px;
+}
+
+/* --------------------------------------------- 7. Builder: printed configuration */
+
+#productModal .modal[data-builder-version="core-v2"] {
+  border-radius: 0;
+  border-color: color-mix(in srgb, var(--mcello-copper) 30%, transparent);
+}
+
+#productModal [data-builder-controls="true"] {
+  background: var(--surface-base);
+  background-image: none;
+}
+
+/* Recipe entry reads as a stamped ticket, not a glassy hero card. */
+#productModal .builder-context {
+  border: 0;
+  border-radius: 0;
+  border-left: 3px solid var(--mcello-copper);
+  padding: 4px 0 16px 16px;
+  background: none;
+  border-bottom: var(--theke-rule) solid var(--rule-subtle);
+}
+
+#productModal .builder-recipe-line {
+  letter-spacing: -.015em;
+}
+
+/* Step markers become plakative numbers with a rule, per Editorial direction. */
+#productModal [data-builder-modifiers="true"] {
+  gap: 0;
+  counter-reset: theke-step;
+}
+
+#productModal .builder-step {
+  padding: 20px 0;
+  border: 0;
+  border-radius: 0;
+  border-top: var(--theke-rule) solid var(--rule-subtle);
+  background: none;
+}
+
+#productModal .builder-step .modifier-head {
+  position: relative;
+  align-items: baseline;
+  margin-bottom: 14px;
+  padding-left: 46px;
+}
+
+#productModal .builder-step .modifier-head::before {
+  counter-increment: theke-step;
+  content: counter(theke-step, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--mcello-copper);
+  font: 800 var(--type-price)/1 var(--type-family-interface);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.03em;
+}
+
+#productModal .builder-step .modifier-head strong {
+  font-size: var(--type-title);
+  letter-spacing: -.015em;
+}
+
+/* Options as a boxed cell block with hairline separators. */
+#productModal .builder-step .modifier-options {
+  gap: 0;
+  border: var(--theke-rule) solid var(--rule-subtle);
+  border-radius: 0;
+}
+
+#productModal [data-builder-option="true"] {
+  border: 0;
+  border-bottom: var(--theke-rule) solid var(--rule-subtle);
+  border-radius: 0;
+  padding: 13px 14px;
+  background: none;
+}
+
+#productModal .builder-step .modifier-options > [data-builder-option="true"]:last-child {
+  border-bottom: 0;
+}
+
+#productModal [data-builder-option="true"]:has(input:checked) {
+  border-color: var(--rule-subtle);
+  background: color-mix(in srgb, var(--mcello-olive) 14%, transparent);
+  background-image: none;
+  box-shadow: inset 3px 0 0 var(--mcello-olive);
+}
+
+#productModal [data-builder-option="true"][data-paid="true"] span:last-child {
+  border-radius: 0;
+  background: var(--mcello-copper);
+  color: var(--content-inverse);
+}
+
+#productModal [data-builder-option="true"][data-default-selected="true"]:not(:has(input:checked))::after {
+  border-radius: 0;
+}
+
+/* Summary reads as a receipt. */
+#productModal .builder-summary {
+  border: 0;
+  border-top: 2px solid var(--mcello-copper);
+  border-radius: 0;
+  padding: 16px 0 0;
+  background: none;
+}
+
+/* Action bar: flat counter edge, matching the store. */
+#productModal [data-builder-action-bar="true"] {
+  border-top: 2px solid var(--mcello-copper);
+  background: var(--mcello-ink);
+  backdrop-filter: none;
+}
+
+/* The FoodStage keeps the only organic shapes in the whole commerce surface. */
+#productModal [data-builder-food-stage="true"] {
+  border-radius: 0;
+}
+
+/* ------------------------------------------------------- 8. Cart: a printed receipt */
+
+.cart-drawer {
+  border-left: 2px solid var(--mcello-copper);
+  background: var(--mcello-ink);
+}
+
+.cart-drawer .cart-item {
+  border: 0;
+  border-bottom: var(--theke-rule) solid var(--rule-subtle);
+  border-radius: 0;
+  padding: 16px 0;
+  background: none;
+}
+
+.cart-drawer .cart-total {
+  border-top: 2px solid var(--mcello-copper);
+  font-size: var(--type-price);
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.cart-drawer .cart-total strong {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-display-product);
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+
+.cart-drawer .checkout-box,
+.cart-drawer .recommendation-box,
+.cart-drawer .cart-recommendations,
+#productModal .recommendation-box,
+#productModal .option-box {
+  border-radius: 0;
+  box-shadow: none;
+  background-image: none;
+}
+
+/* --------------------------------------------------------- 9. Mobile refinements */
+
+@media (max-width: 820px) {
+  .store-stage[data-store-version="v2"] #menuList {
+    border-inline: 0;
+  }
+
+  /*
+   * A price list has to stay dense on a phone. The default stacked row put the
+   * action on its own full-width line and pushed each item past 300px tall.
+   */
+  .store-stage[data-store-version="v2"] #menuList .list-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 14px;
+    row-gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .store-stage[data-store-version="v2"] #menuList .list-row small {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .store-stage[data-store-version="v2"] #menuList .list-row .price {
+    justify-self: end;
+    white-space: nowrap;
+  }
+
+  .store-stage[data-store-version="v2"] #menuList .list-row .ghost-btn {
+    grid-column: 1 / -1;
+    justify-self: end;
+    width: auto;
+    min-width: 9rem;
+    flex: none;
+  }
+
+  .sticky-order {
+    padding-inline: max(14px, env(safe-area-inset-left)) max(14px, env(safe-area-inset-right));
+  }
+
+  #productModal .modal[data-builder-version="core-v2"] {
+    border-radius: 0;
+  }
+
+  #productModal .builder-step .modifier-head {
+    padding-left: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-experience-mode="commerce"] .primary,
+  #productModal .primary {
+    transition: none;
+  }
+}
+
+/*
+ * Short landscape has no room for two fully tracked uppercase actions side by
+ * side; the total must never be the thing that gets clipped.
+ */
+@media (orientation: landscape) and (max-height: 520px) {
+  #productModal[data-builder-device="touch"][data-builder-orientation="landscape"] [data-builder-action-bar="true"] {
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  /*
+   * The counter type is dropped here rather than the total. Uppercase tracking
+   * costs roughly a fifth of the line and this is the one place that cannot
+   * afford it.
+   */
+  #productModal[data-builder-device="touch"][data-builder-orientation="landscape"] [data-builder-action-bar="true"] :is(.pill, .primary) {
+    min-width: 0;
+    padding-inline: 12px;
+    font-size: var(--type-meta);
+    letter-spacing: .01em;
+    text-transform: none;
+  }
+
+  #productModal[data-builder-device="touch"][data-builder-orientation="landscape"] [data-builder-action-bar="true"] .pill {
+    max-width: 9rem;
+  }
+
+  #productModal[data-builder-device="touch"][data-builder-orientation="landscape"] .builder-recipe-actions :is(.primary, .pill) {
+    font-size: var(--type-meta);
+    letter-spacing: .02em;
+  }
+}

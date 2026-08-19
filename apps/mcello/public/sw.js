@@ -1,9 +1,9 @@
-const CACHE = "mcello-public-shell-v29";
+const CACHE = "mcello-public-shell-v30";
 const APP_SHELL = [
   "/", "/styles.css", "/brand-system.css", "/homepage-v2.css", "/app.js",
   "/public-content.js", "/presentation-mode.js", "/presentation-mode.css", "/public-copy.js", "/placeholder-media.js", "/homepage-composition.js",
   "/motion.js", "/motion.css", "/motion/engine.js", "/motion/accessibility.js", "/motion/homepage.js", "/motion/commerce.js", "/store-v2.js", "/store-v2.css",
-  "/builder-core-v2.js", "/builder-core-v2.css", "/pizza-builder-v2.js", "/pizza-builder-v2.css",
+  "/builder-core-v2.js", "/builder-core-v2.css", "/commerce-theke.js", "/commerce-theke.css", "/pizza-builder-v2.js", "/pizza-builder-v2.css",
   "/doner-yufka-builder-v2.js", "/doner-yufka-builder-v2.css",
   "/vendor/gsap/gsap.min.js", "/vendor/gsap/ScrollTrigger.min.js", "/vendor/gsap/Flip.min.js",
   "/operations-shell.js", "/operations-shell.css",

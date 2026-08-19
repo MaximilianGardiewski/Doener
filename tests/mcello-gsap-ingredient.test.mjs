@@ -69,7 +69,7 @@ test("ingredient motion stays presentation-only and available offline", () => {
   assert.doesNotMatch(commerce, /localStorage|sessionStorage|indexedDB/);
   assert.doesNotMatch(commerce, /basePrice|unitPrice|checkout|availability|sold.?out|authorization|locationId/i);
   // Bumped with the shell whenever a cached Builder/FoodStage asset changes.
-  assert.match(sw, /mcello-public-shell-v29/);
+  assert.match(sw, /mcello-public-shell-v30/);
   assert.match(sw, /"\/motion\/commerce\.js"/);
   assert.match(sw, /"\/vendor\/gsap\/gsap\.min\.js"/);
 });
