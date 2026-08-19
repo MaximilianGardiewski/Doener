@@ -22,6 +22,19 @@ test("laptop preview is one-click and PowerShell owns launcher behavior", () => 
   assert.match(psLauncher, /--package-lock=false/);
 });
 
+test("downloaded laptop PowerShell launcher resolves the real repo instead of treating its own folder as project root", () => {
+  assert.match(psLauncher, /\[string\]\$RepoRoot/);
+  assert.match(psLauncher, /Resolve-McelloRepoRoot/);
+  assert.match(psLauncher, /Test-DoenerRepoRoot/);
+  assert.match(psLauncher, /C:\\McelloDemo/);
+  assert.match(psLauncher, /C:\\AI/);
+  assert.match(psLauncher, /C:\\Codex/);
+  assert.match(psLauncher, /apps\\mcello\\public\\index\.html/);
+  assert.match(psLauncher, /package\.json/);
+  assert.match(psLauncher, /Repository: \$repoRoot/);
+  assert.doesNotMatch(psLauncher, /\$repoRoot\s*=\s*\$PSScriptRoot/, "download directory must not automatically become repo root");
+});
+
 test("laptop PowerShell launcher performs a safe clean start by default", () => {
   assert.match(psLauncher, /\[switch\]\$NoCleanup/);
   assert.match(psLauncher, /\[switch\]\$KeepBrowserState/);
@@ -29,7 +42,7 @@ test("laptop PowerShell launcher performs a safe clean start by default", () => 
   assert.match(psLauncher, /preview-mcello-laptop\\\.mjs|preview-mcello-laptop\.mjs/);
   assert.match(psLauncher, /Get-NetTCPConnection/);
   assert.match(psLauncher, /Der Prozess gehört nicht eindeutig zur Mcello Laptop Preview und wird deshalb NICHT beendet/);
-  assert.match(psLauncher, /Join-Path \$repoRoot 'dist'/);
+  assert.match(psLauncher, /Join-Path \$Root 'dist'/);
   assert.doesNotMatch(psLauncher, /Remove-Item[^\n]+node_modules/i, "clean start must never delete node_modules wholesale");
   assert.doesNotMatch(psLauncher, /Remove-Item[^\n]+\.git/i, "clean start must never touch git metadata");
 });
