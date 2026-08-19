@@ -3,14 +3,30 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const server = await readFile(new URL("../scripts/preview-mcello-laptop.mjs", import.meta.url), "utf8");
-const launcher = await readFile(new URL("../Mcello-Laptop-Preview.cmd", import.meta.url), "utf8");
+const cmdLauncher = await readFile(new URL("../Mcello-Laptop-Preview.cmd", import.meta.url), "utf8");
+const psLauncher = await readFile(new URL("../Mcello-Laptop-Preview.ps1", import.meta.url), "utf8");
 const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
-test("laptop preview is one-click and uses the dedicated local server", () => {
+test("laptop preview is one-click and PowerShell owns launcher behavior", () => {
   assert.equal(pkg.scripts["preview:mcello:laptop"], "node scripts/preview-mcello-laptop.mjs");
-  assert.match(launcher, /npm run preview:mcello:laptop/);
-  assert.match(launcher, /node_modules\\gsap\\package\.json/);
-  assert.match(launcher, /Node\.js 22/);
+  assert.match(cmdLauncher, /Mcello-Laptop-Preview\.ps1/);
+  assert.match(cmdLauncher, /pwsh/);
+  assert.doesNotMatch(cmdLauncher, /npm run preview:mcello:laptop/);
+
+  assert.match(psLauncher, /npm['"]?\s*,?\s*['"]run['"]?\s*,?\s*['"]preview:mcello:laptop['"]/);
+  assert.match(psLauncher, /node_modules\\gsap\\package\.json/);
+  assert.match(psLauncher, /Node\.js 22/);
+  assert.match(psLauncher, /\[switch\]\$NoBrowser/);
+  assert.match(psLauncher, /\[int\]\$Port = 4173/);
+  assert.match(psLauncher, /--ignore-scripts/);
+  assert.match(psLauncher, /--package-lock=false/);
+});
+
+test("laptop PowerShell launcher preserves caller environment after preview exits", () => {
+  assert.match(psLauncher, /\$previousPort = \$env:PORT/);
+  assert.match(psLauncher, /\$previousNoBrowser = \$env:MCELLO_NO_BROWSER/);
+  assert.match(psLauncher, /Remove-Item Env:PORT/);
+  assert.match(psLauncher, /Remove-Item Env:MCELLO_NO_BROWSER/);
 });
 
 test("laptop preview serves the real generated builder menu but stays read-only", () => {
