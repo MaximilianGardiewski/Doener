@@ -41,6 +41,7 @@ try {
     const header = getComputedStyle(document.querySelector(".site-header"));
     const heading = getComputedStyle(document.querySelector("h1"));
     const primary = getComputedStyle(document.querySelector(".hero .primary"));
+    const commercePrimary = getComputedStyle(document.querySelector(".sticky-order .primary"));
     const heroPhoto = getComputedStyle(document.querySelector(".hero-photo"));
     const story = getComputedStyle(document.querySelector(".contact-stage .story-card"));
     const tag = getComputedStyle(document.querySelector(".tag"));
@@ -50,6 +51,12 @@ try {
       headingFamily: heading.fontFamily,
       primaryBackground: primary.backgroundImage,
       primaryRadius: primary.borderRadius,
+      primaryColor: primary.backgroundColor,
+      primaryShadow: primary.boxShadow,
+      primaryTransform: primary.textTransform,
+      commercePrimaryColor: commercePrimary.backgroundColor,
+      commercePrimaryRadius: commercePrimary.borderRadius,
+      commercePrimaryBackground: commercePrimary.backgroundImage,
       heroRadius: heroPhoto.borderRadius,
       storyRadius: story.borderRadius,
       tagColor: tag.color,
@@ -61,8 +68,24 @@ try {
   const headerAlpha = alphaFromComputedColor(visualContract.headerBackground);
   assert.ok(headerAlpha > 0 && headerAlpha < 1, "header glass surface must retain real translucency");
   assert.match(visualContract.headingFamily, /Iowan Old Style|Palatino|Book Antiqua|Georgia/i, "display typography must use the premium serif stack");
-  assert.match(visualContract.primaryBackground, /linear-gradient/i, "primary CTA must render the amber gradient");
-  assert.equal(visualContract.primaryRadius, "999px", "primary CTA must keep pill geometry");
+  /*
+   * Theke art direction. ART_DIRECTION.md rules out "generisches Schwarz-Gold-Luxury"
+   * and USER_REFERENCE_SYNTHESIS.md releases the V2 foundation as a "technische
+   * Zwischenstufe", so the primary CTA is a flat printed copper block rather than a
+   * gradient capsule. Owner Visual Gate B still has to confirm this.
+   *
+   * These assertions are stricter than the ones they replace: they pin the flat
+   * treatment AND newly require that the public and commerce halves of the same page
+   * render the same component identically, which nothing checked before.
+   */
+  assert.equal(visualContract.primaryBackground, "none", "primary CTA must not reintroduce a gradient");
+  assert.equal(visualContract.primaryShadow, "none", "primary CTA must not reintroduce a glow");
+  assert.equal(visualContract.primaryTransform, "uppercase", "primary CTA keeps the counter type");
+  assert.equal(visualContract.primaryRadius, "2px", "primary CTA must keep the printed edge");
+  assert.equal(visualContract.primaryColor, "rgb(173, 109, 25)", "primary CTA must render flat copper");
+  assert.equal(visualContract.commercePrimaryBackground, "none", "commerce primary must not reintroduce a gradient");
+  assert.equal(visualContract.commercePrimaryColor, visualContract.primaryColor, "public and commerce must share one button colour");
+  assert.equal(visualContract.commercePrimaryRadius, visualContract.primaryRadius, "public and commerce must share one button geometry");
   assert.equal(visualContract.heroRadius, "42px", "hero media must use the large premium radius");
   assert.equal(visualContract.storyRadius, "30px", "rounded editorial panels must retain the premium surface radius where the V2 layout calls for them");
   assert.equal(visualContract.tagColor, "rgb(141, 184, 93)", "green must be used selectively for small semantic labels");

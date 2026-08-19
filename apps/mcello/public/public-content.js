@@ -5,6 +5,7 @@ import "./motion.js";
 import "./store-v2.js";
 import "./builder-core-v2.js";
 import "./commerce-theke.js";
+import "./public-theke.js";
 import "./homepage-composition.js";
 
 const knownSections = new Map([
