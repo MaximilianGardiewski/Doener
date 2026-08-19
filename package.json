@@ -20,6 +20,7 @@
     "build:lebtig": "npm --workspace @business-web/lebtig run build",
     "preview:mcello": "node --experimental-strip-types apps/mcello/run.mjs",
     "preview:mcello:configurator": "node scripts/preview-mcello-configurator.mjs",
+    "preview:mcello:laptop": "node scripts/preview-mcello-laptop.mjs",
     "preview:lebtig": "npm --workspace @business-web/lebtig run preview",
     "demo:mcello": "pwsh -NoProfile -ExecutionPolicy Bypass -File Mcello-Demo.ps1",
     "demo:mcello:presentation": "pwsh -NoProfile -ExecutionPolicy Bypass -File Mcello-Demo.ps1 -Mode Lan",
