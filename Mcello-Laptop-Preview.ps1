@@ -1,4 +1,5 @@
 param(
+  [string]$RepoRoot,
   [switch]$NoBrowser,
   [ValidateRange(1024, 65535)]
   [int]$Port = 4173,
@@ -8,9 +9,92 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repoRoot = $PSScriptRoot
-$deviceLabUrl = "http://127.0.0.1:$Port/configurator-preview.html?presentation=mcello"
-$directUrl = "http://127.0.0.1:$Port/?presentation=mcello#bestellen"
+
+function Test-DoenerRepoRoot {
+  param([Parameter(Mandatory = $true)][string]$Path)
+
+  if ([string]::IsNullOrWhiteSpace($Path)) { return $false }
+  try {
+    $resolved = (Resolve-Path -LiteralPath $Path -ErrorAction Stop).Path
+  } catch {
+    return $false
+  }
+
+  return (Test-Path -LiteralPath (Join-Path $resolved 'package.json')) -and
+    (Test-Path -LiteralPath (Join-Path $resolved 'apps\mcello\public\index.html'))
+}
+
+function Test-LaptopPreviewReady {
+  param([Parameter(Mandatory = $true)][string]$Path)
+
+  if (-not (Test-DoenerRepoRoot -Path $Path)) { return $false }
+  if (-not (Test-Path -LiteralPath (Join-Path $Path 'scripts\preview-mcello-laptop.mjs'))) { return $false }
+
+  try {
+    $packageJson = Get-Content -LiteralPath (Join-Path $Path 'package.json') -Raw | ConvertFrom-Json
+    return [string]$packageJson.scripts.'preview:mcello:laptop' -eq 'node scripts/preview-mcello-laptop.mjs'
+  } catch {
+    return $false
+  }
+}
+
+function Resolve-McelloRepoRoot {
+  param([string]$ExplicitRoot)
+
+  if ($ExplicitRoot) {
+    if (-not (Test-DoenerRepoRoot -Path $ExplicitRoot)) {
+      throw "-RepoRoot '$ExplicitRoot' ist kein gültiger Doener/Mcello-Repo-Ordner. Erwartet werden package.json und apps\mcello\public\index.html."
+    }
+    return (Resolve-Path -LiteralPath $ExplicitRoot).Path
+  }
+
+  $candidates = New-Object System.Collections.Generic.List[string]
+  $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+
+  function Add-Candidate([string]$Candidate) {
+    if ([string]::IsNullOrWhiteSpace($Candidate)) { return }
+    if ($seen.Add($Candidate)) { $candidates.Add($Candidate) }
+  }
+
+  Add-Candidate (Get-Location).Path
+  Add-Candidate $PSScriptRoot
+  Add-Candidate 'C:\McelloDemo'
+  Add-Candidate 'C:\Doener'
+  Add-Candidate 'C:\AI\Doener'
+  Add-Candidate 'C:\AI\Projects\Doener'
+  Add-Candidate 'C:\Codex\Doener'
+  Add-Candidate 'C:\Claude Code\Doener'
+  if ($env:USERPROFILE) {
+    Add-Candidate (Join-Path $env:USERPROFILE 'Doener')
+    Add-Candidate (Join-Path $env:USERPROFILE 'source\repos\Doener')
+  }
+
+  foreach ($base in @('C:\AI', 'C:\Codex', 'C:\Claude Code')) {
+    if (-not (Test-Path -LiteralPath $base)) { continue }
+    foreach ($child in @(Get-ChildItem -LiteralPath $base -Directory -ErrorAction SilentlyContinue)) {
+      Add-Candidate $child.FullName
+      foreach ($grandChild in @(Get-ChildItem -LiteralPath $child.FullName -Directory -ErrorAction SilentlyContinue)) {
+        Add-Candidate $grandChild.FullName
+      }
+    }
+  }
+
+  foreach ($candidate in $candidates) {
+    if (Test-DoenerRepoRoot -Path $candidate) {
+      return (Resolve-Path -LiteralPath $candidate).Path
+    }
+  }
+
+  throw @"
+Kein Doener/Mcello-Repository wurde gefunden.
+Das Script darf außerhalb des Repos liegen, benötigt aber den echten Projektordner.
+
+Beispiel:
+  .\Mcello-Laptop-Preview.ps1 -RepoRoot 'C:\McelloDemo'
+
+Gesucht wurde u. a. in C:\McelloDemo, C:\AI und C:\Codex.
+"@
+}
 
 function Require-Command {
   param(
@@ -96,9 +180,11 @@ function Stop-StaleMcelloPreview {
 }
 
 function Clear-GeneratedPreviewState {
+  param([Parameter(Mandatory = $true)][string]$Root)
+
   $generatedPaths = @(
-    (Join-Path $repoRoot 'dist'),
-    (Join-Path $repoRoot '.tmp\mcello-laptop-preview')
+    (Join-Path $Root 'dist'),
+    (Join-Path $Root '.tmp\mcello-laptop-preview')
   )
 
   foreach ($target in $generatedPaths) {
@@ -110,6 +196,10 @@ function Clear-GeneratedPreviewState {
   Write-Host 'Generierte Preview-Ausgaben sind sauber. GSAP-Vendor-Dateien werden beim Build ebenfalls frisch ersetzt.' -ForegroundColor DarkGray
 }
 
+$repoRoot = Resolve-McelloRepoRoot -ExplicitRoot $RepoRoot
+$deviceLabUrl = "http://127.0.0.1:$Port/configurator-preview.html?presentation=mcello"
+$directUrl = "http://127.0.0.1:$Port/?presentation=mcello#bestellen"
+
 Push-Location $repoRoot
 try {
   Write-Host ''
@@ -117,9 +207,19 @@ try {
   Write-Host '  MCELLO LAPTOP PREVIEW' -ForegroundColor Yellow
   Write-Host '===============================================' -ForegroundColor DarkYellow
   Write-Host ''
+  Write-Host "Repository: $repoRoot" -ForegroundColor Green
   Write-Host 'Lokale Read-only Vorschau: Konfigurator + FoodStage + GSAP.' -ForegroundColor Cyan
   Write-Host 'Kein Supabase, Docker, Cloudflare oder Lovable erforderlich.'
   Write-Host ''
+
+  if (-not (Test-LaptopPreviewReady -Path $repoRoot)) {
+    throw @"
+Das Doener-Repository wurde gefunden, aber die aktuelle Laptop-Preview-Runtime fehlt.
+Führe im Repo aus:
+  git pull
+und starte dieses Script danach erneut.
+"@
+  }
 
   Require-Command 'node' 'Installiere Node.js 22 oder neuer.'
   Require-Command 'npm' 'npm wird zusammen mit Node.js installiert.'
@@ -137,7 +237,7 @@ try {
       throw 'Lokale npm-Abhängigkeiten fehlen und -SkipInstall wurde gesetzt.'
     }
 
-    Write-Host 'Lokale Abhängigkeiten fehlen - installiere sie einmalig ...' -ForegroundColor Cyan
+    Write-Host "Lokale Abhängigkeiten fehlen - installiere sie einmalig in $repoRoot ..." -ForegroundColor Cyan
     Invoke-Native 'npm' 'install' '--ignore-scripts' '--package-lock=false'
   }
 
@@ -145,7 +245,7 @@ try {
     Write-Host ''
     Write-Host 'Clean Start: räume alte Preview-Reste auf ...' -ForegroundColor Cyan
     Stop-StaleMcelloPreview -LocalPort $Port
-    Clear-GeneratedPreviewState
+    Clear-GeneratedPreviewState -Root $repoRoot
   } else {
     Write-Host 'Cleanup wurde mit -NoCleanup übersprungen.' -ForegroundColor Yellow
   }
@@ -187,7 +287,8 @@ try {
   Write-Host '[FEHLER] Mcello Laptop Preview konnte nicht gestartet werden.' -ForegroundColor Red
   Write-Host $_.Exception.Message -ForegroundColor Red
   Write-Host ''
-  Write-Host 'Tipp: Führe zuerst "git pull" im Doener-Ordner aus und starte das Script danach erneut.' -ForegroundColor Yellow
+  Write-Host 'Falls das Repo nicht automatisch gefunden wird, nutze z. B.:' -ForegroundColor Yellow
+  Write-Host "  .\Mcello-Laptop-Preview.ps1 -RepoRoot 'C:\McelloDemo'" -ForegroundColor Yellow
   exit 1
 } finally {
   Pop-Location
