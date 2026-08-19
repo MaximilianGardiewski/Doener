@@ -11,9 +11,11 @@ const dist = path.join(root, "dist");
 const port = Number(process.env.PORT || 4173);
 const host = "127.0.0.1";
 const deviceLabUrl = `http://${host}:${port}/configurator-preview.html?presentation=mcello`;
+const resetBrowserState = process.env.MCELLO_RESET_BROWSER_STATE === "1";
 
 await runNodeScript(path.join(root, "scripts", "build-cloudflare-preview.mjs"));
 await relabelPreviewFixture();
+if (resetBrowserState) await prepareFreshDeviceLab();
 
 const server = createServer(async (request, response) => {
   try {
@@ -64,6 +66,7 @@ server.listen(port, host, () => {
   console.log("- FoodStage");
   console.log("- GSAP 3.15.0 / ScrollTrigger / Flip");
   console.log("- Desktop / Tablet / Phone Device Lab");
+  if (resetBrowserState) console.log("- Clean Start: alter lokaler Mcello-Warenkorb + Session-State werden beim ersten Laden gelöscht");
   console.log("\nRead-only: Checkout, OTP und Backend bleiben deaktiviert.");
   console.log("Zum Beenden dieses Fenster schließen oder Strg+C drücken.\n");
   openBrowser(deviceLabUrl);
@@ -79,6 +82,18 @@ async function relabelPreviewFixture() {
   menu.locationId = "laptop-preview-read-only";
   menu.provenance = "generated from provisional menu seed + presentation-only builder fixture for local laptop preview; never production catalog truth";
   await writeFile(menuPath, `${JSON.stringify(menu)}\n`, "utf8");
+}
+
+async function prepareFreshDeviceLab() {
+  const file = path.join(dist, "configurator-preview.html");
+  let source = await readFile(file, "utf8");
+  const before = 'src="/?presentation=mcello#bestellen"';
+  const after = 'src="/?presentation=mcello&reset=1#bestellen"';
+  if (!source.includes(before)) {
+    throw new Error("Mcello Laptop Preview clean-start anchor missing in configurator-preview.html");
+  }
+  source = source.replace(before, after);
+  await writeFile(file, source, "utf8");
 }
 
 async function runNodeScript(scriptPath) {

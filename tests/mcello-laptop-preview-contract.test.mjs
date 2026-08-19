@@ -22,11 +22,32 @@ test("laptop preview is one-click and PowerShell owns launcher behavior", () => 
   assert.match(psLauncher, /--package-lock=false/);
 });
 
+test("laptop PowerShell launcher performs a safe clean start by default", () => {
+  assert.match(psLauncher, /\[switch\]\$NoCleanup/);
+  assert.match(psLauncher, /\[switch\]\$KeepBrowserState/);
+  assert.match(psLauncher, /Stop-StaleMcelloPreview/);
+  assert.match(psLauncher, /preview-mcello-laptop\\\.mjs|preview-mcello-laptop\.mjs/);
+  assert.match(psLauncher, /Get-NetTCPConnection/);
+  assert.match(psLauncher, /Der Prozess gehört nicht eindeutig zur Mcello Laptop Preview und wird deshalb NICHT beendet/);
+  assert.match(psLauncher, /Join-Path \$repoRoot 'dist'/);
+  assert.doesNotMatch(psLauncher, /Remove-Item[^\n]+node_modules/i, "clean start must never delete node_modules wholesale");
+  assert.doesNotMatch(psLauncher, /Remove-Item[^\n]+\.git/i, "clean start must never touch git metadata");
+});
+
 test("laptop PowerShell launcher preserves caller environment after preview exits", () => {
   assert.match(psLauncher, /\$previousPort = \$env:PORT/);
   assert.match(psLauncher, /\$previousNoBrowser = \$env:MCELLO_NO_BROWSER/);
+  assert.match(psLauncher, /\$previousResetBrowserState = \$env:MCELLO_RESET_BROWSER_STATE/);
   assert.match(psLauncher, /Remove-Item Env:PORT/);
   assert.match(psLauncher, /Remove-Item Env:MCELLO_NO_BROWSER/);
+  assert.match(psLauncher, /Remove-Item Env:MCELLO_RESET_BROWSER_STATE/);
+});
+
+test("laptop clean start resets only Mcello browser presentation state", () => {
+  assert.match(server, /MCELLO_RESET_BROWSER_STATE/);
+  assert.match(server, /prepareFreshDeviceLab/);
+  assert.match(server, /presentation=mcello&reset=1#bestellen/);
+  assert.match(server, /configurator-preview\.html/);
 });
 
 test("laptop preview serves the real generated builder menu but stays read-only", () => {
