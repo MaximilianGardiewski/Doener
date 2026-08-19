@@ -9,8 +9,7 @@ on:
       - "apps/mcello/**"
       - "data/mcello/builder-presentation.v1.json"
       - "tests/mcello-laptop-preview-contract.test.mjs"
-      - "tests/mcello-gsap-product-open.browser.mjs"
-      - "tests/mcello-gsap-ingredient.browser.mjs"
+      - "tests/mcello-laptop-preview.browser.mjs"
       - "package.json"
       - ".github/workflows/mcello-laptop-preview.yml"
   push:
@@ -23,8 +22,7 @@ on:
       - "apps/mcello/**"
       - "data/mcello/builder-presentation.v1.json"
       - "tests/mcello-laptop-preview-contract.test.mjs"
-      - "tests/mcello-gsap-product-open.browser.mjs"
-      - "tests/mcello-gsap-ingredient.browser.mjs"
+      - "tests/mcello-laptop-preview.browser.mjs"
       - "package.json"
       - ".github/workflows/mcello-laptop-preview.yml"
 
@@ -62,14 +60,10 @@ jobs:
           done
           curl --fail --silent http://127.0.0.1:4173/configurator-preview.html?presentation=mcello >/dev/null
           node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync("/tmp/mcello-laptop-menu.json")); if(m.locationId!=="laptop-preview-read-only") process.exit(1); const warm=m.categories.find(c=>c.slug==="warm"); const p=warm?.products.find(p=>p.id==="warm-013"); if(!p||p.modifierGroups.length<3) process.exit(1);'
-      - name: Prove Product Open GSAP on laptop server
+      - name: Prove real configurator FoodStage and GSAP on laptop server
         env:
           MCELLO_PREVIEW_URL: "http://127.0.0.1:4173/?presentation=mcello#bestellen"
-        run: node tests/mcello-gsap-product-open.browser.mjs normal
-      - name: Prove Ingredient FoodStage GSAP on laptop server
-        env:
-          MCELLO_PREVIEW_URL: "http://127.0.0.1:4173/?presentation=mcello#bestellen"
-        run: node tests/mcello-gsap-ingredient.browser.mjs normal
+        run: node tests/mcello-laptop-preview.browser.mjs
       - name: Stop laptop preview server
         if: always()
         run: |
