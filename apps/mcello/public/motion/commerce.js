@@ -6,6 +6,8 @@ export function createCommerceMotion(engine) {
   const activeTweens = new Set();
   let productTransition = null;
   let ingredientTransition = null;
+  let stepTransition = null;
+  let totalTransition = null;
   scope.context((tools) => {
     gsap = tools.gsap;
   });
@@ -48,6 +50,27 @@ export function createCommerceMotion(engine) {
       delete foodStage.dataset.motionIngredientEngine;
     }
     ingredientTransition = null;
+  }
+
+  function clearStepPresentation() {
+    if (!stepTransition) return;
+    const { timeline, step } = stepTransition;
+    timeline.kill();
+    activeTweens.delete(timeline);
+    gsap.set(step, { clearProps: "opacity,transform" });
+    delete step.dataset.motionStepEngine;
+    delete step.dataset.motionStepDirection;
+    stepTransition = null;
+  }
+
+  function clearTotalPresentation() {
+    if (!totalTransition) return;
+    const { timeline, node } = totalTransition;
+    timeline.kill();
+    activeTweens.delete(timeline);
+    gsap.set(node, { clearProps: "opacity,transform" });
+    delete node.dataset.motionTotalEngine;
+    totalTransition = null;
   }
 
   function animateCategoryChange({ categoryId, stage, featuredGrid, menuList, activeChip }) {
@@ -206,11 +229,78 @@ export function createCommerceMotion(engine) {
     return true;
   }
 
+  /*
+   * Guided step advance. The step navigation only moves presentation; this
+   * explains that movement so the guest can tell forward from backward.
+   */
+  function animateBuilderStep({ step, direction }) {
+    if (!step || (direction !== 1 && direction !== -1)) return false;
+
+    clearStepPresentation();
+    step.dataset.motionStepEngine = "gsap";
+    step.dataset.motionStepDirection = direction === 1 ? "forward" : "back";
+
+    let timeline;
+    const finish = () => {
+      if (!stepTransition || stepTransition.timeline !== timeline) return;
+      gsap.set(step, { clearProps: "opacity,transform" });
+      delete step.dataset.motionStepEngine;
+      delete step.dataset.motionStepDirection;
+      activeTweens.delete(timeline);
+      stepTransition = null;
+    };
+
+    timeline = gsap.timeline({ defaults: { overwrite: "auto" }, onComplete: finish });
+    stepTransition = { timeline, step };
+    track(timeline);
+
+    timeline.fromTo(
+      step,
+      { opacity: 0.4, x: direction * 22 },
+      { opacity: 1, x: 0, duration: 0.3, ease: "power3.out" },
+      0,
+    );
+    return true;
+  }
+
+  /*
+   * The configured total is owned by the application; this only draws the eye to
+   * the value it already rendered when that value changed.
+   */
+  function animateTotalChange({ node }) {
+    if (!node) return false;
+
+    clearTotalPresentation();
+    node.dataset.motionTotalEngine = "gsap";
+
+    let timeline;
+    const finish = () => {
+      if (!totalTransition || totalTransition.timeline !== timeline) return;
+      gsap.set(node, { clearProps: "opacity,transform" });
+      delete node.dataset.motionTotalEngine;
+      activeTweens.delete(timeline);
+      totalTransition = null;
+    };
+
+    timeline = gsap.timeline({ defaults: { overwrite: "auto" }, onComplete: finish });
+    totalTransition = { timeline, node };
+    track(timeline);
+
+    timeline
+      .to(node, { scale: 1.024, duration: 0.13, ease: "power2.out" }, 0)
+      .to(node, { scale: 1, duration: 0.19, ease: "power2.inOut" }, 0.13);
+    return true;
+  }
+
   return {
     animateCategoryChange,
     animateProductOpen,
     animateIngredientChange,
+    animateBuilderStep,
+    animateTotalChange,
     cleanup() {
+      clearTotalPresentation();
+      clearStepPresentation();
       clearIngredientPresentation();
       clearProductPresentation();
       for (const tween of activeTweens) tween.kill();

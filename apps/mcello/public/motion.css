@@ -182,3 +182,41 @@ html[data-mcello-hero-engine="gsap"] .hero-media-v2 .hero-photo {
     will-change: auto;
   }
 }
+/*
+ * Builder step and configured-total fallbacks. These run when GSAP is not
+ * available; the reduced-motion block below turns both into no-ops.
+ */
+@keyframes mcelloStepForward {
+  from { opacity: .45; transform: translate3d(20px, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes mcelloStepBack {
+  from { opacity: .45; transform: translate3d(-20px, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes mcelloTotalChange {
+  0% { transform: scale(1); }
+  42% { transform: scale(1.024); }
+  100% { transform: scale(1); }
+}
+
+.motion-step-change[data-motion-step-direction="forward"] {
+  animation: mcelloStepForward 300ms var(--ease-standard, cubic-bezier(.2, .7, .25, 1)) both;
+}
+
+.motion-step-change[data-motion-step-direction="back"] {
+  animation: mcelloStepBack 300ms var(--ease-standard, cubic-bezier(.2, .7, .25, 1)) both;
+}
+
+.motion-total-change {
+  animation: mcelloTotalChange 320ms var(--ease-standard, cubic-bezier(.2, .7, .25, 1)) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-step-change,
+  .motion-total-change {
+    animation: none !important;
+  }
+}

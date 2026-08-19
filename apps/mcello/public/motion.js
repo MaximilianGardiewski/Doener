@@ -216,6 +216,56 @@ function installCommerceMotionContracts() {
   });
 }
 
+/*
+ * Builder step and configured-total feedback read rendered DOM only. The Builder
+ * shell decides which step is current and the application decides what the total
+ * is; this layer just explains that something changed.
+ */
+function installBuilderStateMotion() {
+  const groups = document.querySelector("#modifierGroups");
+  const addAction = document.querySelector("#addToCart");
+  const modal = document.querySelector("#productModal");
+
+  if (groups) {
+    let lastStepIndex = null;
+    new MutationObserver((records) => {
+      const changed = records.some((record) => record.attributeName === "data-builder-step-current");
+      if (!changed) return;
+      const step = groups.querySelector('.builder-step[data-builder-step-current="true"]');
+      if (!step) return;
+      const index = Number(step.dataset.builderStepIndex || 0);
+      const previous = lastStepIndex;
+      lastStepIndex = index;
+      if (previous === null || previous === index) return;
+
+      const direction = index > previous ? 1 : -1;
+      const handledByV3 = !reducedMotion.matches
+        && Boolean(commerceMotionV3?.animateBuilderStep({ step, direction }));
+      if (handledByV3) return;
+
+      step.dataset.motionStepDirection = direction === 1 ? "forward" : "back";
+      restartMotionClass(step, "motion-step-change", 340);
+      window.setTimeout(() => delete step.dataset.motionStepDirection, 360);
+    }).observe(groups, { subtree: true, attributes: true, attributeFilter: ["data-builder-step-current"] });
+  }
+
+  if (addAction) {
+    let lastLabel = addAction.textContent;
+    new MutationObserver(() => {
+      const label = addAction.textContent;
+      if (label === lastLabel) return;
+      lastLabel = label;
+      if (!modal?.classList.contains("open")) return;
+
+      const handledByV3 = !reducedMotion.matches
+        && Boolean(commerceMotionV3?.animateTotalChange({ node: addAction }));
+      if (handledByV3) return;
+
+      restartMotionClass(addAction, "motion-total-change", 320);
+    }).observe(addAction, { childList: true, characterData: true, subtree: true });
+  }
+}
+
 function publishMotionEngineMode(engine) {
   document.documentElement.dataset.mcelloMotionEngine = engine?.mode || "fallback";
   window.dispatchEvent(new CustomEvent("mcello:motion-engine", {
@@ -273,5 +323,6 @@ function scheduleMotionV3Adapter(revealController, heroController) {
 
 const revealController = installRevealMotion();
 const heroController = installHeroFoodDepth();
+installBuilderStateMotion();
 installCommerceMotionContracts();
 scheduleMotionV3Adapter(revealController, heroController);
