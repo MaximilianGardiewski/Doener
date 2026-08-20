@@ -1,3 +1,19 @@
+/*
+ * The configured total is displayed as German-locale currency text; this reads
+ * the amount already rendered by the application so the count-up tween never
+ * derives a euro value on its own.
+ */
+const displayedAmountFormatter = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
+const DISPLAYED_AMOUNT_PATTERN = /(-?\d{1,3}(?:\.\d{3})*,\d{2})\s?€/;
+
+function readDisplayedAmount(label) {
+  const match = typeof label === "string" ? label.match(DISPLAYED_AMOUNT_PATTERN) : null;
+  if (!match) return null;
+  const amount = Number(match[1].replace(/\./g, "").replace(",", "."));
+  if (!Number.isFinite(amount)) return null;
+  return { amount, index: match.index, raw: match[0] };
+}
+
 export function createCommerceMotion(engine) {
   if (!engine?.available) return null;
 
@@ -8,6 +24,7 @@ export function createCommerceMotion(engine) {
   let ingredientTransition = null;
   let stepTransition = null;
   let totalTransition = null;
+  let handoffTransition = null;
   scope.context((tools) => {
     gsap = tools.gsap;
   });
@@ -63,14 +80,36 @@ export function createCommerceMotion(engine) {
     stepTransition = null;
   }
 
+  /*
+   * Every text write this engine performs also stamps `motionTotalRendered`
+   * with the exact string just written, synchronously in the same task. The
+   * observing controller compares its next detected DOM text against this
+   * marker to tell its own animation frames apart from a genuinely new
+   * application-authored value, without ever guessing at that value itself.
+   */
+  function setTotalLabel(node, text) {
+    node.textContent = text;
+    node.dataset.motionTotalRendered = text;
+  }
+
   function clearTotalPresentation() {
     if (!totalTransition) return;
-    const { timeline, node } = totalTransition;
+    const { timeline, node, label } = totalTransition;
     timeline.kill();
     activeTweens.delete(timeline);
+    if (label != null) setTotalLabel(node, label);
     gsap.set(node, { clearProps: "opacity,transform" });
     delete node.dataset.motionTotalEngine;
     totalTransition = null;
+  }
+
+  function clearHandoffPresentation() {
+    if (!handoffTransition) return;
+    const { timeline, ghost } = handoffTransition;
+    timeline.kill();
+    activeTweens.delete(timeline);
+    ghost.remove();
+    handoffTransition = null;
   }
 
   function animateCategoryChange({ categoryId, stage, featuredGrid, menuList, activeChip }) {
@@ -265,10 +304,17 @@ export function createCommerceMotion(engine) {
 
   /*
    * The configured total is owned by the application; this only draws the eye to
-   * the value it already rendered when that value changed.
+   * the value it already rendered when that value changed. The euro amount is
+   * read from the previous and next rendered label (never derived from any
+   * catalog figure), tweened as a plain number, and the exact application
+   * string is restored on completion so the final text stays byte-identical to
+   * what app.js wrote.
    */
-  function animateTotalChange({ node }) {
+  function animateTotalChange({ node, from, to }) {
     if (!node) return false;
+    const label = typeof to === "string" ? to : node.textContent;
+    const previousAmount = readDisplayedAmount(from);
+    const nextAmount = readDisplayedAmount(label);
 
     clearTotalPresentation();
     node.dataset.motionTotalEngine = "gsap";
@@ -276,6 +322,7 @@ export function createCommerceMotion(engine) {
     let timeline;
     const finish = () => {
       if (!totalTransition || totalTransition.timeline !== timeline) return;
+      setTotalLabel(node, label);
       gsap.set(node, { clearProps: "opacity,transform" });
       delete node.dataset.motionTotalEngine;
       activeTweens.delete(timeline);
@@ -283,12 +330,59 @@ export function createCommerceMotion(engine) {
     };
 
     timeline = gsap.timeline({ defaults: { overwrite: "auto" }, onComplete: finish });
-    totalTransition = { timeline, node };
+    totalTransition = { timeline, node, label };
     track(timeline);
 
     timeline
       .to(node, { scale: 1.024, duration: 0.13, ease: "power2.out" }, 0)
       .to(node, { scale: 1, duration: 0.19, ease: "power2.inOut" }, 0.13);
+
+    if (previousAmount && nextAmount && previousAmount.amount !== nextAmount.amount) {
+      const prefix = label.slice(0, nextAmount.index);
+      const suffix = label.slice(nextAmount.index + nextAmount.raw.length);
+      const counter = { value: previousAmount.amount };
+      setTotalLabel(node, `${prefix}${displayedAmountFormatter.format(counter.value)}${suffix}`);
+      timeline.to(counter, {
+        value: nextAmount.amount,
+        duration: 0.26,
+        ease: "power1.out",
+        onUpdate() {
+          setTotalLabel(node, `${prefix}${displayedAmountFormatter.format(counter.value)}${suffix}`);
+        },
+      }, 0);
+    } else {
+      setTotalLabel(node, label);
+    }
+    return true;
+  }
+
+  /*
+   * A ghost of the already-rendered product visual travels from where the guest
+   * tapped toward the order indicator, then removes itself. The ghost node,
+   * distances and target scale are all supplied by the caller from rendered
+   * layout; this only owns the transform/opacity tween and lifecycle.
+   */
+  function animateHandoffFlight({ ghost, deltaX = 0, deltaY = 0, scale = 0.3 }) {
+    if (!ghost) return false;
+
+    clearHandoffPresentation();
+
+    let timeline;
+    const finish = () => {
+      if (!handoffTransition || handoffTransition.timeline !== timeline) return;
+      activeTweens.delete(timeline);
+      ghost.remove();
+      handoffTransition = null;
+    };
+
+    timeline = gsap.timeline({ defaults: { overwrite: "auto" }, onComplete: finish });
+    handoffTransition = { timeline, ghost };
+    track(timeline);
+
+    timeline
+      .set(ghost, { x: 0, y: 0, scale: 1, opacity: 1 })
+      .to(ghost, { x: deltaX * 0.6, y: deltaY * 0.35, scale: (1 + scale) / 2, duration: 0.22, ease: "power1.out" }, 0)
+      .to(ghost, { x: deltaX, y: deltaY, scale, opacity: 0.2, duration: 0.26, ease: "power2.in" }, 0.22);
     return true;
   }
 
@@ -298,7 +392,9 @@ export function createCommerceMotion(engine) {
     animateIngredientChange,
     animateBuilderStep,
     animateTotalChange,
+    animateHandoffFlight,
     cleanup() {
+      clearHandoffPresentation();
       clearTotalPresentation();
       clearStepPresentation();
       clearIngredientPresentation();
