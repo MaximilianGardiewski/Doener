@@ -1,6 +1,6 @@
 # Mcello — Configurator Experience V5
 
-Stand: 2026-08-19
+Stand: 2026-08-20
 
 Status: **implementierte Presentation-/Interaction-Änderung am bestehenden Konfigurator.** Dieses Dokument ergänzt `BUILDER_CORE_V2.md`, `BUILDER_RESPONSIVE_V3.md`, `DONER_YUFKA_BUILDER_V2.md`, `PIZZA_BUILDER_V2.md` und `GSAP_MOTION_V3.md`. Es hebt keine bindende Decision auf und markiert D065–D071 nicht als vollständig abgenommen.
 
@@ -245,7 +245,50 @@ Desktop, Mobile und Tablet: **964 ms worst-case gegen 2500 ms Budget.** Komforta
 
 ### INP (Interaction to Next Paint)
 
-nicht dokumentiert (wurde nicht speziell gemessen in dieser Slice)
+Gemessen mit `PerformanceObserver({ type: "event" })`, installiert per
+`addInitScript` vor der Navigation. **INP wird nach Definition gebildet:** Events
+werden über `interactionId` gruppiert, pro Interaktion zählt die längste Dauer,
+INP ist die schlechteste Interaktion. Die maximale Einzel-Event-Dauer ist *nicht*
+INP — eine erste Messung, die so gerechnet hatte, meldete 496 ms Desktop und
+widersprach sich selbst (dieselbe Tabelle wies "Events > 200 ms: 0" aus).
+
+Like-for-like gegen `origin/main` gemessen (zweiter Server auf Port 4199 aus
+einem Worktree), nur mit der Interaktion, die **beide** Stände unterstützen —
+Produkt öffnen:
+
+| Viewport | `origin/main` | dieser Branch | Budget |
+| --- | --- | --- | --- |
+| Mobile 390×844 | 96 / 96 ms | **136 / 136 ms** | 200 ms — eingehalten |
+| Desktop 1280×900 | 272 / 296 ms | 320 / 352 ms | headless, siehe unten |
+
+Über den vollen Konfigurator-Ablauf (8 Modifier-Toggles, 17 Interaktionen) liegt
+der Branch mobil bei 144–152 ms.
+
+**Aufteilung:** In *allen* Messungen, auf beiden Ständen, ist `processing` ≈ 1 ms
+und `inputDelay` ≈ 2 ms; die gesamte Dauer ist Presentation Delay (132 von
+136 ms mobil). Es ist also kein Skript-, sondern ein Paint-Kostenpunkt.
+
+**Attribution:** Der Aufschlag von +40 ms gehört der FoodStage. Wird sie per
+`display:none` unterdrückt, fällt INP mobil von 152 ms auf 104 ms — das deckt
+den Abstand zum Baseline-Wert. Zwei Hypothesen wurden geprüft und **widerlegt**:
+
+- `filter: drop-shadow(...)` auf `.mc-food-stage-v4__art` (ganzes SVG) und
+  `feDropShadow stdDeviation="16"` im SVG: einzeln und zusammen abgeschaltet
+  bleibt INP bei 136–152 ms, also innerhalb des Rauschens. Die Schatten kosten
+  nichts messbares und wurden **nicht** entfernt.
+- Motion: mit `prefers-reduced-motion: reduce` gemessen **312 ms** Desktop
+  gegenüber 288 ms normal — Motion ist nicht die Ursache.
+
+**Bewertung:** Die +40 ms sind die Rasterkosten der FoodStage-Illustration
+selbst, also der Preis des Features (D065), nicht ein behebbarer Defekt. Mobil —
+die Primärbreite der Mission — bleibt der Wert mit 136 ms deutlich im Budget.
+Es wurde daher nichts optimiert.
+
+**Grenze der Messung:** Headless-Chromium rastert in Software ohne GPU, was
+Paint-Kosten stark überzeichnet. Die Desktop-Zahlen überschreiten 200 ms auf
+**beiden** Ständen (Baseline 272–296 ms) und sind deshalb kein Branch-Befund.
+Belastbar ist der *Vergleich*, nicht der Absolutwert. Eine Messung auf echter
+Hardware steht aus.
 
 ### Checks, die nicht gemessen wurden
 
@@ -293,3 +336,51 @@ Der Test wurde von gradient+999px pill (Pre-Rebaseline-Foundation) auf flat copp
 Typografie-Entscheidungen verlagern sich aus drei inline style-Blöcken in operations-theke.css. Die Paarung von Display- und Interface-Type ist immer noch Gate-B-abhängig und offen.
 
 ---
+
+## 18. KDS-Lane-Motion (Operations)
+
+**Problem:** `render()` löscht alle Lanes und baut die Karten neu auf. Ein
+Lane-Wechsel las sich dadurch als "Karte verschwindet, andere Karte erscheint" —
+das Personal musste die Bestellung neu suchen.
+
+**Lösung:** `apps/mcello/public/motion/operations.js`, ein eigener Mcello-Adapter
+(D074: self-hosted GSAP, Core + Flip, eigene Modulgrenze, getrennt von
+`motion/commerce.js`). Er stellt `captureBeforeRender()` / `playAfterRender()`
+bereit, die den bestehenden `render()`-Aufruf klammern. Das Matching läuft
+ausschließlich über ein `data-flip-id`, das `kds.js` auf die Karte schreibt —
+nie über Bestell-, Produkt- oder Kundeninhalte. `kds.js` bleibt alleiniger
+Eigentümer von Status und Lane-Zuordnung; D010/D011/D012, `refresh()`, `act()`,
+Alarm und Rush/Pause sind unangetastet.
+
+DESIGN_ACCEPTANCE.md Abschnitt I ist hier bindend ("KDS-Motion ist minimal und
+nie show-orientiert"). Die Karte bewegt sich, sonst nichts: kein Glow, kein
+Pulse, kein Colour-Wash, keine gestaffelte Kaskade — und die Alarm-Karte in
+"Neu" bekommt dieselbe schlichte Neupositionierung wie jede andere Karte.
+
+**Browser-Verifikation** (Chromium, injizierte Bestellungen über Route-Mocking):
+
+| Pfad | Ergebnis |
+| --- | --- |
+| normal | Karte wandert x 299 → 1042 px, 13 von 32 abgetasteten Frames tragen ein `transform`, landet in der Box der Ziel-Lane |
+| `prefers-reduced-motion: reduce` | 0 transformierte Frames, sofortige Platzierung, dieselbe Box |
+| GSAP-Vendor blockiert (`route.abort`) | identische sofortige Platzierung, 0 Page-Errors |
+
+**Statischer Layout-Defekt, beim Tablet-Gate gefunden** (ohne Motion
+reproduzierbar): `.kds-grid` nutzte `repeat(4, 1fr)`; Grid-Tracks behalten
+standardmäßig einen `min-content`-Boden, weshalb der `white-space: nowrap`
+Quick-Action-Button die letzte Lane bei 1024 px über den Viewport schob. Alle
+drei Track-Definitionen tragen jetzt `minmax(0, 1fr)`.
+
+**Guard:** `tests/mcello-kds-lane-motion.test.mjs` sichert die Grenze, die der
+Browser-Lauf festgestellt hat — keine Lane als Wert im Adapter, kein
+Backend-Zugriff, jeder degradierte Pfad kehrt zurück ohne die Karte anzufassen,
+und ein Null-Boden auf jedem Grid-Track. Die Guards laufen gegen den Code mit
+entfernten Kommentaren, weil der Modulkommentar die Lanes, die er nie
+entscheiden darf, zu Recht benennt. Gegen eine eingebaute Verletzung geprüft:
+der Guard schlägt an.
+
+**Bewusst offen gelassen:** `.custom-delay` (Inline-Verzögerungssteuerung in der
+Lane "In Zubereitung") überläuft bei 1024 px die eigene Karte um ca. 70 px,
+unabhängig von Motion und ebenfalls vorbestehend. Der Dokumentrand wird dabei
+nicht überschritten, das Overflow-Gate ist also nicht verletzt. Die Korrektur
+läge in unverwandtem `kds.html`-Layout außerhalb dieser Slice.
