@@ -32,7 +32,8 @@
     "research:chatgpt": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1",
     "research:chatgpt:bg": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -Background",
     "research:chatgpt:stop": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -Stop",
-    "research:chatgpt:doctor": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -DoctorOnly"
+    "research:chatgpt:doctor": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -DoctorOnly",
+    "research:chatgpt:check": "node scripts/check-chatgpt-notebook-mcp.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.1",
