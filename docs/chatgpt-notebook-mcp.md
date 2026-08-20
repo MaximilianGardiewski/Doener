@@ -25,7 +25,8 @@ Discovery *und* für jeden Tool-Call gebraucht, nicht nur beim Verbinden.
 
 | | |
 |---|---|
-| Lokale MCP-URL | `http://127.0.0.1:8000/mcp` |
+| Lokale MCP-URL | `http://127.0.0.1:8000/mcp` (Allowlist-Proxy) |
+| Interner Upstream | `http://127.0.0.1:8001/mcp` (**nie** tunneln) |
 | Health | `http://127.0.0.1:8000/health` |
 | Transport | Streamable HTTP (`--transport http`) |
 | Bind | ausschließlich `127.0.0.1` |
@@ -35,12 +36,33 @@ Discovery *und* für jeden Tool-Call gebraucht, nicht nur beim Verbinden.
 
 Port und Pfad sind über `-Port` änderbar; die Werte oben sind die Defaults.
 
-## Tool-Allowlist
+## Tool-Allowlist — zwei Schichten
 
-Fail-closed: erst werden **alle 14** Upstream-Gruppen (43 Tools) über
-`NOTEBOOKLM_DISABLED_GROUPS` deaktiviert, danach reaktiviert
-`NOTEBOOKLM_ENABLED_TOOLS` genau die erlaubten. Ein neues Tool in einer
-bestehenden Gruppe erreicht ChatGPT dadurch nicht automatisch.
+> **Die Upstream-Gating-Mechanik ist keine Sicherheitsgrenze.**
+> `NOTEBOOKLM_DISABLED_GROUPS` / `NOTEBOOKLM_ENABLED_TOOLS` **verstecken** Tools
+> nur aus `tools/list`; der Quellcode sagt es selbst („no tool is unregistered,
+> only hidden"), und ein Live-Lauf hat es bestätigt: `source_list_drive` fehlte
+> in `tools/list` und **wurde trotzdem ausgeführt**, als es beim Namen gerufen
+> wurde. Damit wären `notebook_delete`, `source_delete`, `notebook_share_public`,
+> `research_import` und `studio_*` erreichbar gewesen.
+
+Deshalb gibt es zwei Listener, und der Schnitt dazwischen ist die Grenze:
+
+```text
+ChatGPT → tunnel-client → 127.0.0.1:8000/mcp   ← Proxy, erzwingt die Allowlist
+                                  │
+                                  ▼
+                          127.0.0.1:8001/mcp   ← notebooklm-mcp, nie getunnelt
+```
+
+`scripts/mcp-allowlist-proxy.mjs` lehnt jeden `tools/call` außerhalb der
+Allowlist ab und **leitet ihn gar nicht erst weiter**. Deny by default: ein
+Upstream-Release, das ein Tool hinzufügt, kann nicht erweitern, was ChatGPT darf.
+Zusätzlich filtert der Proxy `tools/list`, damit die angezeigte Menge exakt der
+erzwungenen entspricht.
+
+Die Upstream-Gating-Variablen bleiben gesetzt — als Anzeigefilter, nicht als
+Schutz.
 
 **`readonly` (Default)** — `server_info`, `notebook_list`, `notebook_get`,
 `notebook_describe`, `source_describe`, `source_get_content`
@@ -176,7 +198,7 @@ werden.
 | `not authenticated` | `nlm login` |
 | Health antwortet nicht | Port belegt? `-Port` ändern; `.research-cache/chatgpt-mcp/server.err.log` |
 | `tools/list` zeigt unerwartete Tools | **Nicht freigeben.** Upstream-Version geprüft? Gruppen-Map gegen `tests/chatgpt-notebook-mcp-allowlist.test.mjs` diffen |
-| `hidden tools cannot be invoked` schlägt fehl | Die Allowlist versteckt nur, blockt nicht. Bridge nicht exponieren, Upstream-Issue eröffnen |
+| `hidden tools cannot be invoked` schlägt fehl | Der Proxy läuft nicht oder der Tunnel zeigt auf Port 8001 statt 8000. `.research-cache/chatgpt-mcp/proxy.err.log` prüfen |
 | `uv tool install` schlägt fehl | Version muss auf PyPI existieren — 0.9.5 und 0.9.7 gibt es dort **nicht** |
 | Tunnel `readyz` nie 200 | `.research-cache/chatgpt-tunnel/tunnel.err.log`; Tunnel-ID und Runtime-Key prüfen |
 | Tunnel fehlt in ChatGPT | falscher Workspace-Scope beim Anlegen |

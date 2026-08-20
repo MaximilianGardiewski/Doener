@@ -29,23 +29,7 @@ function arrayAfter(marker) {
   return [...script.slice(open, close).matchAll(/'([^']+)'/g)].map((m) => m[1]);
 }
 
-const READONLY_TOOLS = [
-  "server_info",
-  "notebook_list",
-  "notebook_get",
-  "notebook_describe",
-  "source_describe",
-  "source_get_content",
-];
-
-const QUERY_EXTRA_TOOLS = [
-  "notebook_query",
-  "notebook_query_start",
-  "notebook_query_status",
-  "chat_list",
-  "chat_get",
-  "chat_export",
-];
+import { READONLY_TOOLS, QUERY_EXTRA_TOOLS, MUTATING_NAME } from "../scripts/lib/chatgpt-tool-allowlist.mjs";
 
 test("the default profile exposes exactly the read-only tools", () => {
   const allowed = arrayAfter("$AllowedTools = @(");
@@ -68,7 +52,7 @@ test("no exposed tool can mutate, delete or share anything", () => {
    * add it to a denylist. `notebook_query_start` is a read query, not a write,
    * so "start" is deliberately not a forbidden verb.
    */
-  const forbidden = /(delete|remove|destroy|create|add|update|edit|write|upload|rename|move|share|invite|publish|import|generate|studio|sync|switch|logout|login)/i;
+  const forbidden = MUTATING_NAME;
   const exposed = [...arrayAfter("$AllowedTools = @("), ...arrayAfter("if ($Mode -eq 'query')")];
   for (const tool of exposed) {
     assert.equal(forbidden.test(tool), false, `tool exposed to ChatGPT looks mutating: ${tool}`);
@@ -218,4 +202,49 @@ test("a missing tunnel-client does not cascade into false bridge failures", () =
   // A check that never ran must report as skipped, not as failed.
   const skipGuards = [...setupScript.matchAll(/if \(-not \$BridgeRunning\) \{ Write-Skip/g)];
   assert.equal(skipGuards.length, 2, "both the health and the MCP step must skip when the bridge is down");
+});
+
+
+/*
+ * The enforcing proxy exists because upstream gating turned out to be cosmetic.
+ * A live run against the real notebooklm-mcp showed source_list_drive hidden
+ * from tools/list and still executing when called by name; a stub reproducing
+ * that behaviour let 6 of 6 destructive calls through directly and 0 of 6
+ * through the proxy.
+ */
+const proxy = await readFile(new URL("../scripts/mcp-allowlist-proxy.mjs", import.meta.url), "utf8");
+
+test("the proxy denies by default and never forwards a denied call", () => {
+  assert.match(proxy, /if \(message\?\.method === "tools\/call"\)/);
+  assert.match(proxy, /if \(!allowed\.has\(name\)\)/, "the check must be membership in the allowlist, not a denylist");
+  // The rejection has to return before the upstream fetch, not after it.
+  const check = proxy.indexOf("if (!allowed.has(name))");
+  const forward = proxy.indexOf("const upstream = await fetch(upstreamUrl, {\n        method: \"POST\"");
+  assert.ok(check > -1 && forward > check, "a denied tools/call must return before anything is forwarded");
+});
+
+test("the proxy refuses to start with a mutating tool allowlisted", () => {
+  assert.match(proxy, /if \(MUTATING_NAME\.test\(tool\)\)/);
+  assert.match(proxy, /process\.exit\(2\)/, "a mutating allowlist entry must abort startup, not warn");
+});
+
+test("the proxy binds to loopback only", () => {
+  assert.match(proxy, /server\.listen\(listenPort, "127\.0\.0\.1"/);
+  const executable = proxy.split(/\r?\n/).filter((line) => !/^\s*\*/.test(line) && !/console\./.test(line)).join("\n");
+  assert.doesNotMatch(executable, /0\.0\.0\.0/);
+});
+
+test("the upstream MCP is moved off the port the tunnel reaches", () => {
+  // If both listened on the same port the proxy could be bypassed entirely.
+  assert.match(script, /\$UpstreamPort = \$Port \+ 1/);
+  assert.match(script, /'--port', \$UpstreamPort\.ToString\(\)/,
+    "notebooklm-mcp must bind the internal port, never the tunnelled one");
+  assert.match(script, /--listen-port', \$Port\.ToString\(\)/,
+    "the proxy must own the port ChatGPT reaches");
+});
+
+test("both processes are stopped together", () => {
+  assert.match(script, /\$ProxyPidFile/);
+  assert.match(script, /File = \$ProxyPidFile; Name = 'allowlist proxy'/);
+  assert.match(script, /File = \$PidFile; Name = 'upstream MCP'/);
 });

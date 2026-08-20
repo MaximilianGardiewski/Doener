@@ -13,27 +13,7 @@
  *   node scripts/check-chatgpt-notebook-mcp.mjs [--url http://127.0.0.1:8000/mcp] [--mode readonly|query]
  */
 
-const READONLY_TOOLS = [
-  "server_info",
-  "notebook_list",
-  "notebook_get",
-  "notebook_describe",
-  "source_describe",
-  "source_get_content",
-];
-
-const QUERY_EXTRA_TOOLS = [
-  "notebook_query",
-  "notebook_query_start",
-  "notebook_query_status",
-  "chat_list",
-  "chat_get",
-  "chat_export",
-];
-
-// Same pattern as tests/chatgpt-notebook-mcp-allowlist.test.mjs: catches an
-// upstream tool that nobody thought to denylist.
-const MUTATING = /(delete|remove|destroy|create|add|update|edit|write|upload|rename|move|share|invite|publish|import|generate|studio|sync|switch|logout|login)/i;
+import { toolsFor, MUTATING_NAME as MUTATING } from "./lib/chatgpt-tool-allowlist.mjs";
 
 function arg(name, fallback) {
   const index = process.argv.indexOf(`--${name}`);
@@ -43,7 +23,7 @@ function arg(name, fallback) {
 const mcpUrl = arg("url", process.env.MCP_SERVER_URL || "http://127.0.0.1:8000/mcp");
 const mode = arg("mode", "readonly");
 const healthUrl = new URL("/health", mcpUrl).toString();
-const expected = mode === "query" ? [...READONLY_TOOLS, ...QUERY_EXTRA_TOOLS] : READONLY_TOOLS;
+const expected = toolsFor(mode);
 
 const results = [];
 function record(name, ok, detail) {
@@ -93,8 +73,14 @@ console.log(`  Health: ${healthUrl}`);
 console.log(`  Mode:   ${mode}\n`);
 
 try {
-  const health = await fetch(healthUrl, { signal: AbortSignal.timeout(5000) });
-  record("health endpoint responds", health.ok, `HTTP ${health.status}`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    const health = await fetch(healthUrl, { signal: controller.signal });
+    record("health endpoint responds", health.ok, `HTTP ${health.status}`);
+  } finally {
+    clearTimeout(timer);
+  }
 } catch (error) {
   record("health endpoint responds", false, error.message);
 }
@@ -166,9 +152,11 @@ if (advertised) {
       `${HIDDEN_READONLY_PROBE} is hidden from tools/list but still executed — the allowlist only hides, it does not block`,
     );
   } catch (error) {
-    // An error is the expected, safe outcome. Anything that reads as
-    // unknown/disabled/not-found means the server refused to dispatch.
-    const refused = /unknown|not found|not_found|disabled|no such tool|invalid|method not found/i.test(error.message);
+    // An error is the expected, safe outcome: it means nothing dispatched the
+    // call. An error phrased as a *tool* complaint (bad arguments, upstream
+    // failure) would mean the opposite -- the tool ran -- so the wording is
+    // checked rather than treating any error as a pass.
+    const refused = /unknown|not available|not found|not_found|disabled|no such tool|blocked|denied|method not found/i.test(error.message);
     record(
       "hidden tools cannot be invoked",
       refused,
@@ -184,6 +172,7 @@ if (failed.length) {
   if (!advertised) {
     console.error("Is the bridge running?  npm run research:chatgpt:bg");
   }
-  process.exit(1);
+  process.exitCode = 1;
+} else {
+  console.log(`All ${results.length} checks passed. Bridge is safe to expose through the tunnel.`);
 }
-console.log(`All ${results.length} checks passed. Bridge is safe to expose through the tunnel.`);

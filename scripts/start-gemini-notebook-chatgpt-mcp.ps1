@@ -28,33 +28,41 @@ function Write-Step {
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $CacheDir = Join-Path $RepoRoot '.research-cache/chatgpt-mcp'
 $PidFile = Join-Path $CacheDir 'server.pid'
+$ProxyPidFile = Join-Path $CacheDir 'proxy.pid'
 $StdoutFile = Join-Path $CacheDir 'server.out.log'
 $StderrFile = Join-Path $CacheDir 'server.err.log'
+$ProxyOutFile = Join-Path $CacheDir 'proxy.out.log'
+$ProxyErrFile = Join-Path $CacheDir 'proxy.err.log'
 $McpPath = '/mcp'
+
+# Two listeners, and the split is the security boundary.
+#
+# notebooklm-mcp's tool gating only hides tools from tools/list -- its own source
+# says "no tool is unregistered, only hidden", and a live run confirmed it:
+# source_list_drive was absent from tools/list and still executed when called by
+# name. Every destructive tool was reachable by anything that could speak to the
+# port. So the upstream now listens on an internal port that is never tunnelled,
+# and the enforcing proxy owns the port ChatGPT reaches.
+$UpstreamPort = $Port + 1
+$UpstreamUrl = "http://127.0.0.1:$UpstreamPort$McpPath"
 $HealthUrl = "http://127.0.0.1:$Port/health"
 $McpUrl = "http://127.0.0.1:$Port$McpPath"
 
 Set-Location $RepoRoot
 
 if ($Stop) {
-    if (-not (Test-Path $PidFile)) {
-        Write-Host 'No ChatGPT Gemini Notebook MCP PID file exists.' -ForegroundColor Yellow
-        exit 0
+    foreach ($Entry in @(@{ File = $ProxyPidFile; Name = 'allowlist proxy' }, @{ File = $PidFile; Name = 'upstream MCP' })) {
+        if (-not (Test-Path $Entry.File)) { continue }
+        $EntryPid = (Get-Content $Entry.File -Raw).Trim()
+        if ($EntryPid -match '^\d+$') {
+            $EntryProcess = Get-Process -Id ([int]$EntryPid) -ErrorAction SilentlyContinue
+            if ($null -ne $EntryProcess) {
+                Write-Step "Stopping $($Entry.Name) (PID $EntryPid)"
+                Stop-Process -Id ([int]$EntryPid) -Force
+            }
+        }
+        Remove-Item $Entry.File -Force -ErrorAction SilentlyContinue
     }
-
-    $StoredPid = (Get-Content $PidFile -Raw).Trim()
-    if ($StoredPid -notmatch '^\d+$') {
-        Remove-Item $PidFile -Force
-        throw 'Invalid PID file removed.'
-    }
-
-    $Process = Get-Process -Id ([int]$StoredPid) -ErrorAction SilentlyContinue
-    if ($null -ne $Process) {
-        Write-Step "Stopping local Gemini Notebook MCP (PID $StoredPid)"
-        Stop-Process -Id ([int]$StoredPid) -Force
-    }
-
-    Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
     Write-Host 'Stopped.' -ForegroundColor Green
     exit 0
 }
@@ -140,7 +148,7 @@ $Executable = (Get-Command notebooklm-mcp).Source
 $Arguments = @(
     '--transport', 'http',
     '--host', '127.0.0.1',
-    '--port', $Port.ToString(),
+    '--port', $UpstreamPort.ToString(),
     '--path', $McpPath
 )
 
@@ -149,7 +157,16 @@ if (-not $Background) {
     Write-Host "MCP:    $McpUrl"
     Write-Host "Health: $HealthUrl"
     Write-Host 'Press Ctrl+C to stop.'
-    & $Executable @Arguments
+    Write-Host "Upstream: $UpstreamUrl (internal, never tunnelled)"
+    $Upstream = Start-Process -FilePath $Executable -ArgumentList $Arguments -PassThru -WindowStyle Hidden
+    try {
+        Start-Sleep -Seconds 2
+        & node (Join-Path $RepoRoot 'scripts/mcp-allowlist-proxy.mjs') `
+            --listen-port $Port --upstream $UpstreamUrl --mode $Mode
+    }
+    finally {
+        Stop-Process -Id $Upstream.Id -Force -ErrorAction SilentlyContinue
+    }
     exit $LASTEXITCODE
 }
 
@@ -189,7 +206,7 @@ for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
     }
 
     try {
-        $Response = Invoke-WebRequest -Uri $HealthUrl -Method Get -TimeoutSec 2
+        $Response = Invoke-WebRequest -Uri "http://127.0.0.1:$UpstreamPort/health" -Method Get -TimeoutSec 2
         if ($Response.StatusCode -ge 200 -and $Response.StatusCode -lt 300) {
             $Ready = $true
             break
@@ -203,12 +220,56 @@ for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
 if (-not $Ready) {
     Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
     Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
-    throw "MCP process started but health endpoint did not become ready: $HealthUrl"
+    throw "Upstream MCP started but its health endpoint never answered on port $UpstreamPort."
+}
+
+# ---- enforcing proxy: the only listener the tunnel is ever pointed at -------
+if (Test-Path $ProxyPidFile) {
+    $ExistingProxyPid = (Get-Content $ProxyPidFile -Raw).Trim()
+    if ($ExistingProxyPid -match '^\d+$' -and $null -ne (Get-Process -Id ([int]$ExistingProxyPid) -ErrorAction SilentlyContinue)) {
+        Stop-Process -Id ([int]$ExistingProxyPid) -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item $ProxyPidFile -Force -ErrorAction SilentlyContinue
+}
+Remove-Item $ProxyOutFile, $ProxyErrFile -Force -ErrorAction SilentlyContinue
+
+Write-Step 'Starting allowlist-enforcing proxy'
+$Proxy = Start-Process -FilePath (Get-Command node).Source `
+    -ArgumentList @((Join-Path $RepoRoot 'scripts/mcp-allowlist-proxy.mjs'),
+                    '--listen-port', $Port.ToString(),
+                    '--upstream', $UpstreamUrl,
+                    '--mode', $Mode) `
+    -PassThru -WindowStyle Hidden `
+    -RedirectStandardOutput $ProxyOutFile -RedirectStandardError $ProxyErrFile
+Set-Content -Path $ProxyPidFile -Value $Proxy.Id -Encoding ascii
+
+$ProxyReady = $false
+for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
+    Start-Sleep -Milliseconds 300
+    if ($Proxy.HasExited) {
+        $ProxyError = if (Test-Path $ProxyErrFile) { Get-Content $ProxyErrFile -Raw } else { '' }
+        Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
+        Remove-Item $PidFile, $ProxyPidFile -Force -ErrorAction SilentlyContinue
+        throw "Allowlist proxy exited with code $($Proxy.ExitCode). $ProxyError"
+    }
+    try {
+        $Probe = Invoke-WebRequest -Uri $HealthUrl -Method Get -TimeoutSec 2
+        if ($Probe.StatusCode -eq 200) { $ProxyReady = $true; break }
+    }
+    catch { }
+}
+
+if (-not $ProxyReady) {
+    Stop-Process -Id $Proxy.Id -Force -ErrorAction SilentlyContinue
+    Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
+    Remove-Item $PidFile, $ProxyPidFile -Force -ErrorAction SilentlyContinue
+    throw "Allowlist proxy started but $HealthUrl never answered."
 }
 
 Write-Host ''
 Write-Host 'ChatGPT Gemini Notebook MCP ready.' -ForegroundColor Green
-Write-Host "PID:    $($Process.Id)"
+Write-Host "Upstream PID: $($Process.Id)  (internal, port $UpstreamPort)"
+Write-Host "Proxy PID:    $($Proxy.Id)"
 Write-Host "MCP:    $McpUrl"
 Write-Host "Health: $HealthUrl"
 Write-Host "Mode:   $Mode"
