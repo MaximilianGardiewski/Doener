@@ -21,8 +21,8 @@ function setText(selector, value) {
 
 function installPublicCopyTone() {
   setText(".hero-copy > p", PUBLIC_COPY.heroIntro);
-  setText(".hero-media .float-card small", PUBLIC_COPY.heroMediaLabel);
-  setText(".hero-media .float-card strong", PUBLIC_COPY.heroMediaText);
+  setText(".hero-media .hero-media-tag small", PUBLIC_COPY.heroMediaLabel);
+  setText(".hero-media .hero-media-tag strong", PUBLIC_COPY.heroMediaText);
   setText("#ueber .story-card:first-child .story-copy p", PUBLIC_COPY.storyVenue);
   setText("#ueber .story-card:nth-child(2) .story-copy p", PUBLIC_COPY.storySelection);
   setText("#aktuelles .section-head > p", PUBLIC_COPY.newsIntro);

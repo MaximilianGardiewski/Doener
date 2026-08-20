@@ -1,0 +1,294 @@
+/*
+ * Mcello Public / Homepage — "Theke" art direction layer.
+ *
+ * Executes ART_DIRECTION.md's A (Cinematic Food) + B (Editorial Street-Food
+ * Energy) mix for the public/experience surfaces, mirroring the component
+ * language commerce-theke.css already established for commerce: flat printed
+ * edges instead of glass, graphic labels/rules instead of SaaS decoration,
+ * asymmetric editorial composition instead of centred symmetric card grids.
+ *
+ * Scope discipline: every selector below is rooted at one of the public
+ * sections (#start, #ueber, #aktuelles, #galerie, #kontakt), the site header,
+ * or the footer. Nothing here reaches into #bestellen, the builder, the cart
+ * or the KDS — those stay on commerce-theke.css's authority.
+ *
+ * Colour comes exclusively from brand-system.css tokens. No raw hex here.
+ * Loads after homepage-v2.css.
+ */
+
+:root {
+  /* Shape language for the editorial surfaces: printed, not inflated.
+   * Intentionally a separate, smaller set from commerce-theke.css's
+   * --theke-* tokens (same geometry, no cross-file coupling). */
+  --editorial-edge: 2px;
+  --editorial-rule: 1px;
+  --editorial-rule-copper: color-mix(in srgb, var(--mcello-copper) 46%, transparent);
+  --editorial-rule-faint: color-mix(in srgb, var(--mcello-copper) 20%, transparent);
+}
+
+/* ------------------------------------------------------- 0. Control language
+ * The commerce layer already flattened its buttons. Without this the same
+ * component renders as a gradient capsule on the public half of the very same
+ * page and as a printed copper block on the commerce half — one product, two
+ * button languages. Gradient plus glow is also the most template-looking thing
+ * on the site, which ART_DIRECTION.md rules out explicitly.
+ */
+
+.mcello-public-v2 :is(.hero-v2, .site-header-v2, .venue-stage, .news-stage, .gallery-stage, .contact-stage) .primary {
+  border: 0;
+  border-radius: 2px;
+  background: var(--mcello-copper);
+  background-image: none;
+  box-shadow: none;
+  color: var(--content-inverse);
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+
+.mcello-public-v2 :is(.hero-v2, .site-header-v2, .venue-stage, .news-stage, .gallery-stage, .contact-stage) .primary:hover {
+  background: color-mix(in srgb, var(--mcello-copper) 84%, var(--mcello-cream));
+}
+
+.mcello-public-v2 :is(.hero-v2, .site-header-v2, .venue-stage, .news-stage, .gallery-stage, .contact-stage) .pill {
+  border-radius: 2px;
+  background-image: none;
+  box-shadow: none;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcello-public-v2 .primary { transition: none; }
+}
+
+/* ------------------------------------------------------------------ 1. Header
+ * The brand mark loses its gradient/inset-glow "app icon" treatment for a
+ * flat printed block, matching the counter-edge language used everywhere
+ * else in the system.
+ */
+
+.mcello-public-v2 .site-header-v2 .brand-mark {
+  border: var(--editorial-edge) solid var(--mcello-copper);
+  border-radius: 0;
+  background: var(--mcello-ink);
+  box-shadow: none;
+}
+
+.mcello-public-v2 .site-header-v2 .nav-links a {
+  position: relative;
+  letter-spacing: .02em;
+}
+
+.mcello-public-v2 .site-header-v2 .nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: 2px;
+  height: 2px;
+  background: var(--mcello-copper);
+  transition: right var(--motion-fast, 120ms) var(--ease-standard, ease);
+}
+
+.mcello-public-v2 .site-header-v2 .nav-links a:hover::after,
+.mcello-public-v2 .site-header-v2 .nav-links a:focus-visible::after {
+  right: 0;
+}
+
+.mcello-public-v2 .site-header-v2 .header-order-cta {
+  border-radius: 0;
+}
+
+/* --------------------------------------------------------------- 2. Hero
+ * Break the centred split-screen template: the copy column narrows and the
+ * food frame gets more of the composition, with a hard copper rule doing the
+ * work a drop shadow used to do. Headline goes oversized per the reference
+ * synthesis ("Wörter werden als grafische Form benutzt").
+ */
+
+.mcello-public-v2 .hero-v2 {
+  grid-template-columns: .92fr 1.08fr;
+}
+
+.mcello-public-v2 .hero-copy-v2 .kicker {
+  display: inline-flex;
+  padding: 6px 10px 6px 0;
+  border-bottom: var(--editorial-edge) solid var(--mcello-copper);
+}
+
+.mcello-public-v2 .hero-copy-v2 .kicker::before {
+  display: none;
+}
+
+.mcello-public-v2 .hero-copy-v2 h1 {
+  font-size: clamp(3.75rem, 8.6vw, 8.2rem);
+  letter-spacing: -.06em;
+}
+
+.mcello-public-v2 .hero-v2 .hero-actions .pill {
+  border-radius: 0;
+  border-color: color-mix(in srgb, var(--mcello-cream) 42%, transparent);
+  background: none;
+}
+
+.mcello-public-v2 .hero-v2 .hero-actions .pill:hover {
+  border-color: var(--mcello-copper);
+  background: none;
+}
+
+.mcello-public-v2 .hero-v2 .meta-row {
+  border-top: var(--editorial-edge) solid var(--editorial-rule-copper);
+}
+
+.mcello-public-v2 .hero-media-v2 {
+  border-radius: 0 0 0 var(--radius-editorial-media);
+}
+
+/* --------------------------------------------------- 3. Venue / story section
+ * The two story cards already break the uniform-card-grid pattern with their
+ * staggered offset; this adds the plakative numbering the reference synthesis
+ * calls for and removes the last identical-radius habit by letting only the
+ * photo stay organic while the numeral stays hard-edged.
+ */
+
+#ueber.venue-stage .two-col {
+  counter-reset: venue-story;
+}
+
+#ueber.venue-stage .story-card {
+  position: relative;
+  padding-top: 46px;
+}
+
+#ueber.venue-stage .story-card::before {
+  counter-increment: venue-story;
+  content: counter(venue-story, decimal-leading-zero);
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--mcello-copper);
+  font: 800 var(--type-title)/1 var(--type-family-interface);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+
+#ueber.venue-stage .story-card img {
+  border-radius: var(--radius-editorial-media) 0 var(--radius-editorial-media) 0;
+}
+
+#ueber.venue-stage .story-card:nth-child(even) img {
+  border-radius: 0 var(--radius-editorial-media) 0 var(--radius-editorial-media);
+}
+
+/* -------------------------------------------------------------- 4. News/events
+ * Trade the identical dark cards for a printed running list: a hairline rule
+ * between entries and a copper kicker instead of a repeated card border.
+ */
+
+#aktuelles.news-stage .news-stack {
+  border-top: var(--editorial-edge) solid var(--editorial-rule-copper);
+}
+
+#aktuelles.news-stage .news-card {
+  border: 0;
+  border-bottom: var(--editorial-rule) solid var(--rule-subtle);
+  border-radius: 0;
+  padding: 22px 4px;
+  background: none;
+  box-shadow: none;
+}
+
+#aktuelles.news-stage .news-stack > .news-card:last-child {
+  border-bottom: 0;
+}
+
+#aktuelles.news-stage .news-card img {
+  border-radius: 0;
+}
+
+#aktuelles.news-stage .news-card .tag {
+  letter-spacing: .14em;
+}
+
+/* ------------------------------------------------------------------ 5. Gallery
+ * One universal radius reads as a template. The featured crop keeps an
+ * organic corner (food/place get to be soft); the supporting grid goes hard,
+ * so the two registers read as a deliberate choice, not an accident.
+ */
+
+#galerie.gallery-stage .gallery-item {
+  border-radius: 0;
+}
+
+#galerie.gallery-stage .gallery-item.featured:first-child {
+  border-radius: var(--radius-editorial-media) 0 var(--radius-editorial-media) 0;
+}
+
+#galerie.gallery-stage .gallery-item figcaption {
+  padding-inline: 14px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ 6. Contact
+ * A stamped receipt block rather than a soft rounded panel-on-panel moment;
+ * radius on .story-card itself is left alone (D001 pins it at 30px).
+ */
+
+#kontakt.contact-stage .story-card {
+  border-top: 3px solid var(--mcello-copper);
+  border-inline: 0;
+  border-bottom: 0;
+  padding-top: 22px;
+}
+
+#kontakt.contact-stage .section-head h2 {
+  font-size: clamp(2.75rem, 6vw, 5.4rem);
+}
+
+#kontakt.contact-stage .hero-actions .pill {
+  border-radius: 0;
+  border-color: color-mix(in srgb, var(--mcello-ink) 42%, transparent);
+  /* .pill hardcodes a light (--text) colour for dark surfaces; this section
+   * is the warm cream surface, so it needs the inverse ink tone or the label
+   * disappears against the background. */
+  color: var(--mcello-ink);
+}
+
+#kontakt.contact-stage .hero-actions .pill:hover {
+  border-color: var(--mcello-copper);
+  background: none;
+  color: var(--mcello-ink);
+}
+
+/* ------------------------------------------------------------------- 7. Footer */
+
+.footer .brand-mark {
+  border-radius: 0;
+  background: var(--mcello-ink);
+  border: var(--editorial-edge) solid var(--mcello-copper);
+  box-shadow: none;
+}
+
+.footer a:hover {
+  color: var(--mcello-gold);
+}
+
+/* --------------------------------------------------------------- 8. Responsive */
+
+@media (max-width: 980px) {
+  .mcello-public-v2 .hero-v2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  #ueber.venue-stage .story-card {
+    padding-top: 40px;
+  }
+}

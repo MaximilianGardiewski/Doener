@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#171715" />
   <title>Mcello — Bestellung ändern</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/brand-system.css" />
   <style>
     .edit-wrap{width:min(calc(100% - 24px),900px);margin:42px auto 120px}
     .edit-card{background:#171714;border:1px solid var(--line);border-radius:28px;padding:24px;box-shadow:var(--shadow);margin-top:16px}
@@ -20,6 +21,34 @@
     .qty-row{display:grid;grid-template-columns:130px 1fr;gap:12px;margin-top:14px}.unavailable{border-color:rgba(229,136,121,.35);background:#251b19}.warning{color:#efb6ad}.edit-message{margin-top:16px;padding:13px 14px;border-radius:14px;background:#20201b;color:var(--muted)}.edit-message.error{background:#291c19;color:#efb0a5}.edit-message.success{background:#1e281b;color:#cce8b0}
     .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:20px}.actions .primary{margin-left:auto}.hidden{display:none!important}
     @media(max-width:680px){.edit-grid,.qty-row{grid-template-columns:1fr}.edit-card{padding:18px}.actions .primary{margin-left:0;width:100%}}
+
+    /*
+     * Theke overrides: this screen sits between the cart and the status page, so
+     * it must not switch back to rounded cards and gradient controls halfway
+     * through the flow. Colour comes from the brand tokens only.
+     */
+    .edit-card{border:0;border-radius:0;background:none;box-shadow:none;padding:0;margin-top:0}
+    .edit-head h1{letter-spacing:-.02em}
+    .edit-wrap > .pill{display:inline-block;margin-bottom:28px}
+    .edit-wrap :is(.pill,.primary,.ghost-btn){border-radius:2px;background-image:none;box-shadow:none;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+    .edit-wrap .primary{border:0;background:var(--mcello-copper);color:var(--content-inverse)}
+    .edit-wrap :is(.pill,.ghost-btn){border:1px solid color-mix(in srgb,var(--content-primary) 38%,transparent);background:none;color:var(--content-primary)}
+    .edit-items{gap:0;margin-top:22px;border-top:2px solid var(--mcello-copper)}
+    .edit-item{border:0;border-bottom:1px solid var(--rule-subtle);border-radius:0;padding:20px 0;background:none}
+    .edit-item .price{font-variant-numeric:tabular-nums;font-weight:800;letter-spacing:-.01em;color:var(--content-primary)}
+    .edit-item.unavailable{border-left:3px solid var(--content-danger);padding-left:14px;background:none}
+    .modifier-group{border:0;border-top:1px solid var(--rule-subtle);border-radius:0;padding:14px 0 0;margin-top:16px}
+    .modifier-head strong{letter-spacing:-.01em}
+    .modifier-head small{font-size:var(--type-meta);font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+    .modifier-options{gap:0;border:1px solid var(--rule-subtle)}
+    .modifier-option{border-radius:0;border-bottom:1px solid var(--rule-subtle);background:none;padding:12px 13px;min-height:44px}
+    .modifier-options .modifier-option:last-child{border-bottom:0}
+    .modifier-option:has(input:checked){background:color-mix(in srgb,var(--mcello-olive) 14%,transparent);box-shadow:inset 3px 0 0 var(--mcello-olive)}
+    .field input,.field select,.field textarea{border-radius:2px}
+    .field>span{font-size:var(--type-meta);font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--content-secondary)}
+    .edit-message{border-radius:0;border-left:3px solid var(--mcello-copper);background:color-mix(in srgb,var(--mcello-copper) 10%,transparent)}
+    .edit-message.error{border-left-color:var(--content-danger);background:color-mix(in srgb,var(--content-danger) 12%,transparent)}
+    .edit-message.success{border-left-color:var(--mcello-olive);background:color-mix(in srgb,var(--mcello-olive) 12%,transparent)}
   </style>
 </head>
 <body>

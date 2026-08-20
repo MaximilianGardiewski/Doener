@@ -127,9 +127,10 @@ async function desktopPresentationFlow() {
   assert.match(cart, /Falafel/);
   assert.match(cart, /Tomate/);
   assert.match(cart, /Gurke/);
-  assert.match(cart, /Soße: Curry/);
-  assert.match(cart, /Soße: Knoblauch/);
-  assert.match(cart, /Soße: Scharf/);
+  // The cart summarises one line per modifier group, in catalog option order,
+  // plus the standard ingredients the guest removed.
+  assert.match(cart, /Soße: Curry, Knoblauch, Scharf/);
+  assert.match(cart, /Ohne: Fleisch/);
   assert.equal((await page.locator("#cartCount").textContent())?.trim(), "2 Artikel");
   assert.deepEqual(errors, [], errors.join("\n"));
   await context.close();

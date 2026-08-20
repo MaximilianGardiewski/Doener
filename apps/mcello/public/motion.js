@@ -135,9 +135,88 @@ function activeFoodStage() {
   return document.querySelector("#productModal.open .modal-hero");
 }
 
+function cartFlightSourceRect() {
+  const node = activeFoodStage() || document.querySelector("#productModal.open .modal-hero");
+  if (!node) return null;
+  const rect = node.getBoundingClientRect();
+  return rect.width && rect.height ? rect : null;
+}
+
+// A deliberately small token, not a duplicate of the full FoodStage/product art.
+const CART_FLIGHT_GHOST_SIZE = 64;
+
+function createCartFlightGhost(rect) {
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const ghost = document.createElement("div");
+  ghost.className = "motion-cart-flight-ghost";
+  ghost.setAttribute("aria-hidden", "true");
+  ghost.style.setProperty("position", "fixed");
+  ghost.style.setProperty("left", `${centerX - CART_FLIGHT_GHOST_SIZE / 2}px`);
+  ghost.style.setProperty("top", `${centerY - CART_FLIGHT_GHOST_SIZE / 2}px`);
+  ghost.style.setProperty("width", `${CART_FLIGHT_GHOST_SIZE}px`);
+  ghost.style.setProperty("height", `${CART_FLIGHT_GHOST_SIZE}px`);
+  const renderedSrc = document.querySelector("#modalImage")?.getAttribute("src");
+  if (renderedSrc) ghost.style.setProperty("background-image", `url("${renderedSrc}")`);
+  document.body.appendChild(ghost);
+  return ghost;
+}
+
+let fallbackCartFlightGhost = null;
+
+/*
+ * GSAP-unavailable path: a bounded CSS keyframe carries the same ghost to the
+ * same destination instead of a GSAP timeline, then removes the node itself.
+ */
+function runFallbackCartFlight(ghost, travel) {
+  if (fallbackCartFlightGhost && fallbackCartFlightGhost !== ghost) fallbackCartFlightGhost.remove();
+  fallbackCartFlightGhost = ghost;
+  ghost.style.setProperty("--motion-flight-x", `${travel.deltaX}px`);
+  ghost.style.setProperty("--motion-flight-y", `${travel.deltaY}px`);
+  ghost.style.setProperty("--motion-flight-scale", `${travel.scale}`);
+  const remove = () => {
+    if (fallbackCartFlightGhost === ghost) fallbackCartFlightGhost = null;
+    ghost.remove();
+  };
+  ghost.addEventListener("animationend", remove, { once: true });
+  window.setTimeout(remove, 640);
+  ghost.classList.add("motion-cart-flight");
+}
+
+function launchCartFlight() {
+  if (reducedMotion.matches) return;
+  const sourceRect = cartFlightSourceRect();
+  const cartTarget = document.querySelector(".sticky-order") || document.querySelector("#cartCount");
+  if (!sourceRect || !cartTarget) return;
+  const targetRect = cartTarget.getBoundingClientRect();
+  if (!targetRect.width || !targetRect.height) return;
+
+  const ghost = createCartFlightGhost(sourceRect);
+  const travel = {
+    deltaX: (targetRect.left + targetRect.width / 2) - (sourceRect.left + sourceRect.width / 2),
+    deltaY: (targetRect.top + targetRect.height / 2) - (sourceRect.top + sourceRect.height / 2),
+    scale: 0.55,
+  };
+
+  const handledByV3 = Boolean(commerceMotionV3?.animateHandoffFlight({ ghost, ...travel }));
+  if (!handledByV3) runFallbackCartFlight(ghost, travel);
+}
+
 function installCommerceMotionContracts() {
   syncCommerceEngineLabels();
   reducedMotion.addEventListener?.("change", syncCommerceEngineLabels);
+
+  /*
+   * Capture phase runs before the application's own `#addToCart` click handler,
+   * so the FoodStage/product visual can be read and cloned into a ghost while
+   * it is still on screen, before the application closes the product modal.
+   */
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const addToCart = target?.closest("#addToCart");
+    if (!addToCart || addToCart.matches(":disabled")) return;
+    launchCartFlight();
+  }, true);
 
   document.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
@@ -216,6 +295,94 @@ function installCommerceMotionContracts() {
   });
 }
 
+/*
+ * Builder step and configured-total feedback read rendered DOM only. The Builder
+ * shell decides which step is current and the application decides what the total
+ * is; this layer just explains that something changed.
+ */
+function installBuilderStateMotion() {
+  const groups = document.querySelector("#modifierGroups");
+  const addAction = document.querySelector("#addToCart");
+  const modal = document.querySelector("#productModal");
+
+  if (groups) {
+    let lastStepIndex = null;
+    new MutationObserver((records) => {
+      const changed = records.some((record) => record.attributeName === "data-builder-step-current");
+      if (!changed) return;
+      const step = groups.querySelector('.builder-step[data-builder-step-current="true"]');
+      if (!step) return;
+      const index = Number(step.dataset.builderStepIndex || 0);
+      const previous = lastStepIndex;
+      lastStepIndex = index;
+      if (previous === null || previous === index) return;
+
+      const direction = index > previous ? 1 : -1;
+      const handledByV3 = !reducedMotion.matches
+        && Boolean(commerceMotionV3?.animateBuilderStep({ step, direction }));
+      if (handledByV3) return;
+
+      step.dataset.motionStepDirection = direction === 1 ? "forward" : "back";
+      restartMotionClass(step, "motion-step-change", 340);
+      window.setTimeout(() => delete step.dataset.motionStepDirection, 360);
+    }).observe(groups, { subtree: true, attributes: true, attributeFilter: ["data-builder-step-current"] });
+  }
+
+  if (addAction) {
+    let lastLabel = addAction.textContent;
+    new MutationObserver(() => {
+      const label = addAction.textContent;
+      if (label === lastLabel) return;
+      // The count-up engine echoes its own interpolation frames onto this same
+      // node; comparing against its own last-written marker (rather than any
+      // price arithmetic) is what lets a genuinely new application value be
+      // told apart from this engine's own presentation frames.
+      const isOwnEcho = label === addAction.dataset.motionTotalRendered;
+      const previousLabel = lastLabel;
+      lastLabel = label;
+      if (isOwnEcho) return;
+      if (!modal?.classList.contains("open")) return;
+
+      const handledByV3 = !reducedMotion.matches
+        && Boolean(commerceMotionV3?.animateTotalChange({ node: addAction, from: previousLabel, to: label }));
+      if (handledByV3) return;
+
+      restartMotionClass(addAction, "motion-total-change", 320);
+    }).observe(addAction, { childList: true, characterData: true, subtree: true });
+  }
+}
+
+/*
+ * Skeleton placeholders. Wired only where the application already starts a
+ * surface empty (before its first real render): both grids are literally
+ * childless in the static markup until `renderMenu()` runs. Skeleton cards
+ * are inserted as ordinary children so the application's own later
+ * `innerHTML` replace removes them for free; the shimmer itself is pure CSS
+ * and stays authoritative-content-free.
+ */
+function installLoadingSkeletons() {
+  const skeletonCardCount = { "#featuredGrid": 3, "#menuList": 4 };
+  for (const [selector, count] of Object.entries(skeletonCardCount)) {
+    const node = document.querySelector(selector);
+    if (!node || node.children.length > 0) continue;
+
+    const observer = new MutationObserver(() => {
+      if (node.querySelector(".motion-skeleton-card")) return;
+      node.classList.remove("motion-skeleton-grid");
+      node.removeAttribute("aria-busy");
+      observer.disconnect();
+    });
+    observer.observe(node, { childList: true });
+
+    node.classList.add("motion-skeleton-grid");
+    node.setAttribute("aria-busy", "true");
+    node.insertAdjacentHTML(
+      "beforeend",
+      Array.from({ length: count }, () => '<div class="motion-skeleton-card" aria-hidden="true"></div>').join(""),
+    );
+  }
+}
+
 function publishMotionEngineMode(engine) {
   document.documentElement.dataset.mcelloMotionEngine = engine?.mode || "fallback";
   window.dispatchEvent(new CustomEvent("mcello:motion-engine", {
@@ -273,5 +440,7 @@ function scheduleMotionV3Adapter(revealController, heroController) {
 
 const revealController = installRevealMotion();
 const heroController = installHeroFoodDepth();
+installBuilderStateMotion();
 installCommerceMotionContracts();
+installLoadingSkeletons();
 scheduleMotionV3Adapter(revealController, heroController);

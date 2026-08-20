@@ -38,25 +38,23 @@
 }
 
 .builder-context {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 18px;
-  margin: 24px 0 14px;
-  padding: 14px 0 16px;
-  border-block: 1px solid var(--rule-subtle);
+  display: grid;
+  gap: 10px;
+  margin: 22px 0 18px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--mcello-copper) 30%, transparent);
+  border-radius: var(--radius-commerce-panel);
+  background:
+    linear-gradient(140deg, color-mix(in srgb, var(--mcello-copper) 13%, transparent), transparent 58%),
+    color-mix(in srgb, var(--surface-base) 74%, var(--surface-raised));
 }
 
 .builder-context[hidden] {
   display: none !important;
 }
 
-.builder-context > div {
-  display: grid;
-  gap: 4px;
-}
-
 .builder-context-label {
+  margin: 0;
   color: var(--mcello-gold);
   font-size: var(--type-meta);
   font-weight: 800;
@@ -64,15 +62,98 @@
   text-transform: uppercase;
 }
 
-.builder-context strong {
+.builder-recipe-line {
+  margin: 0;
+  color: var(--content-primary);
   font-family: var(--type-family-display);
   font-size: var(--type-title);
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.builder-recipe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.builder-recipe-actions .primary,
+.builder-recipe-actions .pill {
+  min-height: var(--touch-target-primary);
+  flex: 1 1 auto;
+}
+
+.builder-recipe-actions .primary {
+  flex-grow: 2;
+}
+
+.builder-recipe-actions .primary[disabled] {
+  opacity: .5;
+  cursor: not-allowed;
 }
 
 .builder-context small {
-  max-width: 29ch;
   color: var(--content-secondary);
-  text-align: right;
+  font-size: var(--type-meta);
+}
+
+/* Once the guest starts customizing, the one-tap path steps back and the sticky
+   action bar becomes the only add-to-cart, so the label can never lie about what
+   it adds. */
+#productModal[data-builder-entry="custom"] .builder-recipe-actions {
+  display: none;
+}
+
+#productModal[data-builder-recipe="none"] .builder-recipe-actions {
+  display: none;
+}
+
+/* Human-readable mirror of the configuration — also the text alternative to the FoodStage. */
+.builder-summary {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--rule-subtle);
+  border-radius: var(--radius-commerce-panel);
+  background: color-mix(in srgb, var(--surface-base) 62%, transparent);
+}
+
+.builder-summary[hidden] {
+  display: none !important;
+}
+
+.builder-summary dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.builder-summary dl > div {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+}
+
+.builder-summary dt {
+  color: var(--content-secondary);
+  font-size: var(--type-meta);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.builder-summary dd {
+  margin: 0;
+  color: var(--content-primary);
+  line-height: 1.45;
+}
+
+.builder-summary dl > div:nth-child(2) dd {
+  color: var(--content-secondary);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--content-secondary) 55%, transparent);
 }
 
 #productModal [data-builder-modifiers="true"] {
@@ -91,30 +172,41 @@
   background: color-mix(in srgb, var(--surface-base) 68%, var(--surface-raised));
 }
 
-#productModal .builder-step::before {
-  content: counter(builder-step, decimal-leading-zero);
-  counter-increment: builder-step;
-  position: absolute;
-  right: 14px;
-  top: 10px;
-  color: color-mix(in srgb, var(--mcello-copper) 42%, transparent);
-  font: 800 var(--type-meta)/1 var(--type-family-interface);
-  letter-spacing: .08em;
-}
-
 #productModal .builder-step .modifier-head {
-  padding-right: 38px;
+  align-items: baseline;
+  gap: 10px;
 }
 
 #productModal .builder-step .modifier-head::before {
   content: attr(data-builder-step-label);
-  display: block;
-  margin-bottom: 4px;
+  flex: none;
+  align-self: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-chip);
+  background: color-mix(in srgb, var(--mcello-copper) 20%, transparent);
+  color: var(--mcello-gold);
+  font: 800 var(--type-meta)/1.4 var(--type-family-interface);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+#productModal .builder-step .modifier-head strong {
+  margin-right: auto;
+  font-family: var(--type-family-display);
+  font-size: var(--type-body-lg);
+  font-weight: 600;
+}
+
+#productModal .builder-step .modifier-head small {
+  flex: none;
   color: var(--content-secondary);
   font-size: var(--type-meta);
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+#productModal .builder-step[data-required="true"] .modifier-head small {
+  color: var(--mcello-gold);
 }
 
 #productModal .builder-step .modifier-options {
@@ -123,6 +215,7 @@
 
 #productModal [data-builder-option="true"] {
   min-height: var(--touch-target-compact);
+  flex-wrap: wrap;
   padding: 11px 12px;
   border-color: color-mix(in srgb, var(--mcello-cream) 8%, transparent);
   background: color-mix(in srgb, var(--surface-base) 80%, transparent);
@@ -139,6 +232,75 @@
   min-width: 18px;
   min-height: 18px;
   accent-color: var(--mcello-gold);
+}
+
+/* "inkl." must never shout as loudly as a real surcharge. */
+#productModal [data-builder-option="true"] span:last-child {
+  color: var(--content-secondary);
+  font-size: var(--type-meta);
+  letter-spacing: .03em;
+}
+
+#productModal [data-builder-option="true"][data-paid="true"] span:last-child {
+  padding: 3px 9px;
+  border-radius: var(--radius-chip);
+  background: color-mix(in srgb, var(--mcello-copper) 24%, transparent);
+  color: var(--mcello-gold);
+  font-size: var(--type-label);
+  font-weight: 800;
+}
+
+/* A standard ingredient the guest took out stays visible and legible as "ohne". */
+#productModal [data-builder-option="true"][data-default-selected="true"]:not(:has(input:checked)) {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--content-secondary) 34%, transparent);
+}
+
+#productModal [data-builder-option="true"][data-default-selected="true"]:not(:has(input:checked)) span:first-of-type {
+  color: var(--content-secondary);
+}
+
+#productModal [data-builder-option="true"][data-default-selected="true"][data-paid="false"]:not(:has(input:checked)) span:last-child {
+  visibility: hidden;
+}
+
+#productModal [data-builder-option="true"][data-default-selected="true"]:not(:has(input:checked))::after {
+  content: "Ohne";
+  order: 3;
+  padding: 2px 8px;
+  border-radius: var(--radius-chip);
+  border: 1px solid color-mix(in srgb, var(--content-secondary) 30%, transparent);
+  color: var(--content-secondary);
+  font-size: var(--type-meta);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* Sold-out stays visible and disabled, and says so in words, not only in opacity. */
+#productModal [data-builder-option="true"][data-sold-out="true"] {
+  border-style: dashed;
+}
+
+#productModal [data-builder-option="true"][data-sold-out="true"]::after {
+  content: "Heute nicht verfügbar";
+  flex-basis: 100%;
+  order: 4;
+  color: var(--content-danger);
+  font-size: var(--type-meta);
+  font-weight: 700;
+}
+
+#productModal [data-builder-option="true"]:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Short option names pair up once there is room; long ones keep the full row. */
+@media (min-width: 1180px) {
+  #productModal .builder-step .modifier-options {
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  }
 }
 
 #productModal [data-builder-action-bar="true"] {
@@ -307,7 +469,62 @@
 }
 
 #productModal[data-builder-device="touch"][data-builder-orientation="landscape"] .builder-step[data-builder-step-current="true"] {
-  min-height: min(260px, 52svh);
+  min-height: 0;
+}
+
+/*
+ * Landscape phones have very little vertical room. The workbench keeps the
+ * product identity, the current step and the price/action; the recipe entry and
+ * the long-form summary collapse instead of pushing the options off-screen.
+ */
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] .builder-recipe-actions :is(.primary, .pill) {
+  min-height: var(--touch-target-primary);
+  font-size: var(--type-label);
+}
+
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] .builder-context small,
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] .builder-summary,
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] #productAvailability,
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] #productRecommendations,
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] .option-box {
+  display: none;
+}
+
+/*
+ * Touch landscape has ~390px of height. The guided step navigation stays visible per
+ * the Builder responsive contract, so the recipe entry collapses to a single action
+ * row instead of a panel — that is the space the modifier options used to lose.
+ */
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] :is(.builder-context-label, .builder-recipe-line, #modalDescription) {
+  display: none;
+}
+
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] .builder-context {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"][data-builder-entry="custom"] .builder-context {
+  display: none;
+}
+
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] .builder-guided-nav {
+  margin-top: 0;
+}
+
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] [data-builder-action-bar="true"] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+}
+
+/* Space is saved through type and padding, never by shrinking the primary touch target. */
+#productModal[data-builder-device="touch"][data-builder-orientation="landscape"] [data-builder-action-bar="true"] :is(.pill, .primary) {
+  min-height: var(--touch-target-primary);
+  padding-inline: 14px;
+  font-size: var(--type-label);
+  white-space: nowrap;
 }
 
 #productModal[data-builder-device="touch"][data-builder-orientation="landscape"] [data-builder-action-bar="true"] {
@@ -403,6 +620,36 @@
 
   #productModal[data-builder-device="touch"] .builder-step[data-builder-step-current="true"] {
     min-height: 0;
+  }
+
+  #productModal[data-builder-device="touch"] .builder-guided-nav {
+    margin-block: 6px;
+    padding-block: 5px;
+  }
+
+  #productModal[data-builder-device="touch"] .builder-recipe-actions {
+    gap: 8px;
+  }
+
+  #productModal[data-builder-device="touch"] .builder-context {
+    margin-block: 0 6px;
+  }
+
+  #productModal[data-builder-device="touch"] .builder-guided-nav :is(button) {
+    min-height: var(--touch-target-primary);
+    font-size: var(--type-label);
+  }
+
+  #productModal[data-builder-device="touch"] .builder-step {
+    padding: 10px 12px;
+  }
+
+  #productModal[data-builder-device="touch"] .builder-step .modifier-head {
+    margin-bottom: 6px;
+  }
+
+  #productModal[data-builder-device="touch"] .builder-step .modifier-options {
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   }
 }
 

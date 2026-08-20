@@ -12,9 +12,9 @@
 }
 
 .mcello-public-v2 .site-header-v2 {
-  background: color-mix(in srgb, var(--mcello-ink) 88%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--mcello-copper) 22%, transparent);
-  backdrop-filter: blur(18px) saturate(120%);
+  background: color-mix(in srgb, var(--mcello-ink) 94%, transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--mcello-copper) 55%, transparent);
+  backdrop-filter: none;
 }
 
 .mcello-public-v2 .site-header-v2 .nav {
@@ -125,6 +125,16 @@
   border-color: color-mix(in srgb, var(--mcello-cream) 10%, transparent);
 }
 
+/*
+ * Cancel the legacy (pre-V2) .hero-media::before rotated gold frame from
+ * styles.css — it was designed for the old hero layout and, once the V2
+ * hero's own double-border overlay is gone, reads as a stray diagonal line
+ * cutting across the food frame instead of a deliberate mark.
+ */
+.mcello-public-v2 .hero-media-v2::before {
+  content: none;
+}
+
 .mcello-public-v2 .hero-media-v2 {
   position: relative;
   aspect-ratio: var(--ratio-hero);
@@ -135,27 +145,7 @@
   background:
     linear-gradient(155deg, color-mix(in srgb, var(--mcello-copper) 13%, transparent), transparent 48%),
     var(--mcello-coal);
-  box-shadow: 0 44px 100px rgba(0, 0, 0, .38);
-}
-
-.mcello-public-v2 .hero-media-v2::before {
-  content: "";
-  position: absolute;
-  z-index: 2;
-  inset: 18px;
-  border: 1px solid color-mix(in srgb, var(--mcello-gold) 18%, transparent);
-  border-radius: calc(var(--radius-editorial-media) - 10px);
-  pointer-events: none;
-}
-.mcello-public-v2 .hero-media-v2::after {
-  content: "CONCEPT / ORIGINAL MEDIA PENDING";
-  position: absolute;
-  z-index: 3;
-  top: 28px;
-  right: 30px;
-  color: color-mix(in srgb, var(--mcello-cream) 58%, transparent);
-  font: 700 var(--type-meta)/1 var(--type-family-interface);
-  letter-spacing: .14em;
+  box-shadow: none;
 }
 
 .mcello-public-v2 .hero-media-v2 .hero-photo {
@@ -167,16 +157,65 @@
   transform: scale(1.035);
 }
 
-.mcello-public-v2 .hero-media-v2 .float-card {
+/*
+ * A flat, bordered stamp instead of a blurred glass card. It is anchored to
+ * the LEFT/top corner and given a fixed max-width on purpose: the media frame
+ * itself is allowed to bleed past the shell on the right (editorial crop),
+ * but that means anything pinned to its right edge inherits the bleed and
+ * gets its text clipped by main's overflow:clip. Left-anchoring keeps this
+ * label inside the actual viewport at every breakpoint regardless of how far
+ * the photo frame bleeds.
+ */
+.mcello-public-v2 .hero-media-v2 .hero-media-tag {
+  position: absolute;
   z-index: 4;
-  right: 28px;
-  bottom: 28px;
-  left: 28px;
+  left: 22px;
+  top: 22px;
+  right: auto;
+  bottom: auto;
   width: auto;
-  padding: 18px 20px;
-  border-color: color-mix(in srgb, var(--mcello-copper) 24%, transparent);
-  background: color-mix(in srgb, var(--mcello-ink) 84%, transparent);
-  backdrop-filter: blur(14px);
+  max-width: 260px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--mcello-copper) 55%, transparent);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--mcello-ink) 92%, transparent);
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.mcello-public-v2 .hero-media-tag small {
+  display: block;
+  color: var(--mcello-gold);
+  font-size: var(--type-meta);
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.mcello-public-v2 .hero-media-tag strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--content-primary);
+  font-family: var(--type-family-interface);
+  font-size: .8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/*
+ * The explicit "this is not documentary photography" marker lives as normal
+ * flow inside the already-bounded tag box (never absolutely positioned
+ * against the bleeding photo frame), so it can never be clipped by
+ * main's overflow:clip the way the old right-anchored overlay was.
+ */
+.mcello-public-v2 .hero-media-tag::after {
+  content: "CONCEPT / ORIGINAL MEDIA PENDING";
+  display: block;
+  margin-top: 8px;
+  color: color-mix(in srgb, var(--mcello-cream) 52%, transparent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
 }
 
 /* --- Transition into commerce ----------------------------------------- */
@@ -444,9 +483,9 @@
     text-align: center;
   }
 
-  .mcello-public-v2 .hero-media-v2 .float-card {
-    right: 18px;
-    bottom: 18px;
-    left: 18px;
+  .mcello-public-v2 .hero-media-v2 .hero-media-tag {
+    left: 16px;
+    top: 16px;
+    max-width: calc(100% - 32px);
   }
 }
