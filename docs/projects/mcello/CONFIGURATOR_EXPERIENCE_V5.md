@@ -384,3 +384,54 @@ Lane "In Zubereitung") überläuft bei 1024 px die eigene Karte um ca. 70 px,
 unabhängig von Motion und ebenfalls vorbestehend. Der Dokumentrand wird dabei
 nicht überschritten, das Overflow-Gate ist also nicht verletzt. Die Korrektur
 läge in unverwandtem `kds.html`-Layout außerhalb dieser Slice.
+
+## 19. Accessibility-Sweep (gemessen, nicht geschätzt)
+
+Gemessen auf `/?presentation=mcello` (390×844 und 1280×900, letzteres mit
+geöffnetem Konfigurator) sowie `/status.html`.
+
+**Methodik-Korrektur, die das Ergebnis erst brauchbar gemacht hat:** Kontrast
+wird über die **vollständige Ancestor-Kette** komponiert. Beim ersten Anlauf
+stoppte die Suche beim ersten nicht-transparenten `backgroundColor` — auf den
+Theke-Flächen ist das oft ein Overlay mit 4 % Alpha, wodurch fast jedes Element
+1:1 ergab. Ein noch früherer Anlauf las zusätzlich `color(srgb 0.78 …)`-Floats
+als 0–255-Werte. Beide Läufe wurden verworfen, nicht berichtet.
+
+### Befunde und Korrekturen
+
+| Element | vorher | nachher | Ursache |
+| --- | --- | --- | --- |
+| `.availability-badge.good` | 3,63 / 3,32 : 1 | ≥ 5,0 : 1 | Mix zu wenig Ink |
+| `.availability-badge.bad` | 3,05 / 2,79 : 1 | ≥ 4,7 : 1 | dito |
+| `.mc-food-stage-v4__caption > span` | 2,76 : 1 | 4,65 : 1 | `#667a39` auf hellem Caption-Grund |
+| `.mc-food-stage-v4__caption > small` | 3,47 : 1 | 5,11 : 1 | `#755f4c`, 11 px |
+| `#cartAmount` | 2,30 : 1 | 4,65 : 1 | Descendant-Selector |
+| `#specialRequest` | kein Accessible Name | `aria-labelledby` | — |
+
+`.availability-badge.bad` wurde über die Rechnung gefunden, nicht über den Lauf:
+kein Fixture-Produkt ist ausverkauft, die Variante wird also nie gerendert. Sie
+scheitert mit demselben Muster und wurde mitkorrigiert.
+
+**`#cartAmount` hatte zwei Defekte in einer Regel.** `.sticky-order span` zielt
+auf die Bildunterschrift der Leiste, greift als Descendant-Selector aber auch in
+den Kupfer-Button hinein und färbte den Betrag muted (2,30:1). Dieselbe Regel
+setzte unter 600 px `display: none` und entfernte damit die Warenkorbsumme
+vollständig vom Button. Beide Regeln sind jetzt `> span`: der Betrag ist bei
+360 / 390 / 430 px sichtbar, 4,65:1, 48 px Touch-Target, 0 px horizontaler
+Overflow.
+
+### Ergebnis
+
+| Fläche | Kontrastfehler | ohne Accessible Name | ohne sichtbaren Fokus | Page-Errors |
+| --- | --- | --- | --- | --- |
+| Store 390×844 | 0 (vorher 11) | 0 | 0 von 8 | 0 |
+| Konfigurator 1280×900 | 0 (vorher 14) | 0 (vorher 1) | 0 von 8 | 0 |
+| Status 390×844 | 0 | 0 | 0 von 5 | 0 |
+
+`brand-design-system.browser.mjs` prüft jetzt CTA-Label, Warenkorbsumme und
+deren Sichtbarkeit auf Mobile. Gegen den zurückgedrehten Selector geprüft: der
+Test meldet 2,3:1 und schlägt fehl.
+
+**Nicht gemessen:** Screenreader-Ausgabe, Zoom bis 200 %, und Kontrast auf
+Flächen, die nur mit echten Backend-Daten erscheinen (KDS-Lanes mit Bestellungen,
+Admin). Diese bleiben offen.
