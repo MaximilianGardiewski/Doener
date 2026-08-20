@@ -305,3 +305,39 @@ test("a network failure is not treated as a missing login", () => {
   assert.match(script, /throw "Gemini Notebook authentication is not ready/);
   assert.match(script, /\[switch\]\$RequireAuth/, "the strict behaviour stays available");
 });
+
+const desktopScript = await read("../scripts/setup-chatgpt-desktop-mcp.ps1");
+
+test("the ChatGPT desktop registration points at the proxy, never the upstream", () => {
+  /*
+   * ChatGPT desktop shares the Codex host's MCP config and accepts a loopback
+   * Streamable HTTP server directly, so this path needs no tunnel. That makes
+   * the target port the whole security question: $Port is the enforcing proxy,
+   * $Port + 1 is the raw upstream that still executes hidden tools.
+   */
+  assert.match(desktopScript, /\$McpUrl = "http:\/\/127\.0\.0\.1:\$Port\/mcp"/);
+  assert.doesNotMatch(desktopScript, /\$McpUrl[^\n]*\$Port \+ 1/, "must never register the upstream port");
+  assert.match(desktopScript, /[Nn]ever point this at \$\(\$Port \+ 1\)/, "and must say so in the written config");
+});
+
+test("the desktop registration edits only its own TOML table", () => {
+  // The Codex config belongs to the host, not to us: a broad rewrite would take
+  // the user's other servers and settings with it.
+  assert.match(desktopScript, /\[regex\]::Escape\(\$ServerName\)/, "the table name must be escaped");
+  assert.match(desktopScript, /\(\?ms\)\^\\\[mcp_servers\\\./, "the pattern must be anchored to a table header");
+  assert.match(desktopScript, /\(\?=\^\\\[\|\\z\)/, "and must stop at the next table or end of file");
+  assert.match(desktopScript, /doener-backup/, "the first edit must leave a backup");
+});
+
+test("the proxy refuses browser-driven requests", () => {
+  /*
+   * Going local-only removes the tunnel but not the exposure: any page in a
+   * browser on this machine can POST to 127.0.0.1. Real MCP clients send no
+   * Origin; a browser always does.
+   */
+  assert.match(proxy, /const origin = req\.headers\.origin;/);
+  assert.match(proxy, /if \(origin && !allowedOrigins\.has\(origin\)\)/);
+  assert.match(proxy, /return send\(res, 403/);
+  // Health has to stay reachable or the start scripts can never confirm readiness.
+  assert.match(proxy, /if \(url\.pathname !== "\/health"\)/);
+});

@@ -204,6 +204,51 @@ werden.
 | Tunnel fehlt in ChatGPT | falscher Workspace-Scope beim Anlegen |
 | Nach Gemini-Notebook-Änderung bricht alles | fail closed lassen, `npm run doctor:research`, Upgrade bewusst durchführen |
 
+## Zwei Wege zu ChatGPT — und welcher wann gilt
+
+| | ChatGPT **Desktop** (Codex-Host) | ChatGPT **Web** (Connectors) |
+| --- | --- | --- |
+| Lokaler MCP direkt | **ja** | **nein** |
+| Tunnel nötig | nein | ja (Secure MCP Tunnel) |
+| Öffentliche URL nötig | nein | ja |
+| Plan-Abhängigkeit | keine bekannt | Business/Enterprise/Edu |
+| Einrichtung | `npm run research:chatgpt:desktop` | `npm run research:chatgpt:tunnel` |
+
+ChatGPT Desktop, Codex CLI und die IDE-Erweiterung teilen sich **einen** Codex-Host
+und **eine** MCP-Konfiguration (`%USERPROFILE%\.codex\config.toml`, überschreibbar
+per `CODEX_HOME`). Dieser Host akzeptiert einen Loopback-Streamable-HTTP-Server
+direkt.
+
+ChatGPT Web tut das ausdrücklich nicht — die OpenAI-Dokumentation verlangt den
+„public `/mcp` endpoint" und das Help Center beantwortet „Can I connect to a local
+MCP server?" mit „Not directly." Genau dafür existiert der Secure MCP Tunnel.
+
+**Empfehlung: der Desktop-Weg.** Kein Tunnel, keine öffentliche URL, keine
+Plan-Abhängigkeit — und die lokale Google-Session bleibt unangetastet.
+
+```powershell
+npm run research:chatgpt:bg        # Bridge starten
+npm run research:chatgpt:desktop   # in die Codex-Config eintragen
+# ChatGPT Desktop neu starten
+```
+
+Rückgängig: `npm run research:chatgpt:desktop:remove`.
+
+Der Eintrag zeigt auf **Port 8000** (den Proxy), nie auf 8001 (den rohen
+Upstream). Vor der ersten Änderung wird `config.toml.doener-backup` angelegt.
+
+## Loopback ist nicht privat
+
+Jeder Prozess auf dem Rechner erreicht `127.0.0.1:8000`, und eine offene Webseite
+kann dorthin POSTen — die DNS-Rebinding-/CSRF-Klasse, vor der die MCP-Spezifikation
+für lokale Server warnt. Der Proxy lehnt deshalb jede Anfrage mit einem
+Browser-`Origin` ab, das nicht ausdrücklich erlaubt wurde. Echte MCP-Clients
+senden keinen `Origin`; ein Browser immer. `/health` bleibt offen, weil die
+Start-Scripts es pollen und es keine Daten trägt.
+
+Optional zusätzlich ein gemeinsames Token über `MCELLO_MCP_TOKEN`; der Codex-Host
+kann es als Header mitschicken.
+
 ## Verifikationsstand
 
 Auf Windows 11 (PowerShell 7.6.5, Node 24.15.0, `notebooklm-mcp-cli` 0.9.13,

@@ -35,6 +35,22 @@ const upstreamUrl = arg("upstream", "http://127.0.0.1:8001/mcp");
 const mode = arg("mode", "readonly");
 const allowed = new Set(toolsFor(mode));
 
+/*
+ * Loopback is not the same as private. Any process on this machine can reach
+ * 127.0.0.1, and a page open in a browser can be made to POST here -- the
+ * DNS-rebinding/CSRF class the MCP spec warns about for local servers. Two
+ * cheap defences:
+ *
+ *   1. Reject anything carrying a browser Origin we did not allow. A real MCP
+ *      client (Codex/ChatGPT Desktop, the checker) sends no Origin; a page
+ *      driven by a browser always does.
+ *   2. An optional shared token, for clients that can send a header.
+ */
+const allowedOrigins = new Set(
+  (arg("allow-origin", "") || "").split(",").map((value) => value.trim()).filter(Boolean),
+);
+const requiredToken = process.env.MCELLO_MCP_TOKEN || "";
+
 // A tool that is allowlisted but reads as mutating is a configuration mistake,
 // and starting anyway would put it in front of ChatGPT. Refuse to start.
 for (const tool of allowed) {
@@ -71,8 +87,31 @@ function reframe(message, sse) {
   return sse ? `event: message\ndata: ${json}\n\n` : json;
 }
 
+function rejectReason(req) {
+  const origin = req.headers.origin;
+  if (origin && !allowedOrigins.has(origin)) {
+    return `request carries a browser Origin (${origin}) that is not allowed`;
+  }
+  if (requiredToken) {
+    const provided = (req.headers.authorization || "").replace(/^Bearer\s+/i, "") || req.headers["x-mcello-token"];
+    // Length-independent compare is overkill for a loopback token; a plain
+    // mismatch is the only outcome that matters here.
+    if (provided !== requiredToken) return "missing or invalid token";
+  }
+  return null;
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${listenPort}`);
+
+  // Health stays open: it carries no data and the start scripts poll it.
+  if (url.pathname !== "/health") {
+    const reason = rejectReason(req);
+    if (reason) {
+      console.warn(`[proxy] REFUSED ${req.method} ${url.pathname}: ${reason}`);
+      return send(res, 403, { error: "forbidden", reason });
+    }
+  }
 
   if (url.pathname === "/health") {
     // Report the boundary the operator cares about, not just liveness.
@@ -169,6 +208,8 @@ server.listen(listenPort, "127.0.0.1", () => {
   console.log(`  allowed:  ${[...allowed].join(", ")}`);
   console.log(`  upstream: ${upstreamUrl}`);
   console.log(`  every other tools/call is denied and never forwarded.`);
+  console.log(`  browser Origin: ${allowedOrigins.size ? [...allowedOrigins].join(", ") : "rejected (none allowed)"}`);
+  console.log(`  shared token:   ${requiredToken ? "required" : "not set"}`);
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
