@@ -8,6 +8,8 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$PinnedVersion = '0.9.5'
+$PinnedPackage = "notebooklm-mcp-cli==$PinnedVersion"
 
 function Test-Command {
     param([Parameter(Mandatory)][string]$Name)
@@ -25,6 +27,7 @@ Set-Location $RepoRoot
 
 Write-Host "Doener / Gemini Notebook research bridge setup" -ForegroundColor Green
 Write-Host "Repo: $RepoRoot"
+Write-Host "Pinned bridge version for first install: $PinnedVersion"
 
 if (-not (Test-Command 'uv')) {
     if (-not $InstallUv) {
@@ -53,6 +56,15 @@ if (-not (Test-Command 'uv')) {
     }
 }
 
+$UvToolBin = (& uv tool dir --bin).Trim()
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($UvToolBin)) {
+    throw "Unable to resolve the uv tool executable directory."
+}
+
+if (-not (($env:Path -split ';') -contains $UvToolBin)) {
+    $env:Path = "$UvToolBin;$env:Path"
+}
+
 if (-not (Test-Command 'claude')) {
     Write-Host ""
     Write-Host "Warning: Claude Code was not found on PATH." -ForegroundColor Yellow
@@ -63,14 +75,14 @@ $HasNlm = Test-Command 'nlm'
 $HasMcp = Test-Command 'notebooklm-mcp'
 
 if (-not ($HasNlm -and $HasMcp)) {
-    Write-Step "Installing Gemini Notebook CLI + MCP"
-    & uv tool install notebooklm-mcp-cli
+    Write-Step "Installing Gemini Notebook CLI + MCP $PinnedVersion"
+    & uv tool install $PinnedPackage
     if ($LASTEXITCODE -ne 0) {
-        throw "uv failed to install notebooklm-mcp-cli (exit $LASTEXITCODE)."
+        throw "uv failed to install $PinnedPackage (exit $LASTEXITCODE)."
     }
 }
 elseif ($Upgrade) {
-    Write-Step "Upgrading Gemini Notebook CLI + MCP"
+    Write-Step "Upgrading Gemini Notebook CLI + MCP to the current release"
     & uv tool upgrade notebooklm-mcp-cli
     if ($LASTEXITCODE -ne 0) {
         throw "uv failed to upgrade notebooklm-mcp-cli (exit $LASTEXITCODE)."
@@ -123,4 +135,4 @@ Write-Host "  - .claude/agents/research-director.md starts notebooklm-mcp only i
 Write-Host "  - Gemini credentials remain outside the repository."
 Write-Host ""
 Write-Host "Next test from Claude Code in this repo:"
-Write-Host '  @research-director List my Gemini Notebooks and identify "Doener — Project Research". Create it only if it does not exist.'
+Write-Host '  /gemini-notebook-research Check the current Mcello landscape-only decision with existing notebook evidence; do not implement anything.'
