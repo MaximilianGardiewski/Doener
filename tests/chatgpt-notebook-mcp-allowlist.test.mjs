@@ -290,3 +290,18 @@ test("every strict-format file read is whitespace-tolerant", () => {
     }
   }
 });
+
+test("a network failure is not treated as a missing login", () => {
+  /*
+   * Observed on a real run: "network_error: ClientAuthenticationError -- your
+   * saved credentials may still be valid" aborted the bridge, and with it the
+   * tunnel, as though the account were logged out. nlm distinguishes the two;
+   * the script has to as well.
+   */
+  assert.match(script, /network_error\|Could not reach\|timed out\|temporarily/);
+  assert.match(script, /for \(\$Attempt = 1; \$Attempt -le 3; \$Attempt\+\+\)/, "transient failures get retried");
+  assert.match(script, /\$NetworkTrouble -and -not \$RequireAuth/, "unreachable != unauthenticated");
+  // A genuine rejection must still stop the start.
+  assert.match(script, /throw "Gemini Notebook authentication is not ready/);
+  assert.match(script, /\[switch\]\$RequireAuth/, "the strict behaviour stays available");
+});

@@ -8,7 +8,11 @@ param(
 
     [switch]$Background,
     [switch]$Stop,
-    [switch]$DoctorOnly
+    [switch]$DoctorOnly,
+
+    # Refuse to start unless the Gemini Notebook login verifies. Off by default
+    # so a flaky connection cannot block a bridge whose cookies are still good.
+    [switch]$RequireAuth
 )
 
 Set-StrictMode -Version Latest
@@ -78,9 +82,42 @@ foreach ($CommandName in @('nlm', 'notebooklm-mcp')) {
 }
 
 Write-Step 'Checking Gemini Notebook authentication'
-& nlm login --check
-if ($LASTEXITCODE -ne 0) {
-    throw "Gemini Notebook authentication is not ready. Run 'nlm login' and retry."
+# A transient network failure is not a missing login, and nlm says so itself
+# ("your saved credentials may still be valid"). Treating the two the same made
+# a flaky connection look like a logged-out account and killed the whole start.
+# So: retry briefly, and only refuse to start when the credentials are actually
+# rejected.
+$AuthOutput = ''
+$AuthOk = $false
+$NetworkTrouble = $false
+for ($Attempt = 1; $Attempt -le 3; $Attempt++) {
+    $AuthOutput = (& nlm login --check 2>&1 | Out-String)
+    if ($LASTEXITCODE -eq 0) { $AuthOk = $true; break }
+
+    $NetworkTrouble = $AuthOutput -match 'network_error|Could not reach|timed out|temporarily'
+    if (-not $NetworkTrouble) { break }
+
+    if ($Attempt -lt 3) {
+        Write-Host "    network trouble reaching Gemini Notebook; retrying ($Attempt/3)" -ForegroundColor Yellow
+        Start-Sleep -Seconds ([Math]::Pow(2, $Attempt))
+    }
+}
+
+Write-Host $AuthOutput.TrimEnd()
+
+if (-not $AuthOk) {
+    if ($NetworkTrouble -and -not $RequireAuth) {
+        # The bridge is useful with stale-but-valid cookies: the upstream will
+        # surface a real auth error per call if they have in fact expired.
+        Write-Host ''
+        Write-Host 'Could not reach Gemini Notebook to verify the login.' -ForegroundColor Yellow
+        Write-Host 'The saved credentials may still be valid, so the bridge is starting anyway.'
+        Write-Host 'If tool calls come back unauthorized, run: nlm login'
+        Write-Host 'Use -RequireAuth to make this a hard failure instead.'
+    }
+    else {
+        throw "Gemini Notebook authentication is not ready. Run 'nlm login' and retry."
+    }
 }
 
 if ($DoctorOnly) {
