@@ -30,7 +30,7 @@ This integration deliberately keeps Gemini Notebook out of the main Claude Code 
 - Google Chrome for the MCP package's interactive login flow.
 - `uv` available, or use the setup script with `-InstallUv`.
 
-V1 pins the first installation to `notebooklm-mcp-cli==0.9.5`, which exposes the `nlm` CLI and `notebooklm-mcp` stdio server. A later upgrade is explicit rather than automatic because this third-party bridge depends on Gemini Notebook internal APIs.
+V1 pins the first installation to `notebooklm-mcp-cli==0.9.13`, which exposes the `nlm` CLI and `notebooklm-mcp` stdio server. A later upgrade is explicit rather than automatic because this third-party bridge depends on Gemini Notebook internal APIs.
 
 ## Setup
 

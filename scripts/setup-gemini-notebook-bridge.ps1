@@ -8,7 +8,15 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$PinnedVersion = '0.9.5'
+# 0.9.5 was pinned here but is not resolvable: it exists as a GitHub release and
+# was never published to PyPI, so `uv tool install notebooklm-mcp-cli==0.9.5`
+# fails on any machine without a warm cache. Verified against the PyPI index --
+# 0.9.4 and 0.9.6 are present, 0.9.5 and 0.9.7 are absent.
+#
+# 0.9.13 is the current release. The 14 tool groups and all 43 tool names are
+# unchanged since 0.9.4 (checked against the extracted 0.9.13 wheel), so the
+# ChatGPT allowlist keeps exactly the same meaning across this bump.
+$PinnedVersion = '0.9.13'
 $PinnedPackage = "notebooklm-mcp-cli==$PinnedVersion"
 
 function Test-Command {
