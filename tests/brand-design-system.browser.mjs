@@ -37,6 +37,42 @@ try {
   assert.equal(tokens.radius, "28px", "shared premium radius must resolve");
 
   const visualContract = await page.evaluate(() => {
+    /*
+     * WCAG contrast, composited through the full ancestor chain. Stopping at the
+     * first non-transparent backgroundColor is wrong here: the warm surfaces are
+     * built from stacked low-alpha layers, so a 4%-alpha overlay would be read as
+     * the ground and every ratio would come out near 1:1.
+     */
+    const toRgba = (str) => {
+      const n = (str.match(/[\d.]+(?:e-?\d+)?/g) || []).map(Number);
+      const srgbFn = /^color\(\s*srgb/i.test(str);
+      const rgb = n.slice(0, 3).map((v) => (srgbFn ? v * 255 : v));
+      const a = srgbFn ? (/\//.test(str) ? n[3] : 1) : (n.length > 3 ? n[3] : 1);
+      return { rgb, a: Number.isFinite(a) ? a : 1 };
+    };
+    const solidBg = (el) => {
+      const layers = [];
+      for (let n = el; n; n = n.parentElement) {
+        const c = toRgba(getComputedStyle(n).backgroundColor);
+        if (c.a > 0) layers.push(c);
+        if (c.a >= 1) break;
+      }
+      let out = [255, 255, 255];
+      for (let i = layers.length - 1; i >= 0; i -= 1) out = layers[i].rgb.map((c, k) => c * layers[i].a + out[k] * (1 - layers[i].a));
+      return out;
+    };
+    const channel = (c) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    const luminance = ([r, g, bl]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(bl);
+    const contrast = (selector) => {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      const cs = getComputedStyle(el);
+      const bg = solidBg(el);
+      const fgRaw = toRgba(cs.color);
+      const fg = fgRaw.rgb.map((c, i) => c * fgRaw.a + bg[i] * (1 - fgRaw.a));
+      const [hi, lo] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
+      return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100;
+    };
     const body = getComputedStyle(document.body);
     const header = getComputedStyle(document.querySelector(".site-header"));
     const heading = getComputedStyle(document.querySelector("h1"));
@@ -55,6 +91,10 @@ try {
       primaryShadow: primary.boxShadow,
       primaryTransform: primary.textTransform,
       commercePrimaryColor: commercePrimary.backgroundColor,
+      primaryContrast: contrast(".hero .primary"),
+      commercePrimaryContrast: contrast(".sticky-order .primary"),
+      cartAmountContrast: contrast("#cartAmount"),
+      cartAmountDisplay: getComputedStyle(document.querySelector("#cartAmount")).display,
       commercePrimaryRadius: commercePrimary.borderRadius,
       commercePrimaryBackground: commercePrimary.backgroundImage,
       heroRadius: heroPhoto.borderRadius,
@@ -83,6 +123,16 @@ try {
   assert.equal(visualContract.primaryTransform, "uppercase", "primary CTA keeps the counter type");
   assert.equal(visualContract.primaryRadius, "2px", "primary CTA must keep the printed edge");
   assert.equal(visualContract.primaryColor, "rgb(173, 109, 25)", "primary CTA must render flat copper");
+  /*
+   * The copper CTA is only legible with an ink label: cream on copper measures
+   * 2.30:1. #cartAmount is called out separately because it is a span inside the
+   * button, so the bar's own muted span colour can reach it through a descendant
+   * selector -- which is exactly how it regressed once.
+   */
+  assert.ok(visualContract.primaryContrast >= 4.5, `public CTA label needs 4.5:1, measured ${visualContract.primaryContrast}:1`);
+  assert.ok(visualContract.commercePrimaryContrast >= 4.5, `commerce CTA label needs 4.5:1, measured ${visualContract.commercePrimaryContrast}:1`);
+  assert.ok(visualContract.cartAmountContrast >= 4.5, `cart total on the CTA needs 4.5:1, measured ${visualContract.cartAmountContrast}:1`);
+  assert.notEqual(visualContract.cartAmountDisplay, "none", "the cart total must stay on the button, including on mobile");
   assert.equal(visualContract.commercePrimaryBackground, "none", "commerce primary must not reintroduce a gradient");
   assert.equal(visualContract.commercePrimaryColor, visualContract.primaryColor, "public and commerce must share one button colour");
   assert.equal(visualContract.commercePrimaryRadius, visualContract.primaryRadius, "public and commerce must share one button geometry");

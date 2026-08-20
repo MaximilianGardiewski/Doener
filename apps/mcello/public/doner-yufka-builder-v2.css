@@ -94,8 +94,13 @@
   backdrop-filter: blur(12px);
 }
 
+/*
+ * Darkened against the caption's own translucent ground, which composites to
+ * rgb(201,197,183): #667a39 measured 2.76:1 and #755f4c 3.47:1 on it, and this
+ * is 11px text that needs 4.5:1. Hue kept, luminance lowered.
+ */
 .mc-food-stage-v4__caption > span {
-  color: #667a39;
+  color: #475528;
   font: 800 .7rem/1 system-ui,sans-serif;
   letter-spacing: .14em;
 }
@@ -110,7 +115,7 @@
 
 .mc-food-stage-v4__caption > small {
   grid-column: 1/-1;
-  color: #755f4c;
+  color: #584739;
   font: 500 .7rem/1.35 system-ui,sans-serif;
 }
 
