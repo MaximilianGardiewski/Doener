@@ -10,6 +10,16 @@
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/brand-system.css" />
   <link rel="stylesheet" href="/homepage-v2.css" />
+  <!--
+    The art-direction layers are also injected at runtime by their loader modules,
+    which keeps the cascade order authoritative. Linking them here as well means
+    they are present at first paint: without this the header restyles after load
+    and moves everything below it, which measured as CLS 0.45 on desktop against
+    a 0.1 budget. The runtime copies still land last, so the final cascade is
+    unchanged.
+  -->
+  <link rel="stylesheet" href="/commerce-theke.css" />
+  <link rel="stylesheet" href="/public-theke.css" />
   <style>
     .field{display:grid;gap:7px;margin-top:12px}.field span{font-size:13px;color:var(--muted)}
     .field input,.field select,.field textarea{width:100%;background:#11110f;color:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;font:inherit}

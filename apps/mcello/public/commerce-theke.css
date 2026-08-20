@@ -564,3 +564,30 @@
     letter-spacing: .02em;
   }
 }
+
+/* --------------------------------------------- 10. Option state refinements
+ * Found by rendering the sold-out / paid-extra probe: the surcharge chip wrapped
+ * onto its own line in the wider rows, and a sold-out option claimed "inkl."
+ * directly above "Heute nicht verfügbar".
+ */
+
+#productModal [data-builder-option="true"] span:last-child {
+  flex: none;
+}
+
+#productModal [data-builder-option="true"] span:first-of-type {
+  min-width: 0;
+}
+
+#productModal [data-builder-option="true"][data-sold-out="true"] span:last-child {
+  display: none;
+}
+
+/*
+ * A group that carries surcharges keeps one column, so the amount always sits
+ * beside the name it belongs to instead of wrapping under it. The price is the
+ * one thing in this list that must never be ambiguous.
+ */
+#productModal .builder-step:has([data-paid="true"]) .modifier-options {
+  grid-template-columns: minmax(0, 1fr);
+}
