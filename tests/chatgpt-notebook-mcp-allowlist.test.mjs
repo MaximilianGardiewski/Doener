@@ -190,3 +190,32 @@ test("the tunnel refuses to expose a bridge that failed its own checks", () => {
     "the bridge must be verified before the tunnel is started, not after",
   );
 });
+
+test("a missing tunnel-client does not cascade into false bridge failures", () => {
+  /*
+   * Observed on a real run: tunnel-client was absent, which gated the bridge
+   * start, which made the health check and the MCP check fail too -- three
+   * reported problems for one actual cause, and two of them misleading.
+   *
+   * tunnel-client is needed to reach ChatGPT, not to run the bridge, so it must
+   * not be marked as blocking.
+   */
+  const blocking = [...setupScript.matchAll(/Write-Fail\s+(?:"[^"]*"|'[^']*')\s+-BlocksBridge/g)]
+    .map((match) => match[0]);
+  assert.ok(blocking.length >= 5, "the genuine prerequisites must be marked -BlocksBridge");
+  for (const marked of blocking) {
+    assert.doesNotMatch(marked, /tunnel/i, `tunnel failures must not block the bridge: ${marked}`);
+  }
+
+  // The gate reads the blocker list, never the full failure list.
+  assert.match(setupScript, /elseif \(\$Script:BridgeBlockers\.Count -gt 0\)/);
+  assert.doesNotMatch(
+    setupScript,
+    /elseif \(\$Script:Failures\.Count -gt 0\) \{ Write-Warn 'skipped: earlier steps failed' \}/,
+    "the bridge must not be gated on unrelated failures",
+  );
+
+  // A check that never ran must report as skipped, not as failed.
+  const skipGuards = [...setupScript.matchAll(/if \(-not \$BridgeRunning\) \{ Write-Skip/g)];
+  assert.equal(skipGuards.length, 2, "both the health and the MCP step must skip when the bridge is down");
+});
