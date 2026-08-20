@@ -26,7 +26,9 @@
     "demo:mcello:presentation": "pwsh -NoProfile -ExecutionPolicy Bypass -File Mcello-Demo.ps1 -Mode Lan",
     "demo:mcello:prepare": "pwsh -NoProfile -ExecutionPolicy Bypass -File Mcello-Demo.ps1 -Mode Prepare",
     "demo:mcello:win": "pwsh -NoProfile -File scripts/demo-mcello.ps1",
-    "demo:mcello:lan": "pwsh -NoProfile -File scripts/demo-mcello-presentation-lan.ps1"
+    "demo:mcello:lan": "pwsh -NoProfile -File scripts/demo-mcello-presentation-lan.ps1",
+    "setup:research": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/setup-gemini-notebook-bridge.ps1",
+    "doctor:research": "nlm doctor"
   },
   "devDependencies": {
     "@types/node": "22.20.1",

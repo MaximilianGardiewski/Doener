@@ -11,3 +11,8 @@ apps/mcello/public/vendor/gsap/
 
 # source evidence kept outside public runtime repo
 apps/mcello/public/media/menu-card-*.jpg
+
+# local Gemini Notebook / research bridge state (credentials must never enter Git)
+.notebooklm-mcp-cli/
+.notebooklm/
+.research-cache/
