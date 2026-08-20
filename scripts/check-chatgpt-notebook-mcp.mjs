@@ -147,6 +147,36 @@ if (advertised) {
   console.log(`\n  exposed: ${advertised.join(", ")}`);
 }
 
+/*
+ * The upstream gating docstring says "no tool is unregistered, only hidden", so
+ * tools/list being clean does not prove a hidden tool cannot be invoked. That
+ * claim is not verifiable from the source alone, so probe it instead.
+ *
+ * source_list_drive is chosen deliberately: it is hidden by our allowlist, and
+ * it is read-only, so the probe cannot damage anything whichever way it goes.
+ * Never probe with a destructive tool.
+ */
+if (advertised) {
+  const HIDDEN_READONLY_PROBE = "source_list_drive";
+  try {
+    await rpc("tools/call", { name: HIDDEN_READONLY_PROBE, arguments: {} });
+    record(
+      "hidden tools cannot be invoked",
+      false,
+      `${HIDDEN_READONLY_PROBE} is hidden from tools/list but still executed — the allowlist only hides, it does not block`,
+    );
+  } catch (error) {
+    // An error is the expected, safe outcome. Anything that reads as
+    // unknown/disabled/not-found means the server refused to dispatch.
+    const refused = /unknown|not found|not_found|disabled|no such tool|invalid|method not found/i.test(error.message);
+    record(
+      "hidden tools cannot be invoked",
+      refused,
+      refused ? `${HIDDEN_READONLY_PROBE} refused: ${error.message}` : `unclear refusal: ${error.message}`,
+    );
+  }
+}
+
 const failed = results.filter((result) => !result.ok);
 console.log("");
 if (failed.length) {

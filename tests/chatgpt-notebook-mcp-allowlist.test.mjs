@@ -77,15 +77,21 @@ test("no exposed tool can mutate, delete or share anything", () => {
 
 test("the allowlist is fail-closed: every upstream group is disabled first", () => {
   const groups = arrayAfter("$env:NOTEBOOKLM_DISABLED_GROUPS = @(");
-  // Disabling groups first means an upstream release that adds a tool to an
-  // existing group cannot silently reach ChatGPT.
-  for (const group of [
+  /*
+   * Exact set equality, not "contains". Upstream resolves a group name with
+   * TOOL_GROUPS.get(group, set()), so a name that no longer exists disables
+   * nothing and reports no error -- a rename upstream would silently reopen a
+   * whole group. A stale entry here must therefore fail, not just a missing one.
+   *
+   * Verified against the extracted notebooklm-mcp-cli 0.9.13 wheel:
+   * 14 groups covering all 43 registered tools. Re-diff this list on upgrade.
+   */
+  const UPSTREAM_GROUPS = [
     "notebooks_read", "notebooks_manage", "sources_read", "sources_manage",
     "chat", "query_multi", "organization", "automation", "notes",
     "auth", "server", "sharing", "research", "studio",
-  ]) {
-    assert.ok(groups.includes(group), `upstream group not disabled: ${group}`);
-  }
+  ];
+  assert.deepEqual(groups.slice().sort(), UPSTREAM_GROUPS.slice().sort());
   assert.ok(
     script.indexOf("NOTEBOOKLM_DISABLED_GROUPS") < script.indexOf("$AllowedTools = @("),
     "groups must be disabled before the allowlist is applied",
