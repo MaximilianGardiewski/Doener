@@ -166,13 +166,15 @@ if (Test-Path $PidFile) {
 Remove-Item $StdoutFile, $StderrFile -Force -ErrorAction SilentlyContinue
 
 Write-Step 'Starting local Streamable HTTP MCP in background'
-$Process = Start-Process \
-    -FilePath $Executable \
-    -ArgumentList $Arguments \
-    -PassThru \
-    -WindowStyle Hidden \
-    -RedirectStandardOutput $StdoutFile \
-    -RedirectStandardError $StderrFile
+$StartProcessArgs = @{
+    FilePath = $Executable
+    ArgumentList = $Arguments
+    PassThru = $true
+    WindowStyle = 'Hidden'
+    RedirectStandardOutput = $StdoutFile
+    RedirectStandardError = $StderrFile
+}
+$Process = Start-Process @StartProcessArgs
 
 Set-Content -Path $PidFile -Value $Process.Id -Encoding ascii
 
