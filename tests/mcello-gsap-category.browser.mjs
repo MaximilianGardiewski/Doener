@@ -42,16 +42,20 @@ async function normalScenario() {
 
     const categoryId = await clickFirstCategory(page);
     await page.waitForFunction(() => document.querySelector(".store-stage")?.dataset.motionCategoryEngine === "gsap");
-    await page.waitForFunction(() => {
+    // The presentation frame must be captured in the same evaluation that detects
+    // it. Waiting for a non-empty inline style and then reading it in a second
+    // round trip races the tween: clearProps can empty both values in between,
+    // which made this assertion fail roughly one run in six.
+    const during = await page.waitForFunction(() => {
       const node = document.querySelector("#featuredGrid");
-      return Boolean(node?.style.transform || node?.style.opacity);
-    });
-
-    const during = await page.locator("#featuredGrid").evaluate((node) => ({
-      inlineTransform: node.style.transform,
-      inlineOpacity: node.style.opacity,
-      fallbackClass: node.classList.contains("motion-category-switch"),
-    }));
+      if (!node) return null;
+      const frame = {
+        inlineTransform: node.style.transform,
+        inlineOpacity: node.style.opacity,
+        fallbackClass: node.classList.contains("motion-category-switch"),
+      };
+      return frame.inlineTransform || frame.inlineOpacity ? frame : null;
+    }).then((handle) => handle.jsonValue());
     assert.equal(during.fallbackClass, false, `GSAP category path must not start the V2 keyframe: ${JSON.stringify(during)}`);
     assert.ok(during.inlineTransform || during.inlineOpacity, `GSAP category path should own an inline presentation frame: ${JSON.stringify(during)}`);
 
