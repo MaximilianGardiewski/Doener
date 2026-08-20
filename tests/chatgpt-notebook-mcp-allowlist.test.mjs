@@ -13,10 +13,16 @@ import test from "node:test";
  * session, so they run anywhere `npm run test:schema` runs.
  */
 
-const script = await readFile(
-  new URL("../scripts/start-gemini-notebook-chatgpt-mcp.ps1", import.meta.url),
-  "utf8",
-);
+/*
+ * Line endings are normalised on read. Git checks these files out with CRLF on
+ * Windows, and a guard that searched for a string containing "\n" silently
+ * matched nothing there -- the suite passed on Linux and failed on the machine
+ * that actually runs the bridge.
+ */
+const read = async (relative) =>
+  (await readFile(new URL(relative, import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+
+const script = await read("../scripts/start-gemini-notebook-chatgpt-mcp.ps1");
 
 /** Pulls a PowerShell array literal like `@( 'a', 'b' )` starting at a marker. */
 function arrayAfter(marker) {
@@ -119,14 +125,8 @@ test("the script carries no secrets", () => {
  * statically instead of trusted.
  */
 
-const tunnelScript = await readFile(
-  new URL("../scripts/start-chatgpt-notebook-tunnel.ps1", import.meta.url),
-  "utf8",
-);
-const setupScript = await readFile(
-  new URL("../scripts/setup-chatgpt-notebook-mcp.ps1", import.meta.url),
-  "utf8",
-);
+const tunnelScript = await read("../scripts/start-chatgpt-notebook-tunnel.ps1");
+const setupScript = await read("../scripts/setup-chatgpt-notebook-mcp.ps1");
 
 test("the runtime API key is never captured or stored in the clear", () => {
   assert.match(tunnelScript, /Read-Host\s+'Runtime API key'\s+-AsSecureString/,
@@ -212,15 +212,16 @@ test("a missing tunnel-client does not cascade into false bridge failures", () =
  * that behaviour let 6 of 6 destructive calls through directly and 0 of 6
  * through the proxy.
  */
-const proxy = await readFile(new URL("../scripts/mcp-allowlist-proxy.mjs", import.meta.url), "utf8");
+const proxy = await read("../scripts/mcp-allowlist-proxy.mjs");
 
 test("the proxy denies by default and never forwards a denied call", () => {
   assert.match(proxy, /if \(message\?\.method === "tools\/call"\)/);
   assert.match(proxy, /if \(!allowed\.has\(name\)\)/, "the check must be membership in the allowlist, not a denylist");
   // The rejection has to return before the upstream fetch, not after it.
   const check = proxy.indexOf("if (!allowed.has(name))");
-  const forward = proxy.indexOf("const upstream = await fetch(upstreamUrl, {\n        method: \"POST\"");
-  assert.ok(check > -1 && forward > check, "a denied tools/call must return before anything is forwarded");
+  const forward = proxy.search(/const upstream = await fetch\(upstreamUrl, \{\s*\n\s*method: "POST"/);
+  assert.ok(check > -1, "the allowlist membership check must exist");
+  assert.ok(forward > check, "a denied tools/call must return before anything is forwarded");
 });
 
 test("the proxy refuses to start with a mutating tool allowlisted", () => {
