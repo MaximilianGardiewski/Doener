@@ -19,7 +19,8 @@ This integration deliberately keeps Gemini Notebook out of the main Claude Code 
 
 - `scripts/setup-gemini-notebook-bridge.ps1` — installs/checks the local CLI/MCP and authenticates the user.
 - `.claude/agents/research-director.md` — read-only Claude Code subagent with an inline stdio MCP.
-- `skills/gemini-notebook-research/SKILL.md` — research policy and escalation ladder.
+- `.claude/skills/gemini-notebook-research/SKILL.md` — native Claude Code `/gemini-notebook-research` entrypoint.
+- `skills/gemini-notebook-research/SKILL.md` — canonical repository research policy and escalation ladder.
 - `docs/research/RESEARCH_BRIEF_TEMPLATE.md` — handoff contract from research to implementation.
 
 ## Prerequisites
@@ -29,7 +30,7 @@ This integration deliberately keeps Gemini Notebook out of the main Claude Code 
 - Google Chrome for the MCP package's interactive login flow.
 - `uv` available, or use the setup script with `-InstallUv`.
 
-The third-party package used by V1 is `notebooklm-mcp-cli`, which exposes the `nlm` CLI and `notebooklm-mcp` stdio server.
+V1 pins the first installation to `notebooklm-mcp-cli==0.9.5`, which exposes the `nlm` CLI and `notebooklm-mcp` stdio server. A later upgrade is explicit rather than automatic because this third-party bridge depends on Gemini Notebook internal APIs.
 
 ## Setup
 
@@ -63,13 +64,13 @@ It does **not** run `claude mcp add`, does not create `.mcp.json`, and does not 
 
 ## First smoke test
 
-Start Claude Code in the repository and run:
+Start Claude Code in the repository and run the native project skill:
 
 ```text
-@research-director List my Gemini Notebooks and identify "Doener — Project Research". Create it only if it does not exist.
+/gemini-notebook-research List my Gemini Notebooks and identify "Doener — Project Research". Create it only if it does not exist.
 ```
 
-Then:
+You can also address the isolated agent directly:
 
 ```text
 @research-director For Mcello, summarize the current repo constraints relevant to responsive/landscape design, then query existing notebook evidence. Do not change files.
@@ -80,6 +81,7 @@ Then:
 ```text
 main Claude Code
     |
+    | /gemini-notebook-research
     | delegate consequential research
     v
 research-director (read-only)
@@ -151,7 +153,7 @@ The long-term target is an adapter-compatible move to an official Google Gemini 
 - Setup completes without writing credentials to Git.
 - `nlm login --check` succeeds.
 - `nlm notebook list` succeeds.
-- Claude Code discovers `research-director`.
+- Claude Code discovers `/gemini-notebook-research` and `research-director`.
 - The subagent can list/query the canonical notebook.
 - The subagent can read relevant repo docs but cannot edit files.
 - A research request returns the standard Research Brief.
