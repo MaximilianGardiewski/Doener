@@ -123,9 +123,23 @@ function renderRecipeSummary() {
   if (!summary) return;
   const entries = summaryEntries();
   summary.hidden = entries.length === 0;
-  summary.querySelector("[data-builder-summary-list]").innerHTML = entries
-    .map(([term, detail]) => `<div><dt>${term}</dt><dd>${detail}</dd></div>`)
-    .join("");
+
+  /*
+   * Built as nodes rather than markup on purpose. The option names come back
+   * through `dataset`, which decodes the entities the application escaped on the
+   * way in, so interpolating them into markup here would undo that escaping and
+   * turn a catalog field into a script sink.
+   */
+  const list = summary.querySelector("[data-builder-summary-list]");
+  list.replaceChildren(...entries.map(([term, detail]) => {
+    const row = document.createElement("div");
+    const label = document.createElement("dt");
+    label.textContent = term;
+    const text = document.createElement("dd");
+    text.textContent = detail;
+    row.append(label, text);
+    return row;
+  }));
 }
 
 function renderRecipeEntry() {
