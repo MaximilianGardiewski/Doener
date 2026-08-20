@@ -121,11 +121,27 @@ if ((-not (Test-Path $KeyFile)) -or $Reconfigure) {
     Write-Host 'Do NOT use an admin key here.' -ForegroundColor Yellow
     $Secure = Read-Host 'Runtime API key' -AsSecureString
     if ($Secure.Length -eq 0) { throw 'No runtime API key entered.' }
-    ConvertFrom-SecureString -SecureString $Secure | Set-Content -Path $KeyFile -Encoding ascii
+    # -NoNewline matters: Set-Content would otherwise append CRLF, and
+    # ConvertTo-SecureString rejects the ciphertext with a trailing line break.
+    ConvertFrom-SecureString -SecureString $Secure | Set-Content -Path $KeyFile -Encoding ascii -NoNewline
     Write-Host 'Stored encrypted for this user on this machine.' -ForegroundColor Green
 }
 
-$SecureKey = Get-Content $KeyFile -Raw | ConvertTo-SecureString
+# Trimmed on read as well, so a key file written by an earlier version (which
+# did append a newline) still loads instead of forcing the key to be re-entered.
+$StoredKey = (Get-Content $KeyFile -Raw).Trim()
+if ([string]::IsNullOrWhiteSpace($StoredKey)) {
+    throw "The stored runtime key at $KeyFile is empty. Rerun with -Reconfigure to enter it again."
+}
+
+try {
+    $SecureKey = $StoredKey | ConvertTo-SecureString
+}
+catch {
+    throw ("The stored runtime key could not be decrypted. DPAPI ciphertext is bound to " +
+           "this Windows account on this machine, so a key copied from elsewhere will not " +
+           "load. Rerun with -Reconfigure to enter it again. ($($_.Exception.Message))")
+}
 $PlainKey = [System.Net.NetworkCredential]::new('', $SecureKey).Password
 
 try {

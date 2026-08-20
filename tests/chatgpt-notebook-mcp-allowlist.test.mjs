@@ -249,3 +249,44 @@ test("both processes are stopped together", () => {
   assert.match(script, /File = \$ProxyPidFile; Name = 'allowlist proxy'/);
   assert.match(script, /File = \$PidFile; Name = 'upstream MCP'/);
 });
+
+test("the stored runtime key survives a write/read roundtrip", () => {
+  /*
+   * Observed on a real run: the key was accepted, stored, and then failed to
+   * load with "The input string ' ' was not in a correct format". Set-Content
+   * appends CRLF, Get-Content -Raw reads it back, and ConvertTo-SecureString
+   * rejects DPAPI ciphertext with a trailing line break -- so the tunnel could
+   * never start, on the very first run, right after asking for the secret.
+   */
+  assert.match(
+    tunnelScript,
+    /ConvertFrom-SecureString[^\n]*\|\s*Set-Content[^\n]*-NoNewline/,
+    "the ciphertext must be written without a trailing newline",
+  );
+  assert.match(
+    tunnelScript,
+    /\$StoredKey = \(Get-Content \$KeyFile -Raw\)\.Trim\(\)/,
+    "and trimmed on read, so a file from an earlier version still loads",
+  );
+
+  // A key that cannot be decrypted must say what to do, not surface a raw
+  // .NET format error.
+  assert.match(tunnelScript, /-Reconfigure to enter it again/);
+  assert.match(tunnelScript, /catch \{\s*\n\s*throw \(?"The stored runtime key could not be decrypted/);
+});
+
+test("every strict-format file read is whitespace-tolerant", () => {
+  /*
+   * Guards the class, not just the one instance: any Get-Content -Raw whose
+   * value is then parsed strictly (a PID, ciphertext) has to be trimmed. JSON
+   * reads are exempt -- ConvertFrom-Json tolerates surrounding whitespace --
+   * and so are reads used as free text, like log tails.
+   */
+  for (const [name, source] of [["tunnel", tunnelScript], ["bridge", script]]) {
+    const rawReads = [...source.matchAll(/Get-Content [^\n]*-Raw[^\n]*/g)].map((m) => m[0]);
+    for (const read of rawReads) {
+      const tolerant = /\.Trim\(\)/.test(read) || /ConvertFrom-Json/.test(read) || /\$StderrFile|\$ProxyErrFile/.test(read);
+      assert.ok(tolerant, `${name}: strict read is not whitespace-tolerant: ${read}`);
+    }
+  }
+});
