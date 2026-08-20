@@ -128,3 +128,65 @@ test("the script carries no secrets", () => {
   assert.doesNotMatch(script, /sk-[A-Za-z0-9]/, "no OpenAI key material in the repo");
   assert.doesNotMatch(script, /API_KEY\s*=\s*'[^']+'/, "no inline API key assignment");
 });
+
+/*
+ * The tunnel scripts handle an OpenAI runtime API key. They cannot be executed
+ * in CI (no Windows, no PowerShell), so their security properties are asserted
+ * statically instead of trusted.
+ */
+
+const tunnelScript = await readFile(
+  new URL("../scripts/start-chatgpt-notebook-tunnel.ps1", import.meta.url),
+  "utf8",
+);
+const setupScript = await readFile(
+  new URL("../scripts/setup-chatgpt-notebook-mcp.ps1", import.meta.url),
+  "utf8",
+);
+
+test("the runtime API key is never captured or stored in the clear", () => {
+  assert.match(tunnelScript, /Read-Host\s+'Runtime API key'\s+-AsSecureString/,
+    "the key must be read as a SecureString, never as plain text");
+  assert.match(tunnelScript, /ConvertFrom-SecureString\s+-SecureString\s+\$Secure\s*\|\s*Set-Content/,
+    "the key must be persisted DPAPI-encrypted, bound to this user and machine");
+  // The decrypted value may exist in memory but must never be written anywhere.
+  assert.doesNotMatch(tunnelScript, /Set-Content[^\n]*\$PlainKey/, "the decrypted key must never be written to a file");
+  assert.doesNotMatch(tunnelScript, /Write-Host[^\n]*\$PlainKey/, "the decrypted key must never be printed");
+  assert.doesNotMatch(tunnelScript, /Out-File[^\n]*\$PlainKey/);
+});
+
+test("the key reaches tunnel-client through the environment, not the command line", () => {
+  // A process argument is visible to every other process on the machine.
+  assert.match(tunnelScript, /\$env:CONTROL_PLANE_API_KEY\s*=\s*\$PlainKey/);
+  assert.doesNotMatch(tunnelScript, /ArgumentList[^\n]*(ApiKey|API_KEY|\$PlainKey)/i,
+    "the key must not be passed as a process argument");
+  assert.match(tunnelScript, /\$env:CONTROL_PLANE_API_KEY\s*=\s*\$null/,
+    "the key must be cleared from the environment afterwards");
+});
+
+test("the tunnel scripts carry no key material and no admin key usage", () => {
+  for (const [name, source] of [["tunnel", tunnelScript], ["setup", setupScript]]) {
+    assert.doesNotMatch(source, /sk-[A-Za-z0-9_-]{8}/, `${name}: no key material in the repo`);
+    assert.doesNotMatch(source, /tunnel_[0-9a-f]{32}/, `${name}: no real tunnel id committed`);
+    assert.doesNotMatch(source, /\$env:OPENAI_ADMIN_KEY\s*=/,
+      `${name}: an admin key must never be handed to the running daemon`);
+  }
+});
+
+test("secrets live only under the gitignored cache", () => {
+  assert.match(tunnelScript, /\$CacheDir\s*=\s*Join-Path\s+\$RepoRoot\s+'\.research-cache\/chatgpt-tunnel'/);
+  // The setup refuses to store anything if that path is not actually ignored.
+  assert.match(setupScript, /\.research-cache is NOT gitignored - refusing to store secrets there/);
+});
+
+test("the tunnel refuses to expose a bridge that failed its own checks", () => {
+  assert.match(
+    tunnelScript,
+    /Refusing to expose it through the tunnel/,
+    "a failing allowlist check must stop the tunnel from starting",
+  );
+  assert.ok(
+    tunnelScript.indexOf("check-chatgpt-notebook-mcp.mjs") < tunnelScript.indexOf("Starting tunnel-client"),
+    "the bridge must be verified before the tunnel is started, not after",
+  );
+});
