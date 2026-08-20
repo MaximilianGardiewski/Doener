@@ -204,11 +204,24 @@ werden.
 | Tunnel fehlt in ChatGPT | falscher Workspace-Scope beim Anlegen |
 | Nach Gemini-Notebook-Änderung bricht alles | fail closed lassen, `npm run doctor:research`, Upgrade bewusst durchführen |
 
-## Bekannte Grenzen
+## Verifikationsstand
 
-- **Nicht auf Windows verifiziert.** Die PowerShell-Scripts wurden in einer
-  Linux-Umgebung ohne `pwsh` geschrieben; ihre Sicherheitseigenschaften sind
-  statisch getestet, ihre Ausführung nicht.
+Auf Windows 11 (PowerShell 7.6.5, Node 24.15.0, `notebooklm-mcp-cli` 0.9.13,
+`tunnel-client` 0.0.12) durchgelaufen:
+
+- Setup 12/12, `Setup complete`
+- Bridge startet: Upstream auf 8001 (intern), Proxy auf 8000
+- Health 200, MCP `initialize` gegen `gemini-notebook-mcp`
+- `tools/list` liefert exakt die sechs erlaubten Tools
+- **`hidden tools cannot be invoked` besteht** — `source_list_drive` wird vom
+  Proxy abgelehnt, obwohl der Upstream es ausführen würde
+- `notebook_list` liefert echte Daten (7 Notebooks)
+
+**Noch offen:** Der Tunnel selbst. `tunnel-client doctor` und die Anbindung in
+ChatGPT sind nicht durchlaufen, solange keine Tunnel-ID und kein Runtime-Key
+konfiguriert sind.
+
+## Bekannte Grenzen
 - **Plan-Stufen des Secure MCP Tunnel nicht verifiziert.** Ob Business /
   Enterprise / Edu / Pro nötig ist, konnte nicht aus offizieller Quelle bestätigt
   werden: <https://developers.openai.com/api/docs/guides/secure-mcp-tunnels>
