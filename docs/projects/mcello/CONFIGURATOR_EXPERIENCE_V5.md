@@ -185,3 +185,111 @@ Unverändert gegenüber `V1_EVIDENCE.md`. Für diesen Slice zusätzlich relevant
 - Die Döner/Yufka-Basis- und Gemüseoptionen bleiben Presentation-Annahmen aus `data/mcello/builder-presentation.v1.json` und sind keine bestätigte Produktionswahrheit.
 - Es existiert in den Fixtures keine ausverkaufte Option und kein Aufpreis-Extra. Der `Heute nicht verfügbar`-Zustand und die Aufpreis-Darstellung sind implementiert und statisch abgesichert, aber noch nicht an echten Daten im Browser vorgeführt.
 - Reale Mcello-Medien ersetzen die stilisierte Illustration erst nach Freigabe und geklärten Bildrechten (D068).
+
+## 12. Theke Art Direction über alle Flächen
+
+Die Theke-Richtung wurde in den Design-Decisions als 45/30/25-Mischung (Cinematic Food/Warm Future Hospitality/Editorial Street-Food Energy) verankert. Ihre Bindung ist in `ART_DIRECTION.md` (`Verbotene Abkürzungen`) und `USER_REFERENCE_SYNTHESIS.md` („technische Zwischenstufe") dokumentiert.
+
+Die Implementierung erfolgte differenziert nach Oberflächenfunktion:
+
+| Fläche | Anwendung | Bindung |
+|---|---|---|
+| Commerce (Store/Builder/Cart) | 45/30/25-Mix vollständig; A liefert Food-Look, C dominiert Struktur, B liefert grafische Details | ART_DIRECTION.md §Empfohlene Mcello-Mischung; USER_REFERENCE_SYNTHESIS.md §6 (Store-Auswirkung) |
+| Public (Homepage/Venue/News) | A+B dominant, C nur für Interaktive; asymmetrisch, editorial | ART_DIRECTION.md §Public/Homepage |
+| Status/Order Edit | C dominant; A/B nur über Brand Tokens und Typografie | ART_DIRECTION.md §Cart/Checkout/Status |
+| KDS/Admin/Handbook | C funktional reduziert; A/B fast vollständig zurückgenommen; keine Papier-Flächen, kein Display-Type, keine Zierornamentik | ART_DIRECTION.md §KDS/Admin; „bring KDS, Admin, Ops"-Commit |
+
+**Nicht geändert wurde:** Logo-/Recognition-Thema D029 (verbleibt offen bis Freigabe Final-Asset), Preis-/Modifier-/Verfügbarkeits-Autorität, bestehende GSAP-V3-Boundaries für Ingredient-/Product-Open-/Cart-Timelines.
+
+## 13. Motion-Erweiterungen: Builder-Schritt und Konfigurierte Summe
+
+Zwei neue Motion-Anpassungen wurden hinter der bestehenden GSAP-V3-Adapter implementiert, ohne neue Motion-Runtime hinzuzufügen. Die D074-Boundary (`motion/commerce.js`, `motion.js` als Ownership-Grenze) bleibt unangetastet.
+
+### animateBuilderStep
+
+Schritt-Wechsel (vorwärts/rückwärts) wird signalisiert durch Slide + Fade des neuen aktiven Schrittes. Gerichtung wird beobachtet: `data-motion-step-engine="gsap"`.
+
+| Szenario | Beobachtung |
+|---|---|
+| Normal (GSAP) | Step trägt `data-motion-step-engine="gsap"`, Richtung erfasst |
+| Reduced Motion | `data-motion-step-engine` wird nicht gesetzt, keine transform angewendet |
+| Fallback (GSAP unavailable) | CSS-Keyframe-Fallback aktiv |
+
+### animateTotalChange
+
+Konfigurierte Summe wird kurz hervorgehoben, wenn sie sich ändert. Gemessen über Computed-Style-Sampling mit `requestAnimationFrame` (Desktop 1280×900):
+
+| Modus | Messung |
+|---|---|
+| Normal (GSAP) | Total-Transform rampt: 1.008 → 1.024 → 1 über ~300 ms |
+| Reduced Motion | keine transform, Ownership von GSAP nicht übernommen |
+| Fallback | CSS-Keyframe-Fallback |
+
+Beide Animationen sind **No-ops unter prefers-reduced-motion**. Sie liefern Dekoration, nicht funktionale Information.
+
+## 14. Design Acceptance Gate K — Performance-Messung
+
+Die Theke-Ebenen-Injektion wurde zum ersten Mal gegen das Design Acceptance K-Budget gemessen.
+
+### LCP (Largest Contentful Paint)
+
+Desktop, Mobile und Tablet: **964 ms worst-case gegen 2500 ms Budget.** Komfortabel über alle Viewports. Above-the-fold Media werden nicht unnötig lazy geladen.
+
+### CLS (Cumulative Layout Shift)
+
+**Desktop vorher: 0.4507** (weit über 0,1-Budget)  
+**Desktop nachher: 0.0131** (bestanden)  
+**Mobile: 0** (konstant)
+
+**Ursache:** Die Theke-Layer werden zur Runtime durch Loader-Module injiziert und landeten nach First Paint. Die Uppercase-Tracking-Änderung änderte die Textbreite, was alles darunter verschob (Header, NAV.nav-links, MAIN). Die Layer sind jetzt auch statisch verlinkt, sodass die Regeln bei First Paint existieren; die Runtime-Kopien laden immer noch, bleiben aber in der Cascade.
+
+### INP (Interaction to Next Paint)
+
+nicht dokumentiert (wurde nicht speziell gemessen in dieser Slice)
+
+### Checks, die nicht gemessen wurden
+
+- Screenshot-Vergleiche für visuelle Regression (wurden durch Render+Interact+Criticize ersetzt);
+- Lighthouse-Score-Baseline (wurde durch einzelne Core-Web-Vitals-Metriken ersetzt).
+
+## 15. Konfiguratoroption-Zustände und Fixture-Sicherheit
+
+Der Browser-Test `mcello-configurator-experience-v5.test.mjs` prüft vier konkrete Zustandsvarianten, die implementiert sind, aber in den Standard-Presentation-Fixtures **bewusst nicht enthalten** sind:
+
+| Zustand | Darstellung | Warum nicht in Fixtures |
+|---|---|---|
+| `required` | Gruppe mit Pflicht-Label und Grund-Text | — |
+| `sold-out` | sichtbar, disabled, „Heute nicht verfügbar" in Worten, kann nicht gewählt werden, bewegt FoodStage nicht | Keine echte Verfügbarkeits-API zu Testzeit |
+| `paid-extra` (Aufpreis) | Akzent-Chip neben Optionsname, visuell unterschieden von inkludierten Optionen, erreicht Summe (Beispiel: 8,00 → 10,50) | Würde unkonfirmierte Preise in Vorschau-Build einbetten |
+| `removed-default` | abgewählte Standardzutat: gestrichelte Kontur, „Ohne"-Chip, Label „inkl." ausgeblendet | — |
+
+Der Test wird mit eigenem Menu-Payload ausgeführt (nicht mit Fixture-Optionen), sodass erfundene Werte im Test bleiben und die Preview-Build-Assertion (`every fixture option stays at zero`) unangetastet bleibt. Das ist absichtlich strenger als das Entfernen der Wächter.
+
+## 16. Operations-Fläche und Touch-Target-Korrektur
+
+Operations (Handbook, KDS, Admin) waren die letzte Fläche in der Gradient-und-Glow-Sprache. Das wurde auf die reduzierte Theke-Richtung gebracht:
+
+- flache bedruckte Controls (solid copper, kein Gradient, kein Glow);
+- Haarlinien-Regeln, Tabellenziffern, getrackte Etiketten;
+- keine Papierflächen, kein Display-Type, keine Zierornamentik;
+- eindeutige Action-Hierarchie: accept/ready/complete und Shop-Mode-Schalter erhalten solide Kupferfüllung; delay/reject/sold-out bleiben outlined.
+
+**Touch-Target-Korrektur:** Der Bericht behauptete 48px Primär / 44px Sekundär ohne Ausnahmen. Drei KDS-Header-Controls gemessen 40px auf dem Tablet:
+- Alarm-Umschalter (D014)
+- Rush und Pause Switches (D012)
+
+Das sind operative Controls, die mitten im Service auf dem Tablet bedient werden, daher auf die 44px-Vereinbarung angehoben.
+
+**Verifiziert:** Null horizontales Overflow, null Console-Fehler bei 1024×768, 768×1024, 1280. Keyboard Focus löst zu 3px solid outline auf jeder Seite.
+
+## 17. Offene Owner-Entscheidungen
+
+### Brand Contract Test (Visual Gate B)
+
+Der Test wurde von gradient+999px pill (Pre-Rebaseline-Foundation) auf flat copper+2px umgeschrieben. `ART_DIRECTION.md` verbietet „generisches Schwarz-Gold-Luxury" und `USER_REFERENCE_SYNTHESIS.md` gibt die Foundation als „technische Zwischenstufe" frei. Die neuen Assertions sind strenger, nicht schwächer: Sie pinnen die flache Behandlung und verlangen zusätzlich, dass der primäre CTA auf Public- und Commerce-Flächen identisch rendert. **Owner Visual Gate B ist noch nicht akzeptiert.**
+
+### Display/Interface-Typografie-Paarung
+
+Typografie-Entscheidungen verlagern sich aus drei inline style-Blöcken in operations-theke.css. Die Paarung von Display- und Interface-Type ist immer noch Gate-B-abhängig und offen.
+
+---
