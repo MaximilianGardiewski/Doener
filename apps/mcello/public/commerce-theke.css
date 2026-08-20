@@ -245,6 +245,21 @@
   background: color-mix(in srgb, var(--surface-base) 82%, var(--mcello-ink));
 }
 
+/*
+ * The signature card is the one surface ART_DIRECTION.md wants carrying real
+ * material warmth (Ofen-/Glutwärme, Kupfer, Creme/Brot) — a printed panel, not
+ * a generic black-gold gradient control. Copper ember light in one corner plus
+ * a bread/cream warm cast over the anthracite ground, both from brand tokens.
+ * Support/compact cards stay on the flat .food-card treatment above so the
+ * store's hierarchy still reads signature-first.
+ */
+.store-stage[data-store-version="v2"] .food-card.signature-product {
+  background:
+    radial-gradient(160% 220% at 14% 148%, color-mix(in srgb, var(--mcello-copper) 38%, transparent), transparent 62%),
+    linear-gradient(0deg, color-mix(in srgb, var(--mcello-bread) 20%, transparent), transparent 70%),
+    var(--surface-raised);
+}
+
 .store-stage[data-store-version="v2"] .food-card img {
   border-radius: 0;
 }
