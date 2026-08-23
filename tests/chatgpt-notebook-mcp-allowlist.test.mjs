@@ -341,3 +341,27 @@ test("the proxy refuses browser-driven requests", () => {
   // Health has to stay reachable or the start scripts can never confirm readiness.
   assert.match(proxy, /if \(url\.pathname !== "\/health"\)/);
 });
+
+test("starting an already-running bridge is a no-op, not an error", () => {
+  /*
+   * Observed on a real run: re-running the start command spent ~18s on network
+   * retries and then refused with "already running" -- an error for the one case
+   * where the caller's intent was already satisfied. A start command people are
+   * told to re-run has to be idempotent.
+   */
+  const fastPath = script.indexOf("if ($Background -and (Test-Path $PidFile))");
+  const authCheck = script.indexOf("Write-Step 'Checking Gemini Notebook authentication'");
+  assert.ok(fastPath > -1, "the already-running check must exist");
+  assert.ok(fastPath < authCheck, "it must run before the network-bound auth check, not after");
+
+  assert.match(script, /Already running - nothing to do\./);
+  assert.match(script, /exit 0/, "a healthy running bridge must exit successfully");
+  // Running-but-unhealthy is a different situation and must still be refused.
+  assert.match(script, /but \$HealthUrl does not answer/);
+});
+
+test("the bridge prints upstream output as UTF-8", () => {
+  // nlm's status lines contain ✗ and em dashes; without this they arrive as
+  // mojibake and a readable status reads like a crash.
+  assert.match(script, /\[Console\]::OutputEncoding = \[System\.Text\.Encoding\]::UTF8/);
+});

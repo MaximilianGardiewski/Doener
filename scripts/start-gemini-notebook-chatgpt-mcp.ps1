@@ -18,6 +18,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# nlm emits UTF-8. Without this, its check marks and dashes arrive as mojibake
+# ("Ô£ù" for "✗"), which makes a readable status line look like a crash.
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
+
 function Test-Command {
     param([Parameter(Mandatory)][string]$Name)
     return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
@@ -72,6 +76,42 @@ if ($Stop) {
 }
 
 Write-Host 'Doener / ChatGPT ↔ Gemini Notebook bridge' -ForegroundColor Green
+
+<#
+  Checked before anything else on purpose. This used to run after the
+  authentication step, so re-running the command spent ~18s on network retries
+  only to refuse at the very end -- and it refused with an error even when the
+  bridge was already up and perfectly healthy, which is the one case where the
+  caller's intent is already satisfied.
+#>
+if ($Background -and (Test-Path $PidFile)) {
+    $RunningPid = (Get-Content $PidFile -Raw).Trim()
+    $RunningProcess = if ($RunningPid -match '^\d+$') { Get-Process -Id ([int]$RunningPid) -ErrorAction SilentlyContinue } else { $null }
+    if ($null -ne $RunningProcess) {
+        $Healthy = $false
+        try {
+            $Probe = Invoke-WebRequest -Uri $HealthUrl -Method Get -TimeoutSec 3
+            $Healthy = $Probe.StatusCode -eq 200
+        }
+        catch { }
+
+        if ($Healthy) {
+            Write-Host ''
+            Write-Host 'Already running - nothing to do.' -ForegroundColor Green
+            Write-Host "  Upstream PID: $RunningPid"
+            Write-Host "  MCP:          $McpUrl"
+            Write-Host "  Health:       $HealthUrl"
+            Write-Host ''
+            Write-Host 'Restart it with: npm run research:chatgpt:stop, then start again.'
+            exit 0
+        }
+
+        throw "A bridge process is running with PID $RunningPid but $HealthUrl does not answer. Run 'npm run research:chatgpt:stop' and start again."
+    }
+
+    # Stale file from a process that is gone; starting over is safe.
+    Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
+}
 Write-Host "Mode: $Mode"
 Write-Host "Endpoint: $McpUrl"
 
@@ -209,10 +249,11 @@ if (-not $Background) {
 
 New-Item -ItemType Directory -Path $CacheDir -Force | Out-Null
 
+# Narrow race guard: another start may have won between the check above and here.
 if (Test-Path $PidFile) {
     $ExistingPid = (Get-Content $PidFile -Raw).Trim()
     if ($ExistingPid -match '^\d+$' -and $null -ne (Get-Process -Id ([int]$ExistingPid) -ErrorAction SilentlyContinue)) {
-        throw "A bridge process is already running with PID $ExistingPid. Use -Stop first."
+        throw "A bridge process started concurrently with PID $ExistingPid. Run 'npm run research:chatgpt:stop' and start again."
     }
     Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
 }
