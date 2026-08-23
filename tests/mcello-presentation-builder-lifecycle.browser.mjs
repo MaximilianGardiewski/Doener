@@ -90,9 +90,8 @@ try {
   assert.match(cartText, /Tomate/);
   assert.match(cartText, /Gurke/);
   assert.match(cartText, /Zwiebel/);
-  assert.match(cartText, /Soße: Knoblauch/);
-  assert.match(cartText, /Soße: Scharf/);
-  assert.doesNotMatch(cartText, /Zwiebeln/, "removed Pizza topping must not be submitted as selected");
+  assert.match(cartText, /Soße: Knoblauch, Scharf/);
+  assert.match(cartText, /Ohne: Zwiebeln/, "removed Pizza topping must be visible as an explicit removal in the cart summary");
   assert.equal((await customer.locator("#cartCount").textContent())?.trim(), "2 Artikel");
 
   await customer.locator("#checkoutFirstName").fill("Builder Demo");
