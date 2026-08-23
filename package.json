@@ -33,13 +33,13 @@
     "research:chatgpt:bg": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -Background",
     "research:chatgpt:stop": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -Stop",
     "research:chatgpt:doctor": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -DoctorOnly",
-    "research:chatgpt:desktop": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/setup-chatgpt-desktop-mcp.ps1",
-    "research:chatgpt:desktop:remove": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/setup-chatgpt-desktop-mcp.ps1 -Remove",
     "research:chatgpt:check": "node scripts/check-chatgpt-notebook-mcp.mjs",
     "research:chatgpt:setup": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/setup-chatgpt-notebook-mcp.ps1",
     "research:chatgpt:tunnel": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-chatgpt-notebook-tunnel.ps1",
     "research:chatgpt:tunnel:stop": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-chatgpt-notebook-tunnel.ps1 -Stop",
-    "research:chatgpt:tunnel:doctor": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-chatgpt-notebook-tunnel.ps1 -DoctorOnly"
+    "research:chatgpt:tunnel:doctor": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-chatgpt-notebook-tunnel.ps1 -DoctorOnly",
+    "research:codex:register": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/setup-codex-notebook-mcp.ps1",
+    "research:codex:remove": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/setup-codex-notebook-mcp.ps1 -Remove"
   },
   "devDependencies": {
     "@types/node": "22.20.1",

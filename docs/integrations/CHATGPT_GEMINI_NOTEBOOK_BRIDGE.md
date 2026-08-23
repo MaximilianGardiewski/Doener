@@ -20,13 +20,25 @@ local tunnel client
 127.0.0.1:8000/mcp
         |
         v
+allowlist-enforcing proxy
+        |
+        v
+127.0.0.1:8001/mcp
+        |
+        v
 notebooklm-mcp
         |
         v
 Gemini Notebook
 ```
 
-ChatGPT cannot connect directly to a local `stdio`/localhost MCP. The local server therefore runs Streamable HTTP on loopback and must be reached through an authenticated OpenAI-supported tunnel or another properly authenticated remote MCP gateway.
+ChatGPT cannot connect directly to a local `stdio`/localhost MCP. A private/local server therefore uses an authenticated OpenAI Secure MCP Tunnel (or another properly authenticated remote MCP gateway) for ChatGPT.
+
+## ChatGPT is not Codex
+
+A Codex MCP entry in `%USERPROFILE%\.codex\config.toml` does **not** make the server available to ordinary ChatGPT conversations.
+
+Codex local surfaces have their own integration path documented in [`CODEX_GEMINI_NOTEBOOK_BRIDGE.md`](CODEX_GEMINI_NOTEBOOK_BRIDGE.md). ChatGPT uses the Custom App + Secure MCP Tunnel path in this document.
 
 ## Security model
 
@@ -34,7 +46,8 @@ ChatGPT cannot connect directly to a local `stdio`/localhost MCP. The local serv
 - Never set `NOTEBOOKLM_ALLOW_EXTERNAL_BIND=1` for this workflow.
 - Never expose port 8000 through a raw public tunnel.
 - Google session state remains in the local user profile.
-- The runtime hides **all** upstream tool groups and re-enables an explicit allowlist.
+- The raw NotebookLM upstream is isolated on port 8001.
+- An allowlist-enforcing proxy owns port 8000 and blocks calls outside the profile.
 - Default mode is `readonly`.
 - No source writes, deletes, notebook deletes, sharing, Studio generation, Drive mutation, research import, automation, or account switching are exposed.
 
@@ -64,14 +77,15 @@ Adds:
 - `chat_get`
 - `chat_export`
 
-This lets ChatGPT ask Gemini Notebook synthesized questions while still withholding destructive and broader mutating tools. Note that Notebook queries can persist chat history in Gemini Notebook, so this is not as strictly read-only as the default profile.
+Notebook queries can persist chat history in Gemini Notebook, so this profile is not as strictly read-only as the default profile.
 
 ## Local setup
 
-First prepare the shared Gemini Notebook installation if not already done:
+Prepare the shared Gemini Notebook installation if needed:
 
 ```powershell
 npm run setup:research
+nlm login
 ```
 
 Start the safest profile in the foreground:
@@ -86,74 +100,62 @@ Or in the background:
 npm run research:chatgpt:bg
 ```
 
-Start query mode:
-
-```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -Mode query
-```
-
 Stop a background instance:
 
 ```powershell
 npm run research:chatgpt:stop
 ```
 
-Diagnostics:
+Verify the real Streamable HTTP endpoint and enforcement boundary:
 
 ```powershell
-npm run research:chatgpt:doctor
+npm run research:chatgpt:check
 ```
 
-The local endpoints are:
+The public-to-ChatGPT local endpoint is always the proxy:
 
 ```text
-MCP:    http://127.0.0.1:8000/mcp
-Health: http://127.0.0.1:8000/health
+MCP:      http://127.0.0.1:8000/mcp
+Health:   http://127.0.0.1:8000/health
+Upstream: http://127.0.0.1:8001/mcp   (internal only)
 ```
 
 ## ChatGPT connection
 
-OpenAI currently requires ChatGPT custom MCP apps to use a remote MCP connection. For a private/local server, use OpenAI Secure MCP Tunnel when that feature is available for the relevant account/workspace.
+OpenAI requires ChatGPT custom MCP apps to use a remote MCP connection. For a private/local server, use Secure MCP Tunnel when available for the relevant account/workspace.
 
-In ChatGPT developer-mode app creation:
+1. Start and verify the local bridge.
+2. Start the Secure MCP Tunnel with `npm run research:chatgpt:tunnel`.
+3. Create a ChatGPT Custom App.
+4. Choose the tunnel/private MCP connection option.
+5. Select the tunnel connected to `http://127.0.0.1:8000/mcp`.
+6. Scan tools.
+7. Confirm that only the expected allowlisted tools appear.
+8. Keep the app private while testing.
+9. Test `notebook_list` before enabling query mode.
 
-1. Create a custom app.
-2. Choose the tunnel/private MCP connection option.
-3. Point the tunnel client at `http://127.0.0.1:8000/mcp`.
-4. Scan tools.
-5. Confirm that only the expected allowlisted tools appear.
-6. Keep the app private while testing.
-7. Test notebook listing before enabling query mode.
-
-Do not approve a tool scan that unexpectedly includes delete/share/studio/source-write/research-import actions. Stop the bridge and inspect the upstream MCP version/tool gating instead.
-
-## Current ChatGPT plan limitation
-
-As of August 2026, OpenAI documents full custom MCP support for Business and Enterprise/Edu. Pro can use custom MCPs with read/fetch permissions in developer mode. Plus is not currently documented as supporting developer-mode custom MCP apps.
-
-Therefore this repo-side bridge can be fully prepared and tested locally on any machine, but activation inside the ChatGPT UI depends on the account/workspace having custom MCP access.
-
-## Deep Research
-
-OpenAI documents that ChatGPT Deep Research can use custom apps for read/fetch actions, not write actions. The `readonly` profile is intentionally the default for this reason.
+Do not approve a tool scan that unexpectedly includes delete/share/studio/source-write/research-import actions.
 
 ## Failure behavior
 
 If the third-party Gemini Notebook internal API changes:
 
-1. The ChatGPT bridge should fail closed.
+1. Fail closed.
 2. Do not expose additional tools as a workaround.
 3. Run `npm run doctor:research`.
 4. Re-authenticate with `nlm login` if needed.
 5. Upgrade the shared package deliberately rather than automatically.
 
-## Relationship to Claude Code bridge
+If ChatGPT says the `gemini_notebook` tool is unavailable while the local MCP check passes, troubleshoot the ChatGPT Custom App / Secure MCP Tunnel / workspace layer. Do not treat `.codex/config.toml` as a ChatGPT fix.
 
-Both integrations share:
+## Relationship to other integrations
 
-- the same `notebooklm-mcp-cli` installation;
-- the same local Gemini Notebook authentication;
-- the same canonical project notebook (`Doener — Project Research`);
-- the same principle that Git/tests/project docs/measured behavior remain source of truth.
+All integrations may share the same local Gemini Notebook authentication, but their client attachment points are distinct:
 
-Claude Code uses an isolated local `stdio` MCP inside `research-director`. ChatGPT uses a loopback Streamable HTTP MCP plus an authenticated remote/tunnel boundary.
+```text
+Claude Code -> isolated local stdio MCP
+Codex       -> ~/.codex/config.toml -> loopback MCP
+ChatGPT     -> Custom App -> Secure MCP Tunnel -> loopback MCP
+```
+
+Git, tests, project docs, and measured behavior remain the project source of truth regardless of which research client is used.
