@@ -327,13 +327,54 @@ Das sind operative Controls, die mitten im Service auf dem Tablet bedient werden
 
 ## 17. Offene Owner-Entscheidungen
 
-### Brand Contract Test (Visual Gate B)
+### Brand Contract Test (Visual Gate B) — **entschieden: flaches Kupfer**
 
-Der Test wurde von gradient+999px pill (Pre-Rebaseline-Foundation) auf flat copper+2px umgeschrieben. `ART_DIRECTION.md` verbietet „generisches Schwarz-Gold-Luxury" und `USER_REFERENCE_SYNTHESIS.md` gibt die Foundation als „technische Zwischenstufe" frei. Die neuen Assertions sind strenger, nicht schwächer: Sie pinnen die flache Behandlung und verlangen zusätzlich, dass der primäre CTA auf Public- und Commerce-Flächen identisch rendert. **Owner Visual Gate B ist noch nicht akzeptiert.**
+Der Test wurde von gradient+999px pill (Pre-Rebaseline-Foundation) auf flat copper+2px umgeschrieben. `ART_DIRECTION.md` verbietet „generisches Schwarz-Gold-Luxury" und `USER_REFERENCE_SYNTHESIS.md` gibt die Foundation als „technische Zwischenstufe" frei. Die neuen Assertions sind strenger, nicht schwächer: Sie pinnen die flache Behandlung und verlangen zusätzlich, dass der primäre CTA auf Public- und Commerce-Flächen identisch rendert.
 
-### Display/Interface-Typografie-Paarung
+**Owner-Entscheidung am 2026-08-20: flaches Kupfer wird übernommen.** Begründung:
+der alte Kontrakt beschrieb genau die Behandlung, die der Auftraggeber als
+generische Baukasten-Optik zurückgewiesen hat — Verlauf plus vollrunde Pille ist
+die Default-Form jedes PWA-Templates. Die Theke-Richtung setzt dem „gedruckt statt
+aufgeblasen" entgegen; ein Verlaufs-CTA wäre der einzige verbliebene Ort, an dem
+die alte Sprache weiterlebt. Der Kontrakt sichert die Entscheidung jetzt in beide
+Richtungen: kein Verlauf, kein Glow, 2 px Kante, und **eine** Button-Farbe über
+Public und Commerce.
 
-Typografie-Entscheidungen verlagern sich aus drei inline style-Blöcken in operations-theke.css. Die Paarung von Display- und Interface-Type ist immer noch Gate-B-abhängig und offen.
+Zusätzlich prüft der Test seit dem Accessibility-Durchgang den CTA-Kontrast und
+die Sichtbarkeit der Warenkorbsumme auf Mobile.
+
+### Display/Interface-Typografie-Paarung — **entschieden: Fraunces + Inter**
+
+Ausgangslage war kein Kompromiss, sondern ein Versehen: `--font-body: Inter` war
+seit jeher gesetzt, **Inter wurde aber nie geladen**. Auf Windows rendete das
+Segoe UI, auf macOS SF. `--font-display` begann mit „Iowan Old Style", das es nur
+auf macOS gibt — Windows fiel auf Palatino Linotype oder Georgia zurück. Die
+Paarung war also betriebssystemabhängig und ungestaltet.
+
+| Rolle | Schrift | Warum |
+| --- | --- | --- |
+| Interface | **Inter** 400–800 | „Zahlen sind das Interface" ist die Theke-Prämisse; Inter hat echte Tabellen-Versalziffern (`tnum`, `lnum`), auf denen Preise, Mengen und Schrittmarken aufbauen |
+| Display | **Fraunces** 400–800 | Warme Old-Style-Antiqua mit hohem Kontrast. Behält die Serifen-**Rolle**, die der alte Stack beabsichtigte, in einem gedruckten statt luxuriösen Register — `ART_DIRECTION.md` verbietet Schwarz-Gold-Luxury ebenso wie SaaS-Grotesk |
+
+**Selbst gehostet, kein CDN** — dieselbe Regel wie D074 für GSAP. Ein Font-CDN
+würde jeden Seitenaufruf von einem Dritten abhängig machen, ihm die IP jedes
+Besuchers geben und die Offline-App-Shell brechen. `scripts/vendor-mcello-fonts.mjs`
+holt die Dateien einmalig; sie liegen unter `vendor/fonts/` im Precache.
+
+Nur Latin, variabel, woff2: **115 560 Bytes** für beide Familien zusammen.
+
+**Gemessen (A/B, Fonts geblockt vs. geladen, je zwei Läufe):**
+
+| Viewport | CLS mit | CLS ohne | LCP mit | LCP ohne |
+| --- | --- | --- | --- | --- |
+| Mobile 390 | 0,0589 | 0,0580 | 436 / 444 ms | 484 / 432 ms |
+| Desktop 1280 | 0,0124 | 0,0130 | 280 / 660 ms | 832 / 840 ms |
+
+Die Schriften kosten **+0,0009 CLS auf Mobile und −0,0006 auf Desktop** — beides
+Rauschen. `font-display: swap` verschiebt nichts Messbares, weil die
+Fallback-Metriken nah genug liegen; eigene `size-adjust`-Overrides waren deshalb
+nicht nötig und wurden bewusst nicht erfunden. Das Mobile-CLS von 0,058 ist
+**vorbestehend** und liegt im Budget von 0,1.
 
 ---
 

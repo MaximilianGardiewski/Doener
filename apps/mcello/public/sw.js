@@ -1,5 +1,8 @@
-const CACHE = "mcello-public-shell-v33";
+const CACHE = "mcello-public-shell-v34";
 const APP_SHELL = [
+  "/vendor/fonts/fonts.css",
+  "/vendor/fonts/inter-latin-variable.woff2",
+  "/vendor/fonts/fraunces-latin-variable.woff2",
   "/", "/styles.css", "/brand-system.css", "/homepage-v2.css", "/public-theke.css", "/app.js",
   "/public-content.js", "/presentation-mode.js", "/presentation-mode.css", "/public-copy.js", "/placeholder-media.js", "/homepage-composition.js",
   "/motion.js", "/motion.css", "/motion/engine.js", "/motion/accessibility.js", "/motion/homepage.js", "/motion/commerce.js", "/store-v2.js", "/store-v2.css",
