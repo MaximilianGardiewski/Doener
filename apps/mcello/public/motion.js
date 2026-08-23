@@ -126,6 +126,7 @@ function syncCommerceEngineLabels() {
   document.documentElement.dataset.mcelloCategoryEngine = mode;
   document.documentElement.dataset.mcelloProductEngine = mode;
   document.documentElement.dataset.mcelloIngredientEngine = mode;
+  document.documentElement.dataset.mcelloCartEngine = mode;
 }
 
 function activeFoodStage() {
@@ -133,6 +134,11 @@ function activeFoodStage() {
   if (donerYufkaStage) return donerYufkaStage;
   if (document.querySelector("#productModal.open [data-pizza-stage]")) return null;
   return document.querySelector("#productModal.open .modal-hero");
+}
+
+function cartCommitSucceededAfterClick() {
+  const drawer = document.querySelector("#cartDrawer");
+  return Boolean(drawer?.classList.contains("open") && !document.querySelector("#productModal.open"));
 }
 
 function installCommerceMotionContracts() {
@@ -179,13 +185,16 @@ function installCommerceMotionContracts() {
     }
 
     const addToCart = target.closest("#addToCart");
-    if (addToCart && !addToCart.matches(":disabled")) {
+    if (addToCart && !addToCart.matches(":disabled") && cartCommitSucceededAfterClick()) {
       const sticky = document.querySelector(".sticky-order");
-      if (sticky) sticky.dataset.motionCart = "added";
-      restartMotionClass(sticky, "motion-cart-confirm", 440);
-      window.setTimeout(() => {
-        if (sticky) delete sticky.dataset.motionCart;
-      }, 460);
+      const handledByV3 = !reducedMotion.matches && Boolean(commerceMotionV3?.animateCartConfirmation(sticky));
+      if (!handledByV3 && !reducedMotion.matches && sticky) {
+        sticky.dataset.motionCart = "added";
+        restartMotionClass(sticky, "motion-cart-confirm", 440);
+        window.setTimeout(() => {
+          if (sticky) delete sticky.dataset.motionCart;
+        }, 460);
+      }
     }
   });
 
