@@ -6,38 +6,35 @@
   <meta name="theme-color" content="#171715" />
   <title>Mcello KDS — Local Development</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/brand-system.css" />
   <link rel="stylesheet" href="/operations-shell.css" />
+  <link rel="stylesheet" href="/operations-theke.css" />
   <style>
+    /*
+     * Layout/structure only. Colour, border, radius and type treatment for
+     * the classes below live in operations-theke.css (ART_DIRECTION.md:
+     * "KDS/Admin: C funktional reduziert; A/B fast vollständig
+     * zurückgenommen" — flat printed controls, hairline rules, tabular
+     * figures, tracked caps, no card-wall radius, no glow).
+     */
     .kds-shell{width:min(calc(100% - 24px),1500px);margin:auto;padding:24px 0 70px}
     .kds-top{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:20px 0}
-    .kds-top h1{font-size:46px;max-width:none;margin-right:auto}
-    .status-dot{width:10px;height:10px;background:var(--green);border-radius:50%;display:inline-block;box-shadow:0 0 18px rgba(135,189,71,.6)}
-    .status-dot.offline{background:#b96e62;box-shadow:none}
-    .kds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
-    .lane{background:#161613;border:1px solid rgba(255,255,255,.06);border-radius:24px;min-height:520px;padding:14px}
-    .lane h2{font-size:24px;margin:5px 4px 14px;display:flex;justify-content:space-between;gap:8px}
-    .lane-count{font-size:13px;color:var(--muted);font-family:system-ui,sans-serif;font-weight:500}
-    .order{border:1px solid var(--line);background:#20201b;border-radius:20px;padding:15px;margin-bottom:12px;transition:.2s ease}
-    .order.alert{box-shadow:0 0 0 1px rgba(229,136,121,.28),0 0 35px rgba(229,136,121,.1)}
-    .order.urgent{border-color:rgba(239,174,163,.55);box-shadow:0 0 0 1px rgba(239,174,163,.35),0 0 44px rgba(229,136,121,.16)}
-    .urgent-copy{color:#efaea3!important;font-weight:700;display:block}
+    .kds-top h1{max-width:none;margin-right:auto}
+    .kds-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+    .lane{min-height:520px;padding:14px}
+    .lane h2{margin:5px 4px 14px;display:flex;justify-content:space-between;gap:8px}
+    .order{padding:15px;margin-bottom:12px}
     .order-head{display:flex;justify-content:space-between;gap:10px}.order-head>div:last-child{text-align:right}
-    .order small{color:var(--muted)}
-    .order ul{padding-left:19px;color:#ddd2c4;line-height:1.55}
+    .order ul{padding-left:19px;line-height:1.55}
     .order li small{display:block;margin-top:-2px}
     .quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;align-items:center}
-    .quick button{border:1px solid var(--line);background:#29251c;color:var(--gold-2);border-radius:10px;padding:9px 10px;cursor:pointer}
-    .quick button.danger{color:#efaea3;border-color:rgba(229,136,121,.22)}
-    .quick button:disabled{opacity:.45;cursor:wait}
-    .mode-active{background:var(--gold)!important;color:#15120d!important;border-color:transparent!important}
-    .custom-delay{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.06);background:#181815;border-radius:12px;padding:4px 4px 4px 9px}
-    .custom-delay span{font-size:12px;color:var(--muted)}
-    .custom-delay input{width:62px;border:1px solid var(--line);background:#10100e;color:#fff;border-radius:8px;padding:7px 6px;font:inherit;text-align:center}
-    .custom-delay input:focus{outline:2px solid rgba(215,169,76,.4);outline-offset:1px}
-    .empty{color:var(--muted);padding:18px 6px}
-    .kds-error{margin:14px 0;padding:14px 16px;border:1px solid rgba(229,136,121,.25);background:#251b19;border-radius:16px;color:#efb6ad}
-    @media(max-width:1000px){.kds-grid{grid-template-columns:1fr 1fr}}
-    @media(max-width:600px){.kds-grid{grid-template-columns:1fr}.kds-top h1{font-size:36px}}
+    .custom-delay{display:inline-flex;align-items:center;gap:6px;padding:4px 4px 4px 9px}
+    .custom-delay span{font-size:12px}
+    .custom-delay input{width:62px;padding:7px 6px;font:inherit;text-align:center}
+    .empty{padding:18px 6px}
+    .kds-error{margin:14px 0;padding:14px 16px}
+    @media(max-width:1000px){.kds-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+    @media(max-width:600px){.kds-grid{grid-template-columns:minmax(0,1fr)}}
   </style>
 </head>
 <body data-operations-area="kds" data-operations-role="staff">

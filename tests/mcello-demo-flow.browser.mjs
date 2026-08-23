@@ -65,8 +65,10 @@ try {
 
   await customer.locator("#addToCart").click();
   await customer.locator("#cartCount").filter({ hasText: "1 Artikel" }).waitFor({ state: "visible" });
-  await customer.locator("[data-open-cart]").last().click();
-  await customer.locator("#cartDrawer").waitFor({ state: "visible" });
+  const cartDrawer = customer.locator("#cartDrawer");
+  const cartAlreadyOpen = await cartDrawer.evaluate((node) => node.classList.contains("open"));
+  if (!cartAlreadyOpen) await customer.locator("[data-open-cart]").last().click();
+  await cartDrawer.waitFor({ state: "visible" });
 
   await customer.locator("#checkoutFirstName").fill("Mcello Demo");
   await customer.locator("#checkoutMobile").fill("+491701234567");

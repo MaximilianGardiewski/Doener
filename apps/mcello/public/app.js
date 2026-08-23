@@ -143,9 +143,11 @@ function renderCart() {
 
   $("#cartItems").innerHTML = state.cart.length
     ? state.cart.map((line, index) => {
-      const optionText = (line.selectionLabels || []).join(" · ");
+      const optionLines = (line.selectionLabels || [])
+        .map((label) => `<small class="cart-line-detail">${esc(label)}</small>`)
+        .join("");
       return `<div class="cart-item">
-        <div><strong>${line.quantity || 1}× ${esc(line.name)}</strong>${optionText ? `<small>${esc(optionText)}</small>` : ""}${line.comment ? `<small>Wunsch: ${esc(line.comment)}</small>` : ""}</div>
+        <div><strong>${line.quantity || 1}× ${esc(line.name)}</strong>${optionLines}${line.comment ? `<small class="cart-line-detail">Wunsch: ${esc(line.comment)}</small>` : ""}</div>
         <div><strong>${euro.format(lineTotal(line) / 100)}</strong><br><button class="ghost-btn" data-remove="${index}" aria-label="Artikel entfernen">×</button></div>
       </div>`;
     }).join("")
@@ -338,6 +340,12 @@ function openProduct(id) {
     optionIds: group.options.filter((option) => option.defaultSelected && !option.soldOut).map((option) => option.id),
   }));
 
+  const category = state.categories.find((entry) => entry.id === product.categoryId);
+  modal.dataset.productId = product.id;
+  modal.dataset.categorySlug = category?.slug || "";
+  modal.dataset.defaultOptionCount = String((product.modifierGroups || [])
+    .reduce((total, group) => total + group.options.filter((option) => option.defaultSelected && !option.soldOut).length, 0));
+
   $("#modalTitle").textContent = product.name;
   $("#modalDescription").textContent = product.description || "Produktdetails werden aus dem Backend gepflegt.";
   $("#modalImage").src = media;
@@ -354,6 +362,10 @@ function openProduct(id) {
 function closeProduct() {
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
+  delete modal.dataset.productId;
+  delete modal.dataset.categorySlug;
+  delete modal.dataset.defaultOptionCount;
+  delete modal.dataset.configurationValid;
 }
 
 function renderModifiers() {
@@ -361,14 +373,16 @@ function renderModifiers() {
   const groups = product?.modifierGroups || [];
   $("#modifierGroups").innerHTML = groups.map((group) => {
     const inputType = group.maxSelections === 1 ? "radio" : "checkbox";
-    const requiredText = group.minSelections > 0 ? `Mind. ${group.minSelections}` : "Optional";
-    return `<section class="modifier-group">
+    const required = group.minSelections > 0;
+    const requiredText = required ? `Pflicht · mind. ${group.minSelections}` : "Optional";
+    return `<section class="modifier-group" data-group-id="${esc(group.id)}" data-group-name="${esc(group.name)}" data-required="${required}" data-min-selections="${group.minSelections}" data-max-selections="${group.maxSelections}">
       <div class="modifier-head"><strong>${esc(group.name)}</strong><small>${requiredText}${group.maxSelections > 1 ? ` · max. ${group.maxSelections}` : ""}</small></div>
       <div class="modifier-options">${group.options.map((option) => {
         const checked = selectedOptionIds(group.id).includes(option.id) ? "checked" : "";
         const disabled = option.soldOut ? "disabled" : "";
-        const delta = option.priceDeltaCents === 0 ? "inkl." : `${option.priceDeltaCents > 0 ? "+" : ""}${euro.format(option.priceDeltaCents / 100)}`;
-        return `<label class="modifier-option"><input type="${inputType}" name="modifier-${group.id}" value="${option.id}" data-group-id="${group.id}" ${checked} ${disabled}><span>${esc(option.name)}${option.soldOut ? " · ausverkauft" : ""}</span><span>${delta}</span></label>`;
+        const paid = option.priceDeltaCents > 0;
+        const delta = option.priceDeltaCents === 0 ? "inkl." : `${paid ? "+" : ""}${euro.format(option.priceDeltaCents / 100)}`;
+        return `<label class="modifier-option" data-option-id="${esc(option.id)}" data-option-name="${esc(option.name)}" data-price-delta-cents="${option.priceDeltaCents}" data-paid="${paid}" data-default-selected="${Boolean(option.defaultSelected)}" data-sold-out="${Boolean(option.soldOut)}"><input type="${inputType}" name="modifier-${group.id}" value="${option.id}" data-group-id="${group.id}" ${checked} ${disabled}><span>${esc(option.name)}${option.soldOut ? " · ausverkauft" : ""}</span><span>${delta}</span></label>`;
       }).join("")}</div>
     </section>`;
   }).join("");
@@ -428,21 +442,49 @@ function updateAddButton() {
   const product = state.activeProduct;
   if (!product) return;
   const button = $("#addToCart");
-  const valid = productOrderable(product) && configurationValid(product);
+  const orderable = productOrderable(product);
+  const valid = orderable && configurationValid(product);
   button.disabled = !valid;
+  modal.dataset.configurationValid = String(valid);
+  /*
+   * Published separately because "cannot order" and "configuration incomplete"
+   * are different situations with different remedies, and presentation must not
+   * guess which one it is looking at from a disabled button.
+   */
+  modal.dataset.productOrderable = String(orderable);
   button.textContent = productOrderable(product)
     ? `In den Warenkorb · ${euro.format(configuredPrice(product) / 100)}`
     : "Online derzeit nicht bestellbar";
 }
 
-function selectionLabels(product) {
+function selectionLabels(product, selections = state.selections) {
+  const selectedIn = (groupId) => selections.find((selection) => selection.groupId === groupId)?.optionIds || [];
   const labels = [];
+  const removed = [];
+
   for (const group of product.modifierGroups || []) {
-    for (const id of selectedOptionIds(group.id)) {
-      const option = group.options.find((candidate) => candidate.id === id);
-      if (option) labels.push(`${group.name}: ${option.name}`);
+    const chosen = selectedIn(group.id);
+    // Follow the catalog's option order so the summary stays stable no matter
+    // in which order the guest tapped.
+    const names = group.options.filter((option) => chosen.includes(option.id)).map((option) => option.name);
+    if (names.length) labels.push(`${group.name}: ${names.join(", ")}`);
+
+    /*
+     * "Ohne" means the guest took something out, and only a group they can add
+     * to and remove from can express that. In a single-choice group, picking the
+     * large size is not "without the small one" -- the choice is already stated
+     * by the line above, and saying it twice puts a contradiction on the kitchen
+     * ticket. A sold-out default is not a removal either: the guest was never
+     * able to select it.
+     */
+    if (group.maxSelections === 1) continue;
+    for (const option of group.options) {
+      if (!option.defaultSelected || option.soldOut) continue;
+      if (!chosen.includes(option.id)) removed.push(option.name);
     }
   }
+
+  if (removed.length) labels.push(`Ohne: ${removed.join(", ")}`);
   return labels;
 }
 
@@ -601,7 +643,6 @@ function validateAndRepriceCart() {
     }
 
     let currentPrice = product.basePriceCents;
-    const labels = [];
     for (const group of product.modifierGroups || []) {
       const optionIds = selected.get(group.id) || [];
       if (optionIds.length < group.minSelections || optionIds.length > group.maxSelections) {
@@ -615,7 +656,6 @@ function validateAndRepriceCart() {
           break;
         }
         currentPrice += option.priceDeltaCents || 0;
-        labels.push(`${group.name}: ${option.name}`);
       }
       if (!valid) break;
     }
@@ -624,6 +664,8 @@ function validateAndRepriceCart() {
       issues.push(`${line.name} wurde bei Zutaten, Sauce, Größe oder Extras geändert. Bitte neu konfigurieren.`);
       continue;
     }
+
+    const labels = selectionLabels(product, [...selected].map(([groupId, optionIds]) => ({ groupId, optionIds })));
 
     if (line.name !== product.name || line.unitPriceCents !== currentPrice || JSON.stringify(line.selectionLabels || []) !== JSON.stringify(labels)) {
       line.name = product.name;

@@ -1,0 +1,426 @@
+/*
+ * Mcello Operations — "Theke" art direction layer for Admin/Ops/KDS.
+ *
+ * ART_DIRECTION.md is explicit and binding for this surface:
+ *   "KDS/Admin: C funktional reduziert; A/B fast vollständig zurückgenommen."
+ *
+ * That means this is NOT the commerce/editorial layer. Nothing here is a
+ * paper surface, an oversized display heading or a plakative number for
+ * decoration. The only things this file takes from the Theke language are:
+ *   - flat printed controls: no gradient, no glow, near-zero radius;
+ *   - hairline rules instead of card stacks;
+ *   - tabular figures for order numbers, prices, times and counts;
+ *   - uppercase tracked labels for lane/panel headings.
+ * Everything an operator reads at a glance under time pressure — Accept/
+ * Reject, ETA, Delay, Ready, Completed — stays visually dominant through a
+ * flat copper fill; secondary/adjustment actions stay outlined so the
+ * primary path never gets lost in a wall of identical buttons.
+ *
+ * Colour comes exclusively from apps/mcello/public/brand-system.css. Loads
+ * after operations-shell.css on kds.html/admin.html/ops.html; layout/grid
+ * stays page-local, this file only owns the component language.
+ */
+
+:root {
+  --ops-edge: 2px;
+  --ops-rule: 1px;
+  --ops-line: color-mix(in srgb, var(--content-primary) 12%, transparent);
+  --ops-line-strong: color-mix(in srgb, var(--content-primary) 30%, transparent);
+  --ops-panel: color-mix(in srgb, var(--surface-operational) 92%, var(--mcello-ink));
+}
+
+/* ---------------------------------------------------------- 1. Area titles
+ * Operational legibility beats editorial display type here: interface font,
+ * modest size, no serif display moment.
+ */
+
+body[data-operations-area="kds"] .kds-top h1,
+body[data-operations-area="admin"] .admin-top h1,
+body[data-operations-area="ops"] .ops-top h1 {
+  font-family: var(--type-family-interface);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  color: var(--content-primary);
+}
+
+@media (max-width: 600px) {
+  body[data-operations-area="kds"] .kds-top h1,
+  body[data-operations-area="admin"] .admin-top h1,
+  body[data-operations-area="ops"] .ops-top h1 {
+    font-size: 19px;
+  }
+}
+
+/* Panel/section headings (Admin "Produkte", Ops "Gerichte", …) drop the
+ * serif display face inherited from styles.css h1/h2/h3 too — a section
+ * label, not an editorial moment. */
+body[data-operations-area="admin"] .panel h2,
+body[data-operations-area="ops"] .ops-panel h2 {
+  font-family: var(--type-family-interface);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.005em;
+  color: var(--content-primary);
+}
+
+/* ----------------------------------------------------------------- 2. KDS */
+
+body[data-operations-area="kds"] .lane {
+  background: var(--ops-panel);
+  border: var(--ops-rule) solid var(--ops-line);
+  border-radius: 0;
+}
+
+body[data-operations-area="kds"] .lane h2 {
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--mcello-copper);
+  color: var(--content-primary);
+  font-family: var(--type-family-interface);
+  font-size: var(--type-label);
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+body[data-operations-area="kds"] .lane-count {
+  font-family: var(--type-family-interface);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--content-secondary);
+}
+
+body[data-operations-area="kds"] .order {
+  border: var(--ops-rule) solid var(--ops-line);
+  border-left: 3px solid var(--ops-line-strong);
+  border-radius: 0;
+  background: var(--surface-operational);
+  transition: border-color var(--motion-fast) var(--ease-standard);
+}
+
+/* The incoming alarm lane and an aging order stay dominant through the
+ * copper/danger rule colour, not through a blurred glow halo. */
+body[data-operations-area="kds"] .order.alert {
+  border-left-color: var(--mcello-copper);
+  box-shadow: none;
+}
+
+body[data-operations-area="kds"] .order.urgent {
+  border-color: color-mix(in srgb, var(--content-danger) 55%, transparent);
+  border-left-color: var(--content-danger);
+  border-left-width: 4px;
+  box-shadow: none;
+}
+
+body[data-operations-area="kds"] .urgent-copy {
+  display: block;
+  color: var(--content-danger) !important;
+  font-weight: 800;
+}
+
+body[data-operations-area="kds"] .order-head strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--content-primary);
+}
+
+body[data-operations-area="kds"] .order small { color: var(--content-secondary); }
+body[data-operations-area="kds"] .order ul { color: var(--content-secondary); }
+
+body[data-operations-area="kds"] .order > p strong {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-size: var(--type-price);
+  font-weight: 800;
+  color: var(--content-primary);
+}
+
+/* Quick actions: the state-advancing action (accept/ready/complete/activate)
+ * stays a flat copper fill — the one thing an operator must not miss. Delay
+ * adjustments and reject reasons stay outlined so they read as secondary
+ * without becoming hard to find. */
+body[data-operations-area="kds"] .quick button {
+  min-height: var(--touch-target-primary);
+  padding-inline: 16px;
+  border: 0;
+  border-radius: var(--ops-edge);
+  background: var(--mcello-copper);
+  color: var(--content-inverse);
+  font-weight: 800;
+  font-size: var(--type-meta);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: background var(--motion-fast) var(--ease-standard);
+}
+body[data-operations-area="kds"] .quick button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mcello-copper) 84%, var(--mcello-cream));
+}
+
+body[data-operations-area="kds"] .quick button[data-action="delay"] {
+  min-height: var(--touch-target-compact);
+  padding-inline: 12px;
+  background: none;
+  border: var(--ops-rule) solid var(--ops-line-strong);
+  color: var(--content-primary);
+  font-variant-numeric: tabular-nums;
+}
+body[data-operations-area="kds"] .quick button[data-action="delay"]:hover:not(:disabled) {
+  background: none;
+  border-color: var(--mcello-copper);
+}
+
+body[data-operations-area="kds"] .quick button.danger {
+  min-height: var(--touch-target-compact);
+  background: none;
+  border: var(--ops-rule) solid color-mix(in srgb, var(--content-danger) 55%, transparent);
+  color: var(--content-danger);
+}
+body[data-operations-area="kds"] .quick button.danger:hover:not(:disabled) {
+  background: none;
+  border-color: var(--content-danger);
+}
+
+body[data-operations-area="kds"] .quick button:disabled { opacity: .45; cursor: wait; }
+
+body[data-operations-area="kds"] .mode-active {
+  background: var(--mcello-copper) !important;
+  color: var(--content-inverse) !important;
+  border-color: transparent !important;
+}
+
+body[data-operations-area="kds"] .custom-delay {
+  border: var(--ops-rule) solid var(--ops-line);
+  border-radius: var(--ops-edge);
+  background: none;
+}
+body[data-operations-area="kds"] .custom-delay span {
+  color: var(--content-secondary);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+body[data-operations-area="kds"] .custom-delay input {
+  min-height: var(--touch-target-compact);
+  border: var(--ops-rule) solid var(--ops-line-strong);
+  border-radius: var(--ops-edge);
+  background: var(--surface-operational);
+  color: var(--content-primary);
+  font-variant-numeric: tabular-nums;
+}
+body[data-operations-area="kds"] .custom-delay input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+body[data-operations-area="kds"] .empty { color: var(--content-secondary); }
+
+body[data-operations-area="kds"] .kds-error {
+  border-radius: 0;
+  border: var(--ops-rule) solid color-mix(in srgb, var(--content-danger) 55%, transparent);
+  border-left: 3px solid var(--content-danger);
+  background: var(--surface-operational);
+  color: var(--content-danger);
+}
+
+/* --------------------------------------------------------------- 3. Admin */
+
+body[data-operations-area="admin"] .toolbar input,
+body[data-operations-area="admin"] .toolbar select,
+body[data-operations-area="admin"] .admin-form input,
+body[data-operations-area="admin"] .admin-form textarea,
+body[data-operations-area="admin"] .admin-form select {
+  border: var(--ops-rule) solid var(--ops-line-strong);
+  border-radius: var(--ops-edge);
+  background: var(--surface-operational);
+  color: var(--content-primary);
+  padding: 10px 12px;
+  font: inherit;
+  min-height: var(--touch-target-compact);
+}
+body[data-operations-area="admin"] .admin-form input:focus-visible,
+body[data-operations-area="admin"] .admin-form textarea:focus-visible,
+body[data-operations-area="admin"] .admin-form select:focus-visible,
+body[data-operations-area="admin"] .toolbar input:focus-visible,
+body[data-operations-area="admin"] .toolbar select:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+body[data-operations-area="admin"] .panel {
+  padding: 16px;
+  border: var(--ops-rule) solid var(--ops-line);
+  border-radius: 0;
+  background: var(--ops-panel);
+}
+
+body[data-operations-area="admin"] .category-card,
+body[data-operations-area="admin"] .product-card,
+body[data-operations-area="admin"] .modifier-card,
+body[data-operations-area="admin"] .rule-card {
+  border: var(--ops-rule) solid var(--ops-line);
+  border-radius: 0;
+  background: var(--surface-operational);
+}
+
+body[data-operations-area="admin"] .product-card summary > span:last-child,
+body[data-operations-area="admin"] .modifier-card summary > span:last-child {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+body[data-operations-area="admin"] .admin-btn {
+  min-height: var(--touch-target-compact);
+  border: var(--ops-rule) solid var(--ops-line-strong);
+  border-radius: var(--ops-edge);
+  background: none;
+  color: var(--content-primary);
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+body[data-operations-area="admin"] .admin-btn:hover:not(:disabled) {
+  border-color: var(--mcello-copper);
+}
+body[data-operations-area="admin"] .admin-btn.primary {
+  border-color: transparent;
+  background: var(--mcello-copper);
+  color: var(--content-inverse);
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+body[data-operations-area="admin"] .admin-btn.primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mcello-copper) 84%, var(--mcello-cream));
+}
+body[data-operations-area="admin"] .admin-btn.danger {
+  border-color: color-mix(in srgb, var(--content-danger) 55%, transparent);
+  color: var(--content-danger);
+}
+body[data-operations-area="admin"] .admin-btn.good {
+  border-color: color-mix(in srgb, var(--content-fresh) 55%, transparent);
+  color: var(--content-fresh);
+}
+body[data-operations-area="admin"] .admin-btn:disabled { opacity: .45; cursor: wait; }
+
+body[data-operations-area="admin"] .badge {
+  border: var(--ops-rule) solid var(--ops-line-strong);
+  border-radius: var(--ops-edge);
+  color: var(--content-secondary);
+  font-size: var(--type-meta);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+body[data-operations-area="admin"] .message,
+body[data-operations-area="admin"] .muted-help {
+  color: var(--content-secondary);
+}
+
+body[data-operations-area="admin"] .option-row {
+  border-top: var(--ops-rule) solid var(--ops-line);
+}
+body[data-operations-area="admin"] .option-row:first-of-type {
+  border-top: 0;
+}
+
+body[data-operations-area="admin"] .group-assignment,
+body[data-operations-area="admin"] .cross-sell-assignment {
+  border: var(--ops-rule) solid var(--ops-line);
+  border-radius: 0;
+}
+body[data-operations-area="admin"] .group-assignment legend,
+body[data-operations-area="admin"] .cross-sell-assignment legend {
+  color: var(--content-secondary);
+}
+
+/* --------------------------------------------------------- 4. Ops/Betrieb */
+
+body[data-operations-area="ops"] .ops-panel {
+  border: var(--ops-rule) solid var(--ops-line);
+  border-radius: 0;
+  background: var(--ops-panel);
+}
+
+body[data-operations-area="ops"] .ops-row {
+  border-bottom: var(--ops-rule) solid var(--ops-line);
+}
+body[data-operations-area="ops"] .ops-row:last-child {
+  border-bottom: 0;
+}
+
+body[data-operations-area="ops"] .ops-row small,
+body[data-operations-area="ops"] .shop-state small,
+body[data-operations-area="ops"] .message {
+  color: var(--content-secondary);
+}
+
+body[data-operations-area="ops"] .shop-state strong {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-title);
+  letter-spacing: -.01em;
+  color: var(--content-primary);
+}
+
+body[data-operations-area="ops"] .ops-btn {
+  min-height: var(--touch-target-compact);
+  border: var(--ops-rule) solid var(--ops-line-strong);
+  border-radius: var(--ops-edge);
+  background: none;
+  color: var(--content-primary);
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+body[data-operations-area="ops"] .ops-btn:hover:not(:disabled) { border-color: var(--mcello-copper); }
+body[data-operations-area="ops"] .ops-btn.danger {
+  border-color: color-mix(in srgb, var(--content-danger) 55%, transparent);
+  color: var(--content-danger);
+}
+body[data-operations-area="ops"] .ops-btn.good {
+  border-color: color-mix(in srgb, var(--content-fresh) 55%, transparent);
+  color: var(--content-fresh);
+}
+body[data-operations-area="ops"] .ops-btn.active {
+  border-color: transparent;
+  background: var(--mcello-copper);
+  color: var(--content-inverse);
+}
+body[data-operations-area="ops"] .ops-btn:disabled { opacity: .45; cursor: wait; }
+
+/* Shop-wide mode switches (Automatik/Rush/Pause/Heute geschlossen/Geschlossen)
+ * are the same operational weight class as KDS Accept/Reject — full primary
+ * touch target, not the compact per-row sold-out toggle size below them. */
+body[data-operations-area="ops"] .shop-actions .ops-btn {
+  min-height: var(--touch-target-primary);
+}
+
+body[data-operations-area="ops"] .operator-message input {
+  min-height: var(--touch-target-compact);
+  border: var(--ops-rule) solid var(--ops-line-strong);
+  border-radius: var(--ops-edge);
+  background: var(--surface-operational);
+  color: var(--content-primary);
+  padding: 10px 12px;
+  font: inherit;
+}
+body[data-operations-area="ops"] .operator-message input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-operations-area="kds"] .order,
+  body[data-operations-area="kds"] .quick button {
+    transition: none;
+  }
+}
+
+/*
+ * KDS header controls are operational, not chrome: the alarm toggle (D014) and
+ * the rush/pause switches (D012) are used on a tablet mid-service. They measured
+ * 40px, under the 44px contract, so they are raised to the secondary target.
+ */
+body[data-operations-area="kds"] .kds-top .pill,
+body[data-operations-area="kds"] .kds-shell .pill {
+  min-height: var(--touch-target-compact);
+}

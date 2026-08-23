@@ -56,7 +56,9 @@ function render(status) {
   current = status;
   $("#statusError").classList.add("hidden");
   $("#statusContent").classList.remove("hidden");
-  $("#orderNumber").textContent = `Bestellung #${status.orderNumber}`;
+  // The surrounding block carries the "Deine Bestellung" label, so the numeral
+  // stands alone as the primary signal.
+  $("#orderNumber").textContent = `#${status.orderNumber}`;
   const [title, message] = stateCopy[status.state] ?? ["Bestellstatus", status.state];
   $("#statusTitle").textContent = title;
   $("#statusMessage").textContent = status.rejectionReason

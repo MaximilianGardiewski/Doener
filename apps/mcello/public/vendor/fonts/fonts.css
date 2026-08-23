@@ -1,0 +1,26 @@
+/*
+ * Mcello brand typefaces, self-hosted.
+ *
+ * Generated files come from scripts/vendor-mcello-fonts.mjs; see MANIFEST.json
+ * for sources and sizes. No CDN at runtime -- same rule as the GSAP vendor
+ * (D074): a third-party font host would make every page load depend on it, leak
+ * visitor IPs, and break the offline app shell.
+ *
+ * Latin subsets, variable weights, woff2 only.
+ */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("./inter-latin-variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("./fraunces-latin-variable.woff2") format("woff2");
+}

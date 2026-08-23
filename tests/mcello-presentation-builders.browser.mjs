@@ -124,12 +124,14 @@ async function desktopPresentationFlow() {
   const cart = await page.locator("#cartItems").innerText();
   assert.match(cart, /Pizza Mcello/);
   assert.match(cart, /Drehspieß im Yufka/);
-  assert.match(cart, /Falafel/);
+  assert.match(cart, /Basis: Falafel/);
   assert.match(cart, /Tomate/);
   assert.match(cart, /Gurke/);
-  assert.match(cart, /Soße: Curry/);
-  assert.match(cart, /Soße: Knoblauch/);
-  assert.match(cart, /Soße: Scharf/);
+  // The cart summarises one line per modifier group in catalog option order.
+  // A single-choice switch (Fleisch -> Falafel) is represented by the chosen
+  // basis, not as a contradictory removal line.
+  assert.match(cart, /Soße: Curry, Knoblauch, Scharf/);
+  assert.doesNotMatch(cart, /Ohne: Fleisch/);
   assert.equal((await page.locator("#cartCount").textContent())?.trim(), "2 Artikel");
   assert.deepEqual(errors, [], errors.join("\n"));
   await context.close();
