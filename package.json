@@ -26,7 +26,13 @@
     "demo:mcello:presentation": "pwsh -NoProfile -ExecutionPolicy Bypass -File Mcello-Demo.ps1 -Mode Lan",
     "demo:mcello:prepare": "pwsh -NoProfile -ExecutionPolicy Bypass -File Mcello-Demo.ps1 -Mode Prepare",
     "demo:mcello:win": "pwsh -NoProfile -File scripts/demo-mcello.ps1",
-    "demo:mcello:lan": "pwsh -NoProfile -File scripts/demo-mcello-presentation-lan.ps1"
+    "demo:mcello:lan": "pwsh -NoProfile -File scripts/demo-mcello-presentation-lan.ps1",
+    "setup:research": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/setup-gemini-notebook-bridge.ps1",
+    "doctor:research": "nlm doctor",
+    "research:chatgpt": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1",
+    "research:chatgpt:bg": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -Background",
+    "research:chatgpt:stop": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -Stop",
+    "research:chatgpt:doctor": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-gemini-notebook-chatgpt-mcp.ps1 -DoctorOnly"
   },
   "devDependencies": {
     "@types/node": "22.20.1",
