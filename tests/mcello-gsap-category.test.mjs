@@ -56,7 +56,10 @@ test("category motion remains presentation-only and self-host/offline capable", 
   assert.doesNotMatch(commerce, /fetch\s*\(|XMLHttpRequest|WebSocket/);
   assert.doesNotMatch(commerce, /\/api\/|\/rest\/|supabase|\.rpc\s*\(/i);
   assert.doesNotMatch(commerce, /localStorage|sessionStorage|indexedDB/);
-  assert.doesNotMatch(commerce, /price|cart|checkout|availability|sold.?out|authorization|locationId/i);
+  // commerce.js is a shared presentation-motion adapter. Cart-specific motion is
+  // covered by its own presentation-only test, so this category guard must not
+  // reject the adapter merely because a sibling cart transition exists.
+  assert.doesNotMatch(commerce, /price|checkout|availability|sold.?out|authorization|locationId/i);
   assert.match(runtime, /motionCategory/);
   assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/motion\/commerce\.js"/);
