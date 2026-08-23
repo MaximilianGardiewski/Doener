@@ -158,3 +158,45 @@ The long-term target is an adapter-compatible move to an official Google Gemini 
 - The subagent can read relevant repo docs but cannot edit files.
 - A research request returns the standard Research Brief.
 - Main Claude Code remains responsible for implementation and decision recording.
+
+## Troubleshooting: `research-director` meldet, `notebook_list` sei nicht verfügbar
+
+Diese Meldung bedeutet fast nie einen Konfigurationsfehler. Die Agent-Definition
+in `.claude/agents/research-director.md` ist korrekt: der `mcpServers`-Block darf
+eine Liste sein, `.claude/skills/<ordner>/SKILL.md` ist der richtige Skill-Ort,
+und `name` + `description` genügen als Frontmatter. Bevor daran etwas geändert
+wird, in dieser Reihenfolge prüfen:
+
+1. **Läuft die Session dort, wo der MCP läuft?**
+   Der Server wird per `type: stdio, command: notebooklm-mcp` gestartet — er
+   muss auf **derselben Maschine** verfügbar sein wie die Claude-Code-Session.
+   Eine Remote-Session (Claude Code on the web) hat weder das Binary noch die
+   Google-Session und kann den Zugriff grundsätzlich nicht herstellen. Prüfen:
+   `command -v notebooklm-mcp` bzw. `Get-Command notebooklm-mcp`.
+
+2. **Ist der Checkout aktuell?**
+   Fehlt `.claude/skills/gemini-notebook-research/SKILL.md`, meldet Claude Code
+   `Unknown command: /gemini-notebook-research`. Prüfen:
+   `Test-Path .claude\skills\gemini-notebook-research\SKILL.md`.
+   Nach einem Pull, der das Verzeichnis erst anlegt, muss Claude Code **neu
+   gestartet** werden — das ist der einzige dokumentierte Fall, in dem ein
+   Neustart nötig ist.
+
+3. **Am Skill vorbei testen.**
+   Der Skill ist nur ein Einstiegspunkt. Die Anbindung selbst prüft man direkt:
+
+   > Nutze den research-director-Subagent. Er soll `notebook_list` aufrufen.
+   > Nur lesen.
+
+Verifiziert am 2026-08-20 auf Windows 11, Claude Code v2.1.234,
+`notebooklm-mcp-cli` 0.9.14: der Aufruf liefert die realen Notebooks.
+
+### Warum `research-director` per stdio angebunden ist und nicht über den Proxy
+
+Der Allowlist-Proxy auf `127.0.0.1:8000` existiert, um **ChatGPT** zu begrenzen —
+einen Dritten — und exponiert im Readonly-Profil sechs Tools. Der
+`research-director` braucht mehr (`notebook_query`, `research_start`,
+`research_import`, `source_add`), und er soll auch dann arbeiten können, wenn die
+ChatGPT-Bridge gar nicht läuft. Begrenzt wird er stattdessen durch die
+`tools:`-Liste seiner eigenen Agent-Definition. Zwei Konsumenten, zwei Grenzen,
+bewusst unterschiedlich weit.
