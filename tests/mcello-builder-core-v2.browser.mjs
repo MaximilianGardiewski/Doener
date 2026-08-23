@@ -58,8 +58,11 @@ async function exerciseModifierStateWhenPresent(page) {
     return { hadInputs: false, originalSignature };
   }
 
-  const checkbox = page.locator('#modifierGroups input[type="checkbox"]:not(:disabled)').first();
-  const uncheckedRadio = page.locator('#modifierGroups input[type="radio"]:not(:disabled):not(:checked)').first();
+  // Touch landscape shows exactly one guided step at a time (Builder Responsive V3),
+  // so only inputs inside a visible step can be exercised by a real guest.
+  const visibleStep = '#modifierGroups .builder-step:not([data-builder-step-current="false"])';
+  const checkbox = page.locator(`${visibleStep} input[type="checkbox"]:not(:disabled)`).first();
+  const uncheckedRadio = page.locator(`${visibleStep} input[type="radio"]:not(:disabled):not(:checked)`).first();
   if (await checkbox.count()) {
     if (await checkbox.isChecked()) await checkbox.uncheck();
     else await checkbox.check();
@@ -73,7 +76,8 @@ async function exerciseModifierStateWhenPresent(page) {
   assert.match(await page.locator("[data-builder-selection-state]").textContent(), /Angepasst/);
   assert.equal(await page.locator("#productModal").getAttribute("data-builder-original-selection"), originalSignature, "visual Builder must not rewrite the captured original recipe signature");
 
-  const optionHeights = await page.locator('[data-builder-option="true"]').evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height));
+  const optionHeights = await page.locator(`${visibleStep} [data-builder-option="true"]`).evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height));
+  assert.ok(optionHeights.length > 0, "a reachable guided step must expose modifier choices");
   assert.ok(optionHeights.every((height) => height >= 44), "modifier choices must remain touch-safe");
   return { hadInputs: true, originalSignature };
 }

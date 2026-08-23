@@ -1,12 +1,15 @@
-const CACHE = "mcello-public-shell-v29";
+const CACHE = "mcello-public-shell-v34";
 const APP_SHELL = [
-  "/", "/styles.css", "/brand-system.css", "/homepage-v2.css", "/app.js",
+  "/vendor/fonts/fonts.css",
+  "/vendor/fonts/inter-latin-variable.woff2",
+  "/vendor/fonts/fraunces-latin-variable.woff2",
+  "/", "/styles.css", "/brand-system.css", "/homepage-v2.css", "/public-theke.css", "/app.js",
   "/public-content.js", "/presentation-mode.js", "/presentation-mode.css", "/public-copy.js", "/placeholder-media.js", "/homepage-composition.js",
   "/motion.js", "/motion.css", "/motion/engine.js", "/motion/accessibility.js", "/motion/homepage.js", "/motion/commerce.js", "/store-v2.js", "/store-v2.css",
-  "/builder-core-v2.js", "/builder-core-v2.css", "/pizza-builder-v2.js", "/pizza-builder-v2.css",
+  "/builder-core-v2.js", "/builder-core-v2.css", "/commerce-theke.js", "/commerce-theke.css", "/public-theke.js", "/pizza-builder-v2.js", "/pizza-builder-v2.css",
   "/doner-yufka-builder-v2.js", "/doner-yufka-builder-v2.css",
   "/vendor/gsap/gsap.min.js", "/vendor/gsap/ScrollTrigger.min.js", "/vendor/gsap/Flip.min.js",
-  "/operations-shell.js", "/operations-shell.css",
+  "/operations-shell.js", "/operations-shell.css", "/operations-theke.css",
   "/handbook.html", "/handbook.js", "/handbook.css", "/handbook/shared.md", "/handbook/staff.md", "/handbook/admin.md",
   "/manifest.webmanifest", "/media/placeholder.svg", "/icons/pwa-192.png", "/icons/pwa-512.png",
 ];

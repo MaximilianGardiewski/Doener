@@ -12,13 +12,19 @@ const groupsRoot = document.querySelector("#modifierGroups");
 const presentationIngredients = ["Kebap Fleisch", "Tomaten", "Broccoli", "Käse", "Zwiebeln"];
 let pendingPizza = false;
 
+// Categories this adapter presents with a top-down stage. Declared by the adapter,
+// resolved from the real category the application published — never from a product name.
+const TOP_DOWN_CATEGORIES = new Set(["pizza"]);
+
 function activeCategorySlug() {
-  const label = document.querySelector("#categoryRail [data-category].active")?.textContent?.trim().toLocaleLowerCase("de") || "";
-  return label === "pizza" ? "pizza" : "";
+  const slug = String(modal?.dataset.categorySlug || "").trim().toLocaleLowerCase("de");
+  return TOP_DOWN_CATEGORIES.has(slug) ? slug : "";
 }
 
 function optionName(label) {
-  return label?.querySelector("span")?.textContent?.replace(/ · ausverkauft$/i, "")?.trim() || "";
+  return label?.dataset.optionName
+    || label?.querySelector("span")?.textContent?.replace(/ · ausverkauft$/i, "")?.trim()
+    || "";
 }
 
 function presentationToppingGroup() {
@@ -121,8 +127,11 @@ document.addEventListener("click", (event) => {
   const target = event.target instanceof Element ? event.target : null;
   const product = target?.closest("[data-product], [data-recommended-product]");
   if (!product || product.matches(":disabled")) return;
-  pendingPizza = activeCategorySlug() === "pizza";
-  queueMicrotask(() => pendingPizza ? applyPizzaStage() : clearPizzaStage());
+  queueMicrotask(() => {
+    pendingPizza = activeCategorySlug() === "pizza";
+    if (pendingPizza) applyPizzaStage();
+    else clearPizzaStage();
+  });
 });
 
 groupsRoot?.addEventListener("change", () => {
@@ -139,7 +148,9 @@ if (groupsRoot) {
 if (modal) {
   new MutationObserver(() => {
     if (modal.classList.contains("open")) {
-      applyPizzaStage();
+      pendingPizza = activeCategorySlug() === "pizza";
+      if (pendingPizza) applyPizzaStage();
+      else clearPizzaStage();
       return;
     }
     pendingPizza = false;

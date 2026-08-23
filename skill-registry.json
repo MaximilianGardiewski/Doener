@@ -43,6 +43,11 @@
       "path": "skills/responsive-route-qa-engineer/SKILL.md"
     },
     {
+      "name": "visual-web-design-engineer",
+      "description": "Take over an existing web or PWA repository and raise the quality of its real interface — layout, hierarchy, interaction states, motion and responsive behaviour — by changing the actual application, judging every iteration in a running browser, and keeping domain, pricing, availability and checkout authority exactly where the repository already has it.",
+      "path": "skills/visual-web-design-engineer/SKILL.md"
+    },
+    {
       "name": "supabase-rls-security-auditor",
       "description": "Audit and harden Supabase/PostgreSQL authentication, roles, RLS, functions, storage policies, public publishing rules, and privileged server access for CMS and SaaS applications.",
       "path": "skills/supabase-rls-security-auditor/SKILL.md"

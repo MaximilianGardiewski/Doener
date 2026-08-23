@@ -38,10 +38,13 @@ test("GSAP cart confirmation is bounded transform-only feedback with V2 fallback
 test("cart feedback isolates its CSS writer and cleans repeated transitions", () => {
   assert.match(css, /\[data-motion-cart-engine="gsap"\]/);
   assert.match(commerce, /let cartTransition = null/);
-  assert.match(commerce, /clearCartPresentation/);
+  assert.match(commerce, /function clearCartPresentation\(\)/);
   assert.match(commerce, /delete sticky\.dataset\.motionCartEngine/);
   assert.match(commerce, /delete sticky\.dataset\.motionCart/);
-  assert.match(commerce, /clearCartPresentation\(\);\n      clearIngredientPresentation\(\)/);
+  const cleanup = commerce.slice(commerce.indexOf("cleanup() {"));
+  assert.match(cleanup, /clearCartPresentation\(\)/);
+  assert.match(cleanup, /activeTweens\.clear\(\)/);
+  assert.match(cleanup, /scope\.cleanup\(\)/);
 });
 
 test("Reduced Motion prevents both GSAP and legacy cart confirmation animation", () => {
@@ -59,7 +62,7 @@ test("cart motion remains presentation-only and self-host/offline capable", () =
   assert.doesNotMatch(cartFn, /\/api\/|\/rest\/|supabase|\.rpc\s*\(/i);
   assert.doesNotMatch(cartFn, /localStorage|sessionStorage|indexedDB/);
   assert.doesNotMatch(cartFn, /price|checkout|availability|sold.?out|authorization|locationId|state\./i);
-  assert.match(sw, /mcello-public-shell-v29/);
+  assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /"\/motion\/commerce\.js"/);
   assert.match(sw, /"\/vendor\/gsap\/gsap\.min\.js"/);
 });

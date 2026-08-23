@@ -1,8 +1,12 @@
 import { connectPostgresRealtime } from "./realtime-client.js";
+import { installKdsLaneMotion } from "./motion/operations.js";
 
 const euro = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
 const lanes = ["incoming", "planned", "preparing", "ready"];
 const target = Object.fromEntries(lanes.map((lane) => [lane, document.querySelector(`#${lane}`)]));
+// Presentation-only: explains where a card went when its lane changed.
+// Never decides the lane itself — see motion/operations.js.
+const laneMotion = installKdsLaneMotion({ root: document.querySelector(".kds-grid") });
 let orders = [];
 let refreshing = false;
 let shopOverride = "auto";
@@ -101,6 +105,10 @@ function actions(order) {
 }
 
 function render() {
+  // Capture where today's cards are before this render wipes and rebuilds
+  // the lanes, so lane motion can explain any lane change once the new
+  // cards are in place. No-op under reduced motion / GSAP-unavailable.
+  laneMotion.captureBeforeRender();
   const counts = Object.fromEntries(lanes.map((lane) => [lane, 0]));
   lanes.forEach((lane) => { target[lane].innerHTML = ""; });
 
@@ -110,6 +118,10 @@ function render() {
     const urgent = isUrgent(order);
     const el = document.createElement("article");
     el.dataset.orderId = order.id;
+    // Stable identity across full re-renders so lane motion can match this
+    // card to its previous position even though the element itself is
+    // recreated on every render() call.
+    el.dataset.flipId = `order-${order.id}`;
     el.className = `order ${order.lane === "incoming" ? "alert" : ""}${urgent ? " urgent" : ""}`;
     const itemHtml = order.items.map((item) => {
       const options = item.options.length ? `<small>${item.options.map(escapeHtml).join(" · ")}</small>` : "";
@@ -134,6 +146,9 @@ function render() {
   }
   document.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", () => act(button)));
   syncAlarm();
+  // Cards are already in their correct (new) lane at this point regardless
+  // of motion support; this only adds the visible travel explaining it.
+  laneMotion.playAfterRender();
 }
 
 async function refresh() {

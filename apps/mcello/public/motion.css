@@ -183,3 +183,155 @@ html[data-mcello-hero-engine="gsap"] .hero-media-v2 .hero-photo {
     will-change: auto;
   }
 }
+/*
+ * Builder step and configured-total fallbacks. These run when GSAP is not
+ * available; the reduced-motion block below turns both into no-ops.
+ */
+@keyframes mcelloStepForward {
+  from { opacity: .45; transform: translate3d(20px, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes mcelloStepBack {
+  from { opacity: .45; transform: translate3d(-20px, 0, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes mcelloTotalChange {
+  0% { transform: scale(1); }
+  42% { transform: scale(1.024); }
+  100% { transform: scale(1); }
+}
+
+.motion-step-change[data-motion-step-direction="forward"] {
+  animation: mcelloStepForward 300ms var(--ease-standard, cubic-bezier(.2, .7, .25, 1)) both;
+}
+
+.motion-step-change[data-motion-step-direction="back"] {
+  animation: mcelloStepBack 300ms var(--ease-standard, cubic-bezier(.2, .7, .25, 1)) both;
+}
+
+.motion-total-change {
+  animation: mcelloTotalChange 320ms var(--ease-standard, cubic-bezier(.2, .7, .25, 1)) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-step-change,
+  .motion-total-change {
+    animation: none !important;
+  }
+}
+
+/*
+ * Add-to-cart flight ghost. Position/size/removal lifecycle are owned by the
+ * controller/adapter that created the node; this only styles the fixed token
+ * and its GSAP-unavailable travel keyframe.
+ */
+.motion-cart-flight-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 200;
+  overflow: hidden;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--rule-warm, var(--line));
+  box-shadow: var(--shadow-md, 0 20px 55px rgba(0, 0, 0, .31));
+  background-color: var(--surface-food-stage, var(--panel));
+  background-size: cover;
+  background-position: center;
+  will-change: transform, opacity;
+}
+
+@keyframes mcello-cart-flight {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
+  70% { opacity: .85; }
+  100% {
+    transform: translate3d(var(--motion-flight-x, 0), var(--motion-flight-y, 0), 0) scale(var(--motion-flight-scale, .3));
+    opacity: .15;
+  }
+}
+
+.motion-cart-flight-ghost.motion-cart-flight {
+  animation-name: mcello-cart-flight;
+  animation-duration: 560ms;
+  animation-timing-function: var(--motion-ease-out);
+  animation-fill-mode: both;
+  animation-iteration-count: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-cart-flight-ghost {
+    display: none !important;
+  }
+}
+
+/*
+ * Skeleton loading placeholders. The loading window itself is real (the
+ * grids start childless until the application's own catalog request
+ * resolves); the shimmer never fabricates or extends that window.
+ */
+.motion-skeleton-card {
+  min-height: 420px;
+  border-radius: var(--radius-lg, 24px);
+  border: 1px solid var(--rule-subtle, var(--line-soft));
+  background-image: linear-gradient(
+    100deg,
+    var(--surface-raised, var(--panel-2)) 25%,
+    var(--surface-food-stage, var(--panel-3)) 37%,
+    var(--surface-raised, var(--panel-2)) 63%
+  );
+  background-size: 400% 100%;
+  animation-name: mcello-skeleton-shimmer;
+  animation-duration: 1.8s;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: both;
+  animation-iteration-count: 30;
+}
+
+#menuList.motion-skeleton-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--surface-raised, var(--panel-2));
+}
+
+#menuList .motion-skeleton-card {
+  min-height: 84px;
+  border-radius: 0;
+  border: 0;
+}
+
+/*
+ * Only while the image has not arrived. Unlike the skeleton cards, which the
+ * observer tears down, these had no off switch: the shimmer kept animating
+ * underneath a fully loaded photo for 30 iterations -- 54 seconds of pointless
+ * compositing on every card in the grid.
+ */
+.food-card img:not([data-loaded="true"]),
+.modal-hero:not(:has(img[data-loaded="true"])) {
+  background-image: linear-gradient(
+    100deg,
+    var(--surface-raised, var(--panel-2)) 25%,
+    var(--surface-food-stage, var(--panel-3)) 37%,
+    var(--surface-raised, var(--panel-2)) 63%
+  );
+  background-size: 400% 100%;
+  animation-name: mcello-skeleton-shimmer;
+  animation-duration: 1.8s;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: both;
+  animation-iteration-count: 30;
+}
+
+@keyframes mcello-skeleton-shimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: -400% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-skeleton-card,
+  .food-card img,
+  .modal-hero {
+    animation: none !important;
+    background-position: 0 0 !important;
+  }
+}

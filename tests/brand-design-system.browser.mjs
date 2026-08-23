@@ -37,10 +37,47 @@ try {
   assert.equal(tokens.radius, "28px", "shared premium radius must resolve");
 
   const visualContract = await page.evaluate(() => {
+    /*
+     * WCAG contrast, composited through the full ancestor chain. Stopping at the
+     * first non-transparent backgroundColor is wrong here: the warm surfaces are
+     * built from stacked low-alpha layers, so a 4%-alpha overlay would be read as
+     * the ground and every ratio would come out near 1:1.
+     */
+    const toRgba = (str) => {
+      const n = (str.match(/[\d.]+(?:e-?\d+)?/g) || []).map(Number);
+      const srgbFn = /^color\(\s*srgb/i.test(str);
+      const rgb = n.slice(0, 3).map((v) => (srgbFn ? v * 255 : v));
+      const a = srgbFn ? (/\//.test(str) ? n[3] : 1) : (n.length > 3 ? n[3] : 1);
+      return { rgb, a: Number.isFinite(a) ? a : 1 };
+    };
+    const solidBg = (el) => {
+      const layers = [];
+      for (let n = el; n; n = n.parentElement) {
+        const c = toRgba(getComputedStyle(n).backgroundColor);
+        if (c.a > 0) layers.push(c);
+        if (c.a >= 1) break;
+      }
+      let out = [255, 255, 255];
+      for (let i = layers.length - 1; i >= 0; i -= 1) out = layers[i].rgb.map((c, k) => c * layers[i].a + out[k] * (1 - layers[i].a));
+      return out;
+    };
+    const channel = (c) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+    const luminance = ([r, g, bl]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(bl);
+    const contrast = (selector) => {
+      const el = document.querySelector(selector);
+      if (!el) return null;
+      const cs = getComputedStyle(el);
+      const bg = solidBg(el);
+      const fgRaw = toRgba(cs.color);
+      const fg = fgRaw.rgb.map((c, i) => c * fgRaw.a + bg[i] * (1 - fgRaw.a));
+      const [hi, lo] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
+      return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100;
+    };
     const body = getComputedStyle(document.body);
     const header = getComputedStyle(document.querySelector(".site-header"));
     const heading = getComputedStyle(document.querySelector("h1"));
     const primary = getComputedStyle(document.querySelector(".hero .primary"));
+    const commercePrimary = getComputedStyle(document.querySelector(".sticky-order .primary"));
     const heroPhoto = getComputedStyle(document.querySelector(".hero-photo"));
     const story = getComputedStyle(document.querySelector(".contact-stage .story-card"));
     const tag = getComputedStyle(document.querySelector(".tag"));
@@ -50,6 +87,16 @@ try {
       headingFamily: heading.fontFamily,
       primaryBackground: primary.backgroundImage,
       primaryRadius: primary.borderRadius,
+      primaryColor: primary.backgroundColor,
+      primaryShadow: primary.boxShadow,
+      primaryTransform: primary.textTransform,
+      commercePrimaryColor: commercePrimary.backgroundColor,
+      primaryContrast: contrast(".hero .primary"),
+      commercePrimaryContrast: contrast(".sticky-order .primary"),
+      cartAmountContrast: contrast("#cartAmount"),
+      cartAmountDisplay: getComputedStyle(document.querySelector("#cartAmount")).display,
+      commercePrimaryRadius: commercePrimary.borderRadius,
+      commercePrimaryBackground: commercePrimary.backgroundImage,
       heroRadius: heroPhoto.borderRadius,
       storyRadius: story.borderRadius,
       tagColor: tag.color,
@@ -61,8 +108,34 @@ try {
   const headerAlpha = alphaFromComputedColor(visualContract.headerBackground);
   assert.ok(headerAlpha > 0 && headerAlpha < 1, "header glass surface must retain real translucency");
   assert.match(visualContract.headingFamily, /Iowan Old Style|Palatino|Book Antiqua|Georgia/i, "display typography must use the premium serif stack");
-  assert.match(visualContract.primaryBackground, /linear-gradient/i, "primary CTA must render the amber gradient");
-  assert.equal(visualContract.primaryRadius, "999px", "primary CTA must keep pill geometry");
+  /*
+   * Theke art direction. ART_DIRECTION.md rules out "generisches Schwarz-Gold-Luxury"
+   * and USER_REFERENCE_SYNTHESIS.md releases the V2 foundation as a "technische
+   * Zwischenstufe", so the primary CTA is a flat printed copper block rather than a
+   * gradient capsule. Owner Visual Gate B still has to confirm this.
+   *
+   * These assertions are stricter than the ones they replace: they pin the flat
+   * treatment AND newly require that the public and commerce halves of the same page
+   * render the same component identically, which nothing checked before.
+   */
+  assert.equal(visualContract.primaryBackground, "none", "primary CTA must not reintroduce a gradient");
+  assert.equal(visualContract.primaryShadow, "none", "primary CTA must not reintroduce a glow");
+  assert.equal(visualContract.primaryTransform, "uppercase", "primary CTA keeps the counter type");
+  assert.equal(visualContract.primaryRadius, "2px", "primary CTA must keep the printed edge");
+  assert.equal(visualContract.primaryColor, "rgb(173, 109, 25)", "primary CTA must render flat copper");
+  /*
+   * The copper CTA is only legible with an ink label: cream on copper measures
+   * 2.30:1. #cartAmount is called out separately because it is a span inside the
+   * button, so the bar's own muted span colour can reach it through a descendant
+   * selector -- which is exactly how it regressed once.
+   */
+  assert.ok(visualContract.primaryContrast >= 4.5, `public CTA label needs 4.5:1, measured ${visualContract.primaryContrast}:1`);
+  assert.ok(visualContract.commercePrimaryContrast >= 4.5, `commerce CTA label needs 4.5:1, measured ${visualContract.commercePrimaryContrast}:1`);
+  assert.ok(visualContract.cartAmountContrast >= 4.5, `cart total on the CTA needs 4.5:1, measured ${visualContract.cartAmountContrast}:1`);
+  assert.notEqual(visualContract.cartAmountDisplay, "none", "the cart total must stay on the button, including on mobile");
+  assert.equal(visualContract.commercePrimaryBackground, "none", "commerce primary must not reintroduce a gradient");
+  assert.equal(visualContract.commercePrimaryColor, visualContract.primaryColor, "public and commerce must share one button colour");
+  assert.equal(visualContract.commercePrimaryRadius, visualContract.primaryRadius, "public and commerce must share one button geometry");
   assert.equal(visualContract.heroRadius, "42px", "hero media must use the large premium radius");
   assert.equal(visualContract.storyRadius, "30px", "rounded editorial panels must retain the premium surface radius where the V2 layout calls for them");
   assert.equal(visualContract.tagColor, "rgb(141, 184, 93)", "green must be used selectively for small semantic labels");
