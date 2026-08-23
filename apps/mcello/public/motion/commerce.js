@@ -22,6 +22,7 @@ export function createCommerceMotion(engine) {
   const activeTweens = new Set();
   let productTransition = null;
   let ingredientTransition = null;
+  let cartTransition = null;
   let stepTransition = null;
   let totalTransition = null;
   let handoffTransition = null;
@@ -67,6 +68,17 @@ export function createCommerceMotion(engine) {
       delete foodStage.dataset.motionIngredientEngine;
     }
     ingredientTransition = null;
+  }
+
+  function clearCartPresentation() {
+    if (!cartTransition) return;
+    const { timeline, sticky } = cartTransition;
+    timeline.kill();
+    activeTweens.delete(timeline);
+    gsap.set(sticky, { clearProps: "transform" });
+    delete sticky.dataset.motionCart;
+    delete sticky.dataset.motionCartEngine;
+    cartTransition = null;
   }
 
   function clearStepPresentation() {
@@ -268,6 +280,34 @@ export function createCommerceMotion(engine) {
     return true;
   }
 
+  function animateCartConfirmation(sticky) {
+    if (!sticky) return false;
+    clearCartPresentation();
+    sticky.dataset.motionCart = "added";
+    sticky.dataset.motionCartEngine = "gsap";
+
+    let timeline;
+    const finish = () => {
+      if (!cartTransition || cartTransition.timeline !== timeline) return;
+      gsap.set(sticky, { clearProps: "transform" });
+      delete sticky.dataset.motionCart;
+      delete sticky.dataset.motionCartEngine;
+      activeTweens.delete(timeline);
+      cartTransition = null;
+    };
+
+    timeline = gsap.timeline({
+      defaults: { overwrite: "auto" },
+      onComplete: finish,
+    });
+    cartTransition = { timeline, sticky };
+    track(timeline);
+    timeline
+      .to(sticky, { scale: 1.025, duration: 0.16, ease: "power2.out" })
+      .to(sticky, { scale: 1, duration: 0.2, ease: "power2.inOut" });
+    return true;
+  }
+
   /*
    * Guided step advance. The step navigation only moves presentation; this
    * explains that movement so the guest can tell forward from backward.
@@ -390,11 +430,13 @@ export function createCommerceMotion(engine) {
     animateCategoryChange,
     animateProductOpen,
     animateIngredientChange,
+    animateCartConfirmation,
     animateBuilderStep,
     animateTotalChange,
     animateHandoffFlight,
     cleanup() {
       clearHandoffPresentation();
+      clearCartPresentation();
       clearTotalPresentation();
       clearStepPresentation();
       clearIngredientPresentation();
