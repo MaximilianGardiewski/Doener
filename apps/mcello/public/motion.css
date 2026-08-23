@@ -299,8 +299,14 @@ html[data-mcello-hero-engine="gsap"] .hero-media-v2 .hero-photo {
   border: 0;
 }
 
-.food-card img,
-.modal-hero {
+/*
+ * Only while the image has not arrived. Unlike the skeleton cards, which the
+ * observer tears down, these had no off switch: the shimmer kept animating
+ * underneath a fully loaded photo for 30 iterations -- 54 seconds of pointless
+ * compositing on every card in the grid.
+ */
+.food-card img:not([data-loaded="true"]),
+.modal-hero:not(:has(img[data-loaded="true"])) {
   background-image: linear-gradient(
     100deg,
     var(--surface-raised, var(--panel-2)) 25%,

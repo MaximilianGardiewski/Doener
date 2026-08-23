@@ -11,7 +11,7 @@
  *
  *   node scripts/vendor-mcello-fonts.mjs
  */
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -51,10 +51,6 @@ async function css(query) {
 
 /** Latin only: the other subsets are bytes no Mcello surface renders. */
 function latinSource(sheet, family) {
-  const blocks = sheet.split("@font-face").slice(1);
-  for (const block of blocks) {
-    if (!block.includes("/* latin */") && !/latin \*\//.test(block)) continue;
-  }
   // The comment naming the subset precedes its @font-face block.
   const marked = sheet.split(/\/\*\s*([a-z-]+)\s*\*\//).slice(1);
   for (let i = 0; i < marked.length; i += 2) {

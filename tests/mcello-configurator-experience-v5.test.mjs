@@ -101,8 +101,16 @@ test("ingredient motion distinguishes entry from exit and stays reduced-motion s
 });
 
 test("fixed commerce chrome reserves its own space and narrow rows never overflow", () => {
-  assert.match(styles, /body \{ padding-bottom: calc\(96px \+ env\(safe-area-inset-bottom\)\); \}/);
+  /*
+   * Scoped to the pages that actually carry the bar. Unscoped, this reserved
+   * 96px at the bottom of kds, ops, admin, status, labels, schedule, handbook
+   * and edit-order, which have no .sticky-order to reserve it for. Same
+   * guarantee, applied where it belongs.
+   */
+  assert.match(styles, /body:has\(\.sticky-order\) \{ padding-bottom: calc\(96px \+ env\(safe-area-inset-bottom\)\); \}/);
   assert.match(styles, /bottom: calc\(18px \+ env\(safe-area-inset-bottom\)\)/);
+  // The phone breakpoint tightens the offset; it must not drop the inset with it.
+  assert.match(styles, /\.sticky-order \{ bottom: calc\(10px \+ env\(safe-area-inset-bottom\)\); \}/);
   assert.match(styles, /\.price-row \{ display: flex; flex-wrap: wrap;/);
   assert.match(styles, /\.recommendation-card \{ min-width: 0; display: grid; grid-template-columns: minmax\(0, 1fr\) auto;/);
 });

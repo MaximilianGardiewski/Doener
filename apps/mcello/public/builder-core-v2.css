@@ -264,7 +264,18 @@
   visibility: hidden;
 }
 
-#productModal [data-builder-option="true"][data-default-selected="true"]:not(:has(input:checked))::after {
+/*
+ * Made disjoint from the sold-out badge below rather than left to specificity.
+ * This selector scores 1,3,1 because :not(:has(input:checked)) carries the inner
+ * selector's weight, and the sold-out rule only 1,2,1 -- so a sold-out standard
+ * ingredient was labelled "Ohne" and never said it was unavailable, which D035
+ * requires it to say in words.
+ *
+ * The exclusions also match what the summary now reports: a sold-out default is
+ * the kitchen's doing, not a removal by the guest, and a single-choice group
+ * states its choice under "Mit" instead of listing the alternatives as removals.
+ */
+#productModal .modifier-group:not([data-max-selections="1"]) [data-builder-option="true"][data-default-selected="true"]:not([data-sold-out="true"]):not(:has(input:checked))::after {
   content: "Ohne";
   order: 3;
   padding: 2px 8px;

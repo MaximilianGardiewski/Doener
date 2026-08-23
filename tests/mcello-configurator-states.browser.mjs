@@ -52,7 +52,7 @@ const MENU = {
           maxSelections: 4,
           options: [
             { id: "g-salat", name: "Salat", priceDeltaCents: 0, defaultSelected: true, soldOut: false },
-            { id: "g-avocado", name: "Avocado", priceDeltaCents: 0, defaultSelected: false, soldOut: true },
+            { id: "g-avocado", name: "Avocado", priceDeltaCents: 0, defaultSelected: true, soldOut: true },
           ],
         },
         {
@@ -168,6 +168,29 @@ try {
   assert.match(cart, /Ohne: Salat/, "the cart must name what was removed");
   assert.match(cart, /10,50/, "the cart must carry the configured total");
   assert.doesNotMatch(cart, /Avocado/, "an unavailable option must never reach the cart");
+
+  // --- "Ohne" must mean the guest removed something ------------------------
+  /*
+   * A single-choice group states its choice; the alternatives are not removals.
+   * Before this was fixed, picking the second base wrote "Ohne: Fleisch" onto
+   * the ticket next to "Basis: Falafel", which contradicts itself.
+   */
+  await page.locator('[data-product="state-probe"]').first().click({ force: true });
+  await page.waitForFunction(() => document.querySelector("#productModal")?.classList.contains("open"));
+  await page.waitForTimeout(300);
+  await page.locator('.modifier-option[data-option-name="Falafel"] input').check();
+  await page.waitForTimeout(250);
+  const summary = await page.locator("[data-builder-summary]").innerText();
+  assert.doesNotMatch(summary, /OHNE[\s\S]*Fleisch/i, "a single-choice alternative is not a removal");
+
+  // A sold-out default was never selectable, so its absence is not the guest's doing.
+  assert.doesNotMatch(summary, /OHNE[\s\S]*Avocado/i, "a sold-out option must not be reported as removed");
+
+  // And it must still say why it is unavailable, rather than being labelled "Ohne".
+  const soldOutDefaultNote = await page
+    .locator('.modifier-option[data-option-name="Avocado"]')
+    .evaluate((node) => getComputedStyle(node, "::after").content);
+  assert.match(soldOutDefaultNote, /Heute nicht verfügbar/);
 
   assert.deepEqual(errors, [], errors.join("\n"));
   console.log("Mcello configurator option states verified: required, sold-out, paid extra, removed default, cart summary.");

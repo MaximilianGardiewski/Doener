@@ -307,6 +307,17 @@ function installBuilderStateMotion() {
 
   if (groups) {
     let lastStepIndex = null;
+    /*
+     * Reset on close. The index survived the modal otherwise, so opening the
+     * next product after stepping forward compared step 1 against the previous
+     * product's last step and played a "back" transition for a move the guest
+     * never made.
+     */
+    if (modal) {
+      new MutationObserver(() => {
+        if (!modal.classList.contains("open")) lastStepIndex = null;
+      }).observe(modal, { attributes: true, attributeFilter: ["class"] });
+    }
     new MutationObserver((records) => {
       const changed = records.some((record) => record.attributeName === "data-builder-step-current");
       if (!changed) return;
@@ -360,7 +371,37 @@ function installBuilderStateMotion() {
  * `innerHTML` replace removes them for free; the shimmer itself is pure CSS
  * and stays authoritative-content-free.
  */
+/*
+ * Marks images as arrived so the shimmer underneath them can stop. Purely a
+ * presentation signal: it says nothing about the image, only that the browser is
+ * done with it, and "errored" counts as done because a shimmer over a broken
+ * image is worse than none.
+ */
+function installImageLoadMarkers() {
+  const mark = (image) => { image.dataset.loaded = "true"; };
+  const track = (image) => {
+    if (image.dataset.loaded === "true") return;
+    if (image.complete) return mark(image);
+    image.addEventListener("load", () => mark(image), { once: true });
+    image.addEventListener("error", () => mark(image), { once: true });
+  };
+
+  for (const image of document.querySelectorAll(".food-card img, .modal-hero img")) track(image);
+
+  // The grid and the modal are rendered after this runs, so watch for later ones.
+  new MutationObserver((records) => {
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (!(node instanceof Element)) continue;
+        if (node.matches?.(".food-card img, .modal-hero img")) track(node);
+        for (const image of node.querySelectorAll?.(".food-card img, .modal-hero img") ?? []) track(image);
+      }
+    }
+  }).observe(document.body, { childList: true, subtree: true });
+}
+
 function installLoadingSkeletons() {
+  installImageLoadMarkers();
   const skeletonCardCount = { "#featuredGrid": 3, "#menuList": 4 };
   for (const [selector, count] of Object.entries(skeletonCardCount)) {
     const node = document.querySelector(selector);

@@ -95,6 +95,15 @@ function presentationGroupMap() {
     if (!role) continue;
     const layers = [...group.querySelectorAll(".modifier-option")].filter(layerFor);
     if (!layers.length) continue;
+    /*
+     * Keep the first group that claims a role. A catalog splitting ingredients
+     * across two groups that normalise to the same role (say "Gemüse" and
+     * "Salate") used to overwrite the entry, so one group's layers silently
+     * stopped appearing on the stage. First-wins at least keeps the stage
+     * consistent with the group the guest sees first; the alternative -- drawing
+     * both -- would need a layer-merge the stage does not model.
+     */
+    if (resolved.has(role)) continue;
     resolved.set(role, group);
   }
   return resolved.size ? resolved : null;

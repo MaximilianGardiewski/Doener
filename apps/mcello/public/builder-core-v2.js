@@ -98,6 +98,14 @@ function summaryEntries() {
   const extras = [];
 
   for (const section of stepSections()) {
+    /*
+     * Only a group the guest can add to and remove from can express "Ohne".
+     * In a single-choice group, picking one option is not "without" the others:
+     * the choice is already stated under "Mit", and repeating it as a removal
+     * contradicts it. The application publishes the group's bounds, so this
+     * reads them rather than guessing from the input type.
+     */
+    const singleChoice = section.dataset.maxSelections === "1";
     for (const option of section.querySelectorAll(OPTION_SELECTOR)) {
       const input = option.querySelector("input");
       const name = optionLabelName(option);
@@ -105,7 +113,13 @@ function summaryEntries() {
       if (input?.checked) {
         if (option.dataset.paid === "true") extras.push(`${name} ${optionPriceLabel(option)}`.trim());
         else withNames.push(name);
-      } else if (option.dataset.defaultSelected === "true") {
+      } else if (
+        option.dataset.defaultSelected === "true"
+        && !singleChoice
+        // A sold-out default was never selectable, so its absence is the
+        // kitchen's doing, not the guest's.
+        && option.dataset.soldOut !== "true"
+      ) {
         withoutNames.push(name);
       }
     }
@@ -166,8 +180,16 @@ function renderRecipeEntry() {
   if (accept) {
     const blocked = Boolean(addButton?.disabled);
     accept.disabled = blocked;
+    /*
+     * Two different blocks, two different remedies. "Pflichtauswahl fehlt" tells
+     * the guest to keep choosing, which is wrong and slightly cruel when the
+     * product cannot be ordered online at all -- no selection will help. The
+     * application publishes which case this is; mirroring its own wording keeps
+     * one source of truth for the reason.
+     */
+    const orderable = modalBackdrop?.dataset.productOrderable !== "false";
     accept.textContent = blocked
-      ? "Pflichtauswahl fehlt"
+      ? (orderable ? "Pflichtauswahl fehlt" : (addButton?.textContent?.trim() || "Nicht bestellbar"))
       : `Genau so · ${addButton?.textContent?.split("·").pop()?.trim() || ""}`;
   }
 }

@@ -442,9 +442,16 @@ function updateAddButton() {
   const product = state.activeProduct;
   if (!product) return;
   const button = $("#addToCart");
-  const valid = productOrderable(product) && configurationValid(product);
+  const orderable = productOrderable(product);
+  const valid = orderable && configurationValid(product);
   button.disabled = !valid;
   modal.dataset.configurationValid = String(valid);
+  /*
+   * Published separately because "cannot order" and "configuration incomplete"
+   * are different situations with different remedies, and presentation must not
+   * guess which one it is looking at from a disabled button.
+   */
+  modal.dataset.productOrderable = String(orderable);
   button.textContent = productOrderable(product)
     ? `In den Warenkorb · ${euro.format(configuredPrice(product) / 100)}`
     : "Online derzeit nicht bestellbar";
@@ -461,8 +468,19 @@ function selectionLabels(product, selections = state.selections) {
     // in which order the guest tapped.
     const names = group.options.filter((option) => chosen.includes(option.id)).map((option) => option.name);
     if (names.length) labels.push(`${group.name}: ${names.join(", ")}`);
+
+    /*
+     * "Ohne" means the guest took something out, and only a group they can add
+     * to and remove from can express that. In a single-choice group, picking the
+     * large size is not "without the small one" -- the choice is already stated
+     * by the line above, and saying it twice puts a contradiction on the kitchen
+     * ticket. A sold-out default is not a removal either: the guest was never
+     * able to select it.
+     */
+    if (group.maxSelections === 1) continue;
     for (const option of group.options) {
-      if (option.defaultSelected && !chosen.includes(option.id)) removed.push(option.name);
+      if (!option.defaultSelected || option.soldOut) continue;
+      if (!chosen.includes(option.id)) removed.push(option.name);
     }
   }
 
