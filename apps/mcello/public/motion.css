@@ -53,7 +53,8 @@ html[data-mcello-hero-engine="gsap"] .hero-media-v2 .hero-photo {
 }
 
 [data-motion-product-engine="gsap"],
-[data-motion-ingredient-engine="gsap"] {
+[data-motion-ingredient-engine="gsap"],
+[data-motion-cart-engine="gsap"] {
   transition: none !important;
   animation: none !important;
   will-change: opacity, transform;
