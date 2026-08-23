@@ -98,6 +98,7 @@ async function proveRejectedClickHasNoSuccessMotion(page) {
   assert.equal(cartQuantity(await page.locator("#cartCount").textContent()), before, "rejected add must not mutate cart quantity");
   const trace = await page.evaluate(() => structuredClone(window.__mcelloCartTrace));
   assert.deepEqual(trace, { sawGsapOwner: false, sawInlineTransform: false, sawFallbackClass: false, sawAddedMarker: false });
+  assert.equal(await page.locator(".motion-cart-flight-ghost").count(), 0, "rejected add must not launch the configurator cart-flight ghost");
   await closeProduct(page);
 }
 
