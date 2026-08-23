@@ -47,7 +47,7 @@ function installRevealMotion() {
   });
 
   nodes.forEach((node) => observer.observe(node));
-  return { nodes, observer, reduced: false };
+  return { nodes, observer: null, reduced: false };
 }
 
 function restartMotionClass(node, className, duration = 420) {
@@ -126,6 +126,7 @@ function syncCommerceEngineLabels() {
   document.documentElement.dataset.mcelloCategoryEngine = mode;
   document.documentElement.dataset.mcelloProductEngine = mode;
   document.documentElement.dataset.mcelloIngredientEngine = mode;
+  document.documentElement.dataset.mcelloCartEngine = mode;
 }
 
 function activeFoodStage() {
@@ -133,6 +134,11 @@ function activeFoodStage() {
   if (donerYufkaStage) return donerYufkaStage;
   if (document.querySelector("#productModal.open [data-pizza-stage]")) return null;
   return document.querySelector("#productModal.open .modal-hero");
+}
+
+function cartCommitSucceededAfterClick() {
+  const drawer = document.querySelector("#cartDrawer");
+  return Boolean(drawer?.classList.contains("open") && !document.querySelector("#productModal.open"));
 }
 
 function cartFlightSourceRect() {
@@ -145,7 +151,7 @@ function cartFlightSourceRect() {
 // A deliberately small token, not a duplicate of the full FoodStage/product art.
 const CART_FLIGHT_GHOST_SIZE = 64;
 
-function createCartFlightGhost(rect) {
+function createCartFlightGhost(rect, renderedSrc = null) {
   const centerX = rect.left + rect.width / 2;
   const centerY = rect.top + rect.height / 2;
   const ghost = document.createElement("div");
@@ -156,7 +162,6 @@ function createCartFlightGhost(rect) {
   ghost.style.setProperty("top", `${centerY - CART_FLIGHT_GHOST_SIZE / 2}px`);
   ghost.style.setProperty("width", `${CART_FLIGHT_GHOST_SIZE}px`);
   ghost.style.setProperty("height", `${CART_FLIGHT_GHOST_SIZE}px`);
-  const renderedSrc = document.querySelector("#modalImage")?.getAttribute("src");
   if (renderedSrc) ghost.style.setProperty("background-image", `url("${renderedSrc}")`);
   document.body.appendChild(ghost);
   return ghost;
@@ -183,15 +188,14 @@ function runFallbackCartFlight(ghost, travel) {
   ghost.classList.add("motion-cart-flight");
 }
 
-function launchCartFlight() {
-  if (reducedMotion.matches) return;
-  const sourceRect = cartFlightSourceRect();
+function launchCartFlight(sourceRect, renderedSrc = null) {
+  if (reducedMotion.matches || !sourceRect || !cartCommitSucceededAfterClick()) return;
   const cartTarget = document.querySelector(".sticky-order") || document.querySelector("#cartCount");
-  if (!sourceRect || !cartTarget) return;
+  if (!cartTarget) return;
   const targetRect = cartTarget.getBoundingClientRect();
   if (!targetRect.width || !targetRect.height) return;
 
-  const ghost = createCartFlightGhost(sourceRect);
+  const ghost = createCartFlightGhost(sourceRect, renderedSrc);
   const travel = {
     deltaX: (targetRect.left + targetRect.width / 2) - (sourceRect.left + sourceRect.width / 2),
     deltaY: (targetRect.top + targetRect.height / 2) - (sourceRect.top + sourceRect.height / 2),
@@ -207,15 +211,18 @@ function installCommerceMotionContracts() {
   reducedMotion.addEventListener?.("change", syncCommerceEngineLabels);
 
   /*
-   * Capture phase runs before the application's own `#addToCart` click handler,
-   * so the FoodStage/product visual can be read and cloned into a ghost while
-   * it is still on screen, before the application closes the product modal.
+   * Capture phase snapshots the source geometry while the product is still on
+   * screen. The flight itself is deferred until after event dispatch so the
+   * application has committed the cart mutation and closed the product modal.
    */
   document.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
     const addToCart = target?.closest("#addToCart");
-    if (!addToCart || addToCart.matches(":disabled")) return;
-    launchCartFlight();
+    if (!addToCart || addToCart.matches(":disabled") || reducedMotion.matches) return;
+    const sourceRect = cartFlightSourceRect();
+    if (!sourceRect) return;
+    const renderedSrc = document.querySelector("#modalImage")?.getAttribute("src") || null;
+    queueMicrotask(() => launchCartFlight(sourceRect, renderedSrc));
   }, true);
 
   document.addEventListener("click", (event) => {
@@ -258,13 +265,16 @@ function installCommerceMotionContracts() {
     }
 
     const addToCart = target.closest("#addToCart");
-    if (addToCart && !addToCart.matches(":disabled")) {
+    if (addToCart && !addToCart.matches(":disabled") && cartCommitSucceededAfterClick()) {
       const sticky = document.querySelector(".sticky-order");
-      if (sticky) sticky.dataset.motionCart = "added";
-      restartMotionClass(sticky, "motion-cart-confirm", 440);
-      window.setTimeout(() => {
-        if (sticky) delete sticky.dataset.motionCart;
-      }, 460);
+      const handledByV3 = !reducedMotion.matches && Boolean(commerceMotionV3?.animateCartConfirmation(sticky));
+      if (!handledByV3 && !reducedMotion.matches && sticky) {
+        sticky.dataset.motionCart = "added";
+        restartMotionClass(sticky, "motion-cart-confirm", 440);
+        window.setTimeout(() => {
+          if (sticky) delete sticky.dataset.motionCart;
+        }, 460);
+      }
     }
   });
 
