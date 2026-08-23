@@ -47,7 +47,7 @@ function installRevealMotion() {
   });
 
   nodes.forEach((node) => observer.observe(node));
-  return { nodes, observer: null, reduced: false };
+  return { nodes, observer, reduced: false };
 }
 
 function restartMotionClass(node, className, duration = 420) {
