@@ -37,12 +37,23 @@ test("FoodStage mirrors actual checked modifier inputs and never owns commerce s
   assert.match(js, /input\?\.checked/);
   assert.match(js, /data-food-layer/);
   assert.match(js, /dataset\.assemblyVisualLayers/);
-  assert.match(js, /Stilisierte Präsentationsillustration/);
+  assert.match(js, /KI-Zutatenvisualisierung · keine Produktfotografie/);
   assert.doesNotMatch(js, /\.checked\s*=|localStorage|sessionStorage|fetch\s*\(|cart\s*=|configuredPrice|configurationValid/);
 });
 
-test("cartoon assembly has distinct ingredient layers and purposeful lightweight motion", () => {
-  for (const ingredient of ["Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"]) {
+test("flatbread uses explicit product-form metadata while Yufka never binds the pocket master", () => {
+  assert.match(js, /const BUILDER_PRODUCT_FORMS = new Set\(\["flatbread-pocket", "yufka-wrap"\]\)/);
+  assert.match(js, /modal\?\.dataset\.builderProductForm/);
+  assert.match(js, /productForm === "flatbread-pocket"/);
+  assert.match(js, /data-atomic-ingredient-host="ingredient\.flatbread\.pocket"/);
+  assert.match(js, /productForm,/);
+  assert.match(css, /data-builder-product-form="flatbread-pocket"/);
+  assert.match(css, /data-flatbread-atomic-ready="true"/);
+  assert.doesNotMatch(js, /(?:name|title|slug)[^\n]*includes\([^\n]*(?:fladenbrot|yufka)/i);
+});
+
+test("presentation assembly has distinct ingredient layers and purposeful lightweight motion", () => {
+  for (const ingredient of ["Fladenbrot", "Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"]) {
     assert.match(js, new RegExp(`data-food-layer=\\"${ingredient}\\"`));
   }
   assert.match(css, /mc-food-stage-v4/);

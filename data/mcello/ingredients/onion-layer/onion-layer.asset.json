@@ -1,0 +1,126 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.onion.layer",
+  "ingredient": "onion-layer",
+  "visual": {
+    "role": "stacked-configurator-layer",
+    "subject": "layer-onion",
+    "layerName": "Zwiebel",
+    "view": "isometric-45",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "single-layer-instance",
+      "extraSelection": "separate-extra-layer-master",
+      "separateExtraAssetAllowed": true
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D076",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.onion.layer.firefly-seed-76009.png",
+      "mediaType": "image/png",
+      "width": 2048,
+      "height": 2048,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 2890742,
+      "sha256": "429b2f8b7f86b028095b35ceda9337226f00edaf2c8a807bfee12ea4325a5bda"
+    },
+    "master": {
+      "path": "master/ingredient.onion.layer.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 389328,
+      "sha256": "b49763f4bef4f3a0aad16283cade59dba95b7a499eba0e7935668e0afb977861"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Codex session generated the raw layer; Claude Code ran the Adobe cutout and tone alignment, then the deterministic local extract and normalization",
+    "reference": {
+      "localFound": false,
+      "adobeFound": false,
+      "used": false
+    },
+    "board": {
+      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "name": "Mcello V1 - Ingredient System - Doener"
+    },
+    "selectedGeneration": {
+      "seed": 76009,
+      "requestId": null,
+      "requestIdCaptured": false,
+      "requestIdReason": "The generation ran in a separate Codex session; only the resulting Firefly asset URN is observable from here.",
+      "assetUrn": "urn:aaid:sc:EU:ab010b9d-6672-4352-bceb-104a2b390678",
+      "width": 2048,
+      "height": 2048,
+      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
+      "promptVerbatimCaptured": false,
+      "briefPrompt": "A scattered layer of thin intact red onion rings, purple-magenta and translucent white, lying nearly flat, loosely overlapping, visible cut thickness, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
+      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "step": "adobe-remove-background",
+          "requestId": "8a370e49-b11b-46a8-9124-d2711c5f4dda"
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "bfe7bf32-12d9-4d66-815e-d82959c693e2",
+          "options": {
+            "gamma": 1.7,
+            "darks": 30,
+            "brightness": 10
+          }
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "cdc25a4f-45b6-4854-8189-500d8bbd97a9",
+          "options": {
+            "saturation": 32,
+            "contrast": 12
+          }
+        },
+        {
+          "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
+          "requestId": null
+        },
+        {
+          "step": "local-normalize-to-transparent-square-1024-master",
+          "requestId": null
+        }
+      ],
+      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.onion.layer.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}

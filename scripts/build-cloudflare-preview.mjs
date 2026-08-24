@@ -61,6 +61,10 @@ const previewMenu = {
   categories,
   productCrossSells: [],
   crossSellRules: [],
+  builderPresentation: {
+    version: presentation.version,
+    productForms: { ...presentation.donerYufka.productForms },
+  },
   previewOnly: true,
   provenance: "generated from provisional menu seed + presentation-only builder fixture; never production catalog truth",
 };
@@ -122,9 +126,9 @@ async function patchCloudflareOrigin(file, kind) {
     assert.ok(source.includes(before), "configurator: expected local-only origin guard missing");
     source = source.replace(before, after);
   } else {
-    const before = '  return window.location.protocol === "http:"\n    && (loopbackHosts.has(hostname) || isPrivateIpv4(hostname) || isPrivateSslipHost(hostname));';
+    const before = /  return window\.location\.protocol === "http:"\r?\n    && \(loopbackHosts\.has\(hostname\) \|\| isPrivateIpv4\(hostname\) \|\| isPrivateSslipHost\(hostname\)\);/;
     const after = '  return (window.location.protocol === "http:"\n    && (loopbackHosts.has(hostname) || isPrivateIpv4(hostname) || isPrivateSslipHost(hostname)))\n    || (window.location.protocol === "https:" && isCloudflarePreviewHost(hostname));';
-    assert.ok(source.includes(before), "presentation: expected local-only origin guard missing");
+    assert.ok(before.test(source), "presentation: expected local-only origin guard missing");
     source = source.replace(before, after);
   }
 

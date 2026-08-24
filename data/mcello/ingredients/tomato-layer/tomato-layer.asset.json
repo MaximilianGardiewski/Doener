@@ -1,0 +1,126 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.tomato.layer",
+  "ingredient": "tomato-layer",
+  "visual": {
+    "role": "stacked-configurator-layer",
+    "subject": "layer-tomato",
+    "layerName": "Tomate",
+    "view": "isometric-45",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "single-layer-instance",
+      "extraSelection": "separate-extra-layer-master",
+      "separateExtraAssetAllowed": true
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D076",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.tomato.layer.firefly-seed-86015.png",
+      "mediaType": "image/png",
+      "width": 512,
+      "height": 512,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 198504,
+      "sha256": "618143259197d777873c960ad9b752132cc11753a99d281ed9d68fc2c9ab4323"
+    },
+    "master": {
+      "path": "master/ingredient.tomato.layer.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 581228,
+      "sha256": "48285d9e8e656e0d2cb9923f446f8ca298b3805cd04afc57f43345e3d6f461ba"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Generated through the Firefly web interface driven by Claude Code in the owner's browser, then Adobe cutout and tone alignment plus a deterministic local extract and normalization",
+    "reference": {
+      "localFound": false,
+      "adobeFound": false,
+      "used": false
+    },
+    "board": {
+      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "name": "Mcello V1 - Ingredient System - Doener"
+    },
+    "selectedGeneration": {
+      "seed": 86015,
+      "requestId": null,
+      "requestIdCaptured": false,
+      "requestIdReason": "The Firefly web interface exposes no generation request id; the resulting Firefly asset URN identifies the generation.",
+      "assetUrn": "urn:aaid:sc:EU:2c8acb4c-11b5-4cb8-b01f-8b9fc9df4bbc",
+      "width": 512,
+      "height": 512,
+      "sourceResolutionNote": "The Firefly web interface returned 512 x 512 for this run, unlike the 2048 x 2048 the API produced for the first eight layers. The master is upscaled from this source and is measurably softer.",
+      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
+      "promptRevisedFromBrief": false,
+      "promptRevisionReason": null,
+      "briefPrompt": "Exactly three fresh red tomato slices lying side by side in one row, juicy seed chambers, delicate flesh texture, subtle moisture highlights, visible slice thickness, slices touching but never stacked, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
+      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "step": "adobe-remove-background",
+          "requestId": "73885861-ba53-44d8-8708-ae6d04abac49"
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "21c3eadd-7171-4aba-818a-a12b6a64ad56",
+          "options": {
+            "gamma": 1.45,
+            "darks": 12
+          }
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "6d25a64f-3bd4-45d1-a295-4a79763867dc",
+          "options": {
+            "gamma": 1.28
+          }
+        },
+        {
+          "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
+          "requestId": null
+        },
+        {
+          "step": "local-normalize-to-transparent-square-1024-master",
+          "requestId": null
+        }
+      ],
+      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.tomato.layer.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}

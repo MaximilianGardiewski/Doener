@@ -1,0 +1,126 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.cucumber.layer",
+  "ingredient": "cucumber-layer",
+  "visual": {
+    "role": "stacked-configurator-layer",
+    "subject": "layer-cucumber",
+    "layerName": "Gurke",
+    "view": "isometric-45",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "single-layer-instance",
+      "extraSelection": "separate-extra-layer-master",
+      "separateExtraAssetAllowed": true
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D076",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.cucumber.layer.firefly-seed-43260.png",
+      "mediaType": "image/png",
+      "width": 512,
+      "height": 512,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 341365,
+      "sha256": "08250e92a11414a0b0498e3854f009280baa0bd0fe683705a5414924d3161a90"
+    },
+    "master": {
+      "path": "master/ingredient.cucumber.layer.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 1065873,
+      "sha256": "402026b5bee7d7e18df1c265b7fab3794e055205bd08c5966c65f26b6e12b8d3"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Generated through the Firefly web interface driven by Claude Code in the owner's browser, then Adobe cutout and tone alignment plus a deterministic local extract and normalization",
+    "reference": {
+      "localFound": false,
+      "adobeFound": false,
+      "used": false
+    },
+    "board": {
+      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "name": "Mcello V1 - Ingredient System - Doener"
+    },
+    "selectedGeneration": {
+      "seed": 43260,
+      "requestId": null,
+      "requestIdCaptured": false,
+      "requestIdReason": "The Firefly web interface exposes no generation request id; the resulting Firefly asset URN identifies the generation.",
+      "assetUrn": "urn:aaid:sc:EU:419763c0-14db-44bf-93a9-52d29de0a060",
+      "width": 512,
+      "height": 512,
+      "sourceResolutionNote": "The Firefly web interface returned 512 x 512 for this run, unlike the 2048 x 2048 the API produced for the first eight layers. The master is upscaled from this source and is measurably softer.",
+      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
+      "promptRevisedFromBrief": true,
+      "promptRevisionReason": "The briefed wording produced the wrong subject and was sharpened: cucumber came back halved lengthwise, lettuce came back as a whole head, meat came back as a geometric stack.",
+      "briefPrompt": "Exactly four round coin-shaped cucumber slices, each one flat thin disc cut straight across the cucumber, thin dark-green peel ring around pale translucent flesh with small seeds, never halved lengthwise, lying flat side by side in one row, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
+      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "step": "adobe-remove-background",
+          "requestId": "74b6f025-804c-483d-b45a-8f207fa7d4d4"
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "c811d488-0dab-46ca-92da-88f1c0c7cec2",
+          "options": {
+            "gamma": 0.84,
+            "highlights": -20
+          }
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "b79c3164-6139-47b1-a792-36aa49c492dc",
+          "options": {
+            "gamma": 0.86
+          }
+        },
+        {
+          "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
+          "requestId": null
+        },
+        {
+          "step": "local-normalize-to-transparent-square-1024-master",
+          "requestId": null
+        }
+      ],
+      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.cucumber.layer.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}

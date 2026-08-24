@@ -1,0 +1,116 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.flatbread.lid",
+  "ingredient": "flatbread-lid",
+  "visual": {
+    "role": "stacked-configurator-layer",
+    "subject": "layer-flatbread-lid",
+    "layerName": "Deckel",
+    "view": "isometric-45",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "single-layer-instance",
+      "extraSelection": "separate-extra-layer-master",
+      "separateExtraAssetAllowed": true
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D076",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.flatbread.lid.firefly-seed-76002.png",
+      "mediaType": "image/png",
+      "width": 2048,
+      "height": 2048,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 3375388,
+      "sha256": "f694c7cb6605557eaba0a36769af40b1ed06ff79a7660368f25c74ae6b5cf7ca"
+    },
+    "master": {
+      "path": "master/ingredient.flatbread.lid.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 502006,
+      "sha256": "2fc8ef2dd51b48918745046b0947f5f7f6403429572884d09d93a27e8ad0417b"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Codex session generated the raw layer; Claude Code ran the Adobe cutout and tone alignment, then the deterministic local extract and normalization",
+    "reference": {
+      "localFound": false,
+      "adobeFound": false,
+      "used": false
+    },
+    "board": {
+      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "name": "Mcello V1 - Ingredient System - Doener"
+    },
+    "selectedGeneration": {
+      "seed": 76002,
+      "requestId": null,
+      "requestIdCaptured": false,
+      "requestIdReason": "The generation ran in a separate Codex session; only the resulting Firefly asset URN is observable from here.",
+      "assetUrn": "urn:aaid:sc:EU:18a1d683-fcd4-4611-9ffb-2336f2375a4a",
+      "width": 2048,
+      "height": 2048,
+      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
+      "promptVerbatimCaptured": false,
+      "briefPrompt": "One domed Turkish flatbread lid, toasted golden crust, scattered sesame seeds, gently curved top, the matching upper half of a horizontally sliced flatbread, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
+      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "step": "adobe-remove-background",
+          "requestId": "fb7067e2-eb04-499f-be8a-703c5edd9171"
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "c654de52-f3c8-4863-83dd-5ca376701e1d",
+          "options": {
+            "gamma": 1.12
+          }
+        },
+        {
+          "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
+          "requestId": null
+        },
+        {
+          "step": "local-normalize-to-transparent-square-1024-master",
+          "requestId": null
+        }
+      ],
+      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.flatbread.lid.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}

@@ -67,7 +67,34 @@
 }
 .mc-food-layer--protein { transform: translate3d(0,-34px,0) scale(.84) rotate(-4deg); }
 .mc-food-layer--salat { transform: translate3d(-10px,18px,0) scale(.82,.68) rotate(-3deg); transition-duration: 320ms; }
-.mc-food-layer--tomate { transform: translate3d(0,-44px,0) scale(.76) rotate(7deg); }
+/* Atomic hosts never animate as a whole; only changed instance media do. */
+[data-atomic-ingredient-host][data-atomic-runtime-ready="true"] {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+/* A ready atomic family replaces only its own legacy illustration children. */
+[data-atomic-ingredient-host][data-atomic-runtime-ready="true"] > :not(.mc-ingredient-instance) {
+  display: none;
+}
+
+/* The single governed pocket master replaces both legacy bread halves only for
+ * the explicit flatbread form. Yufka and untyped products retain their existing
+ * vector vessel and never request the flatbread media. */
+.mc-food-stage-v4[data-builder-product-form="flatbread-pocket"][data-flatbread-atomic-ready="true"] [data-flatbread-vector-fallback] {
+  display: none;
+}
+
+.mc-ingredient-instance {
+  pointer-events: none;
+}
+
+.mc-ingredient-instance__media {
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+}
 .mc-food-layer--gurke { transform: translate3d(12px,-34px,0) scale(.72) rotate(-8deg); transition-delay: 25ms; }
 .mc-food-layer--zwiebel { transform: translate3d(-8px,-30px,0) scale(.7) rotate(12deg); transition-delay: 45ms; }
 .mc-food-layer--sauce { transform: translate3d(-18px,0,0) scaleX(.72); transform-origin: left center; transition-duration: 300ms; }

@@ -1,0 +1,106 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.sauce.curry.ribbon",
+  "ingredient": "curry-sauce",
+  "visual": {
+    "role": "atomic-configurator-ingredient",
+    "subject": "exactly-one-curry-sauce-ribbon",
+    "view": "isometric-top-three-quarter",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "repeat-the-same-master",
+      "extraSelection": "increase-instance-count-only",
+      "separateExtraAssetAllowed": false
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D075",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.sauce.curry.ribbon.firefly-seed-64423.png",
+      "mediaType": "image/png",
+      "width": 2048,
+      "height": 2048,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 3021028,
+      "sha256": "cc08e76755021949e5b632c0bdab901d31a349c417f8dccef801dccb0ec61976"
+    },
+    "master": {
+      "path": "master/ingredient.sauce.curry.ribbon.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 359668,
+      "sha256": "27c25e25ac60fed18231758ba8794ff3aca342464d5599de8abb4b9d5a0b4305"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Adobe plugin generation and image editing",
+    "board": {
+      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "name": "Mcello V1 — Ingredient System — Döner",
+      "rawEntityId": "9397f60d-8bf3-4fae-b13b-62e8202951fc",
+      "masterEntityId": "39d2cbea-30c7-4835-a4cd-47de943fb988"
+    },
+    "selectedGeneration": {
+      "seed": 64423,
+      "requestId": "ca862bfe-b41e-4e3d-9030-b42a460c5b8c",
+      "assetUrn": "urn:aaid:ps:US:0eb06d87-7582-4456-8224-79925635a501",
+      "width": 2048,
+      "height": 2048,
+      "generationMode": "quality",
+      "prompt": "Exactly one short horizontal ribbon of glossy golden-orange curry sauce, a single isolated sauce stroke with softly tapered ends, subtle fine curry spice specks, appetizing smooth surface and natural creamy thickness, viewed from an isometric top-three-quarter 35-degree angle with visible raised thickness, photorealistic premium Mcello food photography, warm restaurant studio lighting, centered, entire sauce ribbon in frame, plain neutral seamless studio background, clean separation, no contact shadow.",
+      "negativePrompt": "multiple objects, duplicate object, two versions, plate, bowl, cup, container, spoon, bottle, kebab, meat, falafel, tomato, cucumber, lettuce, onion, other food, hands, text, logo, watermark, packaging, cast shadow, whole exploded döner, sandwich, illustration, cartoon, vector, 3D render, CGI, garlic sauce, white sauce, mixed sauces"
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "operation": "remove-background",
+          "requestId": "fa35e826-f2ad-492d-a6d4-8b8c0abdfba0",
+          "assetUrn": "urn:aaid:ps:US:847b3e73-4100-487f-96d3-341677c2226f"
+        },
+        {
+          "operation": "tight-extract-small-margin",
+          "requestId": "85810f76-fc87-4aa0-89ac-63c33cefd6ea",
+          "assetUrn": "urn:aaid:ps:US:03aa15de-f779-4da3-b1dd-a443797dddc2"
+        },
+        {
+          "operation": "normalize-transparent-square-1024",
+          "requestId": "aab15557-02ed-4c21-84c6-193d26d1a3de",
+          "assetUrn": "urn:aaid:ps:US:79036669-1025-4f2c-b516-9ff6bb2dcae2"
+        }
+      ],
+      "visualReview": "passed-after-each-required-adobe-inline-preview"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.sauce.curry.ribbon.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}
+

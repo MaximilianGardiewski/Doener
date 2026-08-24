@@ -32,6 +32,14 @@
   },
   "donerYufka": {
     "productSourceIds": ["warm-013", "warm-014", "warm-015", "warm-016", "warm-017", "warm-018"],
+    "productForms": {
+      "warm-013": "flatbread-pocket",
+      "warm-014": "flatbread-pocket",
+      "warm-015": "flatbread-pocket",
+      "warm-016": "yufka-wrap",
+      "warm-017": "yufka-wrap",
+      "warm-018": "yufka-wrap"
+    },
     "provenance": "presentation-assumption:user-request:2026-08-18;sauces-owner-chat-confirmation:2026-08-18",
     "groups": [
       {

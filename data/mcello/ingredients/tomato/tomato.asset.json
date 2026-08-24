@@ -1,0 +1,103 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.tomato.slice",
+  "ingredient": "tomato",
+  "visual": {
+    "role": "atomic-configurator-ingredient",
+    "subject": "exactly-one-tomato-slice",
+    "view": "isometric-top-three-quarter",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "repeat-the-same-master",
+      "extraSelection": "increase-instance-count-only",
+      "separateExtraAssetAllowed": false
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D075",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.tomato.slice.firefly-seed-48271.png",
+      "mediaType": "image/png",
+      "width": 2048,
+      "height": 2048,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 3753564,
+      "sha256": "9d68e100dcc6ec95a0ed29cf7bf403e77edfb034dbc4e06c563100864ab527e6"
+    },
+    "master": {
+      "path": "master/ingredient.tomato.slice.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 962926,
+      "sha256": "f34bf70f07fcacc5b767bba5d439285f167d201dba6047965258c507605c79f1"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Adobe plugin generation and image editing",
+    "reference": {
+      "localFound": false,
+      "adobeFound": false,
+      "used": false
+    },
+    "board": {
+      "id": "urn:aaid:sc:EU:a8c9ddc5-99ca-4ef4-87d3-2d1c52d43c91",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:a8c9ddc5-99ca-4ef4-87d3-2d1c52d43c91",
+      "name": "Mcello V1 — Ingredient — Tomato"
+    },
+    "selectedGeneration": {
+      "seed": 48271,
+      "requestId": "d63a48be-8507-449e-bcde-ec19069eac8d",
+      "assetUrn": "urn:aaid:ps:US:bbef7197-fe28-425d-88bb-6e25e694e6bc",
+      "width": 2048,
+      "height": 2048,
+      "generationMode": "quality",
+      "prompt": "Exactly one fresh red tomato slice, isolated single round cross-section, photorealistic premium Mcello food photography style, isometric top-three-quarter camera angle, visible natural slice thickness and cut edge, juicy seed chambers, delicate tomato flesh texture and subtle moisture highlights, warm appetizing restaurant studio lighting, centered, entire slice in frame, plain neutral seamless studio background, no other objects.",
+      "negativePrompt": "multiple slices, two slices, stack, pile, whole tomato, tomato wedge, half tomato, cherry tomato, plate, bowl, bread, kebab, lettuce, onion, cucumber, cheese, garnish, leaves, stem, utensils, hands, packaging, text, logo, watermark, foreign objects, flat top-down view, illustration, cartoon, 3D render, CGI"
+    },
+    "masterProcessing": {
+      "steps": [
+        "remove-background",
+        "tight-subject-extract-with-small-margin",
+        "normalize-to-transparent-square-1024-master",
+        "targeted-previewed-adjustments"
+      ],
+      "adjustments": {
+        "highlights": -18,
+        "contrast": 6,
+        "saturation": -12
+      },
+      "requestId": "62dcde6f-f755-4c1c-b711-201329ebcc93",
+      "assetUrn": "urn:aaid:ps:US:a353e176-4211-4f07-bbbf-520cf7e21fdf"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.tomato.slice.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}

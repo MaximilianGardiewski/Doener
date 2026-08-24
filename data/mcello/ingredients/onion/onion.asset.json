@@ -1,0 +1,106 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.onion.ring",
+  "ingredient": "onion",
+  "visual": {
+    "role": "atomic-configurator-ingredient",
+    "subject": "exactly-one-red-onion-ring",
+    "view": "isometric-top-three-quarter",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "repeat-the-same-master",
+      "extraSelection": "increase-instance-count-only",
+      "separateExtraAssetAllowed": false
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D075",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.onion.ring.firefly-seed-64222.png",
+      "mediaType": "image/png",
+      "width": 1648,
+      "height": 2544,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 2485673,
+      "sha256": "4f82a2332c10cfff2922515ace18eba94131fe87651a6b96db511b2ae73d36f6"
+    },
+    "master": {
+      "path": "master/ingredient.onion.ring.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 486129,
+      "sha256": "4053d859dae5c6a01b1c8d120a8b198414d78e8b67f871782173631f28c8c2f6"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Adobe plugin generation and image editing",
+    "board": {
+      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "name": "Mcello V1 — Ingredient System — Döner",
+      "rawEntityId": "13ef0ece-b235-4d03-915e-4345b5e58c45",
+      "masterEntityId": "aaeb699d-3bc6-4017-a903-2f3b4a8669ce"
+    },
+    "selectedGeneration": {
+      "seed": 64222,
+      "requestId": "ce78074b-e121-4191-bde7-033798d815f6",
+      "assetUrn": "urn:aaid:ps:US:beae6a37-e3dc-4a5f-a3fe-0583329f9c1f",
+      "width": 1648,
+      "height": 2544,
+      "generationMode": "quality",
+      "prompt": "Exactly one thin intact red onion ring lying nearly flat and horizontal, viewed from a top-three-quarter 35-degree angle as a shallow oval, single unbroken purple-magenta and translucent-white ring with visible 3 mm cut thickness, photorealistic premium Mcello food photography, same warm appetizing material realism as the reference, isolated centered subject, entire subject in frame, plain neutral seamless studio background, clean separation, no contact shadow.",
+      "negativePromptSummary": "Excluded multiple or duplicated subjects, plates, containers, other food, hands, text or logos, packaging, shadows, and illustrative or CGI treatments."
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "operation": "remove-background",
+          "requestId": "79da9baa-f53c-45a1-bc10-b919ab470311",
+          "assetUrn": "urn:aaid:ps:US:4531245d-dac1-4966-8fc5-8feb3be711f7"
+        },
+        {
+          "operation": "tight-extract-small-margin",
+          "requestId": "1b73187f-340b-42c7-936a-d597f01be41c",
+          "assetUrn": "urn:aaid:ps:US:7c49fc28-1c0e-4ef2-8616-2bcb9553febf"
+        },
+        {
+          "operation": "normalize-transparent-square-1024",
+          "requestId": "2ea53101-00a8-4843-a595-4330714b618e",
+          "assetUrn": "urn:aaid:ps:US:d6293745-2c2a-4628-896c-7fa46c27de7a"
+        }
+      ],
+      "visualReview": "passed-after-each-required-adobe-inline-preview"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.onion.ring.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}
+

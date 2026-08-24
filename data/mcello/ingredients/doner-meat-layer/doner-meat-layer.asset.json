@@ -1,0 +1,126 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.meat.doner.layer",
+  "ingredient": "doner-meat-layer",
+  "visual": {
+    "role": "stacked-configurator-layer",
+    "subject": "layer-doner-meat",
+    "layerName": "Fleisch",
+    "view": "isometric-45",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "single-layer-instance",
+      "extraSelection": "separate-extra-layer-master",
+      "separateExtraAssetAllowed": true
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D076",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.meat.doner.layer.firefly-seed-65998.png",
+      "mediaType": "image/png",
+      "width": 512,
+      "height": 512,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 370070,
+      "sha256": "91fc2eaf5eaccbb3c06b54af28c82dc3b1b7d9071911c8baafb3164a9b416c8a"
+    },
+    "master": {
+      "path": "master/ingredient.meat.doner.layer.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 1187565,
+      "sha256": "d14e55d49cd67ae018262f29e6116f31af2c32bd01d9b38a5eb37c0bb028a022"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Generated through the Firefly web interface driven by Claude Code in the owner's browser, then Adobe cutout and tone alignment plus a deterministic local extract and normalization",
+    "reference": {
+      "localFound": false,
+      "adobeFound": false,
+      "used": false
+    },
+    "board": {
+      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "name": "Mcello V1 - Ingredient System - Doener"
+    },
+    "selectedGeneration": {
+      "seed": 65998,
+      "requestId": null,
+      "requestIdCaptured": false,
+      "requestIdReason": "The Firefly web interface exposes no generation request id; the resulting Firefly asset URN identifies the generation.",
+      "assetUrn": "urn:aaid:sc:EU:d0966e0e-14e8-4a4e-b4c5-96a71edb6da0",
+      "width": 512,
+      "height": 512,
+      "sourceResolutionNote": "The Firefly web interface returned 512 x 512 for this run, unlike the 2048 x 2048 the API produced for the first eight layers. The master is upscaled from this source and is measurably softer.",
+      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
+      "promptRevisedFromBrief": true,
+      "promptRevisionReason": "The briefed wording produced the wrong subject and was sharpened: cucumber came back halved lengthwise, lettuce came back as a whole head, meat came back as a geometric stack.",
+      "briefPrompt": "A loose irregular scattering of thin roasted meat shavings tumbled into one low uneven pile, ragged torn edges, crisp browned tips, glistening juicy surface, warm Turkish spice seasoning, no neat stack, no straight rows, no plate, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
+      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "step": "adobe-remove-background",
+          "requestId": "251981d7-1a2f-437d-a759-6bacef42fde4"
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "862a2ae7-6918-4b3e-b074-c2d697654a8d",
+          "options": {
+            "gamma": 1.5,
+            "darks": 22
+          }
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "47c36e3a-7c60-4e17-aabb-d91a3bb27118",
+          "options": {
+            "gamma": 1.24
+          }
+        },
+        {
+          "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
+          "requestId": null
+        },
+        {
+          "step": "local-normalize-to-transparent-square-1024-master",
+          "requestId": null
+        }
+      ],
+      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.meat.doner.layer.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}

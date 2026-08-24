@@ -22,6 +22,8 @@ export function createCommerceMotion(engine) {
   const activeTweens = new Set();
   let productTransition = null;
   let ingredientTransition = null;
+  const activeIngredientBatches = new Map();
+  let ingredientBatchSequence = 0;
   let cartTransition = null;
   let stepTransition = null;
   let totalTransition = null;
@@ -52,6 +54,11 @@ export function createCommerceMotion(engine) {
     productTransition = null;
   }
 
+  /*
+   * `animateIngredientChange` remains the bounded legacy treatment for the
+   * option row / whole FoodStage. Atomic ingredient media use the batch path
+   * below so an entrance and an exit can share one transaction.
+   */
   function clearIngredientPresentation() {
     if (!ingredientTransition) return;
     const { timeline, option, foodStage } = ingredientTransition;
@@ -68,6 +75,66 @@ export function createCommerceMotion(engine) {
       delete foodStage.dataset.motionIngredientEngine;
     }
     ingredientTransition = null;
+  }
+
+  /*
+   * GSAP writes SVG transform metadata in more than one place. Keeping this in
+   * one cleanup function prevents a cancelled/restarted batch from leaving an
+   * inline transform-origin or data-svg-origin that shifts its deterministic
+   * slot on the next render.
+   */
+  function clearIngredientInstancePresentation(instance) {
+    if (!instance) return;
+    gsap.killTweensOf(instance);
+    gsap.set(instance, { clearProps: "opacity,transform,transformOrigin" });
+    instance.style?.removeProperty("opacity");
+    instance.style?.removeProperty("transform");
+    instance.style?.removeProperty("transform-origin");
+    instance.removeAttribute?.("data-svg-origin");
+    instance.removeAttribute?.("transform-origin");
+    if (!instance.getAttribute?.("style")?.trim()) instance.removeAttribute?.("style");
+    instance.classList?.remove("motion-ingredient-instance-change");
+    delete instance.dataset.motionSelection;
+    delete instance.dataset.motionIngredientEngine;
+    delete instance.dataset.motionIngredientBatch;
+  }
+
+  function normalizeIngredientBatchChanges(changes) {
+    if (!Array.isArray(changes)) return [];
+    const claimedInstances = new Set();
+    return changes.flatMap((change) => {
+      const selection = change?.selection;
+      const instances = [...new Set([...(change?.instances || [])].filter(Boolean))]
+        .filter((instance) => {
+          if (claimedInstances.has(instance)) return false;
+          claimedInstances.add(instance);
+          return true;
+        });
+      if (!instances.length || (selection !== "added" && selection !== "removed")) return [];
+      const assetId = typeof change?.assetId === "string" && change.assetId.trim()
+        ? change.assetId.trim()
+        : null;
+      return [{ assetId, selection, instances }];
+    });
+  }
+
+  function ingredientBatchesOverlap(batch, candidate) {
+    if ([...candidate.assetIds].some((assetId) => assetId && batch.assetIds.has(assetId))) return true;
+    return [...candidate.instances].some((instance) => batch.instances.has(instance));
+  }
+
+  function settleIngredientBatch(batch, { killTimeline = true } = {}) {
+    if (!batch || batch.settled) return;
+    batch.settled = true;
+    if (killTimeline) batch.timeline?.kill();
+    activeTweens.delete(batch.timeline);
+    activeIngredientBatches.delete(batch.id);
+    for (const instance of batch.instances) clearIngredientInstancePresentation(instance);
+    batch.settle?.();
+  }
+
+  function settleIngredientBatches() {
+    for (const batch of [...activeIngredientBatches.values()]) settleIngredientBatch(batch);
   }
 
   function clearCartPresentation() {
@@ -234,7 +301,6 @@ export function createCommerceMotion(engine) {
       foodStage.dataset.motionIngredient = selection;
       foodStage.dataset.motionIngredientEngine = "gsap";
     }
-
     const optionScale = selection === "added" ? 1.018 : 0.985;
     const foodScale = selection === "added" ? 1.012 : 0.992;
     let timeline;
@@ -276,6 +342,82 @@ export function createCommerceMotion(engine) {
           0,
         )
         .to(foodStage, { opacity: 1, scale: 1, duration: 0.2, ease: "power2.inOut" }, 0.16);
+    }
+    return true;
+  }
+
+  /*
+   * Atomic media changes are a batch because one validated modifier mutation
+   * can add one ingredient while removing another (for example meat ->
+   * falafel). Each change keeps its own direction, while a single settle hook
+   * commits the renderer's already-decided DOM result exactly once.
+   */
+  function animateIngredientBatch({ changes, settle }) {
+    const normalizedChanges = normalizeIngredientBatchChanges(changes);
+    if (!normalizedChanges.length) return false;
+
+    const candidate = {
+      assetIds: new Set(normalizedChanges.map((change) => change.assetId).filter(Boolean)),
+      instances: new Set(normalizedChanges.flatMap((change) => change.instances)),
+    };
+    for (const batch of [...activeIngredientBatches.values()]) {
+      if (ingredientBatchesOverlap(batch, candidate)) settleIngredientBatch(batch);
+    }
+
+    const id = `ingredient-batch-${++ingredientBatchSequence}`;
+    const batch = {
+      id,
+      ...candidate,
+      timeline: null,
+      settle: typeof settle === "function" ? settle : null,
+      settled: false,
+    };
+    for (const change of normalizedChanges) {
+      for (const instance of change.instances) {
+        clearIngredientInstancePresentation(instance);
+        instance.dataset.motionSelection = change.selection;
+        instance.dataset.motionIngredientEngine = "gsap";
+        instance.dataset.motionIngredientBatch = id;
+      }
+    }
+
+    let timeline;
+    const finish = () => settleIngredientBatch(batch, { killTimeline: false });
+    timeline = gsap.timeline({ defaults: { overwrite: "auto" }, onComplete: finish });
+    batch.timeline = timeline;
+    activeIngredientBatches.set(id, batch);
+    track(timeline);
+
+    for (const change of normalizedChanges) {
+      if (change.selection === "added") {
+        timeline.fromTo(
+          change.instances,
+          { opacity: 0, y: -24, scale: 0.72, rotation: -5 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            rotation: 0,
+            duration: 0.34,
+            ease: "back.out(1.45)",
+            stagger: 0.035,
+          },
+          0,
+        );
+      } else {
+        timeline.to(
+          change.instances,
+          {
+            opacity: 0,
+            y: 10,
+            scale: 0.82,
+            duration: 0.2,
+            ease: "power2.in",
+            stagger: 0.025,
+          },
+          0,
+        );
+      }
     }
     return true;
   }
@@ -430,6 +572,8 @@ export function createCommerceMotion(engine) {
     animateCategoryChange,
     animateProductOpen,
     animateIngredientChange,
+    animateIngredientBatch,
+    settleIngredientBatches,
     animateCartConfirmation,
     animateBuilderStep,
     animateTotalChange,
@@ -439,6 +583,7 @@ export function createCommerceMotion(engine) {
       clearCartPresentation();
       clearTotalPresentation();
       clearStepPresentation();
+      settleIngredientBatches();
       clearIngredientPresentation();
       clearProductPresentation();
       for (const tween of activeTweens) tween.kill();

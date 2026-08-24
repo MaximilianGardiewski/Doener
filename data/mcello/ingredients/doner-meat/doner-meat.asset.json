@@ -1,0 +1,116 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.meat.doner.shaving",
+  "ingredient": "doner-meat",
+  "visual": {
+    "role": "atomic-configurator-ingredient",
+    "subject": "exactly-one-doner-meat-shaving",
+    "view": "isometric-top-three-quarter",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "repeat-the-same-master",
+      "extraSelection": "increase-instance-count-only",
+      "separateExtraAssetAllowed": false
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D075",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.meat.doner.shaving.firefly-seed-64522.png",
+      "mediaType": "image/png",
+      "width": 2048,
+      "height": 2048,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 4313378,
+      "sha256": "3b571b7556be22002919820281f54e247695496f257e6d3ef550298ee9bfac24"
+    },
+    "master": {
+      "path": "master/ingredient.meat.doner.shaving.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 855205,
+      "sha256": "ee1e14eb6a2bb8915c26725a8e1a98be4a75227612864d7ba7d85c5464a75662"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Adobe plugin generation and image editing",
+    "board": {
+      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "name": "Mcello V1 — Ingredient System — Döner",
+      "rawEntityId": "58f6dc9a-671b-43b7-8d72-a3a0d8d1e540",
+      "masterEntityId": "51da5b6c-e6a4-4a1d-aec7-ccc813053de4"
+    },
+    "selectedGeneration": {
+      "seed": 64522,
+      "requestId": "ff543a3c-7411-420d-9361-7d0234366e82",
+      "assetUrn": "urn:aaid:ps:US:88a2aea7-53e9-436f-931a-84bfbce56ec2",
+      "width": 2048,
+      "height": 2048,
+      "generationMode": "quality",
+      "prompt": "Exactly one small thin irregular döner kebab veal shaving, one single loose 8 by 3 cm strip shaved from a vertical rotisserie, lying almost flat with naturally torn tapered edges and one softly curled corner, dark browned roasted surface, crisp caramelized charred rim, visible juicy fibrous grain and warm kebab seasoning, unmistakably döner shaving and not a steak or roast slice, photorealistic premium Mcello food photography, isometric top-three-quarter 35-degree view, centered, entire subject in frame, plain neutral seamless studio background, clean separation, no contact shadow.",
+      "negativePrompt": "multiple meat pieces, two strips, pile, stack, steak, roast beef slice, schnitzel, bacon, sausage, raw meat, whole kebab, skewer, plate, bread, vegetables, sauce, hands, text, logo, watermark, packaging, cast shadow, illustration, cartoon, 3D render, CGI"
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "operation": "remove-background",
+          "requestId": "54aa01b0-b7c0-4480-9498-8ff8b72c2805",
+          "assetUrn": "urn:aaid:ps:US:c40322db-f0d0-4ba2-880e-a9fd5a0c879d"
+        },
+        {
+          "operation": "tight-extract-small-margin",
+          "requestId": "cfbf6629-d3d0-4eb9-98d9-1102ba1432b6",
+          "assetUrn": "urn:aaid:ps:US:097214ac-2128-43b9-a682-405e6626b5c2"
+        },
+        {
+          "operation": "normalize-transparent-square-1024",
+          "requestId": "54405cfc-7af7-4309-9471-5a6cfd1b26b3",
+          "assetUrn": "urn:aaid:ps:US:50054496-c511-46ba-b66d-5bf3e6eaabeb"
+        },
+        {
+          "operation": "targeted-tone-adjustment",
+          "requestId": "f1e47b5f-a881-489e-bf99-52c2550a164e",
+          "assetUrn": "urn:aaid:ps:US:2f125d7b-a9cc-4260-9f70-a32f31086860",
+          "adjustments": {
+            "highlights": -18,
+            "contrast": 10,
+            "saturation": 4
+          }
+        }
+      ],
+      "visualReview": "passed-after-each-required-adobe-inline-preview"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.meat.doner.shaving.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}
+

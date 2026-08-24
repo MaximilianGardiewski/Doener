@@ -1,0 +1,106 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.lettuce.iceberg.leaf",
+  "ingredient": "lettuce",
+  "visual": {
+    "role": "atomic-configurator-ingredient",
+    "subject": "exactly-one-iceberg-lettuce-leaf-piece",
+    "view": "isometric-top-three-quarter",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "repeat-the-same-master",
+      "extraSelection": "increase-instance-count-only",
+      "separateExtraAssetAllowed": false
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D075",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.lettuce.iceberg.leaf.firefly-seed-64122.png",
+      "mediaType": "image/png",
+      "width": 1648,
+      "height": 2544,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 2406087,
+      "sha256": "057d137afd69426ca957d9e3177c0f162dd9f0f41a58c07a2a75a5eb1d144d0b"
+    },
+    "master": {
+      "path": "master/ingredient.lettuce.iceberg.leaf.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 673978,
+      "sha256": "68c1b12f50b7114110e7c43e13d0bc8126d10509784e5959e0424d04b4903883"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Adobe plugin generation and image editing",
+    "board": {
+      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "name": "Mcello V1 — Ingredient System — Döner",
+      "rawEntityId": "bd6a6ec7-3c94-4193-97a6-c2c1b2b9cf53",
+      "masterEntityId": "e338122f-5565-4f2b-b0a9-c6c8f21fdd18"
+    },
+    "selectedGeneration": {
+      "seed": 64122,
+      "requestId": "9eaaf43e-a4ae-42a6-ab28-d491e24a5c34",
+      "assetUrn": "urn:aaid:ps:US:fbb00c29-ef86-48ca-bc0e-09886c782162",
+      "width": 1648,
+      "height": 2544,
+      "generationMode": "quality",
+      "prompt": "Exactly one small torn piece of fresh iceberg lettuce leaf, single ruffled crisp pale-green leaf piece with curled edges and subtle moisture, not a whole lettuce head and not a pile, photorealistic premium Mcello food photography, matching the warm appetizing material realism and isometric top-three-quarter presentation axis of the reference, visible natural thickness, centered, entire subject in frame, plain neutral seamless studio background, clean separation, no contact shadow.",
+      "negativePromptSummary": "Excluded multiple or duplicated subjects, plates, containers, other food, hands, text or logos, packaging, shadows, and illustrative or CGI treatments."
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "operation": "remove-background",
+          "requestId": "d4b4b2f8-9468-498b-80a5-b3d364877471",
+          "assetUrn": "urn:aaid:ps:US:bf1a3ed5-d2b4-4b14-82cc-a1432105fe7c"
+        },
+        {
+          "operation": "tight-extract-small-margin",
+          "requestId": "8cb35d1b-f660-4b47-b382-139164708de9",
+          "assetUrn": "urn:aaid:ps:US:4ff546cf-ddde-4b7f-848b-ec1f852aff90"
+        },
+        {
+          "operation": "normalize-transparent-square-1024",
+          "requestId": "b17a4b1a-2e45-408f-8014-94c2156919f1",
+          "assetUrn": "urn:aaid:ps:US:16152ba2-1329-4e78-aa8c-942dfb519aef"
+        }
+      ],
+      "visualReview": "passed-after-each-required-adobe-inline-preview"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.lettuce.iceberg.leaf.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}
+
