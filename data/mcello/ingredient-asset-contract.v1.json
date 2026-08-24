@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "project": "mcello",
+  "status": "runtime-contract-ready-assets-pending",
+  "purpose": "Define the reusable 2.5D ingredient-layer contract for the interactive builder while keeping cinematic frame sequences separate.",
+  "eventContract": {
+    "name": "mcello:builder-visual-state",
+    "version": 1,
+    "producer": "apps/mcello/public/builder-visual-state.js",
+    "semantics": "presentation-only projection of the currently selected modifier inputs",
+    "detail": {
+      "version": "number",
+      "revision": "number",
+      "reason": "open|selection-change|content-refresh",
+      "productId": "string|null",
+      "categorySlug": "string|null",
+      "groups": [
+        {
+          "groupId": "string",
+          "groupName": "string",
+          "optionIds": ["string"],
+          "optionNames": ["string"]
+        }
+      ]
+    },
+    "forbiddenFields": ["price", "priceDelta", "availability", "validity", "allergens", "capacity", "cart", "checkout"]
+  },
+  "assetContract": {
+    "required": ["id", "version", "kind", "productFamilies", "slot", "path", "status", "provenance", "zIndex", "anchor", "animationPreset"],
+    "kinds": ["ingredient-layer", "bread-layer", "sauce-layer"],
+    "runtimeStatuses": ["approved-runtime"],
+    "nonRuntimeStatuses": ["briefed", "generated-staging", "qa-pending", "approved-concept", "deprecated"],
+    "provenanceClasses": ["first-party-real-media", "generated-concept-art", "generated-product-visual"],
+    "pathRule": "Runtime paths must resolve from the Mcello application or governed media path; Adobe/Firefly URLs are never runtime dependencies."
+  },
+  "layerSlots": [
+    { "slot": "bread.bottom", "zIndex": 10, "anchor": { "x": 0.5, "y": 0.76 }, "animationPreset": "ingredient.drop.soft" },
+    { "slot": "protein.primary", "zIndex": 20, "anchor": { "x": 0.5, "y": 0.66 }, "animationPreset": "ingredient.drop.weighted" },
+    { "slot": "fresh.lettuce", "zIndex": 30, "anchor": { "x": 0.5, "y": 0.58 }, "animationPreset": "ingredient.drop.light" },
+    { "slot": "fresh.tomato", "zIndex": 40, "anchor": { "x": 0.5, "y": 0.53 }, "animationPreset": "ingredient.drop.light" },
+    { "slot": "fresh.cucumber", "zIndex": 50, "anchor": { "x": 0.5, "y": 0.49 }, "animationPreset": "ingredient.drop.light" },
+    { "slot": "fresh.onion", "zIndex": 60, "anchor": { "x": 0.5, "y": 0.45 }, "animationPreset": "ingredient.drop.light" },
+    { "slot": "sauce.primary", "zIndex": 70, "anchor": { "x": 0.5, "y": 0.42 }, "animationPreset": "sauce.splash.controlled" },
+    { "slot": "bread.top", "zIndex": 80, "anchor": { "x": 0.5, "y": 0.31 }, "animationPreset": "ingredient.close.soft" }
+  ],
+  "animationPresets": {
+    "ingredient.drop.soft": { "axis": "y", "from": -80, "rotation": 2, "scaleFrom": 0.96 },
+    "ingredient.drop.weighted": { "axis": "y", "from": -120, "rotation": -4, "scaleFrom": 0.94 },
+    "ingredient.drop.light": { "axis": "y", "from": -100, "rotation": 5, "scaleFrom": 0.95 },
+    "ingredient.close.soft": { "axis": "y", "from": -140, "rotation": -3, "scaleFrom": 0.96 },
+    "sauce.splash.controlled": { "axis": "y", "from": -65, "rotation": 0, "scaleFrom": 0.98 }
+  },
+  "mappingRules": [
+    "Modifier option IDs from the menu domain are mapped explicitly to approved asset IDs; names are display metadata only and must not be used as domain identifiers.",
+    "One asset may be reused across compatible product families when camera, anchor and visual truth remain valid.",
+    "Missing or unapproved visual mappings must fall back to the existing product visual instead of inventing a layer.",
+    "Removing a selected modifier removes only its visual layer; it never mutates menu-engine state by itself.",
+    "The visual state consumer may animate changes but may not calculate or infer business outcomes."
+  ],
+  "productFamilies": ["doner", "yufka", "pizza"],
+  "firstRuntimePack": {
+    "id": "doner-core-layer-pack-v1",
+    "status": "awaiting-approved-assets",
+    "targetSlots": ["bread.bottom", "protein.primary", "fresh.lettuce", "fresh.tomato", "fresh.cucumber", "fresh.onion", "sauce.primary", "bread.top"]
+  }
+}
