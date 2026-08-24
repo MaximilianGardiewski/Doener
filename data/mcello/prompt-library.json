@@ -20,9 +20,25 @@
     {
       "id": "flatbread-bottom-v1",
       "tool": "Adobe Firefly image_generate",
-      "status": "prompt-ready",
+      "status": "executed-rejected-shape",
       "usage": "illustrative-layer-exploration",
-      "prompt": "Single warm toasted döner flatbread bottom half, adult editorial food illustration, isolated object, charcoal-neutral backdrop, cream and copper warmth, clean silhouette, tactile ink-and-paper texture, consistent top-three-quarter camera, no text, no logo, not photorealistic."
+      "requestId": "35e6d673-3ed1-44d8-896e-a0d4037b4e97",
+      "fireflyAssetId": "urn:aaid:sc:EU:114b641b-0267-4f94-b437-b4893f967a5c",
+      "prompt": "Single warm toasted döner flatbread bottom half, adult editorial food illustration, isolated object, charcoal-neutral backdrop, cream and copper warmth, clean silhouette, tactile ink-and-paper texture, consistent top-three-quarter camera, no text, no logo, not photorealistic.",
+      "qaNote": "Rejected as builder layer because the generation read as a mostly complete pita with an unwanted slit/strip rather than an unambiguous bottom foundation."
+    },
+    {
+      "id": "flatbread-bottom-v2",
+      "tool": "Adobe Firefly image_generate",
+      "status": "executed-qa-approved-staging",
+      "usage": "interactive-builder-layer-candidate",
+      "requestId": "9ba1ac07-71db-407a-86dc-aa55950141ab",
+      "fireflyAssetId": "urn:aaid:sc:EU:ee2ffb7a-e001-47ec-92e1-5824d9963631",
+      "referenceAssetId": "exploded-doner-adobe-concept-v1",
+      "referenceImage": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:0957ec63-a9b6-4ce7-b8b9-1c859698f7df",
+      "prompt": "Create only the BOTTOM flatbread foundation from an exploded döner assembly, matching the visual language of the supplied Mcello exploded-döner concept. A single broad, low-profile toasted bread base viewed from top-three-quarter angle, with the cut/open face pointing upward so ingredients can visually stack on it. No upper bread dome and no slit or separate strip crossing the bread. Adult editorial ink-and-paper food illustration, warm toasted orange/copper and cream, restrained charcoal outlines, clean silhouette, centered isolated object with generous empty space, suitable for transparent cutout and 2.5D GSAP layering. No other ingredients, no plate, no text, no logo.",
+      "negativePrompt": "whole pita pocket, closed pita, top bread, bread lid, slit across bread, knife, meat, lettuce, tomato, cucumber, onion, sauce, plate, hands, people, text, logo, watermark, photorealistic stock photo, neon, purple, cyberpunk, blue glow, glossy 3D plastic",
+      "qaNote": "Accepted for staging after background removal and tight crop; runtime publication still requires a local or governed-media path."
     },
     {
       "id": "kebab-protein-layer-v1",
