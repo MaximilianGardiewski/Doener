@@ -95,6 +95,26 @@ try {
     storeIsNext: true,
   }, "ingredient story must be local, illustrative, layered and placed directly before commerce");
   console.log(`Ingredient story normal-motion engine: ${storyEngine}`);
+
+  const storyVisibility = await normal.locator("[data-mcello-ingredient-story]").evaluate(async (story) => {
+    const store = document.querySelector("#bestellen");
+    store.hidden = true;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const hiddenWithStore = story.hidden;
+    store.hidden = false;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    return {
+      source: story.dataset.visibilitySource,
+      hiddenWithStore,
+      visibleWithStore: !story.hidden,
+    };
+  });
+  assert.deepEqual(storyVisibility, {
+    source: "quick-order",
+    hiddenWithStore: true,
+    visibleWithStore: true,
+  }, "ingredient story visibility must follow the owner-controlled quick-order section");
+
   await scrollIngredientStoryToEnd(normal);
   assert.equal(await normal.locator("[data-story-phase]").textContent(), "Fertig");
   assert.equal(await normal.locator("[data-story-progress]").getAttribute("aria-valuenow"), "144");
@@ -141,11 +161,24 @@ try {
     );
   }
 
+  await normal.waitForFunction(() => document.querySelector("#productModal")?.dataset.builderVisualState === "active");
+  const visualStateContract = await normal.locator("#productModal").evaluate((node) => ({
+    contract: node.dataset.builderVisualContract,
+    state: node.dataset.builderVisualState,
+    revision: Number(node.dataset.builderVisualRevision || 0),
+    productId: node.dataset.productId || "",
+  }));
+  assert.equal(visualStateContract.contract, "ingredient-layer-v1");
+  assert.equal(visualStateContract.state, "active");
+  assert.ok(visualStateContract.revision > 0, "visual bridge should publish at least one revision when the builder opens");
+  assert.notEqual(visualStateContract.productId, "", "visual bridge must project the active product identity");
+
   const modifierInput = normal.locator("#modifierGroups input:not(:disabled)").first();
   if (await modifierInput.count()) {
     const ingredientEngine = await normal.evaluate(() => document.documentElement.dataset.mcelloIngredientEngine);
     assert.ok(["v2", "gsap"].includes(ingredientEngine), `unexpected ingredient engine ${ingredientEngine}`);
     const modifierOption = modifierInput.locator("xpath=ancestor::*[contains(@class,'modifier-option')][1]");
+    const visualRevisionBefore = Number(await normal.locator("#productModal").getAttribute("data-builder-visual-revision") || 0);
     const type = await modifierInput.getAttribute("type");
     const wasChecked = await modifierInput.isChecked();
     if (type === "checkbox" && wasChecked) await modifierInput.uncheck();
@@ -157,6 +190,10 @@ try {
       await normal.waitForFunction(() => document.querySelector(".modifier-option[data-motion-ingredient-engine='gsap']"));
       assert.equal(await modifierOption.evaluate((node) => node.classList.contains("motion-ingredient-change")), false);
     }
+    await normal.waitForFunction(
+      (before) => Number(document.querySelector("#productModal")?.dataset.builderVisualRevision || 0) > before,
+      visualRevisionBefore,
+    );
   }
 
   const addToCart = normal.locator("#addToCart");
@@ -219,7 +256,7 @@ try {
   }, "reduced motion must render the complete story without scrub-dependent content");
   await reducedContext.close();
 
-  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, 144-step ingredient story (normal/fallback/reduced), category, product-open, ingredient feedback, cart feedback, and reduced-motion preferences.");
+  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, 144-step ingredient story (normal/fallback/reduced), owner-controlled story visibility, category, product-open, ingredient visual-state bridge, ingredient feedback, cart feedback, and reduced-motion preferences.");
 } finally {
   await browser.close();
 }
