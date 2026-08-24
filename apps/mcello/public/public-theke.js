@@ -1,3 +1,5 @@
+import "./ingredient-scroll-story.js";
+
 /*
  * Loads the Mcello public/homepage "Theke" art direction after homepage-v2.css,
  * mirroring how commerce-theke.js is wired in for the commerce surfaces.
