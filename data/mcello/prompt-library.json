@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "project": "mcello",
+  "prompts": [
+    {
+      "id": "exploded-doner-editorial-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "executed-concept-reference",
+      "usage": "concept-only",
+      "prompt": "Premium adult editorial cartoon-food illustration of an exploded döner kebab build, clearly illustrative concept art and not photorealistic. Separate warm toasted flatbread halves, grilled kebab protein, crisp lettuce, tomato, cucumber, red onion and flowing sauce as distinct floating assembly layers. Strong appetizing food-first composition, warm urban bistro energy, charcoal and cream stage with restrained copper heat-line accents and olive freshness. Bold clean shapes, tactile paper-and-ink feel, subtle depth, generous negative space, sophisticated not childish. No text, no logo, no branding, no packaging. Designed as a concept reference for a scroll-scrubbed interactive web FoodStage.",
+      "negativePrompt": "photorealistic food photography, stock photo, purple, neon, cyberpunk, glassmorphism, glossy 3D plastic, blue SaaS colors, black-gold luxury cliché, childish mascot, text, logo, watermark, hands, people, restaurant interior"
+    },
+    {
+      "id": "flatbread-top-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "prompt-ready",
+      "usage": "illustrative-layer-exploration",
+      "prompt": "Single warm toasted döner flatbread top half, adult editorial food illustration, isolated object, charcoal-neutral backdrop, cream and copper warmth, clean silhouette, tactile ink-and-paper texture, consistent top-three-quarter camera, no text, no logo, not photorealistic."
+    },
+    {
+      "id": "flatbread-bottom-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "prompt-ready",
+      "usage": "illustrative-layer-exploration",
+      "prompt": "Single warm toasted döner flatbread bottom half, adult editorial food illustration, isolated object, charcoal-neutral backdrop, cream and copper warmth, clean silhouette, tactile ink-and-paper texture, consistent top-three-quarter camera, no text, no logo, not photorealistic."
+    },
+    {
+      "id": "kebab-protein-layer-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "prompt-ready",
+      "usage": "illustrative-layer-exploration",
+      "prompt": "Grilled kebab protein strips as one isolated floating ingredient layer, appetizing adult editorial illustration, warm charcoal/copper palette, clean readable silhouette, tactile paper-and-ink texture, no plate, no hands, no text, not photorealistic."
+    },
+    {
+      "id": "fresh-vegetable-layer-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "prompt-ready",
+      "usage": "illustrative-layer-exploration",
+      "prompt": "Fresh lettuce, tomato, cucumber and red onion arranged as separate readable floating ingredient elements, adult editorial cartoon-food illustration, olive freshness, cream/charcoal background, controlled copper accents, no plate, no hands, no text, not photorealistic."
+    },
+    {
+      "id": "sauce-layer-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "prompt-ready",
+      "usage": "illustrative-layer-exploration",
+      "prompt": "Three elegant flowing sauce ribbons as separate ingredient layers for a döner build, adult editorial food illustration, warm cream, curry-gold and restrained spicy accent, dark charcoal-neutral stage, clean shapes, no text, no packaging, not photorealistic."
+    }
+  ]
+}
