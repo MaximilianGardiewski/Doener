@@ -6,6 +6,7 @@
   "target": {
     "assetId": "doner-bread-bottom-v1",
     "slot": "bread.bottom",
+    "mappingType": "product-base",
     "productFamilies": ["doner", "yufka"],
     "renderer": "interactive-builder"
   },
@@ -59,11 +60,18 @@
       "documentaryClaim": false
     }
   },
+  "domainMapping": {
+    "result": "pass-for-staging",
+    "mappingType": "product-base",
+    "productFamilies": ["doner", "yufka"],
+    "modifierOptionIdRequired": false,
+    "reason": "bread.bottom is structural presentation for compatible product families, not a selectable menu modifier."
+  },
   "staging": {
     "status": "qa-approved-staging",
     "outputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:22b37505-f88e-47c3-bc99-596affc568fa",
     "runtimeReady": false,
-    "nextGate": "Publish the approved binary to an application-local or governed-media path, then map explicit menu modifier option IDs before enabling it in the builder."
+    "nextGate": "Publish the approved binary to an application-local or governed-media path. Its product-base mapping to the doner/yufka families is already recorded; no synthetic modifier option is required."
   },
   "boardSync": {
     "requiredForRuntime": false,
