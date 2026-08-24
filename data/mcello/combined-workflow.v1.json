@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "project": "mcello",
+  "status": "active-working-contract",
+  "purpose": "Combine the cinematic scroll experience, the manual ingredient-layer handoff and the agentic asset pipeline without moving commerce truth into presentation.",
+  "sourceWorkflows": [
+    {
+      "name": "Cinematic Mcello 3D",
+      "role": "experience-and-rendering-layer",
+      "adopt": ["exploded-food-story", "scroll-scrubbing", "cinematic-transitions", "frame-sequence-slot"],
+      "limit": "Do not use pre-rendered frame sequences as the only renderer for freely combinable product configuration."
+    },
+    {
+      "name": "Mcello Döner Builder Workflow & Manual Hand-off",
+      "role": "production-baseline",
+      "adopt": ["isolated-ingredient-assets", "explicit-frontend-mapping", "gsap-choreography", "server-authoritative-pricing-and-validation", "qa-before-launch"]
+    },
+    {
+      "name": "Terminal to Reality",
+      "role": "automation-target",
+      "adopt": ["agent-authored-asset-briefs", "staged-generation", "repeatable-asset-pipeline", "repository-handoff", "ci-preview"],
+      "limit": "Automation remains gated by provenance, visual approval and repository CI; generated output does not write directly to production truth."
+    }
+  ],
+  "authority": {
+    "productAndDesign": [
+      "docs/projects/mcello/DECISIONS.md",
+      "docs/projects/mcello/ART_DIRECTION.md",
+      "docs/projects/mcello/BRAND_SYSTEM.md"
+    ],
+    "commerce": "@business-web/menu-engine and tested ordering/domain behavior",
+    "creative": "data/mcello asset, prompt, rights and visual contracts"
+  },
+  "stages": [
+    {
+      "id": "01-product-truth",
+      "owner": "product-owner",
+      "output": "approved product/ingredient definition",
+      "gate": "No public documentary claim without owner-confirmed source material and rights."
+    },
+    {
+      "id": "02-asset-brief",
+      "owner": "creative-agent",
+      "input": "canonical Mcello art direction plus product truth",
+      "output": "reproducible prompt and layer specification"
+    },
+    {
+      "id": "03-generation-staging",
+      "owner": "Adobe Firefly or another approved generator",
+      "output": "candidate assets in staging",
+      "gate": "Generated assets are concept or generated-product visuals until explicitly approved and classified."
+    },
+    {
+      "id": "04-asset-qa",
+      "owner": "visual-gate",
+      "checks": ["silhouette", "camera-consistency", "lighting-consistency", "transparent-cut-quality", "brand-fit", "rights-and-provenance"],
+      "output": "approved or rejected candidate"
+    },
+    {
+      "id": "05-manifest",
+      "owner": "git-governance",
+      "output": "versioned asset manifest entry with publishability and runtime status"
+    },
+    {
+      "id": "06-renderer-routing",
+      "branches": ["cinematic-story", "interactive-builder"],
+      "output": "renderer-specific asset package"
+    },
+    {
+      "id": "07-visual-state-bridge",
+      "owner": "apps/mcello presentation layer",
+      "output": "presentation-only projection of current user selections",
+      "mustNotOwn": ["price", "availability", "validity", "allergens", "capacity", "cart", "checkout"]
+    },
+    {
+      "id": "08-domain-validation",
+      "owner": "@business-web/menu-engine",
+      "output": "authoritative configuration, price and availability response"
+    },
+    {
+      "id": "09-ordering-kds",
+      "owner": "ordering and operations domain",
+      "output": "validated cart/order and KDS projection"
+    },
+    {
+      "id": "10-ci-preview-go-live",
+      "owner": "repository delivery pipeline",
+      "checks": ["schema", "domain", "browser", "mobile-performance", "reduced-motion", "visual-approval"]
+    }
+  ],
+  "renderers": {
+    "cinematic-story": {
+      "purpose": "high-impact linear storytelling before commerce",
+      "current": "144-step local layered SVG scrub",
+      "future": ["approved-raster-frame-sequence"],
+      "rule": "Use frame sequences only for bounded linear stories or transitions; never encode the full modifier combination matrix as pre-rendered movies."
+    },
+    "interactive-builder": {
+      "purpose": "freely combinable product configuration",
+      "strategy": "2.5d-ingredient-layer-composition",
+      "assets": "approved transparent ingredient layers",
+      "motion": "GSAP presentation choreography with reduced-motion fallback",
+      "stateContract": "data/mcello/ingredient-asset-contract.v1.json"
+    }
+  },
+  "assetLifecycle": [
+    "briefed",
+    "generated-staging",
+    "qa-pending",
+    "approved-concept",
+    "approved-runtime",
+    "deprecated"
+  ],
+  "hardGates": [
+    "no-generated-concept-presented-as-real-mcello-photography",
+    "no-unapproved-generated-asset-as-runtime-product-truth",
+    "no-direct-generator-to-production-write",
+    "no-client-authoritative-pricing-or-validation",
+    "no-runtime-dependency-on-adobe-or-other-design-client",
+    "reduced-motion-and-gsap-unavailable-paths-remain-functional"
+  ]
+}
