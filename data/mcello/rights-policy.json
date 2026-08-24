@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "project": "mcello",
+  "policy": {
+    "firstPartyRealMedia": {
+      "publishability": "allowed-after-rights-and-owner-confirmation",
+      "requiredMetadata": ["source", "rightsConfirmed", "ownerConfirmed", "capturedAtOrUnknown"]
+    },
+    "generatedConceptArt": {
+      "publishability": "concept-or-illustrative-use-only",
+      "documentaryClaimAllowed": false,
+      "requiredLabel": "Konzept / Illustration",
+      "requiredMetadata": ["generator", "promptId", "generatedAt", "provenance"]
+    },
+    "placeholderMedia": {
+      "publishability": "development-preview-only",
+      "documentaryClaimAllowed": false
+    },
+    "thirdPartyReference": {
+      "publishability": "reference-only-unless-separately-licensed",
+      "copyingBrandAssetsOrLayoutsOneToOne": false
+    }
+  },
+  "runtimeRule": "No externally hosted design client is a mandatory Mcello runtime dependency.",
+  "sourceDecisions": ["D068", "D069", "D070", "D071"]
+}
