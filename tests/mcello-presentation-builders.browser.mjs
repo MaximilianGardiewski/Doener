@@ -54,6 +54,17 @@ async function waitDataset(page, key, expected) {
   await page.waitForFunction(({ key, expected }) => document.querySelector("#productModal")?.dataset[key] === expected, { key, expected });
 }
 
+async function sauceDeckState(page) {
+  return page.locator("[data-sauce-deck]").evaluate((deck) => ({
+    count: deck.getAttribute("data-sauce-count"),
+    sauces: [...deck.querySelectorAll('.mc-food-layer--sauce[data-active="true"]')].map((layer) => ({
+      name: layer.getAttribute("data-food-layer"),
+      slot: layer.getAttribute("data-sauce-slot"),
+      transform: layer.style.transform,
+    })),
+  }));
+}
+
 async function desktopPresentationFlow() {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
@@ -86,9 +97,11 @@ async function desktopPresentationFlow() {
   await waitDataset(page, "productBuilder", "doner-yufka");
   await waitDataset(page, "assemblyPresentation", "true");
   await waitDataset(page, "assemblyVisualLayers", "5");
+  await waitDataset(page, "assemblySauceCount", "0");
   assert.equal(await page.locator("#modalImage").isHidden(), true, "legacy image must yield to layered FoodStage");
   assert.equal(await page.locator('[data-food-stage-v4="true"]').isVisible(), true);
   assert.match(await page.locator('[data-food-stage-v4="true"]').getAttribute("aria-label"), /Fleisch/);
+  assert.deepEqual(await sauceDeckState(page), { count: "0", sauces: [] });
 
   const basisGroup = await modifierGroup(page, "Basis");
   const freshGroup = await modifierGroup(page, "Gemüse");
@@ -113,11 +126,39 @@ async function desktopPresentationFlow() {
   await cucumber.check();
   await waitDataset(page, "assemblyVisualLayers", "5");
 
+  let threeSauceState = null;
   for (const [index, sauce] of ["Curry", "Knoblauch", "Scharf"].entries()) {
     await (await optionInput(sauceGroup, sauce)).check();
+    const expectedCount = String(index + 1);
     await waitDataset(page, "assemblyVisualLayers", String(6 + index));
+    await waitDataset(page, "assemblySauceCount", expectedCount);
     assert.equal(await page.locator(`[data-food-layer="${sauce}"]`).getAttribute("data-active"), "true");
+
+    const deck = await sauceDeckState(page);
+    assert.equal(deck.count, expectedCount);
+    assert.equal(deck.sauces.length, index + 1);
+    assert.deepEqual(deck.sauces.map(({ slot }) => slot), Array.from({ length: index + 1 }, (_, slot) => String(slot)));
+    assert.ok(deck.sauces.every(({ transform }) => transform.includes("translate3d(") && transform.includes("scale(")), "every active sauce must receive explicit deck geometry");
+    assert.equal(new Set(deck.sauces.map(({ transform }) => transform)).size, index + 1, "active sauces must occupy distinct deck geometry");
+    if (index === 2) threeSauceState = deck;
   }
+
+  assert.deepEqual(threeSauceState.sauces.map(({ name }) => name), ["Curry", "Knoblauch", "Scharf"]);
+  const threeSauceTransforms = new Map(threeSauceState.sauces.map(({ name, transform }) => [name, transform]));
+
+  const garlic = await optionInput(sauceGroup, "Knoblauch");
+  await garlic.uncheck();
+  await waitDataset(page, "assemblyVisualLayers", "7");
+  await waitDataset(page, "assemblySauceCount", "2");
+  const redistributed = await sauceDeckState(page);
+  assert.equal(redistributed.count, "2");
+  assert.deepEqual(redistributed.sauces.map(({ name, slot }) => [name, slot]), [["Curry", "0"], ["Scharf", "1"]]);
+  assert.ok(redistributed.sauces.every(({ name, transform }) => transform !== threeSauceTransforms.get(name)), "remaining sauces must redistribute when the active sauce count changes");
+
+  await garlic.check();
+  await waitDataset(page, "assemblyVisualLayers", "8");
+  await waitDataset(page, "assemblySauceCount", "3");
+  assert.deepEqual((await sauceDeckState(page)).sauces.map(({ name, slot }) => [name, slot]), [["Curry", "0"], ["Knoblauch", "1"], ["Scharf", "2"]]);
 
   await page.locator("#addToCart").click();
   await page.locator("#cartDrawer").waitFor({ state: "visible" });
@@ -180,7 +221,7 @@ async function mobileRotationFlow() {
 try {
   await desktopPresentationFlow();
   await mobileRotationFlow();
-  console.log("Mcello Presentation UX V4 passed: Pizza, layered cartoon Döner/Yufka, cart state and phone rotation recovery.");
+  console.log("Mcello Presentation UX V4 passed: Pizza, layered cartoon Döner/Yufka, deterministic SauceDeck, cart state and phone rotation recovery.");
 } finally {
   await browser.close();
 }

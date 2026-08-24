@@ -96,8 +96,15 @@
         "sauce.primary",
         "bread.top"
       ],
+      "slotPolicies": {
+        "sauce.primary": {
+          "capacity": 3,
+          "compositor": "sauce-deck-v1",
+          "authority": "presentation-only"
+        }
+      },
       "publishGate": ["asset-qa-approved", "provenance-recorded", "explicit-domain-mapping", "runtime-path-local-or-governed-media"],
-      "notes": "The first reusable 2.5D builder pack is now in production. The bread.bottom candidate has passed visual QA in staging; no generated candidate becomes a runtime layer until all publish gates are satisfied."
+      "notes": "The first reusable 2.5D builder pack is now in production. The bread.bottom candidate has passed visual QA in staging; no generated candidate becomes a runtime layer until all publish gates are satisfied. sauce.primary is deliberately a composite visual slot: up to three approved sauce assets share one SauceDeck plane instead of becoming stacked full-width layers."
     },
     {
       "id": "builder-visual-state-contract-v1",
