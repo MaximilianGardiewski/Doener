@@ -1,0 +1,341 @@
+/*
+ * Notebook-inspired exploded-food story.
+ * Presentation only: no catalog, price, availability or modifier truth lives here.
+ */
+
+.mc-ingredient-story {
+  --story-progress: 0;
+  position: relative;
+  min-height: 420vh;
+  background: var(--surface-warm);
+  color: var(--content-inverse);
+  border-block: 1px solid var(--rule-warm);
+  isolation: isolate;
+}
+
+.mc-ingredient-story__sticky {
+  position: sticky;
+  top: 0;
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(260px, .82fr) minmax(420px, 1.18fr);
+  align-items: center;
+  gap: clamp(28px, 6vw, 96px);
+  width: min(100% - 40px, var(--content-max-editorial));
+  margin-inline: auto;
+  padding-block: clamp(86px, 12vh, 132px) clamp(40px, 8vh, 84px);
+}
+
+.mc-ingredient-story__copy {
+  max-width: 560px;
+  position: relative;
+  z-index: 2;
+}
+
+.mc-ingredient-story__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  font: 800 var(--type-label)/1 var(--type-family-interface);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--mcello-copper);
+}
+
+.mc-ingredient-story__eyebrow::before {
+  content: "";
+  width: 38px;
+  height: 2px;
+  background: currentColor;
+}
+
+.mc-ingredient-story h2 {
+  margin: 0;
+  max-width: 9ch;
+  font: 800 var(--type-display-section)/.92 var(--type-family-display);
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+
+.mc-ingredient-story__lead {
+  margin: 24px 0 0;
+  max-width: 47ch;
+  font-size: var(--type-body-lg);
+  line-height: 1.58;
+  color: color-mix(in srgb, var(--content-inverse) 72%, transparent);
+}
+
+.mc-ingredient-story__truth {
+  display: grid;
+  gap: 4px;
+  margin-top: 28px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--mcello-olive);
+  background: color-mix(in srgb, var(--surface-food-stage) 72%, transparent);
+}
+
+.mc-ingredient-story__truth strong {
+  font-size: .9rem;
+}
+
+.mc-ingredient-story__truth span {
+  font-size: .8rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--content-inverse) 68%, transparent);
+}
+
+.mc-ingredient-story__meter {
+  display: grid;
+  gap: 10px;
+  margin-top: 34px;
+}
+
+.mc-ingredient-story__meter-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  font: 800 var(--type-meta)/1.2 var(--type-family-interface);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.mc-ingredient-story__phase {
+  color: var(--mcello-olive);
+}
+
+.mc-ingredient-story__track {
+  height: 3px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--mcello-copper) 22%, transparent);
+}
+
+.mc-ingredient-story__track::after {
+  content: "";
+  display: block;
+  width: calc(var(--story-progress) * 100%);
+  height: 100%;
+  background: var(--mcello-copper);
+  transform-origin: left center;
+}
+
+.mc-ingredient-story__stage-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.mc-ingredient-story__stage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid var(--rule-warm);
+  border-radius: var(--radius-editorial-media);
+  background: var(--surface-food-stage);
+  box-shadow: 0 28px 80px color-mix(in srgb, var(--mcello-ink) 18%, transparent);
+}
+
+.mc-ingredient-story__stage::before,
+.mc-ingredient-story__stage::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mc-ingredient-story__stage::before {
+  inset: 8% auto 8% 8%;
+  width: 1px;
+  background: var(--mcello-copper);
+  opacity: .52;
+}
+
+.mc-ingredient-story__stage::after {
+  right: 8%;
+  top: 10%;
+  width: clamp(54px, 9vw, 116px);
+  height: clamp(54px, 9vw, 116px);
+  border-top: 1px solid var(--mcello-copper);
+  border-right: 1px solid var(--mcello-copper);
+  opacity: .42;
+}
+
+.mc-ingredient-story__concept-label {
+  position: absolute;
+  z-index: 3;
+  left: clamp(18px, 3vw, 34px);
+  bottom: clamp(16px, 2.5vw, 28px);
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 11px;
+  border: 1px solid var(--rule-warm);
+  background: color-mix(in srgb, var(--surface-warm) 88%, transparent);
+  color: var(--content-inverse);
+  font: 800 .68rem/1 var(--type-family-interface);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.mc-ingredient-story__concept-label::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mcello-olive);
+}
+
+.mc-scroll-art {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.mc-scroll-art [data-story-layer] {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.mc-scroll-art__bread {
+  fill: var(--mcello-bread);
+  stroke: var(--mcello-copper);
+  stroke-width: 6;
+  stroke-linejoin: round;
+}
+
+.mc-scroll-art__toast {
+  fill: none;
+  stroke: color-mix(in srgb, var(--mcello-copper) 62%, var(--mcello-ink));
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: .56;
+}
+
+.mc-scroll-art__protein {
+  fill: color-mix(in srgb, var(--mcello-copper) 68%, var(--mcello-ink));
+  stroke: color-mix(in srgb, var(--mcello-copper) 38%, var(--mcello-ink));
+  stroke-width: 4;
+}
+
+.mc-scroll-art__protein-mark {
+  fill: none;
+  stroke: color-mix(in srgb, var(--mcello-gold) 62%, var(--mcello-copper));
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: .7;
+}
+
+.mc-scroll-art__lettuce {
+  fill: color-mix(in srgb, var(--mcello-olive) 78%, var(--mcello-bread));
+  stroke: var(--mcello-olive);
+  stroke-width: 4;
+}
+
+.mc-scroll-art__tomato {
+  fill: color-mix(in srgb, var(--mcello-copper) 78%, var(--content-danger));
+  stroke: color-mix(in srgb, var(--mcello-copper) 48%, var(--mcello-ink));
+  stroke-width: 4;
+}
+
+.mc-scroll-art__cucumber {
+  fill: color-mix(in srgb, var(--mcello-olive) 48%, var(--mcello-bread));
+  stroke: var(--mcello-olive);
+  stroke-width: 4;
+}
+
+.mc-scroll-art__cucumber-core {
+  fill: color-mix(in srgb, var(--mcello-cream) 62%, var(--mcello-olive));
+}
+
+.mc-scroll-art__onion {
+  fill: none;
+  stroke: color-mix(in srgb, var(--mcello-copper) 42%, var(--mcello-cream));
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.mc-scroll-art__sauce {
+  fill: none;
+  stroke: var(--mcello-cream);
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+
+.mc-scroll-art__sauce-accent {
+  fill: none;
+  stroke: var(--mcello-gold);
+  stroke-width: 9;
+  stroke-linecap: round;
+  opacity: .92;
+}
+
+.mc-scroll-art__shadow {
+  fill: color-mix(in srgb, var(--mcello-ink) 15%, transparent);
+}
+
+@media (max-width: 900px) {
+  .mc-ingredient-story {
+    min-height: 360vh;
+  }
+
+  .mc-ingredient-story__sticky {
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 24px;
+    width: min(100% - 28px, 720px);
+    padding-block: 82px 30px;
+  }
+
+  .mc-ingredient-story__copy {
+    max-width: none;
+  }
+
+  .mc-ingredient-story h2 {
+    max-width: 12ch;
+    font-size: clamp(2.45rem, 12vw, 4.5rem);
+  }
+
+  .mc-ingredient-story__lead {
+    margin-top: 14px;
+    font-size: .98rem;
+  }
+
+  .mc-ingredient-story__truth {
+    margin-top: 16px;
+  }
+
+  .mc-ingredient-story__meter {
+    margin-top: 18px;
+  }
+
+  .mc-ingredient-story__stage {
+    max-height: 53svh;
+    margin-inline: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-ingredient-story {
+    min-height: auto;
+  }
+
+  .mc-ingredient-story__sticky {
+    position: relative;
+    min-height: auto;
+    padding-block: 72px;
+  }
+
+  .mc-scroll-art [data-story-layer] {
+    will-change: auto;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .mc-ingredient-story__track::after {
+    width: 100%;
+  }
+}
