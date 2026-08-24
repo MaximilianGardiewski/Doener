@@ -165,15 +165,27 @@ try {
     await normal.waitForFunction(() => document.querySelector(".sticky-order")?.dataset.motionCart === "added");
   }
 
-  const fallback = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "no-preference" });
-  await fallback.route("**/vendor/gsap/**", (route) => route.abort("failed"));
+  const fallbackContext = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    reducedMotion: "no-preference",
+    serviceWorkers: "block",
+  });
+  await fallbackContext.route("**/vendor/gsap/**", (route) => route.abort("failed"));
+  const fallback = await fallbackContext.newPage();
   await fallback.goto(baseUrl, { waitUntil: "networkidle" });
   await fallback.waitForFunction(() => document.querySelector("[data-mcello-ingredient-story]")?.dataset.storyEngine === "fallback");
   await scrollIngredientStoryToEnd(fallback);
   assert.equal(await fallback.locator("[data-mcello-ingredient-story]").getAttribute("data-story-frame"), "144");
   assert.equal(await fallback.locator('[data-story-layer="top"]').evaluate((node) => Number(getComputedStyle(node).opacity) > .99), true);
+  await fallbackContext.close();
 
-  const reduced = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, reducedMotion: "reduce" });
+  const reducedContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    reducedMotion: "reduce",
+    serviceWorkers: "block",
+  });
+  const reduced = await reducedContext.newPage();
   await reduced.goto(baseUrl, { waitUntil: "networkidle" });
   await reduced.waitForFunction(() => document.querySelector(".hero-copy")?.hasAttribute("data-reveal"));
   assert.equal(
@@ -205,6 +217,7 @@ try {
     topTransform: "none",
     stickyPosition: "relative",
   }, "reduced motion must render the complete story without scrub-dependent content");
+  await reducedContext.close();
 
   console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, 144-step ingredient story (normal/fallback/reduced), category, product-open, ingredient feedback, cart feedback, and reduced-motion preferences.");
 } finally {
