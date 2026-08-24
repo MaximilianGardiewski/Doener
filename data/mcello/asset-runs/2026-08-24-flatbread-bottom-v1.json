@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "project": "mcello",
+  "runId": "2026-08-24-flatbread-bottom-v1",
+  "workflow": "data/mcello/combined-workflow.v1.json",
+  "target": {
+    "assetId": "doner-bread-bottom-v1",
+    "slot": "bread.bottom",
+    "productFamilies": ["doner", "yufka"],
+    "renderer": "interactive-builder"
+  },
+  "artDirectionReference": {
+    "assetId": "exploded-doner-adobe-concept-v1",
+    "source": "Adobe Firefly",
+    "referenceImage": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:0957ec63-a9b6-4ce7-b8b9-1c859698f7df"
+  },
+  "attempts": [
+    {
+      "promptId": "flatbread-bottom-v1",
+      "requestId": "35e6d673-3ed1-44d8-896e-a0d4037b4e97",
+      "fireflyAssetId": "urn:aaid:sc:EU:114b641b-0267-4f94-b437-b4893f967a5c",
+      "result": "rejected",
+      "reason": "The object read as a mostly complete pita with an unwanted slit/strip and therefore did not communicate an unambiguous bottom foundation layer."
+    },
+    {
+      "promptId": "flatbread-bottom-v2",
+      "requestId": "9ba1ac07-71db-407a-86dc-aa55950141ab",
+      "fireflyAssetId": "urn:aaid:sc:EU:ee2ffb7a-e001-47ec-92e1-5824d9963631",
+      "result": "selected",
+      "reason": "Low-profile open bread foundation, readable top-three-quarter camera, clean silhouette and visual match to the Mcello editorial concept."
+    }
+  ],
+  "postProcessing": [
+    {
+      "operation": "remove-background",
+      "requestId": "ae0aee66-df0f-4491-96de-e44bb52a5c7d",
+      "result": "pass",
+      "outputDimensions": { "width": 1744, "height": 1360 }
+    },
+    {
+      "operation": "subject-aware-tight-crop",
+      "requestId": "33ad8f62-9c30-4b6e-bbc9-0ca95c18013b",
+      "result": "pass",
+      "outputDimensions": { "width": 1673, "height": 573 },
+      "detectionConfidence": 0.97265625
+    }
+  ],
+  "visualQA": {
+    "result": "pass-for-staging",
+    "checks": {
+      "singleSubject": true,
+      "bottomLayerGeometry": true,
+      "transparentCutout": true,
+      "cameraConsistency": true,
+      "brandLanguage": true,
+      "cleanSilhouette": true,
+      "containsOtherIngredients": false,
+      "containsTextOrLogo": false,
+      "documentaryClaim": false
+    }
+  },
+  "staging": {
+    "status": "qa-approved-staging",
+    "outputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:22b37505-f88e-47c3-bc99-596affc568fa",
+    "runtimeReady": false,
+    "nextGate": "Publish the approved binary to an application-local or governed-media path, then map explicit menu modifier option IDs before enabling it in the builder."
+  },
+  "boardSync": {
+    "requiredForRuntime": false,
+    "status": "not-completed",
+    "note": "Board synchronization was attempted but the Adobe board service rejected the add-item request; this does not affect the governed runtime publish gates."
+  }
+}
