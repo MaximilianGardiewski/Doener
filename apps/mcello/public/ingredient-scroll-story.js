@@ -196,13 +196,15 @@ async function installStoryMotion(root) {
     const art = root.querySelector("[data-story-art]");
     const timeline = gsap.timeline({
       defaults: { ease: "power2.out" },
+      onUpdate() {
+        updateProgress(root, this.progress());
+      },
       scrollTrigger: {
         trigger: root,
         start: "top top",
         end: "bottom bottom",
         scrub: .55,
         invalidateOnRefresh: true,
-        onUpdate: (self) => updateProgress(root, self.progress),
       },
     });
 
@@ -244,7 +246,7 @@ function installPlacementGuard(root, store, main) {
 }
 
 function installStory() {
-  if (document.querySelector("section[data-mcello-ingredient-story=\"true\"]")) return true;
+  if (document.querySelector('section[data-mcello-ingredient-story="true"]')) return true;
 
   const main = document.querySelector("main");
   const store = document.querySelector("#bestellen");
