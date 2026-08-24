@@ -42,9 +42,34 @@
     { "slot": "fresh.tomato", "mappingType": "modifier-option", "zIndex": 40, "anchor": { "x": 0.5, "y": 0.53 }, "animationPreset": "ingredient.drop.light" },
     { "slot": "fresh.cucumber", "mappingType": "modifier-option", "zIndex": 50, "anchor": { "x": 0.5, "y": 0.49 }, "animationPreset": "ingredient.drop.light" },
     { "slot": "fresh.onion", "mappingType": "modifier-option", "zIndex": 60, "anchor": { "x": 0.5, "y": 0.45 }, "animationPreset": "ingredient.drop.light" },
-    { "slot": "sauce.primary", "mappingType": "modifier-option", "zIndex": 70, "anchor": { "x": 0.5, "y": 0.42 }, "animationPreset": "sauce.splash.controlled" },
+    { "slot": "sauce.primary", "mappingType": "modifier-option", "zIndex": 70, "anchor": { "x": 0.5, "y": 0.42 }, "animationPreset": "sauce.splash.controlled", "capacity": 3, "compositor": "sauce-deck-v1" },
     { "slot": "bread.top", "mappingType": "product-base", "zIndex": 80, "anchor": { "x": 0.5, "y": 0.31 }, "animationPreset": "ingredient.close.soft" }
   ],
+  "compositors": {
+    "sauce-deck-v1": {
+      "slot": "sauce.primary",
+      "assetKind": "sauce-layer",
+      "capacity": 3,
+      "authority": "presentation-only",
+      "ordering": "stable-mapped-option-order",
+      "overlap": "intentional-light",
+      "layouts": {
+        "1": [
+          { "x": 0.5, "y": 0.42, "widthScale": 1.0, "heightScale": 1.0, "rotationDeg": 0 }
+        ],
+        "2": [
+          { "x": 0.34, "y": 0.41, "widthScale": 0.62, "heightScale": 0.96, "rotationDeg": -1.5 },
+          { "x": 0.66, "y": 0.43, "widthScale": 0.62, "heightScale": 0.96, "rotationDeg": 1.5 }
+        ],
+        "3": [
+          { "x": 0.26, "y": 0.41, "widthScale": 0.44, "heightScale": 0.94, "rotationDeg": -2 },
+          { "x": 0.5, "y": 0.43, "widthScale": 0.44, "heightScale": 0.94, "rotationDeg": 0.5 },
+          { "x": 0.74, "y": 0.41, "widthScale": 0.44, "heightScale": 0.94, "rotationDeg": 2 }
+        ]
+      },
+      "rule": "One to three selected sauce assets share one z-plane and are redistributed deterministically; selected sauces must never render as independent full-width stacked layers."
+    }
+  },
   "animationPresets": {
     "ingredient.drop.soft": { "axis": "y", "from": -80, "rotation": 2, "scaleFrom": 0.96 },
     "ingredient.drop.weighted": { "axis": "y", "from": -120, "rotation": -4, "scaleFrom": 0.94 },
@@ -55,6 +80,7 @@
   "mappingRules": [
     "Structural bread slots use mappingType product-base and are mapped explicitly to a product family or product ID; they do not require a fake modifier option merely to appear in the visual stack.",
     "Selectable ingredients use mappingType modifier-option and map explicit menu-domain modifier option IDs to approved asset IDs; names are display metadata only and must not be used as domain identifiers.",
+    "Selected sauce modifier options may share sauce.primary only through sauce-deck-v1; the compositor is presentation-only and never changes checked, pricing, availability or validation state.",
     "One asset may be reused across compatible product families when camera, anchor and visual truth remain valid.",
     "Missing or unapproved visual mappings must fall back to the existing product visual instead of inventing a layer.",
     "Removing a selected modifier removes only its visual layer; it never mutates menu-engine state by itself.",
