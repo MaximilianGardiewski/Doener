@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "mcello",
-  "status": "runtime-contract-ready-assets-pending",
+  "status": "runtime-contract-ready-assets-in-production",
   "purpose": "Define the reusable 2.5D ingredient-layer contract for the interactive builder while keeping cinematic frame sequences separate.",
   "eventContract": {
     "name": "mcello:builder-visual-state",
@@ -29,9 +29,10 @@
     "required": ["id", "version", "kind", "productFamilies", "slot", "path", "status", "provenance", "zIndex", "anchor", "animationPreset"],
     "kinds": ["ingredient-layer", "bread-layer", "sauce-layer"],
     "runtimeStatuses": ["approved-runtime"],
-    "nonRuntimeStatuses": ["briefed", "generated-staging", "qa-pending", "approved-concept", "deprecated"],
+    "nonRuntimeStatuses": ["briefed", "generated-staging", "qa-pending", "qa-approved-staging", "approved-concept", "deprecated"],
     "provenanceClasses": ["first-party-real-media", "generated-concept-art", "generated-product-visual"],
-    "pathRule": "Runtime paths must resolve from the Mcello application or governed media path; Adobe/Firefly URLs are never runtime dependencies."
+    "pathRule": "Runtime paths must resolve from the Mcello application or governed media path; Adobe/Firefly URLs are never runtime dependencies.",
+    "stagingRule": "A qa-approved-staging asset may carry path:null plus reproducible source/edit provenance. It cannot be mapped into runtime until a local or governed-media path is published."
   },
   "layerSlots": [
     { "slot": "bread.bottom", "zIndex": 10, "anchor": { "x": 0.5, "y": 0.76 }, "animationPreset": "ingredient.drop.soft" },
@@ -60,7 +61,8 @@
   "productFamilies": ["doner", "yufka", "pizza"],
   "firstRuntimePack": {
     "id": "doner-core-layer-pack-v1",
-    "status": "awaiting-approved-assets",
+    "status": "production-started",
+    "qaApprovedStagingSlots": ["bread.bottom"],
     "targetSlots": ["bread.bottom", "protein.primary", "fresh.lettuce", "fresh.tomato", "fresh.cucumber", "fresh.onion", "sauce.primary", "bread.top"]
   }
 }
