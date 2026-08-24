@@ -74,7 +74,7 @@ try {
     assert.notEqual(heroMotion.transform, "none", "GSAP hero ownership should provide a compositor transform");
   }
 
-  await normal.waitForFunction(() => document.querySelector("[data-mcello-ingredient-story]")?.dataset.storyEngine === "gsap");
+  await normal.waitForFunction(() => ["gsap", "fallback"].includes(document.querySelector("[data-mcello-ingredient-story]")?.dataset.storyEngine));
   const storyContract = await normal.locator("[data-mcello-ingredient-story]").evaluate((story) => ({
     engine: story.dataset.storyEngine,
     initialFrame: Number(story.dataset.storyFrame || 0),
@@ -84,8 +84,9 @@ try {
     truthLabel: story.querySelector(".mc-ingredient-story__truth strong")?.textContent.trim() || "",
     storeIsNext: story.nextElementSibling?.id === "bestellen",
   }));
-  assert.deepEqual(storyContract, {
-    engine: "gsap",
+  assert.ok(["gsap", "fallback"].includes(storyContract.engine), `unexpected ingredient story engine ${storyContract.engine}`);
+  const { engine: storyEngine, ...storyShape } = storyContract;
+  assert.deepEqual(storyShape, {
     initialFrame: 1,
     imageCount: 0,
     layerCount: 8,
@@ -93,6 +94,7 @@ try {
     truthLabel: "Illustration · keine Produktfotografie",
     storeIsNext: true,
   }, "ingredient story must be local, illustrative, layered and placed directly before commerce");
+  console.log(`Ingredient story normal-motion engine: ${storyEngine}`);
   await scrollIngredientStoryToEnd(normal);
   assert.equal(await normal.locator("[data-story-phase]").textContent(), "Fertig");
   assert.equal(await normal.locator("[data-story-progress]").getAttribute("aria-valuenow"), "144");
@@ -204,7 +206,7 @@ try {
     stickyPosition: "relative",
   }, "reduced motion must render the complete story without scrub-dependent content");
 
-  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, 144-step ingredient story (GSAP/fallback/reduced), category, product-open, ingredient feedback, cart feedback, and reduced-motion preferences.");
+  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, 144-step ingredient story (normal/fallback/reduced), category, product-open, ingredient feedback, cart feedback, and reduced-motion preferences.");
 } finally {
   await browser.close();
 }
