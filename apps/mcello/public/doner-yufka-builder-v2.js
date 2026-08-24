@@ -52,10 +52,24 @@ const LAYER_TOKENS = new Map([
 ]);
 
 const visualLayerNames = ["Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"];
+const SAUCE_LAYER_NAMES = Object.freeze(["Curry", "Knoblauch", "Scharf"]);
+const SAUCE_BASELINE_Y = Object.freeze({ Curry: 44, Knoblauch: 4, Scharf: -36 });
+const SAUCE_LAYOUTS = Object.freeze({
+  1: Object.freeze([{ x: 0, y: 0, scaleX: 1, scaleY: 1, rotate: 0 }]),
+  2: Object.freeze([
+    { x: -78, y: -4, scaleX: 0.62, scaleY: 0.96, rotate: -1.5 },
+    { x: 78, y: 4, scaleX: 0.62, scaleY: 0.96, rotate: 1.5 },
+  ]),
+  3: Object.freeze([
+    { x: -116, y: -4, scaleX: 0.44, scaleY: 0.94, rotate: -2 },
+    { x: 0, y: 3, scaleX: 0.44, scaleY: 0.94, rotate: 0.5 },
+    { x: 116, y: -2, scaleX: 0.44, scaleY: 0.94, rotate: 2 },
+  ]),
+});
 const ROLE_LAYERS = new Map([
   ["basis", ["Fleisch", "Falafel"]],
   ["fresh", ["Salat", "Tomate", "Gurke", "Zwiebel"]],
-  ["sauce", ["Curry", "Knoblauch", "Scharf"]],
+  ["sauce", SAUCE_LAYER_NAMES],
 ]);
 
 // Categories whose products are presented by a different stage metaphor (top-down).
@@ -164,9 +178,12 @@ function stageMarkup() {
 
         <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel"><g fill="none" stroke="#dcb0d6" stroke-width="8" stroke-linecap="round" opacity=".92"><path d="M232 330c26-24 56-21 74 6 12 20 4 39-17 48-22 10-45 2-53-16-7-17 3-34 22-40"/><path d="M356 310c25-22 55-17 70 11 11 22 0 40-23 47-23 6-44-4-49-23-5-18 6-33 27-37"/><path d="M470 340c23-20 49-16 62 9 9 19 0 35-21 42-21 7-40-2-46-19-5-17 5-31 24-36"/></g></g>
 
-        <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--curry" data-food-layer="Curry"><path d="M172 322c66-46 136-49 206-11 58 32 109 29 158-9" fill="none" stroke="#efbd43" stroke-width="19" stroke-linecap="round"/><path d="M192 352c60-33 119-33 177-4 50 24 96 21 136-5" fill="none" stroke="#f6d56d" stroke-width="9" stroke-linecap="round"/></g>
-        <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--knoblauch" data-food-layer="Knoblauch"><path d="M168 362c63-40 129-42 196-7 63 32 118 28 168-9" fill="none" stroke="#f6efd8" stroke-width="19" stroke-linecap="round"/><path d="M190 392c54-30 112-31 172-2 52 25 97 20 138-5" fill="none" stroke="#fff9e8" stroke-width="9" stroke-linecap="round"/></g>
-        <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--scharf" data-food-layer="Scharf"><path d="M174 402c62-38 129-39 196-4 59 30 113 25 162-10" fill="none" stroke="#d64736" stroke-width="19" stroke-linecap="round"/><path d="M200 430c53-27 108-27 164-1 48 22 90 18 128-5" fill="none" stroke="#ed7051" stroke-width="9" stroke-linecap="round"/></g>
+        <!-- Sauces share one visual deck. JS deterministically redistributes 1–3 active sauces across this plane. -->
+        <g class="mc-sauce-deck" data-sauce-deck data-sauce-count="0">
+          <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--curry" data-food-layer="Curry"><path d="M172 322c66-46 136-49 206-11 58 32 109 29 158-9" fill="none" stroke="#efbd43" stroke-width="19" stroke-linecap="round"/><path d="M192 352c60-33 119-33 177-4 50 24 96 21 136-5" fill="none" stroke="#f6d56d" stroke-width="9" stroke-linecap="round"/></g>
+          <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--knoblauch" data-food-layer="Knoblauch"><path d="M168 362c63-40 129-42 196-7 63 32 118 28 168-9" fill="none" stroke="#f6efd8" stroke-width="19" stroke-linecap="round"/><path d="M190 392c54-30 112-31 172-2 52 25 97 20 138-5" fill="none" stroke="#fff9e8" stroke-width="9" stroke-linecap="round"/></g>
+          <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--scharf" data-food-layer="Scharf"><path d="M174 402c62-38 129-39 196-4 59 30 113 25 162-10" fill="none" stroke="#d64736" stroke-width="19" stroke-linecap="round"/><path d="M200 430c53-27 108-27 164-1 48 22 90 18 128-5" fill="none" stroke="#ed7051" stroke-width="9" stroke-linecap="round"/></g>
+        </g>
       </g>
 
       <!-- Front half of the flatbread wraps the filling. -->
@@ -220,6 +237,41 @@ function roleSummary(selected, role, fallback) {
   return names.length ? names.join(" · ") : fallback;
 }
 
+function sauceTransform(name, placement) {
+  const baselineY = SAUCE_BASELINE_Y[name] || 0;
+  return `translate3d(${placement.x}px, ${baselineY + placement.y}px, 0) rotate(${placement.rotate}deg) scale(${placement.scaleX}, ${placement.scaleY})`;
+}
+
+function updateSauceDeck(root, selected) {
+  const sauces = SAUCE_LAYER_NAMES.filter((name) => selected.has(name));
+  const placements = SAUCE_LAYOUTS[sauces.length] || [];
+  const deck = root.querySelector("[data-sauce-deck]");
+
+  for (const name of SAUCE_LAYER_NAMES) {
+    const layer = root.querySelector(`[data-food-layer="${name}"]`);
+    if (!layer) continue;
+    const slot = sauces.indexOf(name);
+    const active = slot >= 0;
+    layer.dataset.active = active ? "true" : "false";
+    layer.setAttribute("aria-hidden", active ? "false" : "true");
+
+    if (!active) {
+      delete layer.dataset.sauceSlot;
+      layer.style.removeProperty("transform");
+      continue;
+    }
+
+    layer.dataset.sauceSlot = String(slot);
+    layer.style.transform = sauceTransform(name, placements[slot]);
+  }
+
+  if (deck) {
+    deck.dataset.sauceCount = String(sauces.length);
+    deck.setAttribute("aria-hidden", sauces.length ? "false" : "true");
+  }
+  modal.dataset.assemblySauceCount = String(sauces.length);
+}
+
 function updateStage(groupMap) {
   const root = ensureStage();
   if (!root) return false;
@@ -231,6 +283,7 @@ function updateStage(groupMap) {
     layer.dataset.active = active ? "true" : "false";
     layer.setAttribute("aria-hidden", active ? "false" : "true");
   }
+  updateSauceDeck(root, selected);
 
   const summary = [
     roleSummary(selected, "basis", "Basis wählen"),
@@ -249,6 +302,7 @@ function clearStage() {
   if (!modal) return;
   if (modal.dataset.productBuilder === "doner-yufka") delete modal.dataset.productBuilder;
   delete modal.dataset.assemblyVisualLayers;
+  delete modal.dataset.assemblySauceCount;
   delete modal.dataset.assemblyPresentation;
   setImageVisibility(false);
   stageRoot?.remove();
