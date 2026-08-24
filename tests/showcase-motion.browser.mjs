@@ -34,6 +34,15 @@ async function waitForAnimations(page, selector) {
   });
 }
 
+async function scrollIngredientStoryToEnd(page) {
+  await page.evaluate(() => {
+    const story = document.querySelector("[data-mcello-ingredient-story]");
+    const top = story.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo(0, top + story.offsetHeight - window.innerHeight + 8);
+  });
+  await page.waitForFunction(() => Number(document.querySelector("[data-mcello-ingredient-story]")?.dataset.storyFrame || 0) === 144);
+}
+
 try {
   const normal = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "no-preference" });
   await normal.goto(baseUrl, { waitUntil: "networkidle" });
@@ -64,6 +73,30 @@ try {
     assert.match(heroMotion.transitionDuration, /(^|, )0s(,|$)/, "GSAP hero frames must not contend with CSS transitions");
     assert.notEqual(heroMotion.transform, "none", "GSAP hero ownership should provide a compositor transform");
   }
+
+  await normal.waitForFunction(() => document.querySelector("[data-mcello-ingredient-story]")?.dataset.storyEngine === "gsap");
+  const storyContract = await normal.locator("[data-mcello-ingredient-story]").evaluate((story) => ({
+    engine: story.dataset.storyEngine,
+    initialFrame: Number(story.dataset.storyFrame || 0),
+    imageCount: story.querySelectorAll("img").length,
+    layerCount: story.querySelectorAll("[data-story-layer]").length,
+    conceptLabel: story.querySelector(".mc-ingredient-story__concept-label")?.textContent.trim() || "",
+    truthLabel: story.querySelector(".mc-ingredient-story__truth strong")?.textContent.trim() || "",
+    storeIsNext: story.nextElementSibling?.id === "bestellen",
+  }));
+  assert.deepEqual(storyContract, {
+    engine: "gsap",
+    initialFrame: 1,
+    imageCount: 0,
+    layerCount: 8,
+    conceptLabel: "Concept Art · lokal gerendert",
+    truthLabel: "Illustration · keine Produktfotografie",
+    storeIsNext: true,
+  }, "ingredient story must be local, illustrative, layered and placed directly before commerce");
+  await scrollIngredientStoryToEnd(normal);
+  assert.equal(await normal.locator("[data-story-phase]").textContent(), "Fertig");
+  assert.equal(await normal.locator("[data-story-progress]").getAttribute("aria-valuenow"), "144");
+  assert.equal(await normal.locator('[data-story-layer="top"]').evaluate((node) => Number(getComputedStyle(node).opacity) > .99), true);
 
   await normal.locator("#aktuelles").scrollIntoViewIfNeeded();
   await normal.waitForFunction(() => document.querySelector("#aktuelles .section-head")?.classList.contains("is-revealed"));
@@ -130,6 +163,14 @@ try {
     await normal.waitForFunction(() => document.querySelector(".sticky-order")?.dataset.motionCart === "added");
   }
 
+  const fallback = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "no-preference" });
+  await fallback.route("**/vendor/gsap/**", (route) => route.abort("failed"));
+  await fallback.goto(baseUrl, { waitUntil: "networkidle" });
+  await fallback.waitForFunction(() => document.querySelector("[data-mcello-ingredient-story]")?.dataset.storyEngine === "fallback");
+  await scrollIngredientStoryToEnd(fallback);
+  assert.equal(await fallback.locator("[data-mcello-ingredient-story]").getAttribute("data-story-frame"), "144");
+  assert.equal(await fallback.locator('[data-story-layer="top"]').evaluate((node) => Number(getComputedStyle(node).opacity) > .99), true);
+
   const reduced = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, reducedMotion: "reduce" });
   await reduced.goto(baseUrl, { waitUntil: "networkidle" });
   await reduced.waitForFunction(() => document.querySelector(".hero-copy")?.hasAttribute("data-reveal"));
@@ -147,8 +188,23 @@ try {
     "",
     "reduced motion must not inject scroll-depth offsets",
   );
+  await reduced.waitForFunction(() => document.querySelector("[data-mcello-ingredient-story]")?.dataset.storyEngine === "reduced");
+  const reducedStory = await reduced.locator("[data-mcello-ingredient-story]").evaluate((story) => ({
+    frame: story.dataset.storyFrame,
+    phase: story.querySelector("[data-story-phase]")?.textContent,
+    topOpacity: getComputedStyle(story.querySelector('[data-story-layer="top"]')).opacity,
+    topTransform: getComputedStyle(story.querySelector('[data-story-layer="top"]')).transform,
+    stickyPosition: getComputedStyle(story.querySelector(".mc-ingredient-story__sticky")).position,
+  }));
+  assert.deepEqual(reducedStory, {
+    frame: "144",
+    phase: "Fertig",
+    topOpacity: "1",
+    topTransform: "none",
+    stickyPosition: "relative",
+  }, "reduced motion must render the complete story without scrub-dependent content");
 
-  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, category, product-open, ingredient feedback, cart feedback, and reduced-motion preferences.");
+  console.log("D058/V3-compatible Chromium motion smoke passed for reveal, hero depth, 144-step ingredient story (GSAP/fallback/reduced), category, product-open, ingredient feedback, cart feedback, and reduced-motion preferences.");
 } finally {
   await browser.close();
 }
