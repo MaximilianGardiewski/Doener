@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello KDS — Konzept-Snapshot</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="/vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/brand-system.css" />
+  <link rel="stylesheet" href="/operations-shell.css" />
+  <link rel="stylesheet" href="/operations-theke.css" />
+  <style>
+    /* Layout only, same as the real kds.html — colors/borders/type come from
+       operations-theke.css. Frozen with demo orders instead of a realtime feed. */
+    .kds-shell{width:min(calc(100% - 24px),1500px);margin:auto;padding:24px 0 70px}
+    .kds-top{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:20px 0}
+    .kds-top h1{max-width:none;margin-right:auto}
+    .kds-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+    .lane{min-height:400px;padding:14px}
+    .lane h2{margin:5px 4px 14px;display:flex;justify-content:space-between;gap:8px}
+    .order{padding:15px;margin-bottom:12px}
+    .order-head{display:flex;justify-content:space-between;gap:10px}.order-head>div:last-child{text-align:right}
+    .order ul{padding-left:19px;line-height:1.55;margin:8px 0}
+    .order li small{display:block;margin-top:-2px}
+    .empty{padding:18px 6px;color:var(--content-secondary,var(--muted))}
+    .snapshot-note{grid-column:1/-1;color:var(--content-secondary,var(--muted));font-size:13px;padding:10px 14px;border:1px dashed var(--rule-subtle,var(--line));border-radius:14px;margin:14px 0}
+    @media(max-width:1000px){.kds-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+    @media(max-width:600px){.kds-grid{grid-template-columns:minmax(0,1fr)}}
+  </style>
+</head>
+<body data-operations-area="kds" data-operations-role="staff">
+  <main class="kds-shell">
+    <div class="kds-top">
+      <h1>Mcello KDS</h1>
+      <a class="pill" href="/concept/">Konzept-Übersicht</a>
+    </div>
+    <p class="snapshot-note">Statischer Konzept-Snapshot mit Beispiel-Bestellungen. Die echte Seite (kds.html) läuft live, authentifiziert, mit Realtime-Sync.</p>
+    <div class="kds-grid">
+      <section class="lane">
+        <h2>Neu <span class="lane-count">1</span></h2>
+        <article class="order">
+          <div class="order-head"><strong>#A-217</strong><div><small>vor 40 Sek.</small></div></div>
+          <ul>
+            <li>1× Pide Gemischt</li>
+            <li>1× Ayran</li>
+          </ul>
+        </article>
+      </section>
+      <section class="lane">
+        <h2>Geplant <span class="lane-count">1</span></h2>
+        <article class="order">
+          <div class="order-head"><strong>#A-215</strong><div><small>Abholung 19:15</small></div></div>
+          <ul>
+            <li>1× Drehspieß als Teller</li>
+            <li>1× Saft der Saison</li>
+          </ul>
+        </article>
+      </section>
+      <section class="lane">
+        <h2>In Zubereitung <span class="lane-count">1</span></h2>
+        <article class="order">
+          <div class="order-head"><strong>#A-214</strong><div><small>seit 6 Min.</small></div></div>
+          <ul>
+            <li>2× Drehspieß im Fladenbrot</li>
+            <li>1× Falafel Teller</li>
+            <li>2× Apfelsaft</li>
+          </ul>
+        </article>
+      </section>
+      <section class="lane">
+        <h2>Abholbereit <span class="lane-count">2</span></h2>
+        <article class="order">
+          <div class="order-head"><strong>#A-212</strong><div><small>seit 2 Min.</small></div></div>
+          <ul>
+            <li>1× Original "Kusbaşı"</li>
+          </ul>
+        </article>
+        <article class="order">
+          <div class="order-head"><strong>#A-213</strong><div><small>seit 1 Min.</small></div></div>
+          <ul>
+            <li>1× Halloumi im Yufka</li>
+            <li>1× Apothekensaft</li>
+          </ul>
+        </article>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
