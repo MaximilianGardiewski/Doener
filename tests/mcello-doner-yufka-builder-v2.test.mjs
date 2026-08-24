@@ -8,6 +8,8 @@ const css = await readFile(new URL("apps/mcello/public/doner-yufka-builder-v2.cs
 const sw = await readFile(new URL("apps/mcello/public/sw.js", root), "utf8");
 const seed = JSON.parse(await readFile(new URL("data/mcello/menu-seed.provisional.json", root), "utf8"));
 const presentation = JSON.parse(await readFile(new URL("data/mcello/builder-presentation.v1.json", root), "utf8"));
+const ingredientContract = JSON.parse(await readFile(new URL("data/mcello/ingredient-asset-contract.v1.json", root), "utf8"));
+const assetManifest = JSON.parse(await readFile(new URL("data/mcello/asset-manifest.json", root), "utf8"));
 
 const ids = ["warm-013","warm-014","warm-015","warm-016","warm-017","warm-018"];
 const groupByName = new Map(presentation.donerYufka.groups.map((group) => [group.name, group]));
@@ -67,6 +69,36 @@ test("SauceDeck keeps one visual sauce plane and deterministically redistributes
   assert.match(js, /dataset\.assemblySauceCount/);
   assert.match(js, /layer\.style\.transform = sauceTransform/);
   assert.doesNotMatch(js, /Math\.random/);
+  assert.match(css, /\.mc-sauce-deck \.mc-food-layer--sauce\[data-sauce-slot\]/);
+  assert.match(css, /transform-box:\s*fill-box/);
+  assert.match(css, /transform-origin:\s*center center/);
+});
+
+test("governed asset contract reserves sauce.primary as a three-member presentation-only composite slot", () => {
+  const sauceSlot = ingredientContract.layerSlots.find((slot) => slot.slot === "sauce.primary");
+  assert.ok(sauceSlot);
+  assert.equal(sauceSlot.mappingType, "modifier-option");
+  assert.equal(sauceSlot.capacity, 3);
+  assert.equal(sauceSlot.compositor, "sauce-deck-v1");
+
+  const compositor = ingredientContract.compositors?.["sauce-deck-v1"];
+  assert.ok(compositor);
+  assert.equal(compositor.slot, "sauce.primary");
+  assert.equal(compositor.assetKind, "sauce-layer");
+  assert.equal(compositor.capacity, 3);
+  assert.equal(compositor.authority, "presentation-only");
+  assert.equal(compositor.ordering, "stable-mapped-option-order");
+  assert.deepEqual(Object.fromEntries(Object.entries(compositor.layouts).map(([count, layout]) => [count, layout.length])), { "1": 1, "2": 2, "3": 3 });
+  assert.match(compositor.rule, /one z-plane/i);
+
+  const pack = assetManifest.assets.find((asset) => asset.id === "doner-core-layer-pack-v1");
+  assert.ok(pack);
+  assert.ok(pack.targetSlots.includes("sauce.primary"));
+  assert.deepEqual(pack.slotPolicies?.["sauce.primary"], {
+    capacity: 3,
+    compositor: "sauce-deck-v1",
+    authority: "presentation-only",
+  });
 });
 
 test("Döner/Yufka presentation code remains in refreshed offline shell while business data stays network-only", () => {
