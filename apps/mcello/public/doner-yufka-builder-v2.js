@@ -56,7 +56,7 @@ const LAYER_TOKENS = new Map([
   ["scharf", "Scharf"],
 ]);
 
-const visualLayerNames = ["Fladenbrot", "Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"];
+const visualLayerNames = ["Fladenbrot", "Deckel", "Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"];
 const ROLE_LAYERS = new Map([
   ["basis", ["Fleisch", "Falafel"]],
   ["fresh", ["Salat", "Tomate", "Gurke", "Zwiebel"]],
@@ -162,45 +162,77 @@ function stageMarkup() {
         visible because it was selected, not because a mask happens to reveal it. Every group is one
         real, checked modifier option, or -- for the bread -- structured product-form metadata.
       -->
-      <g class="mc-food-layer mc-food-layer--flatbread" data-food-layer="Fladenbrot" data-atomic-ingredient-host="ingredient.flatbread.pocket"></g>
+      <g class="mc-food-layer mc-food-layer--flatbread" data-food-layer="Fladenbrot" data-atomic-ingredient-host="ingredient.flatbread.base"></g>
 
-      <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--curry" data-food-layer="Curry" data-atomic-ingredient-host="ingredient.sauce.curry.ribbon"><path d="M172 322c66-46 136-49 206-11 58 32 109 29 158-9" fill="none" stroke="#efbd43" stroke-width="19" stroke-linecap="round"/><path d="M192 352c60-33 119-33 177-4 50 24 96 21 136-5" fill="none" stroke="#f6d56d" stroke-width="9" stroke-linecap="round"/></g>
+      <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--curry" data-food-layer="Curry" data-atomic-ingredient-host="ingredient.sauce.curry.layer"><path d="M172 322c66-46 136-49 206-11 58 32 109 29 158-9" fill="none" stroke="#efbd43" stroke-width="19" stroke-linecap="round"/><path d="M192 352c60-33 119-33 177-4 50 24 96 21 136-5" fill="none" stroke="#f6d56d" stroke-width="9" stroke-linecap="round"/></g>
 
-      <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--knoblauch" data-food-layer="Knoblauch" data-atomic-ingredient-host="ingredient.sauce.garlic.ribbon"><path d="M168 362c63-40 129-42 196-7 63 32 118 28 168-9" fill="none" stroke="#f6efd8" stroke-width="19" stroke-linecap="round"/><path d="M190 392c54-30 112-31 172-2 52 25 97 20 138-5" fill="none" stroke="#fff9e8" stroke-width="9" stroke-linecap="round"/></g>
+      <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--knoblauch" data-food-layer="Knoblauch" data-atomic-ingredient-host="ingredient.sauce.garlic.layer"><path d="M168 362c63-40 129-42 196-7 63 32 118 28 168-9" fill="none" stroke="#f6efd8" stroke-width="19" stroke-linecap="round"/><path d="M190 392c54-30 112-31 172-2 52 25 97 20 138-5" fill="none" stroke="#fff9e8" stroke-width="9" stroke-linecap="round"/></g>
 
-      <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--scharf" data-food-layer="Scharf"><path d="M174 402c62-38 129-39 196-4 59 30 113 25 162-10" fill="none" stroke="#d64736" stroke-width="19" stroke-linecap="round"/><path d="M200 430c53-27 108-27 164-1 48 22 90 18 128-5" fill="none" stroke="#ed7051" stroke-width="9" stroke-linecap="round"/></g>
+      <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--scharf" data-food-layer="Scharf" data-atomic-ingredient-host="ingredient.sauce.hot.layer"><path d="M174 402c62-38 129-39 196-4 59 30 113 25 162-10" fill="none" stroke="#d64736" stroke-width="19" stroke-linecap="round"/><path d="M200 430c53-27 108-27 164-1 48 22 90 18 128-5" fill="none" stroke="#ed7051" stroke-width="9" stroke-linecap="round"/></g>
 
-      <g class="mc-food-layer mc-food-layer--tomate" data-food-layer="Tomate" data-atomic-ingredient-host="ingredient.tomato.slice"></g>
+      <g class="mc-food-layer mc-food-layer--tomate" data-food-layer="Tomate" data-atomic-ingredient-host="ingredient.tomato.layer"></g>
+      <g class="mc-food-layer mc-food-layer--tomate-extra" data-atomic-ingredient-host="ingredient.tomato.layer.extra"></g>
 
-      <g class="mc-food-layer mc-food-layer--gurke" data-food-layer="Gurke" data-atomic-ingredient-host="ingredient.cucumber.slice"><g fill="#a7ce65" stroke="#477739" stroke-width="5"><ellipse cx="212" cy="418" rx="48" ry="23" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="49" ry="23" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="48" ry="23" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="44" ry="22" transform="rotate(-10 536 404)"/></g><g fill="#d7eca0" opacity=".9"><ellipse cx="212" cy="418" rx="29" ry="11" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="29" ry="11" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="29" ry="11" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="26" ry="10" transform="rotate(-10 536 404)"/></g></g>
+      <g class="mc-food-layer mc-food-layer--gurke" data-food-layer="Gurke" data-atomic-ingredient-host="ingredient.cucumber.layer"><g fill="#a7ce65" stroke="#477739" stroke-width="5"><ellipse cx="212" cy="418" rx="48" ry="23" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="49" ry="23" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="48" ry="23" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="44" ry="22" transform="rotate(-10 536 404)"/></g><g fill="#d7eca0" opacity=".9"><ellipse cx="212" cy="418" rx="29" ry="11" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="29" ry="11" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="29" ry="11" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="26" ry="10" transform="rotate(-10 536 404)"/></g></g>
 
-      <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel" data-atomic-ingredient-host="ingredient.onion.ring"><g fill="none" stroke="#dcb0d6" stroke-width="8" stroke-linecap="round" opacity=".92"><path d="M232 330c26-24 56-21 74 6 12 20 4 39-17 48-22 10-45 2-53-16-7-17 3-34 22-40"/><path d="M356 310c25-22 55-17 70 11 11 22 0 40-23 47-23 6-44-4-49-23-5-18 6-33 27-37"/><path d="M470 340c23-20 49-16 62 9 9 19 0 35-21 42-21 7-40-2-46-19-5-17 5-31 24-36"/></g></g>
+      <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel" data-atomic-ingredient-host="ingredient.onion.layer"><g fill="none" stroke="#dcb0d6" stroke-width="8" stroke-linecap="round" opacity=".92"><path d="M232 330c26-24 56-21 74 6 12 20 4 39-17 48-22 10-45 2-53-16-7-17 3-34 22-40"/><path d="M356 310c25-22 55-17 70 11 11 22 0 40-23 47-23 6-44-4-49-23-5-18 6-33 27-37"/><path d="M470 340c23-20 49-16 62 9 9 19 0 35-21 42-21 7-40-2-46-19-5-17 5-31 24-36"/></g></g>
 
-      <g class="mc-food-layer mc-food-layer--protein mc-food-layer--fleisch" data-food-layer="Fleisch" data-atomic-ingredient-host="ingredient.meat.doner.shaving">
+      <g class="mc-food-layer mc-food-layer--protein mc-food-layer--fleisch" data-food-layer="Fleisch" data-atomic-ingredient-host="ingredient.meat.doner.layer">
           <path d="M186 262c40-30 76-24 104 8l-26 68-86-16Z" fill="url(#mcMeat)" stroke="#5c2f22" stroke-width="4"/><path d="M284 238c42-21 81-9 107 28l-30 68-91-23Z" fill="#9b5033" stroke="#5c2f22" stroke-width="4"/><path d="M388 259c36-21 72-9 105 34l-37 59-85-25Z" fill="#823c29" stroke="#5c2f22" stroke-width="4"/><path d="M498 250c36-18 70-4 96 36l-38 56-83-26Z" fill="#a15b38" stroke="#5c2f22" stroke-width="4"/><path d="M240 332c41-17 79-5 111 37l-40 56-92-29Z" fill="#ab5c38" stroke="#5c2f22" stroke-width="4"/><path d="M352 331c42-18 86-5 125 38l-44 57-103-33Z" fill="#8b452e" stroke="#5c2f22" stroke-width="4"/>
           <path d="M206 282l50 18m52-39l55 21m44 5l53 22m-200 52l55 21m56-19l60 21" stroke="#dd8b5b" stroke-width="7" stroke-linecap="round" opacity=".6"/>
         </g>
 
-      <g class="mc-food-layer mc-food-layer--protein mc-food-layer--falafel" data-food-layer="Falafel" data-atomic-ingredient-host="ingredient.falafel.ball">
+      <g class="mc-food-layer mc-food-layer--protein mc-food-layer--falafel" data-food-layer="Falafel" data-atomic-ingredient-host="ingredient.falafel.layer">
           <circle cx="236" cy="306" r="45" fill="#a97838" stroke="#69502e" stroke-width="5"/><circle cx="338" cy="278" r="47" fill="#b78742" stroke="#69502e" stroke-width="5"/><circle cx="444" cy="292" r="44" fill="#9b7139" stroke="#69502e" stroke-width="5"/><circle cx="536" cy="318" r="42" fill="#a8793d" stroke="#69502e" stroke-width="5"/><circle cx="290" cy="382" r="44" fill="#ae8141" stroke="#69502e" stroke-width="5"/><circle cx="398" cy="388" r="45" fill="#a5763b" stroke="#69502e" stroke-width="5"/>
           <g fill="#d5b56a" opacity=".7"><circle cx="223" cy="294" r="5"/><circle cx="248" cy="318" r="4"/><circle cx="326" cy="264" r="5"/><circle cx="352" cy="294" r="4"/><circle cx="431" cy="280" r="5"/><circle cx="297" cy="370" r="5"/><circle cx="387" cy="374" r="5"/></g>
         </g>
 
-      <g class="mc-food-layer mc-food-layer--salat" data-food-layer="Salat" data-atomic-ingredient-host="ingredient.lettuce.iceberg.leaf"><path d="M156 356c30-34 60-32 87-3 22-44 54-50 84-14 25-44 58-47 88-9 30-43 63-41 91 1 26-29 39-26 52 4v122H156Z" fill="#7fb04d" stroke="#4f7a34" stroke-width="5"/><path d="M206 372c48 14 90 32 125 56m48-52c-24 26-40 51-47 78m123-75c-24 19-41 44-51 73" fill="none" stroke="#b0d270" stroke-width="7" stroke-linecap="round" opacity=".7"/></g>
+      <g class="mc-food-layer mc-food-layer--salat" data-food-layer="Salat" data-atomic-ingredient-host="ingredient.lettuce.layer"><path d="M156 356c30-34 60-32 87-3 22-44 54-50 84-14 25-44 58-47 88-9 30-43 63-41 91 1 26-29 39-26 52 4v122H156Z" fill="#7fb04d" stroke="#4f7a34" stroke-width="5"/><path d="M206 372c48 14 90 32 125 56m48-52c-24 26-40 51-47 78m123-75c-24 19-41 44-51 73" fill="none" stroke="#b0d270" stroke-width="7" stroke-linecap="round" opacity=".7"/></g>
 
-      <!-- Vector vessel front half, in front of the filling for the products that still use it. -->
+      <!-- Vector vessel front half, in front of the filling for the products that still use it (Yufka, untyped). -->
       <g class="mc-food-vessel mc-food-vessel--front" data-flatbread-vector-fallback filter="url(#mcStageShadow)">
         <path d="M166 434c0-9 7-16 16-16h396c9 0 16 7 16 16v8c0 64-97 116-214 116S166 506 166 442Z" fill="url(#mcBread)" stroke="#9c5f2d" stroke-width="5" stroke-linejoin="round"/>
         <path d="M186 446h388" fill="none" stroke="#8a4f27" stroke-width="3" opacity=".3"/>
         <path d="M262 492c-2 22 6 40 24 54" fill="none" stroke="#ffeec6" stroke-width="8" stroke-linecap="round" opacity=".3"/>
         <path d="M448 546c26-10 46-25 60-45" fill="none" stroke="#8a4f27" stroke-width="4" stroke-linecap="round" opacity=".22"/>
       </g>
+
+      <!-- Deckel: the second flatbread master (D076). Always the last-painted layer. -->
+      <g class="mc-food-layer mc-food-layer--flatbread-lid" data-food-layer="Deckel" data-atomic-ingredient-host="ingredient.flatbread.lid"></g>
     </svg>
     <div class="mc-food-stage-v4__caption">
       <span>DEIN MCELLO</span>
       <strong data-food-stage-summary>Auswahl wird aufgebaut …</strong>
       <small>Stilisierte Präsentation mit KI-Zutatenvisualisierung · keine Produktfotografie</small>
     </div>`;
+}
+
+const reducedMotionQuery = typeof window.matchMedia === "function"
+  ? window.matchMedia("(prefers-reduced-motion: reduce)")
+  : null;
+
+/*
+ * Cinematic Engineering ref: "Ein virtueller Spot folgt exakt der
+ * Cursor-Bewegung." Pure CSS custom-property update, no GSAP/WebGL --
+ * `--spot-x`/`--spot-y` feed the stage's existing radial-gradient background
+ * (doner-yufka-builder-v2.css). Skipped under reduced motion, which leaves
+ * the CSS fallback position (54% 40%) in place.
+ */
+function attachSpotlight(stage) {
+  if (!stage || stage.dataset.spotlightBound === "true" || reducedMotionQuery?.matches) return;
+  stage.dataset.spotlightBound = "true";
+  stage.addEventListener("pointermove", (event) => {
+    const rect = stage.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    stage.style.setProperty("--spot-x", `${Math.max(0, Math.min(100, x)).toFixed(1)}%`);
+    stage.style.setProperty("--spot-y", `${Math.max(0, Math.min(100, y)).toFixed(1)}%`);
+  });
+  stage.addEventListener("pointerleave", () => {
+    stage.style.removeProperty("--spot-x");
+    stage.style.removeProperty("--spot-y");
+  });
 }
 
 function ensureStage() {
@@ -213,6 +245,7 @@ function ensureStage() {
   stageRoot.setAttribute("aria-label", "Stilisierte interaktive Döner- und Yufka-Vorschau");
   stageRoot.innerHTML = stageMarkup();
   foodStageImage.before(stageRoot);
+  attachSpotlight(stageRoot);
   return stageRoot;
 }
 
@@ -246,7 +279,10 @@ function updateStage(groupMap) {
   if (productForm) root.dataset.builderProductForm = productForm;
   else delete root.dataset.builderProductForm;
   const selected = selectedNames(groupMap);
-  if (productForm === "flatbread-pocket") selected.add("Fladenbrot");
+  if (productForm === "flatbread-pocket") {
+    selected.add("Fladenbrot");
+    selected.add("Deckel");
+  }
   for (const name of visualLayerNames) {
     const layer = root.querySelector(`[data-food-layer="${name}"]`);
     if (!layer) continue;
@@ -263,7 +299,7 @@ function updateStage(groupMap) {
   const tomatoCount = atomic.counts.get(TOMATO_VISUAL.assetId) || 0;
   root.dataset.tomatoInstanceCount = String(tomatoCount);
   modal.dataset.tomatoInstanceCount = String(tomatoCount);
-  root.dataset.flatbreadAtomicReady = String((atomic.counts.get("ingredient.flatbread.pocket") || 0) > 0);
+  root.dataset.flatbreadAtomicReady = String((atomic.counts.get("ingredient.flatbread.base") || 0) > 0);
 
   const summary = [
     roleSummary(selected, "basis", "Basis wählen"),

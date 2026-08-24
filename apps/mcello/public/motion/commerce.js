@@ -288,6 +288,57 @@ export function createCommerceMotion(engine) {
     return true;
   }
 
+  /*
+   * D076 Motion phase: the FoodStage's first paint on modal open, not a later
+   * modifier change (that path is `animateIngredientBatch` below, which
+   * deliberately skips this same layer set on its own first run). Every
+   * currently-active `[data-food-layer]` group -- vector fallback or atomic
+   * PNG host, whichever the layer resolved to -- enters offset on Y and
+   * settles, staggered in the stage's existing bottom-to-top DOM order
+   * (Fladenbrot -> sauces -> Gemüse -> Fleisch/Falafel -> Salat -> Deckel).
+   * Matches the Cinematic Engineering reference: layers explode apart then
+   * drop into their assembled position, not a plain fade.
+   */
+  let stageRevealTimeline = null;
+  function animateStageReveal({ stage }) {
+    if (!stage) return false;
+    const layers = [...stage.querySelectorAll("[data-food-layer]")]
+      .filter((layer) => layer.dataset.active === "true");
+    if (!layers.length) return false;
+
+    gsap.killTweensOf(layers);
+    if (stageRevealTimeline) {
+      activeTweens.delete(stageRevealTimeline);
+      stageRevealTimeline.kill();
+    }
+
+    let timeline;
+    const finish = () => {
+      if (stageRevealTimeline !== timeline) return;
+      activeTweens.delete(timeline);
+      stageRevealTimeline = null;
+    };
+    timeline = gsap.timeline({ defaults: { overwrite: "auto" }, onComplete: finish });
+    stageRevealTimeline = timeline;
+    track(timeline);
+
+    timeline.fromTo(
+      layers,
+      { opacity: 0, y: -46, scale: 0.88 },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.5,
+        ease: "power3.out",
+        stagger: 0.07,
+        clearProps: "opacity,transform",
+      },
+      0,
+    );
+    return true;
+  }
+
   function animateIngredientChange({ option, foodStage, selection }) {
     if (!option && !foodStage) return false;
     if (selection !== "added" && selection !== "removed") return false;
@@ -571,6 +622,7 @@ export function createCommerceMotion(engine) {
   return {
     animateCategoryChange,
     animateProductOpen,
+    animateStageReveal,
     animateIngredientChange,
     animateIngredientBatch,
     settleIngredientBatches,
@@ -586,6 +638,10 @@ export function createCommerceMotion(engine) {
       settleIngredientBatches();
       clearIngredientPresentation();
       clearProductPresentation();
+      if (stageRevealTimeline) {
+        stageRevealTimeline.kill();
+        stageRevealTimeline = null;
+      }
       for (const tween of activeTweens) tween.kill();
       activeTweens.clear();
       scope.cleanup();

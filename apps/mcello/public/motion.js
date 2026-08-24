@@ -378,6 +378,7 @@ function installCommerceMotionContracts() {
           restartMotionClass(source, "motion-product-activate", 320);
           restartMotionClass(modal, "motion-product-open", 380);
         }
+        if (!reducedMotion.matches) commerceMotionV3?.animateStageReveal({ stage: activeFoodStage() });
       });
     }
 

@@ -22,10 +22,14 @@
   padding: clamp(20px, 3.5vw, 54px);
   color: var(--content-primary);
   background:
-    radial-gradient(circle at 54% 40%, rgba(255, 246, 214, .95) 0 20%, rgba(240, 218, 172, .62) 44%, transparent 70%),
+    radial-gradient(circle at var(--spot-x, 54%) var(--spot-y, 40%), rgba(255, 246, 214, .95) 0 20%, rgba(240, 218, 172, .62) 44%, transparent 70%),
     radial-gradient(circle at 16% 14%, rgba(198, 124, 52, .22), transparent 38%),
     linear-gradient(155deg, #f6ecd5 0%, #ead6b0 56%, #d3ab77 100%);
 }
+
+/* Dynamic light-feedback (Cinematic Engineering ref, "Licht folgt dem Cursor"):
+   --spot-x/--spot-y are set from pointer position in JS. Falls back to the
+   static 54%/40% position above when JS never sets them (no-JS, reduced motion). */
 
 .mc-food-stage-v4__halo {
   position: absolute;

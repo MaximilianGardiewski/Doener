@@ -82,7 +82,40 @@
 
   <script type="module" src="/doner-yufka-builder-v2.js"></script>
   <script type="module">
+    // Minimal motion bootstrap for this static demo page — the real app wires
+    // this through motion.js's full init chain (homepage reveals, hero depth,
+    // commerce). This page only needs the commerce slice's stage-reveal and
+    // ingredient-batch animations, so it loads the same real engine +
+    // commerce module directly instead of dragging in the homepage-only code.
     document.querySelector('[data-product]')?.click();
+
+    const { loadMcelloMotionEngine } = await import('/motion/engine.js');
+    const engine = await loadMcelloMotionEngine();
+    if (!engine.available) {
+      console.warn('Mcello motion engine unavailable on this demo page:', engine.reason);
+    } else {
+      const { createCommerceMotion } = await import('/motion/commerce.js');
+      const commerceMotionV3 = createCommerceMotion(engine);
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+      requestAnimationFrame(() => {
+        const stage = document.querySelector('#productModal.open [data-food-stage-v4="true"]');
+        if (!reducedMotion.matches) commerceMotionV3?.animateStageReveal({ stage });
+      });
+
+      document.addEventListener('mcello:ingredient-visual-delta', (event) => {
+        const detail = event instanceof CustomEvent ? event.detail : null;
+        if (!detail) return;
+        event.preventDefault();
+        const { changes, settle } = detail;
+        if (!changes?.length || reducedMotion.matches) {
+          settle?.();
+          return;
+        }
+        const handled = commerceMotionV3?.animateIngredientBatch({ changes, settle });
+        if (!handled) settle?.();
+      });
+    }
   </script>
 </body>
 </html>

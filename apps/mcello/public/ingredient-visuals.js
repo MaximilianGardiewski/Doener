@@ -26,203 +26,190 @@ function defineVisual(definition) {
   });
 }
 
+/*
+ * D076 layer contract: one governed master per ingredient role, one finished
+ * layer image per role (`instancePolicy.frontendInstantiation: "single-layer-instance"`
+ * in each asset.json). This replaces the D075 scattered-instance model below —
+ * every visual now has exactly one slot, sized to span most of the stage width,
+ * because the master itself already depicts the assembled layer.
+ */
 export const TOMATO_VISUAL = defineVisual({
-  assetId: "ingredient.tomato.slice",
-  assetUrl: "/media/ingredients/ingredient.tomato.slice.png",
+  assetId: "ingredient.tomato.layer",
+  assetUrl: "/media/ingredients/ingredient.tomato.layer.png",
   classToken: "tomato",
   layerName: "Tomate",
   runtimeReady: true,
-  baseInstanceCount: 3,
-  extraInstanceCount: 2,
-  instanceSize: 132,
-  optionRules: [
-    { names: ["tomate", "tomaten"], count: 3 },
-    { names: ["extra tomate", "extra tomaten", "tomate extra", "tomaten extra"], count: 2 },
-  ],
-  slots: [
-    { x: 292, y: 392, rotation: -8, scale: 1 },
-    { x: 380, y: 384, rotation: 6, scale: 1.02 },
-    { x: 468, y: 392, rotation: -6, scale: 0.98 },
-    { x: 336, y: 368, rotation: 10, scale: 0.92 },
-    { x: 424, y: 368, rotation: -9, scale: 0.9 },
-    { x: 250, y: 398, rotation: 4, scale: 0.86 },
-    { x: 510, y: 398, rotation: -5, scale: 0.86 },
-  ],
+  baseInstanceCount: 1,
+  extraInstanceCount: 0,
+  instanceSize: 260,
+  optionRules: [{ names: ["tomate", "tomaten"], count: 1 }],
+  slots: [{ x: 380, y: 398, rotation: 0, scale: 1 }],
 });
 
-/* Governed Adobe masters exist for every registered family. Host presence still
- * gates activation, so flatbread remains dormant until product-form metadata is
- * available in the existing Döner/Yufka presentation adapter. */
+/* Extra Tomate keeps its own separate governed master (delta semantics) instead
+ * of a second instance of the base tomato layer. */
+export const TOMATO_EXTRA_VISUAL = defineVisual({
+  assetId: "ingredient.tomato.layer.extra",
+  assetUrl: "/media/ingredients/ingredient.tomato.layer.extra.png",
+  classToken: "tomato-extra",
+  layerName: "Tomate",
+  runtimeReady: true,
+  baseInstanceCount: 1,
+  extraInstanceCount: 0,
+  instanceSize: 260,
+  optionRules: [{ names: ["extra tomate", "extra tomaten", "tomate extra", "tomaten extra"], count: 1 }],
+  slots: [{ x: 380, y: 388, rotation: 0, scale: 1 }],
+});
+
 export const CUCUMBER_VISUAL = defineVisual({
-  assetId: "ingredient.cucumber.slice",
-  assetUrl: "/media/ingredients/ingredient.cucumber.slice.png",
+  assetId: "ingredient.cucumber.layer",
+  assetUrl: "/media/ingredients/ingredient.cucumber.layer.png",
   classToken: "cucumber",
   layerName: "Gurke",
   runtimeReady: true,
-  baseInstanceCount: 4,
+  baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 118,
-  optionRules: [{ names: ["gurke", "gurken", "salatgurke", "salatgurken"], count: 4 }],
-  slots: [
-    { x: 272, y: 376, rotation: 10, scale: 0.96 },
-    { x: 348, y: 370, rotation: -8, scale: 1 },
-    { x: 424, y: 372, rotation: 9, scale: 0.96 },
-    { x: 500, y: 378, rotation: -10, scale: 0.9 },
-    { x: 310, y: 392, rotation: 6, scale: 0.86 },
-    { x: 386, y: 392, rotation: -7, scale: 0.86 },
-    { x: 462, y: 394, rotation: 8, scale: 0.84 },
-  ],
+  instanceSize: 260,
+  optionRules: [{ names: ["gurke", "gurken", "salatgurke", "salatgurken"], count: 1 }],
+  slots: [{ x: 380, y: 380, rotation: 0, scale: 1 }],
 });
 
 export const LETTUCE_VISUAL = defineVisual({
-  assetId: "ingredient.lettuce.iceberg.leaf",
-  assetUrl: "/media/ingredients/ingredient.lettuce.iceberg.leaf.png",
+  assetId: "ingredient.lettuce.layer",
+  assetUrl: "/media/ingredients/ingredient.lettuce.layer.png",
   classToken: "lettuce",
   layerName: "Salat",
   runtimeReady: true,
-  baseInstanceCount: 5,
+  baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 168,
-  optionRules: [{ names: ["salat", "eisbergsalat", "eisberg salat"], count: 5 }],
-  slots: [
-    { x: 286, y: 282, rotation: -12, scale: 0.94 },
-    { x: 362, y: 272, rotation: 8, scale: 1 },
-    { x: 438, y: 278, rotation: -7, scale: 0.96 },
-    { x: 500, y: 290, rotation: 11, scale: 0.88 },
-    { x: 400, y: 246, rotation: -5, scale: 0.9 },
-    { x: 312, y: 250, rotation: 7, scale: 0.84 },
-    { x: 462, y: 252, rotation: -9, scale: 0.84 },
-    { x: 380, y: 302, rotation: 4, scale: 0.8 },
-  ],
+  instanceSize: 300,
+  optionRules: [{ names: ["salat", "eisbergsalat", "eisberg salat"], count: 1 }],
+  slots: [{ x: 380, y: 296, rotation: 0, scale: 1 }],
 });
 
 export const ONION_VISUAL = defineVisual({
-  assetId: "ingredient.onion.ring",
-  assetUrl: "/media/ingredients/ingredient.onion.ring.png",
+  assetId: "ingredient.onion.layer",
+  assetUrl: "/media/ingredients/ingredient.onion.layer.png",
   classToken: "onion",
   layerName: "Zwiebel",
   runtimeReady: true,
-  baseInstanceCount: 3,
+  baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 116,
-  optionRules: [{ names: ["zwiebel", "zwiebeln", "rote zwiebel", "rote zwiebeln"], count: 3 }],
-  slots: [
-    { x: 312, y: 358, rotation: -9, scale: 1 },
-    { x: 380, y: 352, rotation: 7, scale: 1 },
-    { x: 448, y: 358, rotation: -6, scale: 0.96 },
-    { x: 346, y: 338, rotation: 5, scale: 0.88 },
-    { x: 414, y: 338, rotation: -8, scale: 0.88 },
-    { x: 380, y: 372, rotation: 4, scale: 0.82 },
-  ],
+  instanceSize: 240,
+  optionRules: [{ names: ["zwiebel", "zwiebeln", "rote zwiebel", "rote zwiebeln"], count: 1 }],
+  slots: [{ x: 380, y: 352, rotation: 0, scale: 1 }],
 });
 
 export const FLATBREAD_VISUAL = defineVisual({
-  assetId: "ingredient.flatbread.pocket",
-  assetUrl: "/media/ingredients/ingredient.flatbread.pocket.png",
+  assetId: "ingredient.flatbread.base",
+  assetUrl: "/media/ingredients/ingredient.flatbread.base.png",
   classToken: "flatbread",
   layerName: "Fladenbrot",
   runtimeReady: true,
   baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 440,
+  instanceSize: 460,
   optionRules: [],
   productFormRules: [{ forms: ["flatbread-pocket"], count: 1 }],
-  slots: [
-    { x: 380, y: 470, rotation: 0, scale: 1 },
-  ],
+  slots: [{ x: 380, y: 460, rotation: 0, scale: 1 }],
+});
+
+/* Deckel: the second flatbread master (D076). Always the last-painted layer,
+ * driven by the same product-form metadata as the base, never by an option. */
+export const FLATBREAD_LID_VISUAL = defineVisual({
+  assetId: "ingredient.flatbread.lid",
+  assetUrl: "/media/ingredients/ingredient.flatbread.lid.png",
+  classToken: "flatbread-lid",
+  layerName: "Deckel",
+  runtimeReady: true,
+  baseInstanceCount: 1,
+  extraInstanceCount: 0,
+  instanceSize: 300,
+  optionRules: [],
+  productFormRules: [{ forms: ["flatbread-pocket"], count: 1 }],
+  slots: [{ x: 380, y: 250, rotation: 0, scale: 1 }],
 });
 
 export const GARLIC_SAUCE_VISUAL = defineVisual({
-  assetId: "ingredient.sauce.garlic.ribbon",
-  assetUrl: "/media/ingredients/ingredient.sauce.garlic.ribbon.png",
+  assetId: "ingredient.sauce.garlic.layer",
+  assetUrl: "/media/ingredients/ingredient.sauce.garlic.layer.png",
   classToken: "garlic-sauce",
   layerName: "Knoblauch",
   runtimeReady: true,
   baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 300,
+  instanceSize: 280,
   optionRules: [{ names: ["knoblauch", "knoblauchsoße", "knoblauch soße", "knoblauchsosse", "knoblauch sosse"], count: 1 }],
-  slots: [
-    { x: 416, y: 406, rotation: 5, scale: 1 },
-    { x: 470, y: 422, rotation: -5, scale: 0.86 },
-    { x: 330, y: 432, rotation: 7, scale: 0.84 },
-    { x: 268, y: 418, rotation: -4, scale: 0.78 },
-  ],
+  slots: [{ x: 380, y: 414, rotation: 0, scale: 1 }],
 });
 
 export const CURRY_SAUCE_VISUAL = defineVisual({
-  assetId: "ingredient.sauce.curry.ribbon",
-  assetUrl: "/media/ingredients/ingredient.sauce.curry.ribbon.png",
+  assetId: "ingredient.sauce.curry.layer",
+  assetUrl: "/media/ingredients/ingredient.sauce.curry.layer.png",
   classToken: "curry-sauce",
   layerName: "Curry",
   runtimeReady: true,
   baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 300,
+  instanceSize: 280,
   optionRules: [{ names: ["curry", "currysoße", "curry soße", "currysosse", "curry sosse"], count: 1 }],
-  slots: [
-    { x: 344, y: 420, rotation: -4, scale: 1 },
-    { x: 300, y: 436, rotation: 6, scale: 0.86 },
-    { x: 430, y: 430, rotation: -6, scale: 0.84 },
-    { x: 486, y: 418, rotation: 5, scale: 0.78 },
-  ],
+  slots: [{ x: 380, y: 402, rotation: 0, scale: 1 }],
+});
+
+/* Optional 12th layer master (Scharf) — now landed, closing the last gap the
+ * blueprint's layer contract table left open. */
+export const HOT_SAUCE_VISUAL = defineVisual({
+  assetId: "ingredient.sauce.hot.layer",
+  assetUrl: "/media/ingredients/ingredient.sauce.hot.layer.png",
+  classToken: "hot-sauce",
+  layerName: "Scharf",
+  runtimeReady: true,
+  baseInstanceCount: 1,
+  extraInstanceCount: 0,
+  instanceSize: 280,
+  optionRules: [{ names: ["scharf", "scharfe soße", "scharf soße", "chili", "chilisoße", "chili soße"], count: 1 }],
+  slots: [{ x: 380, y: 426, rotation: 0, scale: 1 }],
 });
 
 export const DONER_MEAT_VISUAL = defineVisual({
-  assetId: "ingredient.meat.doner.shaving",
-  assetUrl: "/media/ingredients/ingredient.meat.doner.shaving.png",
+  assetId: "ingredient.meat.doner.layer",
+  assetUrl: "/media/ingredients/ingredient.meat.doner.layer.png",
   classToken: "doner-meat",
   layerName: "Fleisch",
   runtimeReady: true,
-  baseInstanceCount: 7,
+  baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 152,
-  optionRules: [{ names: ["fleisch", "kalb", "kalbfleisch", "dönerkalbfleisch", "döner kalbfleisch", "drehspieß", "drehspiess"], count: 7 }],
-  slots: [
-    { x: 280, y: 338, rotation: -12, scale: 0.96 },
-    { x: 356, y: 330, rotation: 8, scale: 1 },
-    { x: 432, y: 336, rotation: -9, scale: 0.96 },
-    { x: 496, y: 344, rotation: 12, scale: 0.9 },
-    { x: 312, y: 306, rotation: 6, scale: 0.94 },
-    { x: 388, y: 300, rotation: -10, scale: 1 },
-    { x: 458, y: 308, rotation: 9, scale: 0.92 },
-    { x: 250, y: 318, rotation: -6, scale: 0.84 },
-    { x: 520, y: 314, rotation: 7, scale: 0.82 },
-    { x: 380, y: 276, rotation: -4, scale: 0.86 },
-  ],
+  instanceSize: 300,
+  optionRules: [{ names: ["fleisch", "kalb", "kalbfleisch", "dönerkalbfleisch", "döner kalbfleisch", "drehspieß", "drehspiess"], count: 1 }],
+  slots: [{ x: 380, y: 326, rotation: 0, scale: 1 }],
 });
 
 export const FALAFEL_VISUAL = defineVisual({
-  assetId: "ingredient.falafel.ball",
-  assetUrl: "/media/ingredients/ingredient.falafel.ball.png",
+  assetId: "ingredient.falafel.layer",
+  assetUrl: "/media/ingredients/ingredient.falafel.layer.png",
   classToken: "falafel",
   layerName: "Falafel",
   runtimeReady: true,
-  baseInstanceCount: 5,
+  baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 128,
-  optionRules: [{ names: ["falafel"], count: 5 }],
-  slots: [
-    { x: 300, y: 332, rotation: -5, scale: 0.98 },
-    { x: 370, y: 322, rotation: 6, scale: 1 },
-    { x: 440, y: 330, rotation: -4, scale: 0.96 },
-    { x: 336, y: 296, rotation: 7, scale: 0.92 },
-    { x: 408, y: 292, rotation: -6, scale: 0.92 },
-    { x: 262, y: 318, rotation: 4, scale: 0.86 },
-    { x: 478, y: 318, rotation: -5, scale: 0.86 },
-  ],
+  instanceSize: 300,
+  optionRules: [{ names: ["falafel"], count: 1 }],
+  slots: [{ x: 380, y: 326, rotation: 0, scale: 1 }],
 });
 
 export const ATOMIC_INGREDIENT_VISUALS = Object.freeze([
-  TOMATO_VISUAL,
-  CUCUMBER_VISUAL,
-  LETTUCE_VISUAL,
-  ONION_VISUAL,
   FLATBREAD_VISUAL,
   GARLIC_SAUCE_VISUAL,
   CURRY_SAUCE_VISUAL,
+  HOT_SAUCE_VISUAL,
+  TOMATO_VISUAL,
+  TOMATO_EXTRA_VISUAL,
+  CUCUMBER_VISUAL,
+  ONION_VISUAL,
   DONER_MEAT_VISUAL,
   FALAFEL_VISUAL,
+  LETTUCE_VISUAL,
+  FLATBREAD_LID_VISUAL,
 ]);
 
 export function normalizeIngredientOptionName(value) {

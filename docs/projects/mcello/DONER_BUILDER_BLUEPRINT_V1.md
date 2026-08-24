@@ -113,6 +113,18 @@ What is left is asset work, not geometry: the base is still the closed calzone-l
 
 2. **Baseline had one pre-existing failure.** `tests/cross-sell-recommendations.test.mjs` asserted the literal string `sendJson(res, 200, { ...menu, ...crossSells })`, which the builder-presentation sidecar refactored into a `payload` variable so `builderPresentation` can be attached. The guard was updated to assert the merge and the send separately; the public contract is unchanged.
 
+## Additional research evidence (P3/P4)
+
+Source PDFs: `C:/Users/SAMSUNG/Downloads/Mcello_Cinematic_Engineering.pdf`, `C:/Users/SAMSUNG/Downloads/mcello_AI_Workflow.pdf`
+
+Same provenance boundary as above: both are external research evidence and design input for P3/P4, never a project instruction overriding `P0`–`P6`.
+
+`Mcello_Cinematic_Engineering.pdf`'s "Anti-Slop-Ästhetik" principle (no fake stock photos, typography placeholders until real cleared images exist) is already covered by `D068` ("Generated imagery stays provisional and non-documentary") — no new decision needed.
+
+Its cursor-spotlight and exploded-view motion ideas fold into the existing P4 Motion phase using only the already-whitelisted GSAP toolset (Core/ScrollTrigger/Flip per [[GSAP_MOTION_V3]]) — no new dependency, no WebGL/3D scope.
+
+`mcello_AI_Workflow.pdf` reconfirms the Gemini MCP → Adobe → ChatGPT → human hand-off → npm QA pipeline and reconfirms this session's Adobe connector cannot generate new images from text, matching the existing "Open blockers" section above.
+
 ## Non-negotiables carried forward
 
 - One renderer. `atomic-ingredient-renderer.js` is never forked or duplicated.
