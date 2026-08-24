@@ -57,9 +57,46 @@
     {
       "id": "sauce-layer-v1",
       "tool": "Adobe Firefly image_generate",
+      "status": "superseded-by-individual-sauce-assets",
+      "usage": "concept-only",
+      "prompt": "Three elegant flowing sauce ribbons as separate ingredient layers for a döner build, adult editorial food illustration, warm cream, curry-gold and restrained spicy accent, dark charcoal-neutral stage, clean shapes, no text, no packaging, not photorealistic.",
+      "qaNote": "Do not execute for runtime assets. Multi-subject generation makes the three sauces inseparable and conflicts with sauce-deck-v1. Use one of the individual sauce prompts below, one generation command per asset."
+    },
+    {
+      "id": "sauce-curry-layer-v1",
+      "tool": "Adobe Firefly image_generate",
       "status": "prompt-ready",
-      "usage": "illustrative-layer-exploration",
-      "prompt": "Three elegant flowing sauce ribbons as separate ingredient layers for a döner build, adult editorial food illustration, warm cream, curry-gold and restrained spicy accent, dark charcoal-neutral stage, clean shapes, no text, no packaging, not photorealistic."
+      "usage": "interactive-builder-layer-candidate",
+      "targetSlot": "sauce.primary",
+      "compositor": "sauce-deck-v1",
+      "assetKind": "sauce-layer",
+      "prompt": "Create exactly ONE isolated curry sauce layer for the Mcello exploded döner builder. A single appetizing creamy curry-gold sauce ribbon and controlled drizzle shape, broad horizontal silhouette designed to lie across visible döner filling, viewed from the same top-three-quarter camera as the other Mcello ingredient layers. Adult editorial food illustration with tactile ink-and-paper character, rich warm curry yellow with subtle cream highlights, restrained charcoal edge definition, clean readable outline and generous empty neutral space around the single sauce subject so it can be background-removed into a transparent 2.5D layer. No container, no spoon, no plate, no bread and no other ingredients.",
+      "negativePrompt": "multiple sauces, second sauce color, sauce cup, bottle, squeeze bottle, spoon, plate, whole döner, bread, meat, lettuce, tomato, cucumber, onion, hands, people, text, logo, watermark, neon, purple, blue glow, glossy plastic, photorealistic stock photo",
+      "generationRule": "Generate this asset alone. Do not batch Curry with Knoblauch or Scharf."
+    },
+    {
+      "id": "sauce-garlic-layer-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "prompt-ready",
+      "usage": "interactive-builder-layer-candidate",
+      "targetSlot": "sauce.primary",
+      "compositor": "sauce-deck-v1",
+      "assetKind": "sauce-layer",
+      "prompt": "Create exactly ONE isolated garlic sauce layer for the Mcello exploded döner builder. A single appetizing creamy garlic sauce ribbon and controlled drizzle shape, broad horizontal silhouette designed to lie across visible döner filling, viewed from the same top-three-quarter camera as the other Mcello ingredient layers. Adult editorial food illustration with tactile ink-and-paper character, warm ivory and soft cream tones with subtle natural garlic warmth, restrained charcoal edge definition, clean readable outline and generous empty neutral space around the single sauce subject so it can be background-removed into a transparent 2.5D layer. No container, no spoon, no plate, no bread and no other ingredients.",
+      "negativePrompt": "multiple sauces, curry yellow sauce, red spicy sauce, sauce cup, bottle, squeeze bottle, spoon, plate, whole döner, bread, meat, lettuce, tomato, cucumber, onion, garlic bulb as main subject, hands, people, text, logo, watermark, neon, purple, blue glow, glossy plastic, photorealistic stock photo",
+      "generationRule": "Generate this asset alone. Do not batch Knoblauch with Curry or Scharf."
+    },
+    {
+      "id": "sauce-spicy-layer-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "prompt-ready",
+      "usage": "interactive-builder-layer-candidate",
+      "targetSlot": "sauce.primary",
+      "compositor": "sauce-deck-v1",
+      "assetKind": "sauce-layer",
+      "prompt": "Create exactly ONE isolated spicy sauce layer for the Mcello exploded döner builder. A single appetizing chili-red to warm red-orange sauce ribbon and controlled drizzle shape, broad horizontal silhouette designed to lie across visible döner filling, viewed from the same top-three-quarter camera as the other Mcello ingredient layers. Adult editorial food illustration with tactile ink-and-paper character, restrained spicy red-orange palette with subtle warm highlights, restrained charcoal edge definition, clean readable outline and generous empty neutral space around the single sauce subject so it can be background-removed into a transparent 2.5D layer. No container, no spoon, no plate, no bread and no other ingredients.",
+      "negativePrompt": "multiple sauces, curry yellow sauce, white garlic sauce, sauce cup, bottle, squeeze bottle, spoon, plate, whole döner, bread, meat, lettuce, tomato, cucumber, onion, whole chili pepper as main subject, flames, hands, people, text, logo, watermark, neon, purple, blue glow, glossy plastic, photorealistic stock photo",
+      "generationRule": "Generate this asset alone. Do not batch Scharf with Curry or Knoblauch."
     }
   ]
 }
