@@ -62,7 +62,10 @@ ChatGPT → Secure MCP Tunnel → :8000 Proxy → :8001 notebooklm-mcp
 Allowlist ab und leitet ihn nicht weiter. Der Proxy filtert zusätzlich
 `tools/list`.
 
-### `readonly` (Default)
+### `query` — Standard für ChatGPT
+
+Die normalen `npm run research:chatgpt*`-Workflows starten jetzt explizit im
+`query`-Profil. Es enthält die sechs reinen Lesefunktionen:
 
 - `server_info`
 - `notebook_list`
@@ -71,9 +74,7 @@ Allowlist ab und leitet ihn nicht weiter. Der Proxy filtert zusätzlich
 - `source_describe`
 - `source_get_content`
 
-### `query`
-
-Zusätzlich:
+und zusätzlich diese Query-/Chat-Funktionen:
 
 - `notebook_query`
 - `notebook_query_start`
@@ -82,8 +83,15 @@ Zusätzlich:
 - `chat_get`
 - `chat_export`
 
-`query` kann serverseitig Conversation-History erzeugen; deshalb bleibt
-`readonly` der Default.
+Damit kann ChatGPT NotebookLM direkt befragen und bestehende Chat-/Query-Ergebnisse
+lesen. `query` kann serverseitig Conversation-History erzeugen, erlaubt über die
+Bridge aber weiterhin **keine** Notebook-, Quellen-, Sharing-, Studio- oder
+sonstigen Schreib-/Löschoperationen.
+
+### `readonly` — expliziter Rückfallmodus
+
+`readonly` enthält ausschließlich die ersten sechs Lesefunktionen. Er bleibt als
+bewusste Rückfalloption verfügbar, ist aber nicht mehr der normale ChatGPT-Startpfad.
 
 ## Installation
 
@@ -91,8 +99,9 @@ Zusätzlich:
 npm run research:chatgpt:setup
 ```
 
-Der Setup-Pfad prüft die lokale NotebookLM/Gemini-Installation, Authentifizierung,
-Allowlist-Tests und den Tunnel-Client. Secrets gehören nie ins Repo.
+Der Setup-Pfad verwendet standardmäßig `query` und prüft die lokale
+NotebookLM/Gemini-Installation, Authentifizierung, Allowlist-Tests und den
+Tunnel-Client. Secrets gehören nie ins Repo.
 
 Falls nur die gemeinsame Gemini-Notebook-Basis fehlt:
 
@@ -103,16 +112,22 @@ nlm login
 
 ## Bridge starten
 
-Hintergrundbetrieb:
+Hintergrundbetrieb (`query`):
 
 ```powershell
 npm run research:chatgpt:bg
 ```
 
-Vordergrundbetrieb:
+Vordergrundbetrieb (`query`):
 
 ```powershell
 npm run research:chatgpt
+```
+
+Explizit nur read-only:
+
+```powershell
+npm run research:chatgpt:readonly
 ```
 
 Stoppen:
@@ -127,7 +142,7 @@ npm run research:chatgpt:stop
 npm run research:chatgpt:check
 ```
 
-Der Check validiert unter anderem:
+Der Standardcheck validiert das `query`-Profil und unter anderem:
 
 - `/health`
 - MCP `initialize`
@@ -150,14 +165,16 @@ nlm notebook list
 
 ## Secure MCP Tunnel starten
 
+Standardmäßig mit Query-/Chat-Funktionen:
+
 ```powershell
 npm run research:chatgpt:tunnel
 ```
 
-Query-Profil:
+Explizit nur read-only:
 
 ```powershell
-npm run research:chatgpt:tunnel -- -Mode query
+npm run research:chatgpt:tunnel:readonly
 ```
 
 Stoppen:
@@ -179,14 +196,14 @@ niemals auf den Upstream-Port `8001`.
 
 In ChatGPT Developer Mode / Custom Apps:
 
-1. Custom App für `Gemini Notebook` anlegen.
+1. Custom App für `Gemini Notebook` anlegen bzw. die bestehende App öffnen.
 2. Secure MCP Tunnel als Verbindung wählen.
 3. Den zugehörigen Tunnel auswählen.
-4. Tools scannen.
-5. Prüfen, dass nur die Tools des gewählten Profils erscheinen.
+4. Tools neu scannen bzw. die Verbindung nach dem Neustart aktualisieren.
+5. Prüfen, dass genau die zwölf Tools des `query`-Profils erscheinen.
 6. App zunächst privat halten.
 7. Mit `notebook_list` testen.
-8. Erst danach optional `query` aktivieren.
+8. Danach mit `notebook_query` einen reinen Abfragetest durchführen.
 
 Wenn Delete-/Share-/Studio-/Source-Write-/Research-Import-Tools auftauchen:
 **nicht freigeben**, Bridge stoppen und Proxy/Upstream-Version prüfen.
@@ -233,6 +250,7 @@ Workspace noch nicht freigibt.
 | `EADDRINUSE 127.0.0.1:8000` | Bridge läuft bereits; nicht doppelt starten |
 | `tools/list` zeigt mehr als Allowlist | **Nicht tunneln**; Proxy/Version prüfen |
 | Hidden-tool-Probe schlägt fehl | Tunnel/Client zeigt evtl. auf `8001` statt `8000` |
+| ChatGPT zeigt weiterhin nur sechs Tools | Bridge/Tunnel neu im Query-Modus starten und die Custom-App-Verbindung/Tools neu laden |
 | ChatGPT sagt `gemini_notebook` nicht verfügbar | Custom App/Tunnel ist im ChatGPT-Workspace nicht verbunden; `.codex/config.toml` hilft normalen ChatGPT-Chats nicht |
 | Codex sieht `gemini_notebook` nicht | `npm run research:codex:register`, Codex neu starten |
 | Gemini Auth ist gültig, ChatGPT sieht trotzdem nichts | ChatGPT-App-/Workspace-Konfiguration prüfen, nicht den lokalen MCP neu bauen |
@@ -246,9 +264,12 @@ Lokal bereits nachgewiesen:
 - Upstream auf `8001`
 - Allowlist-Proxy auf `8000`
 - MCP `initialize` erfolgreich
-- exakt sechs `readonly`-Tools
+- exakt sechs `readonly`-Tools im früheren Read-only-Lauf
 - mutierende Tools nicht exponiert
 - verstecktes `source_list_drive` wird aktiv blockiert
+- Query-Profil und seine zusätzlichen sechs Tool-Namen sind statisch durch Tests abgesichert
 
-Noch separat zu verifizieren ist immer die letzte ChatGPT-Schicht:
-Custom App → Secure MCP Tunnel → lokaler Proxy.
+Nach der Umstellung separat live zu verifizieren:
+
+- zwölf Tools im `query`-Profil über den laufenden Proxy
+- `notebook_query` über ChatGPT Custom App → Secure MCP Tunnel → lokalen Proxy
