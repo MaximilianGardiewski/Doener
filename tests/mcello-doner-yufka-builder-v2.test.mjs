@@ -10,6 +10,7 @@ const seed = JSON.parse(await readFile(new URL("data/mcello/menu-seed.provisiona
 const presentation = JSON.parse(await readFile(new URL("data/mcello/builder-presentation.v1.json", root), "utf8"));
 const ingredientContract = JSON.parse(await readFile(new URL("data/mcello/ingredient-asset-contract.v1.json", root), "utf8"));
 const assetManifest = JSON.parse(await readFile(new URL("data/mcello/asset-manifest.json", root), "utf8"));
+const promptLibrary = JSON.parse(await readFile(new URL("data/mcello/prompt-library.json", root), "utf8"));
 
 const ids = ["warm-013","warm-014","warm-015","warm-016","warm-017","warm-018"];
 const groupByName = new Map(presentation.donerYufka.groups.map((group) => [group.name, group]));
@@ -99,6 +100,26 @@ test("governed asset contract reserves sauce.primary as a three-member presentat
     compositor: "sauce-deck-v1",
     authority: "presentation-only",
   });
+});
+
+test("Firefly asset workflow generates Curry, Knoblauch and Scharf separately for SauceDeck composition", () => {
+  const prompts = new Map(promptLibrary.prompts.map((prompt) => [prompt.id, prompt]));
+  const legacy = prompts.get("sauce-layer-v1");
+  assert.equal(legacy?.status, "superseded-by-individual-sauce-assets");
+  assert.match(legacy?.qaNote || "", /one generation command per asset/i);
+
+  const individualIds = ["sauce-curry-layer-v1", "sauce-garlic-layer-v1", "sauce-spicy-layer-v1"];
+  for (const id of individualIds) {
+    const prompt = prompts.get(id);
+    assert.ok(prompt, `${id} must exist`);
+    assert.equal(prompt.status, "prompt-ready");
+    assert.equal(prompt.usage, "interactive-builder-layer-candidate");
+    assert.equal(prompt.targetSlot, "sauce.primary");
+    assert.equal(prompt.compositor, "sauce-deck-v1");
+    assert.equal(prompt.assetKind, "sauce-layer");
+    assert.match(prompt.prompt, /exactly ONE isolated/i);
+    assert.match(prompt.generationRule, /Generate this asset alone/i);
+  }
 });
 
 test("Döner/Yufka presentation code remains in refreshed offline shell while business data stays network-only", () => {
