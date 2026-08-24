@@ -21,7 +21,9 @@
       "ingredient-layers-use-predictable-spatial-order",
       "tap-is-sufficient",
       "drag-is-progressive-enhancement-only",
-      "foodstage-never-decides-validity-price-or-availability"
+      "foodstage-never-decides-validity-price-or-availability",
+      "modifier-option-ids-map-explicitly-to-approved-visual-assets",
+      "missing-visual-mapping-falls-back-without-inventing-product-truth"
     ],
     "operations": [
       "high-information-density",
@@ -30,6 +32,29 @@
       "no-cinematic-scroll-story"
     ]
   },
+  "renderers": {
+    "cinematicStory": {
+      "role": "bounded-linear-storytelling",
+      "current": "local-layered-svg-logical-scrub",
+      "logicalFrames": 144,
+      "runtime": "existing-mcello-gsap-adapter",
+      "plugins": ["ScrollTrigger"],
+      "reducedMotion": "static-final-composition-with-full-content",
+      "gsapUnavailable": "requestAnimationFrame-scroll-progress-fallback",
+      "futureRendererSlots": ["approved-frame-sequence"],
+      "combinationRule": "never-pre-render-the-full-modifier-combination-matrix"
+    },
+    "interactiveBuilder": {
+      "role": "freely-combinable-product-configuration",
+      "strategy": "2.5d-approved-ingredient-layers",
+      "contract": "data/mcello/ingredient-asset-contract.v1.json",
+      "stateEvent": "mcello:builder-visual-state",
+      "contentOwnsState": false,
+      "domainAuthority": false,
+      "mustNotInfer": ["price", "availability", "validity", "allergens", "capacity", "cart", "checkout"],
+      "missingAssetBehavior": "retain-existing-product-visual"
+    }
+  },
   "scrollStory": {
     "logicalFrames": 144,
     "runtime": "existing-mcello-gsap-adapter",
@@ -37,7 +62,15 @@
     "contentOwnsState": false,
     "reducedMotion": "static-final-composition-with-full-content",
     "gsapUnavailable": "requestAnimationFrame-scroll-progress-fallback",
-    "futureRendererSlots": ["approved-frame-sequence", "glb-gltf"]
+    "futureRendererSlots": ["approved-frame-sequence"]
+  },
+  "assetPipeline": {
+    "workflow": "data/mcello/combined-workflow.v1.json",
+    "stagingRequired": true,
+    "visualApprovalRequired": true,
+    "provenanceRequired": true,
+    "directGeneratorToProduction": false,
+    "runtimeDesignClientDependency": false
   },
   "newCreativeAssetConstraints": [
     "no-purple-gradient-defaults",
