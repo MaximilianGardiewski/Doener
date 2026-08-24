@@ -37,13 +37,50 @@
       "logicalFrames": 144
     },
     {
+      "id": "doner-bread-bottom-v1",
+      "version": 1,
+      "kind": "bread-layer",
+      "productFamilies": ["doner", "yufka"],
+      "slot": "bread.bottom",
+      "path": null,
+      "status": "qa-approved-staging",
+      "documentary": false,
+      "provenance": "generated-product-visual",
+      "generator": "Adobe Firefly",
+      "promptId": "flatbread-bottom-v2",
+      "generatedAt": "2026-08-24",
+      "fireflyAssetId": "urn:aaid:sc:EU:ee2ffb7a-e001-47ec-92e1-5824d9963631",
+      "generationRequestId": "9ba1ac07-71db-407a-86dc-aa55950141ab",
+      "backgroundRemovalRequestId": "ae0aee66-df0f-4491-96de-e44bb52a5c7d",
+      "cropRequestId": "33ad8f62-9c30-4b6e-bbc9-0ca95c18013b",
+      "stagingOutput": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:22b37505-f88e-47c3-bc99-596affc568fa",
+      "stagingDimensions": { "width": 1673, "height": 573 },
+      "zIndex": 10,
+      "anchor": { "x": 0.5, "y": 0.76 },
+      "animationPreset": "ingredient.drop.soft",
+      "rendererBranch": "interactive-builder",
+      "runtimeDependency": false,
+      "runtimeReady": false,
+      "runtimeBlocker": "publish-to-local-or-governed-media-path",
+      "qa": {
+        "shape": "pass",
+        "singleSubject": "pass",
+        "transparentCutout": "pass",
+        "cameraConsistency": "pass",
+        "brandLanguage": "pass",
+        "noDocumentaryClaim": "pass"
+      },
+      "notes": "First end-to-end ingredient-layer production run. The initial v1 prompt was rejected for ambiguous whole-pita geometry; v2 was regenerated against the Mcello exploded-döner reference, then background-removed and tightly cropped. It remains staging-only until the binary is published to a local or governed media path."
+    },
+    {
       "id": "doner-core-layer-pack-v1",
       "kind": "ingredient-layer-pack",
-      "status": "contract-ready-awaiting-approved-assets",
+      "status": "production-started-one-asset-qa-approved",
       "documentary": false,
       "rendererBranch": "interactive-builder",
       "contractPath": "data/mcello/ingredient-asset-contract.v1.json",
       "runtimeDependency": false,
+      "qaApprovedStagingAssets": ["doner-bread-bottom-v1"],
       "targetSlots": [
         "bread.bottom",
         "protein.primary",
@@ -55,7 +92,7 @@
         "bread.top"
       ],
       "publishGate": ["asset-qa-approved", "provenance-recorded", "explicit-modifier-id-mapping", "runtime-path-local-or-governed-media"],
-      "notes": "This entry reserves the first reusable 2.5D builder pack. No generated candidate becomes a runtime layer until it passes the listed gates."
+      "notes": "The first reusable 2.5D builder pack is now in production. The bread.bottom candidate has passed visual QA in staging; no generated candidate becomes a runtime layer until all publish gates are satisfied."
     },
     {
       "id": "builder-visual-state-contract-v1",
