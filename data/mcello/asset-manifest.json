@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "project": "mcello",
+  "assets": [
+    {
+      "id": "runtime-placeholder",
+      "kind": "placeholder",
+      "path": "apps/mcello/public/media/placeholder.svg",
+      "status": "runtime-development-placeholder",
+      "documentary": false
+    },
+    {
+      "id": "exploded-doner-adobe-concept-v1",
+      "kind": "generated-concept-art",
+      "status": "concept-reference-only",
+      "documentary": false,
+      "generator": "Adobe Firefly",
+      "promptId": "exploded-doner-editorial-v1",
+      "generatedAt": "2026-08-24",
+      "adobeRequestId": "1cb61215-0a41-4e81-9796-dce230dcdb72",
+      "vectorizationRequestId": "6b1c4b1e-4087-4d41-abc1-d4d15d0b726e",
+      "fireflyBoardId": "urn:aaid:sc:EU:9706d8f2-0960-4f15-b448-c8c1a0e34519",
+      "fireflyBoardEntityId": "34475862-e718-4f0f-9070-d541661dc872",
+      "runtimeDependency": false,
+      "notes": "Adult editorial exploded-döner concept used as art-direction reference. It must not be presented as a real Mcello dish photo. Runtime scroll art remains local and illustrative."
+    },
+    {
+      "id": "exploded-doner-scroll-stage-v1",
+      "kind": "local-runtime-illustration",
+      "path": "apps/mcello/public/ingredient-scroll-story.js",
+      "status": "branch-implementation",
+      "documentary": false,
+      "informedBy": ["exploded-doner-adobe-concept-v1", "D065", "D071", "D074"],
+      "logicalFrames": 144
+    },
+    {
+      "id": "real-mcello-food-set",
+      "kind": "first-party-real-media",
+      "status": "awaiting-owner-confirmed-assets",
+      "documentary": true,
+      "requiredBeforePublicClaim": ["rights-confirmed", "owner-confirmed", "provenance-recorded"]
+    },
+    {
+      "id": "interactive-glb-foodstage",
+      "kind": "glb-gltf",
+      "status": "future-evaluation-slot",
+      "documentary": false,
+      "runtimeDependency": false,
+      "notes": "Only adopt if it improves the existing FoodStage without moving commerce truth into presentation or harming mobile performance."
+    }
+  ]
+}
