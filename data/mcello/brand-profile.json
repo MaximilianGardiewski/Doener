@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "project": "mcello",
+  "status": "working-direction-not-owner-accepted",
+  "canonicalSources": [
+    "docs/projects/mcello/DECISIONS.md",
+    "docs/projects/mcello/ART_DIRECTION.md",
+    "docs/projects/mcello/BRAND_SYSTEM.md"
+  ],
+  "experienceMixPercent": {
+    "cinematicFoodUrbanBistro": 45,
+    "warmFutureHospitalityCommercePrecision": 30,
+    "editorialStreetFoodEnergy": 25
+  },
+  "designDNA": [
+    "cinematic-food-warmth",
+    "consumer-product-precision",
+    "editorial-street-food-individuality",
+    "local-hospitality"
+  ],
+  "semanticColorRoles": [
+    "mcello-ink",
+    "mcello-charcoal",
+    "mcello-coal",
+    "mcello-copper",
+    "mcello-gold",
+    "mcello-olive",
+    "mcello-cream",
+    "mcello-bread",
+    "mcello-stone"
+  ],
+  "experienceModes": {
+    "public": "cinematic and editorial, food-first, venue and community storytelling",
+    "commerce": "denser, faster and app-like with warm food-stage clarity",
+    "builder": "commerce precision with food warmth and selective editorial labels",
+    "operations": "functional and reduced, no decorative campaign treatment"
+  },
+  "avoid": [
+    "generic-black-gold-luxury",
+    "purple-gradients",
+    "cyberpunk-neon",
+    "blue-saas-fintech-ui",
+    "glassmorphism-as-default",
+    "universal-rounded-card-wall",
+    "sterile-white-fast-casual-ui",
+    "rustic-chalkboard-folklore",
+    "generic-stock-food-collage",
+    "ai-generated-documentary-mcello-photography"
+  ],
+  "visualIntegrity": {
+    "generatedFood": "concept-or-illustration-only",
+    "documentaryFoodAndVenue": "first-party-provenance-and-rights-required",
+    "ownerVisualGateRequired": true
+  }
+}
