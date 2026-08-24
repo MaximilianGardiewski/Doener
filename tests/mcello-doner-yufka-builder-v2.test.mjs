@@ -54,6 +54,21 @@ test("cartoon assembly has distinct ingredient layers and purposeful lightweight
   assert.doesNotMatch(js + css, /firefly|photoshop-api|short-url/i);
 });
 
+test("SauceDeck keeps one visual sauce plane and deterministically redistributes one to three sauces", () => {
+  assert.match(js, /data-sauce-deck/);
+  assert.match(js, /const SAUCE_LAYER_NAMES = Object\.freeze\(\["Curry", "Knoblauch", "Scharf"\]\)/);
+  assert.match(js, /const SAUCE_LAYOUTS = Object\.freeze/);
+  assert.match(js, /1: Object\.freeze\(\[\{ x: 0, y: 0, scaleX: 1/);
+  assert.match(js, /2: Object\.freeze\(\[/);
+  assert.match(js, /3: Object\.freeze\(\[/);
+  assert.match(js, /function updateSauceDeck/);
+  assert.match(js, /dataset\.sauceSlot/);
+  assert.match(js, /dataset\.sauceCount/);
+  assert.match(js, /dataset\.assemblySauceCount/);
+  assert.match(js, /layer\.style\.transform = sauceTransform/);
+  assert.doesNotMatch(js, /Math\.random/);
+});
+
 test("Döner/Yufka presentation code remains in refreshed offline shell while business data stays network-only", () => {
   assert.match(sw, /mcello-public-shell-v\d+/);
   assert.match(sw, /doner-yufka-builder-v2\.js/);
