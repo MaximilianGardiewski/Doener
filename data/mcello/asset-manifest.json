@@ -46,6 +46,10 @@
       "status": "qa-approved-staging",
       "documentary": false,
       "provenance": "generated-product-visual",
+      "mappingType": "product-base",
+      "domainMapping": {
+        "productFamilies": ["doner", "yufka"]
+      },
       "generator": "Adobe Firefly",
       "promptId": "flatbread-bottom-v2",
       "generatedAt": "2026-08-24",
@@ -62,6 +66,7 @@
       "runtimeDependency": false,
       "runtimeReady": false,
       "runtimeBlocker": "publish-to-local-or-governed-media-path",
+      "publishGatesPassed": ["asset-qa-approved", "provenance-recorded", "explicit-domain-mapping"],
       "qa": {
         "shape": "pass",
         "singleSubject": "pass",
@@ -91,7 +96,7 @@
         "sauce.primary",
         "bread.top"
       ],
-      "publishGate": ["asset-qa-approved", "provenance-recorded", "explicit-modifier-id-mapping", "runtime-path-local-or-governed-media"],
+      "publishGate": ["asset-qa-approved", "provenance-recorded", "explicit-domain-mapping", "runtime-path-local-or-governed-media"],
       "notes": "The first reusable 2.5D builder pack is now in production. The bread.bottom candidate has passed visual QA in staging; no generated candidate becomes a runtime layer until all publish gates are satisfied."
     },
     {
