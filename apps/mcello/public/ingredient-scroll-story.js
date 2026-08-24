@@ -6,8 +6,8 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const stylesheet = document.createElement("link");
 stylesheet.rel = "stylesheet";
 stylesheet.href = "/ingredient-scroll-story.css";
-stylesheet.dataset.mcelloIngredientStory = "true";
-if (!document.querySelector('link[data-mcello-ingredient-story="true"]')) document.head.appendChild(stylesheet);
+stylesheet.dataset.mcelloIngredientStoryStyles = "true";
+if (!document.querySelector('link[data-mcello-ingredient-story-styles="true"]')) document.head.appendChild(stylesheet);
 
 const layerSpecs = [
   { name: "base", start: 0, end: .14, fromX: 0, fromY: 110, rotate: 0, scale: .9 },
@@ -244,7 +244,7 @@ function installPlacementGuard(root, store, main) {
 }
 
 function installStory() {
-  if (document.querySelector("[data-mcello-ingredient-story]")) return true;
+  if (document.querySelector("section[data-mcello-ingredient-story=\"true\"]")) return true;
 
   const main = document.querySelector("main");
   const store = document.querySelector("#bestellen");
