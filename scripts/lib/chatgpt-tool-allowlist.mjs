@@ -33,3 +33,18 @@ export function toolsFor(mode) {
   if (mode === "readonly") return [...READONLY_TOOLS];
   throw new Error(`unknown mode: ${mode}`);
 }
+
+/*
+ * The complete read-only surface of the Gemini Notebook MCP, in one place.
+ *
+ * This is the same set as `toolsFor("query")`, named for the second consumer:
+ * the `/gemini-notebook-research` router, which is read-only by construction and
+ * has no notion of the ChatGPT proxy's readonly/query profiles. Keeping it here
+ * rather than in the router is the point -- one list, two consumers, no drift.
+ */
+export const NOTEBOOK_READONLY_TOOLS = Object.freeze([...READONLY_TOOLS, ...QUERY_EXTRA_TOOLS]);
+
+/** True only for a tool on the read-only surface that also survives the mutating-name screen. */
+export function isReadOnlyTool(tool) {
+  return NOTEBOOK_READONLY_TOOLS.includes(tool) && !MUTATING_NAME.test(tool);
+}
