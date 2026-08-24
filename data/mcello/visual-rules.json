@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "status": "working-contract",
+  "rules": {
+    "public": [
+      "food-is-primary-visual-subject",
+      "alternate-dark-warm-and-food-surfaces",
+      "allow-editorial-asymmetry-and-oversized-type",
+      "avoid-card-wall-layouts",
+      "real-venue-media-only-with-confirmed-provenance"
+    ],
+    "commerce": [
+      "scan-speed-before-decoration",
+      "warm-neutral-stage-surfaces",
+      "large-touch-targets",
+      "sticky-actions-allowed",
+      "pricing-and-availability-remain-domain-owned"
+    ],
+    "builder": [
+      "warm-adult-editorial-cartoon-food-language",
+      "ingredient-layers-use-predictable-spatial-order",
+      "tap-is-sufficient",
+      "drag-is-progressive-enhancement-only",
+      "foodstage-never-decides-validity-price-or-availability"
+    ],
+    "operations": [
+      "high-information-density",
+      "minimal-decoration",
+      "shared-operations-shell",
+      "no-cinematic-scroll-story"
+    ]
+  },
+  "scrollStory": {
+    "logicalFrames": 144,
+    "runtime": "existing-mcello-gsap-adapter",
+    "plugins": ["ScrollTrigger"],
+    "contentOwnsState": false,
+    "reducedMotion": "static-final-composition-with-full-content",
+    "gsapUnavailable": "requestAnimationFrame-scroll-progress-fallback",
+    "futureRendererSlots": ["approved-frame-sequence", "glb-gltf"]
+  },
+  "newCreativeAssetConstraints": [
+    "no-purple-gradient-defaults",
+    "no-glassmorphism-defaults",
+    "no-generic-stock-food-as-mcello",
+    "no-ai-photorealism-presented-as-real-mcello",
+    "no-runtime-dependency-on-adobe-figma-canva-or-lovable"
+  ]
+}
