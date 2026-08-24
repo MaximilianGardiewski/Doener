@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtempSync, readFileSync, existsSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -505,6 +505,27 @@ test("the async path completes against a server that stays busy for several poll
   const called = readFileSync(audit, "utf8").split("\n").filter(Boolean);
   assert.ok(called.filter((tool) => tool === "notebook_query_status").length >= 3, "it must actually poll");
   assert.equal(called.includes("notebook_query"), false, "the sync call must not also fire");
+});
+
+test("the smoke harness resolves a bare command through PATH before spawning", async () => {
+  /*
+   * The production invocation passes no --command, so the binary is found on
+   * PATH. Resolving it to an absolute path first is what keeps this working on
+   * Windows, where `uv tool install` can leave a .cmd shim that Node's spawn
+   * cannot start directly. Exercised here with a PATH entry named exactly like
+   * the real binary.
+   */
+  const bin = mkdtempSync(join(tmpdir(), "notebook-path-"));
+  copyFileSync(join(repoRoot, "tests/fixtures/fake-notebook-mcp.mjs"), join(bin, "notebooklm-mcp"));
+  chmodSync(join(bin, "notebooklm-mcp"), 0o755);
+
+  const { stdout } = await run(
+    process.execPath,
+    [join(repoRoot, "scripts/smoke-notebook-readonly.mjs"), "--notebook", "Doener — Project Research"],
+    { env: { ...process.env, PATH: `${bin}:${process.env.PATH}` } },
+  );
+  assert.match(stdout, /No mutating call was made/);
+  assert.equal(/^SKIPPED/.test(stdout), false, "a binary on PATH must not be reported as missing");
 });
 
 test("the smoke harness skips cleanly when there is no local MCP", async () => {

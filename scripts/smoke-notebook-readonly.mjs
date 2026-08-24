@@ -42,16 +42,30 @@ const NOTEBOOK = argValue("--notebook", "Mcelleo sein Hurensohn Design");
 const QUESTION = argValue("--question", "Fasse die wichtigsten Erkenntnisse zusammen.");
 const COMMAND = argValue("--command", "notebooklm-mcp");
 
-async function onPath(name) {
+/**
+ * Resolves a command to the absolute path PATH would pick.
+ *
+ * `where` returns every hit, one per line; the first is the one that would run.
+ * Resolving rather than just testing matters on Windows: `uv tool install` can
+ * leave a `.cmd` shim, and Node's spawn without a shell fails on those with
+ * ENOENT -- which would break this script on exactly the machine it is for.
+ */
+async function resolveCommand(name) {
+  /* An explicit path (from --command) needs no lookup. */
+  if (name.includes("/") || name.includes("\\")) return { path: name, shell: false };
   try {
-    await run(process.platform === "win32" ? "where" : "which", [name]);
-    return true;
+    const { stdout } = await run(process.platform === "win32" ? "where" : "which", [name]);
+    const first = stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)[0];
+    if (!first) return null;
+    return { path: first, shell: /\.(cmd|bat)$/i.test(first) };
   } catch {
-    return false;
+    return null;
   }
 }
 
-if (!(await onPath(COMMAND))) {
+const resolved = await resolveCommand(COMMAND);
+
+if (!resolved) {
   console.log(`SKIPPED: ${COMMAND} is not on PATH — no local Gemini Notebook MCP to smoke-test.`);
   console.log("         Run this on the machine that holds the Google session (npm run setup:research).");
   process.exit(0);
@@ -59,7 +73,7 @@ if (!(await onPath(COMMAND))) {
 
 /* ------------------------------------------------------- stdio JSON-RPC --- */
 
-const child = spawn(COMMAND, [], { stdio: ["pipe", "pipe", "pipe"] });
+const child = spawn(resolved.path, [], { stdio: ["pipe", "pipe", "pipe"], shell: resolved.shell });
 const pending = new Map();
 let nextId = 1;
 
@@ -79,6 +93,12 @@ createInterface({ input: child.stdout }).on("line", (line) => {
 });
 
 child.stderr.on("data", (chunk) => process.stderr.write(`[mcp] ${chunk}`));
+
+/* Without this a spawn failure is an uncaught exception instead of a report. */
+child.on("error", (error) => {
+  console.log(`FAIL  could not start ${resolved.path} — ${error.message}`);
+  process.exit(1);
+});
 
 function request(method, params, timeoutMs = 180000) {
   const id = nextId++;
