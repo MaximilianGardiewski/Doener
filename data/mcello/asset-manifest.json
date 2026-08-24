@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "mcello",
+  "workflow": "data/mcello/combined-workflow.v1.json",
   "assets": [
     {
       "id": "runtime-placeholder",
@@ -22,6 +23,7 @@
       "fireflyBoardId": "urn:aaid:sc:EU:9706d8f2-0960-4f15-b448-c8c1a0e34519",
       "fireflyBoardEntityId": "34475862-e718-4f0f-9070-d541661dc872",
       "runtimeDependency": false,
+      "rendererBranch": "cinematic-story",
       "notes": "Adult editorial exploded-döner concept used as art-direction reference. It must not be presented as a real Mcello dish photo. Runtime scroll art remains local and illustrative."
     },
     {
@@ -30,8 +32,41 @@
       "path": "apps/mcello/public/ingredient-scroll-story.js",
       "status": "branch-implementation",
       "documentary": false,
+      "rendererBranch": "cinematic-story",
       "informedBy": ["exploded-doner-adobe-concept-v1", "D065", "D071", "D074"],
       "logicalFrames": 144
+    },
+    {
+      "id": "doner-core-layer-pack-v1",
+      "kind": "ingredient-layer-pack",
+      "status": "contract-ready-awaiting-approved-assets",
+      "documentary": false,
+      "rendererBranch": "interactive-builder",
+      "contractPath": "data/mcello/ingredient-asset-contract.v1.json",
+      "runtimeDependency": false,
+      "targetSlots": [
+        "bread.bottom",
+        "protein.primary",
+        "fresh.lettuce",
+        "fresh.tomato",
+        "fresh.cucumber",
+        "fresh.onion",
+        "sauce.primary",
+        "bread.top"
+      ],
+      "publishGate": ["asset-qa-approved", "provenance-recorded", "explicit-modifier-id-mapping", "runtime-path-local-or-governed-media"],
+      "notes": "This entry reserves the first reusable 2.5D builder pack. No generated candidate becomes a runtime layer until it passes the listed gates."
+    },
+    {
+      "id": "builder-visual-state-contract-v1",
+      "kind": "runtime-presentation-contract",
+      "path": "apps/mcello/public/builder-visual-state.js",
+      "status": "branch-implementation",
+      "documentary": false,
+      "rendererBranch": "interactive-builder",
+      "runtimeDependency": true,
+      "domainAuthority": false,
+      "event": "mcello:builder-visual-state"
     },
     {
       "id": "real-mcello-food-set",
