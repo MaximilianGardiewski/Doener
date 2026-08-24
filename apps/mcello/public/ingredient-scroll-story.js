@@ -244,9 +244,11 @@ function installPlacementGuard(root, store, main) {
 }
 
 function installStory() {
+  if (document.querySelector("[data-mcello-ingredient-story]")) return true;
+
   const main = document.querySelector("main");
   const store = document.querySelector("#bestellen");
-  if (!main || !store || document.querySelector("[data-mcello-ingredient-story]")) return;
+  if (!main || !store) return false;
 
   const root = document.createElement("section");
   root.className = "mc-ingredient-story";
@@ -264,6 +266,22 @@ function installStory() {
     cleanupMotion();
     cleanupPlacement();
   }, { once: true });
+
+  return true;
 }
 
-installStory();
+function bootStory() {
+  if (installStory()) return;
+
+  const observer = new MutationObserver(() => {
+    if (installStory()) observer.disconnect();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener("pagehide", () => observer.disconnect(), { once: true });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootStory, { once: true });
+} else {
+  bootStory();
+}
