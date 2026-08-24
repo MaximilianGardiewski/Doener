@@ -245,6 +245,17 @@ function installPlacementGuard(root, store, main) {
   return () => observer.disconnect();
 }
 
+function installVisibilityGuard(root, store) {
+  const syncVisibility = () => {
+    root.hidden = store.hidden;
+    root.dataset.visibilitySource = "quick-order";
+  };
+  const observer = new MutationObserver(syncVisibility);
+  observer.observe(store, { attributes: true, attributeFilter: ["hidden"] });
+  syncVisibility();
+  return () => observer.disconnect();
+}
+
 function installStory() {
   if (document.querySelector('section[data-mcello-ingredient-story="true"]')) return true;
 
@@ -261,12 +272,14 @@ function installStory() {
   main.insertBefore(root, store);
 
   const cleanupPlacement = installPlacementGuard(root, store, main);
+  const cleanupVisibility = installVisibilityGuard(root, store);
   let cleanupMotion = () => {};
   void installStoryMotion(root).then((cleanup) => { cleanupMotion = cleanup; });
 
   window.addEventListener("pagehide", () => {
     cleanupMotion();
     cleanupPlacement();
+    cleanupVisibility();
   }, { once: true });
 
   return true;
