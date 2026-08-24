@@ -51,10 +51,26 @@ into Gemini Notebook.
 
 ### What is not reachable
 
-No notebook creation or deletion, no adding/changing/deleting sources, no importing
-research results as sources, no Drive sync, no sharing, no settings. This is an
-explicit allowlist, so a write tool added by a future upstream release does **not**
-become available by appearing upstream.
+Measured against `notebooklm-mcp-cli` 0.9.14: the server registers **48 tools**. This
+integration routes to 12 and withholds 36 — notebook create/delete/rename, source
+add/delete/rename, Drive sync, all four sharing tools, the Studio tools, collections,
+notes/tags/labels, `research_import`, and the auth-writing tools. This is an explicit
+allowlist, so a write tool added by a future upstream release does **not** become
+available by appearing upstream.
+
+Two findings from that measurement changed the guard itself:
+
+- **`batch` and `pipeline` execute other tools.** The dangerous name never appears in
+  the call, so no name-based screen can see it. That is why the positive allowlist,
+  not the `MUTATING_NAME` verb screen, is the real control here.
+- **`save_auth_tokens`, `refresh_auth` and `chat_configure` carry no forbidden verb**,
+  and `note` cannot go in the regex at all because it is a substring of `notebook`.
+  `HIGH_RISK_TOOLS` in `scripts/lib/chatgpt-tool-allowlist.mjs` refuses those by exact
+  name as a second screen.
+
+`tests/fixtures/server-info-0.9.14.json` is the real captured `server_info` payload, so
+the "12 reachable, 36 withheld" split is asserted against upstream reality rather than
+an assumption.
 
 This is a deliberate tightening. `research-director` previously also carried
 `notebook_create`, `source_add`, `source_sync_drive` and `research_import`; those are

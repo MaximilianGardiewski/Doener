@@ -504,6 +504,38 @@ const AUTH_STATES = {
  * unverified-but-present session sends the user through a browser login they do
  * not need.
  */
+/*
+ * `mcp_capabilities` is not a flat list. Measured against notebooklm-mcp-cli
+ * 0.9.14 it is an object of named groups, each carrying visible/hidden/missing
+ * tool arrays. Reading it as an array -- which is what this did first -- yields
+ * an empty set, so the report cheerfully claimed nothing was withheld while the
+ * server was offering 36 tools this integration never routes to.
+ *
+ * Both shapes are accepted: a flat array is what a simpler server would send.
+ */
+function capabilityToolNames(info) {
+  const capabilities = info?.capabilities ?? info?.mcp_capabilities ?? null;
+  if (!capabilities) return [];
+
+  if (Array.isArray(capabilities)) {
+    return capabilities.map((entry) => (typeof entry === "string" ? entry : entry?.name)).filter(Boolean);
+  }
+
+  const names = new Set();
+  const collect = (value) => {
+    for (const name of Array.isArray(value) ? value : []) {
+      if (typeof name === "string" && name) names.add(name);
+    }
+  };
+  for (const group of Object.values(capabilities.groups ?? {})) {
+    collect(group?.visible_tools);
+    collect(group?.hidden_tools);
+    collect(group?.missing_tools);
+  }
+  collect(capabilities.ungrouped_tools);
+  return [...names];
+}
+
 export function interpretServerInfo(info) {
   const installed = info?.version ?? info?.installed_version ?? null;
   const latest = info?.latest_version ?? info?.available_version ?? null;
@@ -516,10 +548,7 @@ export function interpretServerInfo(info) {
     ? { state: rawAuth, ...AUTH_STATES[rawAuth] }
     : { state: "unknown", ok: false, summary: `Unbekannter Auth-Status: ${rawAuth || "(leer)"}`, remedy: "nlm doctor" };
 
-  const capabilities = info?.capabilities ?? info?.mcp_capabilities ?? [];
-  const toolNames = Array.isArray(capabilities)
-    ? capabilities.map((entry) => (typeof entry === "string" ? entry : entry?.name)).filter(Boolean)
-    : [];
+  const toolNames = capabilityToolNames(info);
 
   return {
     installed,

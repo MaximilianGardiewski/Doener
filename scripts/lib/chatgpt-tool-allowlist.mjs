@@ -44,7 +44,37 @@ export function toolsFor(mode) {
  */
 export const NOTEBOOK_READONLY_TOOLS = Object.freeze([...READONLY_TOOLS, ...QUERY_EXTRA_TOOLS]);
 
-/** True only for a tool on the read-only surface that also survives the mutating-name screen. */
+/*
+ * Names the verb screen above cannot catch, measured against notebooklm-mcp-cli
+ * 0.9.14 (48 tools registered, 12 allowed here).
+ *
+ * `batch` and `pipeline` are the important entries: they execute other tools, so
+ * the dangerous name never appears in the call and no name-based screen can see
+ * it. They are the reason the positive allowlist -- not the regex -- is the real
+ * control. The rest are writes whose verbs simply are not in MUTATING_NAME
+ * ("save", "refresh", "configure"), or whose name collides with a legitimate one
+ * ("note" is a substring of "notebook", so it cannot go in the regex at all).
+ */
+export const HIGH_RISK_TOOLS = Object.freeze([
+  "batch",
+  "pipeline",
+  "save_auth_tokens",
+  "refresh_auth",
+  "chat_configure",
+  "collection_set_emoji",
+  "note",
+  "tag",
+  "label",
+  "download_artifact",
+  "download_all_artifacts",
+  "export_artifact",
+]);
+
+/** True only for a tool on the read-only surface that also survives both screens. */
 export function isReadOnlyTool(tool) {
-  return NOTEBOOK_READONLY_TOOLS.includes(tool) && !MUTATING_NAME.test(tool);
+  return (
+    NOTEBOOK_READONLY_TOOLS.includes(tool)
+    && !MUTATING_NAME.test(tool)
+    && !HIGH_RISK_TOOLS.includes(tool)
+  );
 }

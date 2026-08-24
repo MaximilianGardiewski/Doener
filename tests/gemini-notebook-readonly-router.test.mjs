@@ -27,7 +27,7 @@ import {
   HEAVY_SOURCE_COUNT,
   NOTEBOOK_READONLY_TOOLS,
 } from "../scripts/lib/notebook-research-router.mjs";
-import { MUTATING_NAME, toolsFor } from "../scripts/lib/chatgpt-tool-allowlist.mjs";
+import { HIGH_RISK_TOOLS, MUTATING_NAME, toolsFor } from "../scripts/lib/chatgpt-tool-allowlist.mjs";
 
 const run = promisify(execFile);
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -313,6 +313,61 @@ test("an unknown auth state is reported as unknown, not as configured", () => {
   const auth = interpretServerInfo({ auth_status: "wat" }).auth;
   assert.equal(auth.state, "unknown");
   assert.equal(auth.ok, false);
+});
+
+test("the real 0.9.14 server_info payload is parsed, not silently ignored", () => {
+  /*
+   * Captured from notebooklm-mcp-cli 0.9.14 rather than invented. The first
+   * implementation read mcp_capabilities as an array; against this payload -- an
+   * object of named groups -- that yields an empty set, and the report then
+   * claims nothing is withheld while 36 tools are on offer.
+   */
+  const payload = JSON.parse(readFileSync(join(repoRoot, "tests/fixtures/server-info-0.9.14.json"), "utf8"));
+  const info = interpretServerInfo(payload);
+
+  assert.equal(info.installed, "0.9.14");
+  assert.equal(info.auth.state, "not_configured", "the real server reports one of the five known states");
+  assert.equal(info.capabilities.length, 48, "every registered tool must be seen");
+  assert.equal(info.reachable.length, 12, "exactly the read-only surface is reachable");
+  assert.equal(info.withheld.length, 36, "everything else must be reported as withheld");
+  assert.equal(info.updateAvailable, false);
+});
+
+test("the read-only surface matches the real upstream tool names", () => {
+  const payload = JSON.parse(readFileSync(join(repoRoot, "tests/fixtures/server-info-0.9.14.json"), "utf8"));
+  const upstream = interpretServerInfo(payload).capabilities;
+  const missing = NOTEBOOK_READONLY_TOOLS.filter((tool) => !upstream.includes(tool));
+  assert.deepEqual(missing, [], "an allowlisted tool that does not exist upstream is a typo, not a guard");
+});
+
+test("tools that execute other tools are refused even though no verb betrays them", () => {
+  /*
+   * `batch` and `pipeline` exist upstream and run other tools, so the dangerous
+   * name never appears in the call. No name-based screen can catch that, which
+   * is precisely why the positive allowlist is the real control.
+   */
+  for (const tool of ["batch", "pipeline"]) {
+    assert.equal(MUTATING_NAME.test(tool), false, `${tool} is invisible to the verb screen, as expected`);
+    assert.equal(isReadOnlyTool(tool), false, `${tool} must still be refused`);
+    assert.throws(() => assertReadOnly(tool), /refused/, tool);
+  }
+});
+
+test("high-risk upstream tools the verb screen misses are refused by name", () => {
+  for (const tool of HIGH_RISK_TOOLS) {
+    assert.equal(isReadOnlyTool(tool), false, tool);
+    assert.throws(() => assertReadOnly(tool), /refused/, tool);
+  }
+  /* Auth mutation is the one that would be quietest if it slipped through. */
+  assert.equal(MUTATING_NAME.test("save_auth_tokens"), false, "documented gap the exact list closes");
+  assert.equal(isReadOnlyTool("save_auth_tokens"), false);
+});
+
+test("the high-risk list never shadows a tool the integration needs", () => {
+  for (const tool of NOTEBOOK_READONLY_TOOLS) {
+    assert.equal(HIGH_RISK_TOOLS.includes(tool), false, `${tool} is both required and denied`);
+    assert.equal(isReadOnlyTool(tool), true, tool);
+  }
 });
 
 test("capabilities the integration will never route to are listed as withheld", () => {
