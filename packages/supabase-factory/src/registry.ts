@@ -30,7 +30,11 @@ interface RegistryFile {
 }
 
 export class JsonFileProjectRegistry implements ProjectRegistry {
-  constructor(readonly path: string) {}
+  readonly path: string;
+
+  constructor(path: string) {
+    this.path = path;
+  }
 
   async #read(): Promise<RegistryFile> {
     try {
