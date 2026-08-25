@@ -27,14 +27,14 @@
   },
   "files": {
     "source": {
-      "path": "source/ingredient.onion.layer.firefly-seed-76009.png",
+      "path": "source/ingredient.onion.layer.firefly-board.png",
       "mediaType": "image/png",
-      "width": 2048,
-      "height": 2048,
+      "width": 2400,
+      "height": 1792,
       "bitDepth": 8,
       "pngColorType": "RGB",
-      "bytes": 2890742,
-      "sha256": "429b2f8b7f86b028095b35ceda9337226f00edaf2c8a807bfee12ea4325a5bda"
+      "bytes": 5120929,
+      "sha256": "6c2d9a3187f7ddb7cecedd709c6758780bc2f79e447b2fe3ffedd2fb4e97f2cf"
     },
     "master": {
       "path": "master/ingredient.onion.layer.png",
@@ -45,8 +45,8 @@
       "pngColorType": "RGBA",
       "transparent": true,
       "canvas": "square",
-      "bytes": 389328,
-      "sha256": "b49763f4bef4f3a0aad16283cade59dba95b7a499eba0e7935668e0afb977861"
+      "bytes": 924307,
+      "sha256": "203881fc43be887cc45f02d22902323b6f413d41e1d34d21dd7c4916927a990c"
     },
     "webDerivative": {
       "status": "blocked-no-existing-repository-converter",
@@ -56,52 +56,37 @@
   },
   "provenance": {
     "provider": "Adobe Firefly",
-    "workflow": "Codex session generated the raw layer; Claude Code ran the Adobe cutout and tone alignment, then the deterministic local extract and normalization",
+    "workflow": "Located in the owner Firefly generation history through asset_search, resolved to a presigned URL, cut out with the Adobe background removal, then taken through the deterministic local alpha-bbox extract and 1024 square normalization.",
     "reference": {
       "localFound": false,
       "adobeFound": false,
       "used": false
     },
     "board": {
-      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
-      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
-      "name": "Mcello V1 - Ingredient System - Doener"
+      "id": null,
+      "url": null,
+      "name": null,
+      "reason": "The owner pointed at the ingredient family board, but the generation was located through the account-wide generation history rather than through board membership, so no board is claimed."
     },
     "selectedGeneration": {
-      "seed": 76009,
+      "seed": 1470115883,
       "requestId": null,
       "requestIdCaptured": false,
-      "requestIdReason": "The generation ran in a separate Codex session; only the resulting Firefly asset URN is observable from here.",
-      "assetUrn": "urn:aaid:sc:EU:ab010b9d-6672-4352-bceb-104a2b390678",
-      "width": 2048,
-      "height": 2048,
-      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
+      "requestIdReason": "The generation predates this session; only the Firefly asset URN and the seed carried in its name are observable.",
+      "assetUrn": "urn:aaid:sc:EU:2e5f60ca-c9e6-4453-8f47-55cf140ac930",
+      "generationName": "Photorealistic red onion rings f 1470115883 WEC.ffgenimg",
+      "width": 2400,
+      "height": 1792,
+      "promptSource": null,
       "promptVerbatimCaptured": false,
-      "briefPrompt": "A scattered layer of thin intact red onion rings, purple-magenta and translucent white, lying nearly flat, loosely overlapping, visible cut thickness, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
-      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+      "briefPrompt": null,
+      "briefNegativePrompt": null
     },
     "masterProcessing": {
       "steps": [
         {
           "step": "adobe-remove-background",
-          "requestId": "8a370e49-b11b-46a8-9124-d2711c5f4dda"
-        },
-        {
-          "step": "adobe-apply-adjustments",
-          "requestId": "bfe7bf32-12d9-4d66-815e-d82959c693e2",
-          "options": {
-            "gamma": 1.7,
-            "darks": 30,
-            "brightness": 10
-          }
-        },
-        {
-          "step": "adobe-apply-adjustments",
-          "requestId": "cdc25a4f-45b6-4854-8189-500d8bbd97a9",
-          "options": {
-            "saturation": 32,
-            "contrast": 12
-          }
+          "requestId": "2f804799-23c3-48d3-a9a1-b6a7a59be624"
         },
         {
           "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
@@ -112,7 +97,8 @@
           "requestId": null
         }
       ],
-      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+      "toneTarget": "not re-aligned in this pass; the Firefly cutout was accepted as generated",
+      "supersedes": "Replaces a generation whose rings read as horizontally smeared at layer scale."
     }
   },
   "delivery": {

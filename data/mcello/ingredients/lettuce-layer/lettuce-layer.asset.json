@@ -27,14 +27,14 @@
   },
   "files": {
     "source": {
-      "path": "source/ingredient.lettuce.layer.firefly-seed-43260.png",
+      "path": "source/ingredient.lettuce.layer.firefly-board.png",
       "mediaType": "image/png",
-      "width": 512,
-      "height": 512,
+      "width": 2400,
+      "height": 1792,
       "bitDepth": 8,
       "pngColorType": "RGB",
-      "bytes": 421719,
-      "sha256": "5dd593d9ac64c6e72b981fcdf7b87bf73173e5b91a5258ea8fac58879a03592b"
+      "bytes": 4679119,
+      "sha256": "20b86bbbf7d11f7f6ff10056e6825910c010fc9e607279a28f4eaeb110eed846"
     },
     "master": {
       "path": "master/ingredient.lettuce.layer.png",
@@ -45,8 +45,8 @@
       "pngColorType": "RGBA",
       "transparent": true,
       "canvas": "square",
-      "bytes": 1176698,
-      "sha256": "3f8a643172692719dcdc71d147b8cc7e6b68981858363c2dfa777fdbda44b7af"
+      "bytes": 992723,
+      "sha256": "eab038837af8a89c2a918e80367dd08510953277d54e4e45895990fa0fca4dee"
     },
     "webDerivative": {
       "status": "blocked-no-existing-repository-converter",
@@ -56,37 +56,37 @@
   },
   "provenance": {
     "provider": "Adobe Firefly",
-    "workflow": "Generated through the Firefly web interface driven by Claude Code in the owner's browser, then Adobe cutout and tone alignment plus a deterministic local extract and normalization",
+    "workflow": "Located in the owner Firefly generation history through asset_search, resolved to a presigned URL, cut out with the Adobe background removal, then taken through the deterministic local alpha-bbox extract and 1024 square normalization.",
     "reference": {
       "localFound": false,
       "adobeFound": false,
       "used": false
     },
     "board": {
-      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
-      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
-      "name": "Mcello V1 - Ingredient System - Doener"
+      "id": null,
+      "url": null,
+      "name": null,
+      "reason": "The owner pointed at the ingredient family board, but the generation was located through the account-wide generation history rather than through board membership, so no board is claimed."
     },
     "selectedGeneration": {
-      "seed": 43260,
+      "seed": 189906973,
       "requestId": null,
       "requestIdCaptured": false,
-      "requestIdReason": "The Firefly web interface exposes no generation request id; the resulting Firefly asset URN identifies the generation.",
-      "assetUrn": "urn:aaid:sc:EU:10cf7936-ef62-4c26-ace2-80c549d3f8c4",
-      "width": 512,
-      "height": 512,
-      "sourceResolutionNote": "The Firefly web interface returned 512 x 512 for this run, unlike the 2048 x 2048 the API produced for the first eight layers. The master is upscaled from this source and is measurably softer.",
-      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
-      "promptRevisedFromBrief": true,
-      "promptRevisionReason": "The briefed wording produced the wrong subject and was sharpened: cucumber came back halved lengthwise, lettuce came back as a whole head, meat came back as a geometric stack.",
-      "briefPrompt": "A scattered handful of small hand-torn iceberg lettuce pieces spread loosely as one flat airy layer, individual ruffled pale-green leaf fragments with curled edges, no intact lettuce head, no core, no bowl, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
-      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+      "requestIdReason": "The generation predates this session; only the Firefly asset URN and the seed carried in its name are observable.",
+      "assetUrn": "urn:aaid:sc:EU:28eee95d-0870-427b-ab37-f296368cbd13",
+      "generationName": "Photorealistic fresh green lettu 189906973 2Lh.ffgenimg",
+      "width": 2400,
+      "height": 1792,
+      "promptSource": null,
+      "promptVerbatimCaptured": false,
+      "briefPrompt": null,
+      "briefNegativePrompt": null
     },
     "masterProcessing": {
       "steps": [
         {
           "step": "adobe-remove-background",
-          "requestId": "38c44e1d-5809-4ebe-94b8-3cbdfc0f7d4b"
+          "requestId": "04865e38-2ca7-418e-a456-150e302509d8"
         },
         {
           "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
@@ -97,7 +97,8 @@
           "requestId": null
         }
       ],
-      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+      "toneTarget": "not re-aligned in this pass; the Firefly cutout was accepted as generated",
+      "supersedes": "Replaces the 512px web-interface generation that the asset worklog records as measurably softer than the API-produced masters."
     }
   },
   "delivery": {

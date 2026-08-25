@@ -27,14 +27,14 @@
   },
   "files": {
     "source": {
-      "path": "source/ingredient.cucumber.layer.firefly-seed-43260.png",
+      "path": "source/ingredient.cucumber.layer.firefly-board.png",
       "mediaType": "image/png",
-      "width": 512,
-      "height": 512,
+      "width": 2400,
+      "height": 1792,
       "bitDepth": 8,
       "pngColorType": "RGB",
-      "bytes": 341365,
-      "sha256": "08250e92a11414a0b0498e3854f009280baa0bd0fe683705a5414924d3161a90"
+      "bytes": 4508681,
+      "sha256": "44f290c9f37a5bde6b10e2cda5a7b8f2aca00c8007266297ed19ec8676a71c87"
     },
     "master": {
       "path": "master/ingredient.cucumber.layer.png",
@@ -45,8 +45,8 @@
       "pngColorType": "RGBA",
       "transparent": true,
       "canvas": "square",
-      "bytes": 1065873,
-      "sha256": "402026b5bee7d7e18df1c265b7fab3794e055205bd08c5966c65f26b6e12b8d3"
+      "bytes": 1176658,
+      "sha256": "728d8be47d4d2e7e50d2285be28443fe72cb2d48fe28a6bc5b9ae041b1148f9d"
     },
     "webDerivative": {
       "status": "blocked-no-existing-repository-converter",
@@ -56,52 +56,37 @@
   },
   "provenance": {
     "provider": "Adobe Firefly",
-    "workflow": "Generated through the Firefly web interface driven by Claude Code in the owner's browser, then Adobe cutout and tone alignment plus a deterministic local extract and normalization",
+    "workflow": "Located in the owner Firefly generation history through asset_search, resolved to a presigned URL, cut out with the Adobe background removal, then taken through the deterministic local alpha-bbox extract and 1024 square normalization.",
     "reference": {
       "localFound": false,
       "adobeFound": false,
       "used": false
     },
     "board": {
-      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
-      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
-      "name": "Mcello V1 - Ingredient System - Doener"
+      "id": null,
+      "url": null,
+      "name": null,
+      "reason": "The owner pointed at the ingredient family board, but the generation was located through the account-wide generation history rather than through board membership, so no board is claimed."
     },
     "selectedGeneration": {
-      "seed": 43260,
+      "seed": 896726499,
       "requestId": null,
       "requestIdCaptured": false,
-      "requestIdReason": "The Firefly web interface exposes no generation request id; the resulting Firefly asset URN identifies the generation.",
-      "assetUrn": "urn:aaid:sc:EU:419763c0-14db-44bf-93a9-52d29de0a060",
-      "width": 512,
-      "height": 512,
-      "sourceResolutionNote": "The Firefly web interface returned 512 x 512 for this run, unlike the 2048 x 2048 the API produced for the first eight layers. The master is upscaled from this source and is measurably softer.",
-      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
-      "promptRevisedFromBrief": true,
-      "promptRevisionReason": "The briefed wording produced the wrong subject and was sharpened: cucumber came back halved lengthwise, lettuce came back as a whole head, meat came back as a geometric stack.",
-      "briefPrompt": "Exactly four round coin-shaped cucumber slices, each one flat thin disc cut straight across the cucumber, thin dark-green peel ring around pale translucent flesh with small seeds, never halved lengthwise, lying flat side by side in one row, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
-      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+      "requestIdReason": "The generation predates this session; only the Firefly asset URN and the seed carried in its name are observable.",
+      "assetUrn": "urn:aaid:sc:EU:e07010da-caaa-4a92-b1c0-bb1cfdc7f875",
+      "generationName": "Photorealistic fresh cucumber sl 896726499 y6i.ffgenimg",
+      "width": 2400,
+      "height": 1792,
+      "promptSource": null,
+      "promptVerbatimCaptured": false,
+      "briefPrompt": null,
+      "briefNegativePrompt": null
     },
     "masterProcessing": {
       "steps": [
         {
           "step": "adobe-remove-background",
-          "requestId": "74b6f025-804c-483d-b45a-8f207fa7d4d4"
-        },
-        {
-          "step": "adobe-apply-adjustments",
-          "requestId": "c811d488-0dab-46ca-92da-88f1c0c7cec2",
-          "options": {
-            "gamma": 0.84,
-            "highlights": -20
-          }
-        },
-        {
-          "step": "adobe-apply-adjustments",
-          "requestId": "b79c3164-6139-47b1-a792-36aa49c492dc",
-          "options": {
-            "gamma": 0.86
-          }
+          "requestId": "d0bafb36-8420-4231-a115-770cff9f531b"
         },
         {
           "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
@@ -112,7 +97,8 @@
           "requestId": null
         }
       ],
-      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+      "toneTarget": "not re-aligned in this pass; the Firefly cutout was accepted as generated",
+      "supersedes": "Replaces the 512px web-interface generation that the asset worklog records as measurably softer than the API-produced masters."
     }
   },
   "delivery": {
