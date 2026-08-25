@@ -58,13 +58,19 @@ function validateHost(host: FactoryHost): void {
 
 export class ProjectScheduler {
   readonly #hosts: readonly FactoryHost[];
+  readonly store: PlacementStore;
 
-  constructor(hosts: readonly FactoryHost[], readonly store: PlacementStore) {
+  constructor(hosts: readonly FactoryHost[], store: PlacementStore) {
     if (hosts.length === 0) throw new Error("at least one Factory host is required");
     for (const host of hosts) validateHost(host);
     const ids = new Set(hosts.map((host) => host.id));
     if (ids.size !== hosts.length) throw new Error("Factory host ids must be unique");
     this.#hosts = [...hosts];
+    this.store = store;
+  }
+
+  async get(projectId: string): Promise<ProjectPlacement | undefined> {
+    return this.store.get(projectId);
   }
 
   async allocate(projectId: string, requiredLabels: Readonly<Record<string, string>> = {}): Promise<ProjectPlacement> {
