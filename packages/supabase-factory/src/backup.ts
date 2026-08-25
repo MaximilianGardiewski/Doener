@@ -1,10 +1,9 @@
+import { cloudlessCommand } from "./cloudless-env.ts";
 import type { FactoryHostExecutor, HostExecutorRegistry } from "./host.ts";
 import { SUPABASE_CLI_BASELINE } from "./migrations.ts";
 import type { ProjectPlacement, ProjectScheduler } from "./placement.ts";
 import type { SecretStore } from "./secrets.ts";
 import type { ResolvedFactoryManifest } from "./types.ts";
-
-const CLOUD_ENV_KEYS = ["SUPABASE_ACCESS_TOKEN", "SUPABASE_PROJECT_ID", "SUPABASE_PROJECT_REF"] as const;
 
 export interface StoredBackupArtifact {
   ref: string;
@@ -90,10 +89,6 @@ function parseCliVersion(output: string): string {
   const match = output.match(/\b(\d+\.\d+\.\d+)\b/);
   if (!match) throw new Error(`could not parse Supabase CLI version from: ${output.trim()}`);
   return match[1];
-}
-
-function cloudlessCommand(command: string, args: readonly string[]): readonly string[] {
-  return [...CLOUD_ENV_KEYS.flatMap((key) => ["-u", key]), command, ...args];
 }
 
 function redact(value: string, secrets: readonly string[]): string {
