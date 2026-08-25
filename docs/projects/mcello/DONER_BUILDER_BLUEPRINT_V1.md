@@ -3,7 +3,7 @@
 Status: **P0–P3 done. P4 motion landed with `c1d572a`. The layer-contract runtime is live, its test guards now match it, and the nine superseded single-atom directories are deleted, so the tree holds exactly the twelve `D076` layer directories. `npm run check` is 405 pass / 0 fail. P5 is next, and it starts with rewriting `tests/mcello-atomic-tomato.browser.mjs`, which is still written against the superseded nine-atom repeat counts and is the last place in the repository carrying the old asset ids.**
 
 Binding decision: [[DECISIONS]] `D076`, scoped against `D075`, `D074`, `D071`, `D070`, `D068`, `D065`.
-Open asset work: [[ASSET_REPAIR_HANDOFF]].
+Open asset work: [[ASSET_REPAIR_HANDOFF]] (fix in place) and [[ASSET_GENERATION_BRIEF_V2]] (generate new).
 Acceptance rows: [[ACCEPTANCE]] · Evidence: [[V1_EVIDENCE]] · Asset provenance: [[ATOMIC_INGREDIENT_ASSET_WORKLOG]] · Previous handoff: [[CLAUDE_HANDOFF_ATOMIC_DONER]] · Motion rules: [[GSAP_MOTION_V3]] · Visual language: [[ART_DIRECTION]], [[BRAND_SYSTEM]].
 
 This document is the hub for the stacked-layer rebuild of the Döner FoodStage. It is presentation contract only. Prices, availability, selection limits and order validity stay authoritative in `@business-web/menu-engine` and the normal Mcello application path.
