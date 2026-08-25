@@ -1,4 +1,4 @@
-const CACHE = "mcello-public-shell-v36";
+const CACHE = "mcello-public-shell-v37";
 const APP_SHELL = [
   "/vendor/fonts/fonts.css",
   "/vendor/fonts/inter-latin-variable.woff2",
@@ -8,6 +8,7 @@ const APP_SHELL = [
   "/motion.js", "/motion.css", "/motion/engine.js", "/motion/accessibility.js", "/motion/homepage.js", "/motion/commerce.js", "/store-v2.js", "/store-v2.css",
   "/builder-core-v2.js", "/builder-core-v2.css", "/builder-visual-state.js", "/commerce-theke.js", "/commerce-theke.css", "/public-theke.js", "/ingredient-scroll-story.js", "/ingredient-scroll-story.css", "/pizza-builder-v2.js", "/pizza-builder-v2.css",
   "/doner-yufka-builder-v2.js", "/doner-yufka-builder-v2.css",
+  "/assets/ingredients/sauces/sauce-curry-master.png", "/assets/ingredients/sauces/sauce-garlic-master.png", "/assets/ingredients/sauces/sauce-spicy-master.png",
   "/vendor/gsap/gsap.min.js", "/vendor/gsap/ScrollTrigger.min.js", "/vendor/gsap/Flip.min.js",
   "/operations-shell.js", "/operations-shell.css", "/operations-theke.css",
   "/handbook.html", "/handbook.js", "/handbook.css", "/handbook/shared.md", "/handbook/staff.md", "/handbook/admin.md",

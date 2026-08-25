@@ -33,14 +33,22 @@
       "status": "branch-implementation",
       "documentary": false,
       "rendererBranch": "cinematic-story",
-      "informedBy": ["exploded-doner-adobe-concept-v1", "D065", "D071", "D074"],
+      "informedBy": [
+        "exploded-doner-adobe-concept-v1",
+        "D065",
+        "D071",
+        "D074"
+      ],
       "logicalFrames": 144
     },
     {
       "id": "doner-bread-bottom-v1",
       "version": 1,
       "kind": "bread-layer",
-      "productFamilies": ["doner", "yufka"],
+      "productFamilies": [
+        "doner",
+        "yufka"
+      ],
       "slot": "bread.bottom",
       "path": null,
       "status": "qa-approved-staging",
@@ -48,7 +56,10 @@
       "provenance": "generated-product-visual",
       "mappingType": "product-base",
       "domainMapping": {
-        "productFamilies": ["doner", "yufka"]
+        "productFamilies": [
+          "doner",
+          "yufka"
+        ]
       },
       "generator": "Adobe Firefly",
       "promptId": "flatbread-bottom-v2",
@@ -58,15 +69,25 @@
       "backgroundRemovalRequestId": "ae0aee66-df0f-4491-96de-e44bb52a5c7d",
       "cropRequestId": "33ad8f62-9c30-4b6e-bbc9-0ca95c18013b",
       "stagingOutput": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:22b37505-f88e-47c3-bc99-596affc568fa",
-      "stagingDimensions": { "width": 1673, "height": 573 },
+      "stagingDimensions": {
+        "width": 1673,
+        "height": 573
+      },
       "zIndex": 10,
-      "anchor": { "x": 0.5, "y": 0.76 },
+      "anchor": {
+        "x": 0.5,
+        "y": 0.76
+      },
       "animationPreset": "ingredient.drop.soft",
       "rendererBranch": "interactive-builder",
       "runtimeDependency": false,
       "runtimeReady": false,
       "runtimeBlocker": "publish-to-local-or-governed-media-path",
-      "publishGatesPassed": ["asset-qa-approved", "provenance-recorded", "explicit-domain-mapping"],
+      "publishGatesPassed": [
+        "asset-qa-approved",
+        "provenance-recorded",
+        "explicit-domain-mapping"
+      ],
       "qa": {
         "shape": "pass",
         "singleSubject": "pass",
@@ -78,14 +99,190 @@
       "notes": "First end-to-end ingredient-layer production run. The initial v1 prompt was rejected for ambiguous whole-pita geometry; v2 was regenerated against the Mcello exploded-döner reference, then background-removed and tightly cropped. It remains staging-only until the binary is published to a local or governed media path."
     },
     {
+      "id": "sauce-curry-master-v1",
+      "version": 1,
+      "kind": "sauce-layer",
+      "productFamilies": [
+        "doner",
+        "yufka"
+      ],
+      "slot": "sauce.primary",
+      "path": "apps/mcello/public/assets/ingredients/sauces/sauce-curry-master.png",
+      "publicPath": "/assets/ingredients/sauces/sauce-curry-master.png",
+      "status": "approved-runtime",
+      "runtimeScope": "presentation-only-local-demo",
+      "documentary": false,
+      "provenance": "generated-product-visual",
+      "mappingType": "modifier-option",
+      "domainMapping": {
+        "presentationGroupKey": "doner-yufka-saucen",
+        "presentationOptionKey": "curry",
+        "productionOptionId": null
+      },
+      "productionMappingStatus": "awaiting-owner-confirmed-domain-option-id",
+      "generator": "Adobe Firefly",
+      "promptId": "sauce-curry-layer-v1",
+      "generatedAt": "2026-08-25",
+      "generationRequestId": "9915e5b1-0aa9-4847-b75c-b48108aee2df",
+      "backgroundRemovalRequestId": "46a0f444-490e-4d21-92ae-cbfdc0fbe3c7",
+      "cropRequestId": "988266c1-905a-4553-b55a-0f149ce9d976",
+      "stagingOutput": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:fd525d71-c2e5-41ed-b51c-24da0f590dac",
+      "stagingDimensions": {
+        "width": 1999,
+        "height": 674
+      },
+      "fireflyBoardId": "urn:aaid:sc:EU:bea31d70-9090-4de1-9b2e-e4feeeec4ef7",
+      "fireflyBoardEntityId": "1d46a8bc-ed1c-4fe0-bfdf-05e0ee4172b5",
+      "zIndex": 70,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.42
+      },
+      "animationPreset": "sauce.splash.controlled",
+      "rendererBranch": "interactive-builder",
+      "runtimeDependency": true,
+      "runtimeReady": true,
+      "publishGatesPassed": [
+        "asset-qa-approved",
+        "provenance-recorded",
+        "runtime-path-local-or-governed-media"
+      ],
+      "qa": {
+        "singleSubject": "pass",
+        "transparentCutout": "pass",
+        "cameraConsistency": "pass",
+        "sauceDeckFootprint": "pass",
+        "noDocumentaryClaim": "pass"
+      },
+      "notes": "Approved local raster master for the presentation-only SauceDeck. Production modifier-option ID mapping remains pending owner-confirmed catalog truth."
+    },
+    {
+      "id": "sauce-garlic-master-v1",
+      "version": 1,
+      "kind": "sauce-layer",
+      "productFamilies": [
+        "doner",
+        "yufka"
+      ],
+      "slot": "sauce.primary",
+      "path": "apps/mcello/public/assets/ingredients/sauces/sauce-garlic-master.png",
+      "publicPath": "/assets/ingredients/sauces/sauce-garlic-master.png",
+      "status": "approved-runtime",
+      "runtimeScope": "presentation-only-local-demo",
+      "documentary": false,
+      "provenance": "generated-product-visual",
+      "mappingType": "modifier-option",
+      "domainMapping": {
+        "presentationGroupKey": "doner-yufka-saucen",
+        "presentationOptionKey": "knoblauch",
+        "productionOptionId": null
+      },
+      "productionMappingStatus": "awaiting-owner-confirmed-domain-option-id",
+      "generator": "Adobe Firefly",
+      "promptId": "sauce-garlic-layer-v1",
+      "generatedAt": "2026-08-25",
+      "generationRequestId": "1407536f-3a01-4c8e-bac3-5dc99d57dfe1",
+      "backgroundRemovalRequestId": "d9f9f47d-f4bb-4e18-affb-051c4307d411",
+      "cropRequestId": "829aee14-a758-41b2-b03b-add03c188506",
+      "stagingOutput": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:f2b9d109-b14a-4690-93cb-2d43d36216aa",
+      "stagingDimensions": {
+        "width": 1516,
+        "height": 511
+      },
+      "fireflyBoardId": "urn:aaid:sc:EU:bea31d70-9090-4de1-9b2e-e4feeeec4ef7",
+      "fireflyBoardEntityId": "e6d42cc2-cc93-4165-a579-a23d4cc6795b",
+      "zIndex": 70,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.42
+      },
+      "animationPreset": "sauce.splash.controlled",
+      "rendererBranch": "interactive-builder",
+      "runtimeDependency": true,
+      "runtimeReady": true,
+      "publishGatesPassed": [
+        "asset-qa-approved",
+        "provenance-recorded",
+        "runtime-path-local-or-governed-media"
+      ],
+      "qa": {
+        "singleSubject": "pass",
+        "transparentCutout": "pass",
+        "cameraConsistency": "pass",
+        "sauceDeckFootprint": "pass",
+        "noDocumentaryClaim": "pass"
+      },
+      "notes": "Approved local raster master for the presentation-only SauceDeck. Production modifier-option ID mapping remains pending owner-confirmed catalog truth."
+    },
+    {
+      "id": "sauce-spicy-master-v1",
+      "version": 1,
+      "kind": "sauce-layer",
+      "productFamilies": [
+        "doner",
+        "yufka"
+      ],
+      "slot": "sauce.primary",
+      "path": "apps/mcello/public/assets/ingredients/sauces/sauce-spicy-master.png",
+      "publicPath": "/assets/ingredients/sauces/sauce-spicy-master.png",
+      "status": "approved-runtime",
+      "runtimeScope": "presentation-only-local-demo",
+      "documentary": false,
+      "provenance": "generated-product-visual",
+      "mappingType": "modifier-option",
+      "domainMapping": {
+        "presentationGroupKey": "doner-yufka-saucen",
+        "presentationOptionKey": "scharf",
+        "productionOptionId": null
+      },
+      "productionMappingStatus": "awaiting-owner-confirmed-domain-option-id",
+      "generator": "Adobe Firefly",
+      "promptId": "sauce-spicy-layer-v1",
+      "generatedAt": "2026-08-25",
+      "generationRequestId": "1ae0caff-34e3-4c92-8cf1-f818c84881db",
+      "backgroundRemovalRequestId": "1597c1bb-edc5-45a9-a416-5e87d6b4ee8a",
+      "cropRequestId": "b41c6915-48bc-46f5-bf69-2ec45582ee98",
+      "stagingOutput": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:6a1e0f75-77f4-487f-bc04-02dba0fd81fc",
+      "stagingDimensions": {
+        "width": 1521,
+        "height": 518
+      },
+      "fireflyBoardId": "urn:aaid:sc:EU:bea31d70-9090-4de1-9b2e-e4feeeec4ef7",
+      "fireflyBoardEntityId": "dd68d3e4-b190-4c86-bd79-f695febfd626",
+      "zIndex": 70,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.42
+      },
+      "animationPreset": "sauce.splash.controlled",
+      "rendererBranch": "interactive-builder",
+      "runtimeDependency": true,
+      "runtimeReady": true,
+      "publishGatesPassed": [
+        "asset-qa-approved",
+        "provenance-recorded",
+        "runtime-path-local-or-governed-media"
+      ],
+      "qa": {
+        "singleSubject": "pass",
+        "transparentCutout": "pass",
+        "cameraConsistency": "pass",
+        "sauceDeckFootprint": "pass",
+        "noDocumentaryClaim": "pass"
+      },
+      "notes": "Approved local raster master for the presentation-only SauceDeck. Production modifier-option ID mapping remains pending owner-confirmed catalog truth."
+    },
+    {
       "id": "doner-core-layer-pack-v1",
       "kind": "ingredient-layer-pack",
-      "status": "production-started-one-asset-qa-approved",
+      "status": "production-started-sauce-runtime-approved",
       "documentary": false,
       "rendererBranch": "interactive-builder",
       "contractPath": "data/mcello/ingredient-asset-contract.v1.json",
       "runtimeDependency": false,
-      "qaApprovedStagingAssets": ["doner-bread-bottom-v1"],
+      "qaApprovedStagingAssets": [
+        "doner-bread-bottom-v1"
+      ],
       "targetSlots": [
         "bread.bottom",
         "protein.primary",
@@ -103,8 +300,18 @@
           "authority": "presentation-only"
         }
       },
-      "publishGate": ["asset-qa-approved", "provenance-recorded", "explicit-domain-mapping", "runtime-path-local-or-governed-media"],
-      "notes": "The first reusable 2.5D builder pack is now in production. The bread.bottom candidate has passed visual QA in staging; no generated candidate becomes a runtime layer until all publish gates are satisfied. sauce.primary is deliberately a composite visual slot: up to three approved sauce assets share one SauceDeck plane instead of becoming stacked full-width layers."
+      "publishGate": [
+        "asset-qa-approved",
+        "provenance-recorded",
+        "explicit-domain-mapping",
+        "runtime-path-local-or-governed-media"
+      ],
+      "notes": "The reusable 2.5D builder pack now has three governed local SauceDeck raster masters. Curry, garlic and spicy are approved for the presentation-only local runtime; owner-confirmed production modifier-option IDs remain a separate catalog gate. bread.bottom remains QA-approved staging until its binary is published.",
+      "runtimeApprovedAssets": [
+        "sauce-curry-master-v1",
+        "sauce-garlic-master-v1",
+        "sauce-spicy-master-v1"
+      ]
     },
     {
       "id": "builder-visual-state-contract-v1",
@@ -122,7 +329,11 @@
       "kind": "first-party-real-media",
       "status": "awaiting-owner-confirmed-assets",
       "documentary": true,
-      "requiredBeforePublicClaim": ["rights-confirmed", "owner-confirmed", "provenance-recorded"]
+      "requiredBeforePublicClaim": [
+        "rights-confirmed",
+        "owner-confirmed",
+        "provenance-recorded"
+      ]
     },
     {
       "id": "interactive-glb-foodstage",

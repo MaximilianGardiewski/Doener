@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
@@ -55,6 +55,30 @@ test("cartoon assembly has distinct ingredient layers and purposeful lightweight
   assert.match(css, /Stilisierte|illustration/i);
   assert.doesNotMatch(js + css, /https:\/\//i);
   assert.doesNotMatch(js + css, /firefly|photoshop-api|short-url/i);
+});
+
+test("SauceDeck uses governed local Adobe sauce masters with no Adobe runtime dependency", async () => {
+  const assets = [
+    ["sauce-curry-master-v1", "/assets/ingredients/sauces/sauce-curry-master.png", "apps/mcello/public/assets/ingredients/sauces/sauce-curry-master.png"],
+    ["sauce-garlic-master-v1", "/assets/ingredients/sauces/sauce-garlic-master.png", "apps/mcello/public/assets/ingredients/sauces/sauce-garlic-master.png"],
+    ["sauce-spicy-master-v1", "/assets/ingredients/sauces/sauce-spicy-master.png", "apps/mcello/public/assets/ingredients/sauces/sauce-spicy-master.png"],
+  ];
+  for (const [id, publicPath, repoPath] of assets) {
+    assert.ok(js.includes(`data-asset-id=\"${id}\"`));
+    assert.ok(js.includes(`href=\"${publicPath}\"`));
+    assert.ok(sw.includes(publicPath));
+    const file = await stat(new URL(repoPath, root));
+    assert.ok(file.size > 10_000, `${repoPath} must be a real PNG asset`);
+    const manifestAsset = assetManifest.assets.find((asset) => asset.id === id);
+    assert.ok(manifestAsset, `${id} must be governed in the asset manifest`);
+    assert.equal(manifestAsset.status, "approved-runtime");
+    assert.equal(manifestAsset.runtimeScope, "presentation-only-local-demo");
+    assert.equal(manifestAsset.runtimeReady, true);
+    assert.equal(manifestAsset.publicPath, publicPath);
+    assert.equal(manifestAsset.slot, "sauce.primary");
+    assert.equal(manifestAsset.productionMappingStatus, "awaiting-owner-confirmed-domain-option-id");
+  }
+  assert.doesNotMatch(js + css, /photoshop-api|firefly\.adobe|short-url/i);
 });
 
 test("SauceDeck keeps one visual sauce plane and deterministically redistributes one to three sauces", () => {

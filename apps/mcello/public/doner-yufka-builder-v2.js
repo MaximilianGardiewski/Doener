@@ -180,9 +180,9 @@ function stageMarkup() {
 
         <!-- Sauces share one visual deck. JS deterministically redistributes 1–3 active sauces across this plane. -->
         <g class="mc-sauce-deck" data-sauce-deck data-sauce-count="0">
-          <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--curry" data-food-layer="Curry"><path d="M172 322c66-46 136-49 206-11 58 32 109 29 158-9" fill="none" stroke="#efbd43" stroke-width="19" stroke-linecap="round"/><path d="M192 352c60-33 119-33 177-4 50 24 96 21 136-5" fill="none" stroke="#f6d56d" stroke-width="9" stroke-linecap="round"/></g>
-          <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--knoblauch" data-food-layer="Knoblauch"><path d="M168 362c63-40 129-42 196-7 63 32 118 28 168-9" fill="none" stroke="#f6efd8" stroke-width="19" stroke-linecap="round"/><path d="M190 392c54-30 112-31 172-2 52 25 97 20 138-5" fill="none" stroke="#fff9e8" stroke-width="9" stroke-linecap="round"/></g>
-          <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--scharf" data-food-layer="Scharf"><path d="M174 402c62-38 129-39 196-4 59 30 113 25 162-10" fill="none" stroke="#d64736" stroke-width="19" stroke-linecap="round"/><path d="M200 430c53-27 108-27 164-1 48 22 90 18 128-5" fill="none" stroke="#ed7051" stroke-width="9" stroke-linecap="round"/></g>
+          <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--curry" data-food-layer="Curry" data-asset-id="sauce-curry-master-v1"><image class="mc-sauce-raster" href="/assets/ingredients/sauces/sauce-curry-master.png" x="175" y="306" width="410" height="138" preserveAspectRatio="xMidYMid meet"/></g>
+          <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--knoblauch" data-food-layer="Knoblauch" data-asset-id="sauce-garlic-master-v1"><image class="mc-sauce-raster" href="/assets/ingredients/sauces/sauce-garlic-master.png" x="175" y="346" width="410" height="138" preserveAspectRatio="xMidYMid meet"/></g>
+          <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--scharf" data-food-layer="Scharf" data-asset-id="sauce-spicy-master-v1"><image class="mc-sauce-raster" href="/assets/ingredients/sauces/sauce-spicy-master.png" x="175" y="386" width="410" height="138" preserveAspectRatio="xMidYMid meet"/></g>
         </g>
       </g>
 

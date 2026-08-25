@@ -65,6 +65,11 @@ try {
   assert.equal(await page.locator("#modalImage").isHidden(), true, "FoodStage must replace the legacy product image while active");
   assert.equal(await page.locator("#productModal").getAttribute("data-assembly-sauce-count"), "0");
   assert.equal(await page.locator("[data-sauce-deck]").getAttribute("data-sauce-count"), "0");
+  assert.deepEqual(await page.locator("[data-sauce-deck] image.mc-sauce-raster").evaluateAll((images) => images.map((image) => image.getAttribute("href"))), [
+    "/assets/ingredients/sauces/sauce-curry-master.png",
+    "/assets/ingredients/sauces/sauce-garlic-master.png",
+    "/assets/ingredients/sauces/sauce-spicy-master.png",
+  ]);
 
   async function setSauce(name, checked) {
     await page.locator(`[data-group-name="Soße"] [data-option-name="${name}"] input`).setChecked(checked);
