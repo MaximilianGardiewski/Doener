@@ -392,6 +392,65 @@
       "notes": "One Adobe-generated grouped four-slice cucumber master is used as the presentation layer. Production modifier-option ID mapping remains pending owner-confirmed catalog truth."
     },
     {
+      "id": "fresh-red-onion-ring-master-v1",
+      "version": 1,
+      "kind": "ingredient-layer",
+      "productFamilies": [
+        "doner",
+        "yufka"
+      ],
+      "slot": "fresh.onion",
+      "path": "apps/mcello/public/assets/ingredients/fresh/red-onion-ring-master.png",
+      "publicPath": "/assets/ingredients/fresh/red-onion-ring-master.png",
+      "status": "approved-runtime",
+      "runtimeScope": "presentation-only-local-demo",
+      "documentary": false,
+      "provenance": "generated-product-visual",
+      "mappingType": "modifier-option",
+      "domainMapping": {
+        "presentationGroupKey": "doner-yufka-gemuese",
+        "presentationOptionKey": "zwiebel",
+        "productionOptionId": null
+      },
+      "productionMappingStatus": "awaiting-owner-confirmed-domain-option-id",
+      "generator": "Adobe Firefly",
+      "promptId": "red-onion-ring-layer-v1",
+      "generatedAt": "2026-08-25",
+      "generationRequestId": "054356d2-8152-49e1-a54b-b7f6c86fd4b4",
+      "backgroundRemovalRequestId": "98256a88-4219-4bd6-8908-b3a91ac16d93",
+      "cropRequestId": "e66e1dc6-3eca-4ad7-8fbc-309636707296",
+      "stagingOutput": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:69e810ac-e559-4264-91d9-57d729e06cad",
+      "stagingDimensions": {
+        "width": 1965,
+        "height": 1089
+      },
+      "fireflyBoardId": "urn:aaid:sc:EU:bea31d70-9090-4de1-9b2e-e4feeeec4ef7",
+      "fireflyBoardEntityId": "71e3ab16-ab95-4a95-a805-fb7681d15116",
+      "zIndex": 60,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.45
+      },
+      "animationPreset": "ingredient.drop.light",
+      "rendererBranch": "interactive-builder",
+      "runtimeDependency": true,
+      "runtimeReady": true,
+      "reusePolicy": "grouped-three-ring-master-single-layer",
+      "publishGatesPassed": [
+        "asset-qa-approved",
+        "provenance-recorded",
+        "runtime-path-local-or-governed-media"
+      ],
+      "qa": {
+        "threeRings": "pass",
+        "transparentCutout": "pass",
+        "cameraConsistency": "pass",
+        "reusableMaster": "pass",
+        "noDocumentaryClaim": "pass"
+      },
+      "notes": "One Adobe-generated grouped three-ring red-onion master is used as the presentation layer. Production modifier-option ID mapping remains pending owner-confirmed catalog truth."
+    },
+    {
       "id": "doner-core-layer-pack-v1",
       "kind": "ingredient-layer-pack",
       "status": "production-active-runtime-assets",
@@ -433,7 +492,8 @@
       ],
       "qaApprovedRuntimeAssets": [
         "fresh-tomato-slice-master-v1",
-        "fresh-cucumber-slice-master-v1"
+        "fresh-cucumber-slice-master-v1",
+        "fresh-red-onion-ring-master-v1"
       ]
     },
     {

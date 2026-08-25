@@ -182,7 +182,9 @@ function stageMarkup() {
           <image class="mc-fresh-raster mc-fresh-raster--cucumber" href="/assets/ingredients/fresh/cucumber-slice-master.png" x="210" y="278" width="340" height="174" preserveAspectRatio="xMidYMid meet"/>
         </g>
 
-        <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel"><g fill="none" stroke="#dcb0d6" stroke-width="8" stroke-linecap="round" opacity=".92"><path d="M232 330c26-24 56-21 74 6 12 20 4 39-17 48-22 10-45 2-53-16-7-17 3-34 22-40"/><path d="M356 310c25-22 55-17 70 11 11 22 0 40-23 47-23 6-44-4-49-23-5-18 6-33 27-37"/><path d="M470 340c23-20 49-16 62 9 9 19 0 35-21 42-21 7-40-2-46-19-5-17 5-31 24-36"/></g></g>
+        <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel" data-asset-id="fresh-red-onion-ring-master-v1">
+          <image class="mc-fresh-raster mc-fresh-raster--onion" href="/assets/ingredients/fresh/red-onion-ring-master.png" x="216" y="285" width="328" height="182" preserveAspectRatio="xMidYMid meet"/>
+        </g>
 
         <!-- Sauces share one visual deck. JS deterministically redistributes 1–3 active sauces across this plane. -->
         <g class="mc-sauce-deck" data-sauce-deck data-sauce-count="0">

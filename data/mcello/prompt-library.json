@@ -123,6 +123,19 @@
       "negativePrompt": "full sandwich, döner, kebab, bread, other vegetables, tomato, onion, lettuce, chopped cucumber pile, bowl, plate, garnish, countertop, hands, utensils, packaging, text, logo, watermark, illustration, cartoon, CGI, cropped edges",
       "generationRule": "Generate exactly four cucumber slices as one grouped reusable master layer. Do not generate a whole sandwich or bake other ingredients into the asset.",
       "qaNote": "Passed four-slice, transparent-cutout, top-three-quarter camera and reusable-master QA; published to a local runtime path for presentation-only demo scope."
+    },
+    {
+      "id": "red-onion-ring-layer-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "executed-qa-approved-runtime-demo",
+      "usage": "interactive-builder-layer-candidate",
+      "targetSlot": "fresh.onion",
+      "assetKind": "ingredient-layer",
+      "requestId": "054356d2-8152-49e1-a54b-b7f6c86fd4b4",
+      "prompt": "Create exactly THREE isolated red onion rings for a premium döner / yufka ingredient layer. Photorealistic food asset, thin fresh red onion rings with clearly visible concentric ring structure, slightly translucent crisp flesh, natural purple-red outer edges with pale interior, subtle moisture and appetizing studio-quality detail. Arrange the three rings as one clean modular grouped ingredient layer suitable for an interactive sandwich builder. Keep the rings distinct, separated enough for clean cutout, and visually cohesive. Slightly elevated top-three-quarter camera matching the existing Mcello exploded döner ingredient stack, soft premium studio lighting from upper left, crisp realistic edges, generous clean neutral empty space around the grouped ingredient. No bread, no other vegetables, no plate, no table, no hands, no sauce, no text, no packaging.",
+      "negativePrompt": "diced onion, chopped onion pile, whole onion bulb, onion skin pile, full sandwich, döner, kebab, bread, tomato, cucumber, lettuce, meat, sauce, bowl, plate, garnish, table, hands, utensils, packaging, text, logo, watermark, illustration, cartoon, CGI, cropped edges",
+      "generationRule": "Generate exactly three red onion rings as one grouped reusable master layer. Do not generate a whole sandwich or bake other ingredients into the asset.",
+      "qaNote": "Passed three-ring, transparent-cutout, top-three-quarter camera and reusable-master QA; published to a local runtime path for presentation-only demo scope."
     }
   ]
 }
