@@ -27,7 +27,11 @@ export interface FactoryHostExecutor {
 }
 
 export class LocalHostExecutor implements FactoryHostExecutor {
-  constructor(readonly id = "local") {}
+  readonly id: string;
+
+  constructor(id = "local") {
+    this.id = id;
+  }
 
   async exec(file: string, args: readonly string[] = [], options: HostCommandOptions = {}): Promise<HostCommandResult> {
     const result = await execFileAsync(file, [...args], {
