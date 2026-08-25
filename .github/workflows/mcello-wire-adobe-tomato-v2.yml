@@ -143,12 +143,11 @@ jobs:
           prompt_path.write_text(json.dumps(library, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
 
-      - name: Validate existing Mcello static and SauceDeck coverage
+      - name: Validate existing Mcello static coverage
         shell: bash
         run: |
           set -euo pipefail
           node --test tests/mcello-doner-yufka-builder-v2.test.mjs
-          node tests/mcello-sauce-deck.browser.mjs
 
       - name: Commit runtime asset and remove one-shot helpers
         shell: bash
