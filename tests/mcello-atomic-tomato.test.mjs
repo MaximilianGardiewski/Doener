@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -202,11 +202,4 @@ test("batch settlement is token-scoped and idempotent for rapid remove/add rever
   assert.match(atomicRenderer, /let settled = false[\s\S]*if \(settled\) return/);
   assert.match(atomicRenderer, /delete wrapper\.dataset\.exitBatch/);
   assert.equal((atomicRenderer.match(/dispatchEvent\(deltaEvent\)/g) || []).length, 1);
-});
-
-test("there is no separate Extra-Tomato asset file", async () => {
-  const files = await readdir(new URL("data/mcello/ingredients/tomato/", root), { recursive: true });
-  const assetFiles = files.filter((file) => /\.(?:png|webp|avif|jpe?g)$/i.test(file));
-  assert.equal(assetFiles.some((file) => /extra[._ -]?tomat|tomat[._ -]?extra/i.test(file)), false);
-  assert.equal(assetFiles.some((file) => /web[\\/]ingredient\.tomato/i.test(file)), false);
 });

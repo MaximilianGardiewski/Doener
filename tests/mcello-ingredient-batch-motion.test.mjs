@@ -78,8 +78,8 @@ test("GSAP ingredient batches animate add and remove directions in one timeline"
 
   assert.equal(adapter.animateIngredientBatch({
     changes: [
-      { assetId: "ingredient.falafel.ball", selection: "added", instances: [added] },
-      { assetId: "ingredient.meat.doner.shaving", selection: "removed", instances: [removed] },
+      { assetId: "ingredient.falafel.layer", selection: "added", instances: [added] },
+      { assetId: "ingredient.meat.doner.layer", selection: "removed", instances: [removed] },
     ],
     settle: () => { settled += 1; },
   }), true);
@@ -104,11 +104,11 @@ test("overlapping ingredient batches settle the old transaction and remove SVG r
   let secondSettled = 0;
 
   adapter.animateIngredientBatch({
-    changes: [{ assetId: "ingredient.tomato.slice", selection: "removed", instances: [exiting] }],
+    changes: [{ assetId: "ingredient.tomato.layer", selection: "removed", instances: [exiting] }],
     settle: () => { firstSettled += 1; },
   });
   adapter.animateIngredientBatch({
-    changes: [{ assetId: "ingredient.tomato.slice", selection: "added", instances: [returning] }],
+    changes: [{ assetId: "ingredient.tomato.layer", selection: "added", instances: [returning] }],
     settle: () => { secondSettled += 1; },
   });
 
@@ -130,11 +130,11 @@ test("non-overlapping ingredient batches remain independent until explicitly set
   const { adapter, timelines } = createHarness();
   let settled = 0;
   adapter.animateIngredientBatch({
-    changes: [{ assetId: "ingredient.onion.ring", selection: "added", instances: [createInstance()] }],
+    changes: [{ assetId: "ingredient.onion.layer", selection: "added", instances: [createInstance()] }],
     settle: () => { settled += 1; },
   });
   adapter.animateIngredientBatch({
-    changes: [{ assetId: "ingredient.sauce.garlic.ribbon", selection: "added", instances: [createInstance()] }],
+    changes: [{ assetId: "ingredient.sauce.garlic.layer", selection: "added", instances: [createInstance()] }],
     settle: () => { settled += 1; },
   });
 

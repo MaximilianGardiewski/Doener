@@ -2,6 +2,15 @@
 
 Status: **Adobe asset pipeline, atomic runtime and structured Flatbread/Yufka sidecar complete. The stage was rebuilt as a stacked layer composition under `D076`; the layer masters that composition needs are specified below but not yet generated, because the authorized Adobe connector in this environment exposes no image generation.**
 
+> **Historical record.** The nine single-atom directories this log documents
+> (`tomato/`, `cucumber/`, `lettuce/`, `onion/`, `flatbread/`, `garlic-sauce/`,
+> `curry-sauce/`, `doner-meat/`, `falafel/`) were deleted under `D076`, which
+> supersedes them with one layer master per role rather than keeping both sets
+> alongside each other. Their paths no longer resolve in the working tree; the
+> files remain reachable through Git history. The generation provenance below is
+> kept verbatim because it still explains how the surviving layer masters came to
+> look the way they do. See [[DONER_BUILDER_BLUEPRINT_V1]].
+
 This log contains presentation metadata and creative provenance only. Prices, availability, selection limits and order validity remain authoritative in `@business-web/menu-engine` and the normal Mcello application path. Every generated image remains provisional and non-documentary under D068. Pizza is explicitly outside this slice.
 
 ## Adobe session, boards and reference
