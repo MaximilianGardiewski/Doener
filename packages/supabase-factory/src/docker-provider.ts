@@ -1,4 +1,5 @@
 import type { DockerRuntimeInput, DockerRuntimeState, PreparedDockerRuntime } from "./docker-runtime.ts";
+import type { PublicEndpointVerifier } from "./health.ts";
 import type { FactoryHostExecutor, HostExecutorRegistry } from "./host.ts";
 import type { ProjectPlacement, ProjectScheduler } from "./placement.ts";
 import type { ApplyOptions, ApplyResult, InfrastructureProvider } from "./provider.ts";
@@ -30,6 +31,8 @@ export class DockerComposeInfrastructureProvider implements InfrastructureProvid
   readonly secretStore: SecretStore;
   readonly bindings: ProjectRuntimeBindingProvider;
   readonly runtimeFactory: DockerRuntimeControllerFactory;
+  readonly publicEndpointVerifier: PublicEndpointVerifier;
+  readonly allowHttpHealth: boolean;
 
   constructor(options: {
     scheduler: ProjectScheduler;
@@ -37,12 +40,17 @@ export class DockerComposeInfrastructureProvider implements InfrastructureProvid
     secretStore: SecretStore;
     bindings: ProjectRuntimeBindingProvider;
     runtimeFactory: DockerRuntimeControllerFactory;
+    publicEndpointVerifier: PublicEndpointVerifier;
+    /** Development-only escape hatch. Production bindings should never enable this. */
+    allowHttpHealth?: boolean;
   }) {
     this.scheduler = options.scheduler;
     this.hosts = options.hosts;
     this.secretStore = options.secretStore;
     this.bindings = options.bindings;
     this.runtimeFactory = options.runtimeFactory;
+    this.publicEndpointVerifier = options.publicEndpointVerifier;
+    this.allowHttpHealth = options.allowHttpHealth ?? false;
   }
 
   async #placement(projectId: string): Promise<ProjectPlacement | undefined> {
@@ -61,6 +69,25 @@ export class DockerComposeInfrastructureProvider implements InfrastructureProvid
     }
   }
 
+  async #publicHealthy(projectId: string, publicUrl: string): Promise<boolean> {
+    const prefix = `projects/${projectId}/supabase`;
+    try {
+      const [publishableKey, secretKey] = await Promise.all([
+        this.secretStore.get({ store: this.secretStore.name, key: `${prefix}/SUPABASE_PUBLISHABLE_KEY` }),
+        this.secretStore.get({ store: this.secretStore.name, key: `${prefix}/SUPABASE_SECRET_KEY` }),
+      ]);
+      const report = await this.publicEndpointVerifier.verify({
+        publicUrl,
+        publishableKey,
+        secretKey,
+        allowHttp: this.allowHttpHealth,
+      });
+      return report.healthy;
+    } catch {
+      return false;
+    }
+  }
+
   async observe(projectId: string): Promise<ObservedProjectState> {
     const placement = await this.#placement(projectId);
     if (!placement) return { exists: false };
@@ -71,7 +98,9 @@ export class DockerComposeInfrastructureProvider implements InfrastructureProvid
     if (!state) return { exists: false };
 
     const running = await this.#runningServices(host, placement.projectRoot);
-    const healthy = running.includes("db") && running.includes("api-gw");
+    const containersHealthy = running.includes("db") && running.includes("api-gw");
+    const publicHealthy = containersHealthy && await this.#publicHealthy(projectId, state.publicUrl);
+    const healthy = containersHealthy && publicHealthy;
 
     return {
       exists: true,
