@@ -1,0 +1,47 @@
+name: Mcello publish Adobe onion v1
+
+on:
+  push:
+    branches:
+      - feat/mcello-notebook-design-slice-v1
+    paths:
+      - .github/workflows/mcello-publish-adobe-onion-v1.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feat/mcello-notebook-design-slice-v1
+          fetch-depth: 0
+
+      - name: Download and validate Adobe onion master
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p apps/mcello/public/assets/ingredients/fresh
+          curl -L --fail --retry 2 -o apps/mcello/public/assets/ingredients/fresh/red-onion-ring-master.png 'https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:69e810ac-e559-4264-91d9-57d729e06cad'
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('apps/mcello/public/assets/ingredients/fresh/red-onion-ring-master.png')
+          data = p.read_bytes()
+          if len(data) < 10000 or data[:8] != b'\x89PNG\r\n\x1a\n':
+              raise SystemExit('downloaded onion master is not a valid PNG')
+          print(f'validated onion PNG: {len(data)} bytes')
+          PY
+
+      - name: Commit binary asset and remove one-shot helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/mcello-publish-adobe-onion-v1.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore(mcello): publish Adobe onion master binary'
+          git push origin HEAD:feat/mcello-notebook-design-slice-v1
