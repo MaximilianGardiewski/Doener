@@ -1,0 +1,191 @@
+name: Mcello wire Adobe onion v1
+
+on:
+  push:
+    branches:
+      - feat/mcello-notebook-design-slice-v1
+    paths:
+      - .github/workflows/mcello-wire-adobe-onion-v1.yml
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feat/mcello-notebook-design-slice-v1
+          fetch-depth: 0
+
+      - name: Wire onion runtime metadata and presentation layer
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          asset_id = 'fresh-red-onion-ring-master-v1'
+          public_path = '/assets/ingredients/fresh/red-onion-ring-master.png'
+          repo_path = 'apps/mcello/public/assets/ingredients/fresh/red-onion-ring-master.png'
+          p = Path(repo_path)
+          if not p.exists() or p.stat().st_size < 10000 or p.read_bytes()[:8] != b'\x89PNG\r\n\x1a\n':
+              raise SystemExit('onion runtime PNG missing or invalid')
+
+          js_path = Path('apps/mcello/public/doner-yufka-builder-v2.js')
+          js = js_path.read_text(encoding='utf-8')
+          if f'data-asset-id="{asset_id}"' not in js:
+              start_marker = '        <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel">'
+              end_marker = '\n\n        <!-- Sauces share one visual deck.'
+              start = js.index(start_marker)
+              end = js.index(end_marker, start)
+              new_block = '\n'.join([
+                  '        <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel" data-asset-id="fresh-red-onion-ring-master-v1">',
+                  '          <image class="mc-fresh-raster mc-fresh-raster--onion" href="/assets/ingredients/fresh/red-onion-ring-master.png" x="216" y="285" width="328" height="182" preserveAspectRatio="xMidYMid meet"/>',
+                  '        </g>',
+              ])
+              js_path.write_text(js[:start] + new_block + js[end:], encoding='utf-8')
+
+          sw_path = Path('apps/mcello/public/sw.js')
+          sw = sw_path.read_text(encoding='utf-8')
+          if public_path not in sw:
+              match = re.search(r'const CACHE = "mcello-public-shell-v(\d+)";', sw)
+              if not match:
+                  raise SystemExit('service worker cache version missing')
+              sw = re.sub(r'const CACHE = "mcello-public-shell-v\d+";', f'const CACHE = "mcello-public-shell-v{int(match.group(1)) + 1}";', sw, count=1)
+              anchor = '  "/assets/ingredients/fresh/cucumber-slice-master.png",\n'
+              if anchor not in sw:
+                  raise SystemExit('service worker cucumber asset anchor missing')
+              sw_path.write_text(sw.replace(anchor, anchor + f'  "{public_path}",\n', 1), encoding='utf-8')
+
+          manifest_path = Path('data/mcello/asset-manifest.json')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          onion_asset = {
+              'id': asset_id,
+              'version': 1,
+              'kind': 'ingredient-layer',
+              'productFamilies': ['doner', 'yufka'],
+              'slot': 'fresh.onion',
+              'path': repo_path,
+              'publicPath': public_path,
+              'status': 'approved-runtime',
+              'runtimeScope': 'presentation-only-local-demo',
+              'documentary': False,
+              'provenance': 'generated-product-visual',
+              'mappingType': 'modifier-option',
+              'domainMapping': {'presentationGroupKey': 'doner-yufka-gemuese', 'presentationOptionKey': 'zwiebel', 'productionOptionId': None},
+              'productionMappingStatus': 'awaiting-owner-confirmed-domain-option-id',
+              'generator': 'Adobe Firefly',
+              'promptId': 'red-onion-ring-layer-v1',
+              'generatedAt': '2026-08-25',
+              'generationRequestId': '054356d2-8152-49e1-a54b-b7f6c86fd4b4',
+              'backgroundRemovalRequestId': '98256a88-4219-4bd6-8908-b3a91ac16d93',
+              'cropRequestId': 'e66e1dc6-3eca-4ad7-8fbc-309636707296',
+              'stagingOutput': 'https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:69e810ac-e559-4264-91d9-57d729e06cad',
+              'stagingDimensions': {'width': 1965, 'height': 1089},
+              'fireflyBoardId': 'urn:aaid:sc:EU:bea31d70-9090-4de1-9b2e-e4feeeec4ef7',
+              'fireflyBoardEntityId': '71e3ab16-ab95-4a95-a805-fb7681d15116',
+              'zIndex': 60,
+              'anchor': {'x': 0.5, 'y': 0.45},
+              'animationPreset': 'ingredient.drop.light',
+              'rendererBranch': 'interactive-builder',
+              'runtimeDependency': True,
+              'runtimeReady': True,
+              'reusePolicy': 'grouped-three-ring-master-single-layer',
+              'publishGatesPassed': ['asset-qa-approved', 'provenance-recorded', 'runtime-path-local-or-governed-media'],
+              'qa': {'threeRings': 'pass', 'transparentCutout': 'pass', 'cameraConsistency': 'pass', 'reusableMaster': 'pass', 'noDocumentaryClaim': 'pass'},
+              'notes': 'One Adobe-generated grouped three-ring red-onion master is used as the presentation layer. Production modifier-option ID mapping remains pending owner-confirmed catalog truth.',
+          }
+          existing = next((a for a in manifest['assets'] if a.get('id') == asset_id), None)
+          if existing:
+              existing.clear(); existing.update(onion_asset)
+          else:
+              idx = next((i for i, a in enumerate(manifest['assets']) if a.get('id') == 'doner-core-layer-pack-v1'), len(manifest['assets']))
+              manifest['assets'].insert(idx, onion_asset)
+          pack = next((a for a in manifest['assets'] if a.get('id') == 'doner-core-layer-pack-v1'), None)
+          if pack:
+              approved = pack.setdefault('qaApprovedRuntimeAssets', [])
+              if asset_id not in approved:
+                  approved.append(asset_id)
+              pack['status'] = 'production-active-runtime-assets'
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          prompt_path = Path('data/mcello/prompt-library.json')
+          library = json.loads(prompt_path.read_text(encoding='utf-8'))
+          prompt_entry = {
+              'id': 'red-onion-ring-layer-v1',
+              'tool': 'Adobe Firefly image_generate',
+              'status': 'executed-qa-approved-runtime-demo',
+              'usage': 'interactive-builder-layer-candidate',
+              'targetSlot': 'fresh.onion',
+              'assetKind': 'ingredient-layer',
+              'requestId': '054356d2-8152-49e1-a54b-b7f6c86fd4b4',
+              'prompt': 'Create exactly THREE isolated red onion rings for a premium döner / yufka ingredient layer. Photorealistic food asset, thin fresh red onion rings with clearly visible concentric ring structure, slightly translucent crisp flesh, natural purple-red outer edges with pale interior, subtle moisture and appetizing studio-quality detail. Arrange the three rings as one clean modular grouped ingredient layer suitable for an interactive sandwich builder. Keep the rings distinct, separated enough for clean cutout, and visually cohesive. Slightly elevated top-three-quarter camera matching the existing Mcello exploded döner ingredient stack, soft premium studio lighting from upper left, crisp realistic edges, generous clean neutral empty space around the grouped ingredient. No bread, no other vegetables, no plate, no table, no hands, no sauce, no text, no packaging.',
+              'negativePrompt': 'diced onion, chopped onion pile, whole onion bulb, onion skin pile, full sandwich, döner, kebab, bread, tomato, cucumber, lettuce, meat, sauce, bowl, plate, garnish, table, hands, utensils, packaging, text, logo, watermark, illustration, cartoon, CGI, cropped edges',
+              'generationRule': 'Generate exactly three red onion rings as one grouped reusable master layer. Do not generate a whole sandwich or bake other ingredients into the asset.',
+              'qaNote': 'Passed three-ring, transparent-cutout, top-three-quarter camera and reusable-master QA; published to a local runtime path for presentation-only demo scope.',
+          }
+          existing_prompt = next((p for p in library['prompts'] if p.get('id') == prompt_entry['id']), None)
+          if existing_prompt:
+              existing_prompt.clear(); existing_prompt.update(prompt_entry)
+          else:
+              library['prompts'].append(prompt_entry)
+          prompt_path.write_text(json.dumps(library, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/mcello-doner-yufka-builder-v2.test.mjs')
+          tests = test_path.read_text(encoding='utf-8')
+          if 'Zwiebel uses one governed local Adobe three-ring master' not in tests:
+              marker = 'test("SauceDeck uses governed local Adobe sauce masters with no Adobe runtime dependency", async () => {'
+              if marker not in tests:
+                  raise SystemExit('onion test insertion marker missing')
+              lines = [
+                  'test("Zwiebel uses one governed local Adobe three-ring master with no Adobe runtime dependency", async () => {',
+                  '  const id = "fresh-red-onion-ring-master-v1";',
+                  '  const publicPath = "/assets/ingredients/fresh/red-onion-ring-master.png";',
+                  '  const repoPath = "apps/mcello/public/assets/ingredients/fresh/red-onion-ring-master.png";',
+                  '  assert.ok(js.includes(`data-asset-id=\\"${id}\\"`));',
+                  '  assert.equal(js.split(`href=\\"${publicPath}\\"`).length - 1, 1, "the grouped onion master should be rendered once");',
+                  '  assert.ok(sw.includes(publicPath));',
+                  '  const file = await stat(new URL(repoPath, root));',
+                  '  assert.ok(file.size > 10_000, `${repoPath} must be a real PNG asset`);',
+                  '  const manifestAsset = assetManifest.assets.find((asset) => asset.id === id);',
+                  '  assert.ok(manifestAsset, `${id} must be governed in the asset manifest`);',
+                  '  assert.equal(manifestAsset.status, "approved-runtime");',
+                  '  assert.equal(manifestAsset.runtimeScope, "presentation-only-local-demo");',
+                  '  assert.equal(manifestAsset.runtimeReady, true);',
+                  '  assert.equal(manifestAsset.slot, "fresh.onion");',
+                  '  assert.equal(manifestAsset.publicPath, publicPath);',
+                  '  assert.equal(manifestAsset.productionMappingStatus, "awaiting-owner-confirmed-domain-option-id");',
+                  '  assert.match(manifestAsset.reusePolicy || "", /grouped-three-ring-master/i);',
+                  '  const prompt = promptLibrary.prompts.find((entry) => entry.id === "red-onion-ring-layer-v1");',
+                  '  assert.ok(prompt, "red-onion-ring-layer-v1 must be recorded in the prompt library");',
+                  '  assert.equal(prompt.status, "executed-qa-approved-runtime-demo");',
+                  '  assert.equal(prompt.targetSlot, "fresh.onion");',
+                  '  assert.match(prompt.generationRule, /exactly three red onion rings/i);',
+                  '  assert.doesNotMatch(js + css, /photoshop-api|firefly\\.adobe|short-url/i);',
+                  '});',
+                  '',
+                  '',
+              ]
+              test_path.write_text(tests.replace(marker, '\n'.join(lines) + marker, 1), encoding='utf-8')
+          PY
+
+      - name: Validate Mcello static asset contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/mcello-doner-yufka-builder-v2.test.mjs
+
+      - name: Commit runtime wiring and remove one-shot helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/mcello-wire-adobe-onion-v1.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat(mcello): wire Adobe onion master'
+          git push origin HEAD:feat/mcello-notebook-design-slice-v1
