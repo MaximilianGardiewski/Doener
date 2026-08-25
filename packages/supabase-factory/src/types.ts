@@ -1,0 +1,176 @@
+export const FACTORY_API_VERSION = "factory.supabase.local/v1" as const;
+
+export const SUPABASE_BASELINE = {
+  release: "self-hosted/v0.8.0",
+  postgresMajor: 17,
+  gateway: "envoy",
+} as const;
+
+export type ProjectEnvironment = "development" | "staging" | "production";
+export type ProjectProfileName = "minimal" | "webapp" | "realtime" | "full" | "production-critical";
+export type StorageBackend = "file" | "s3";
+export type StudioExposure = "disabled" | "internal";
+
+export type SupabaseService =
+  | "database"
+  | "auth"
+  | "rest"
+  | "gateway"
+  | "storage"
+  | "realtime"
+  | "functions"
+  | "studio"
+  | "analytics";
+
+export interface ProjectIdentity {
+  id: string;
+  environment: ProjectEnvironment;
+  displayName?: string;
+}
+
+export interface SupabaseVersionSpec {
+  release?: string;
+  postgresMajor?: 15 | 17;
+}
+
+export interface FeatureSpec {
+  auth?: boolean;
+  rest?: boolean;
+  storage?: boolean;
+  realtime?: boolean;
+  functions?: boolean;
+  studio?: StudioExposure;
+  analytics?: boolean;
+}
+
+export interface StorageSpec {
+  backend?: StorageBackend;
+  bucketPrefix?: string;
+  region?: string;
+}
+
+export interface BackupSpec {
+  logical?: "off" | "daily" | "hourly";
+  pitr?: boolean;
+  storageReplication?: boolean;
+  restoreDrill?: "off" | "weekly" | "monthly";
+}
+
+export interface SecuritySpec {
+  rlsRequired?: boolean;
+  databasePublic?: boolean;
+  studioPublic?: boolean;
+  requireHttps?: boolean;
+  allowLegacyApiKeys?: boolean;
+}
+
+export interface SupabaseFactoryManifest {
+  apiVersion: typeof FACTORY_API_VERSION;
+  project: ProjectIdentity;
+  profile: ProjectProfileName;
+  supabase?: SupabaseVersionSpec;
+  features?: FeatureSpec;
+  storage?: StorageSpec;
+  backup?: BackupSpec;
+  security?: SecuritySpec;
+}
+
+export interface ResolvedFactoryManifest {
+  apiVersion: typeof FACTORY_API_VERSION;
+  project: ProjectIdentity;
+  profile: ProjectProfileName;
+  supabase: {
+    release: string;
+    postgresMajor: 15 | 17;
+    gateway: "envoy";
+  };
+  services: readonly SupabaseService[];
+  storage: {
+    backend: StorageBackend;
+    bucketPrefix: string;
+    region: string;
+  };
+  backup: {
+    logical: "off" | "daily" | "hourly";
+    pitr: boolean;
+    storageReplication: boolean;
+    restoreDrill: "off" | "weekly" | "monthly";
+  };
+  security: {
+    rlsRequired: boolean;
+    databasePublic: false;
+    studioPublic: false;
+    requireHttps: boolean;
+    allowLegacyApiKeys: boolean;
+  };
+}
+
+export type LifecycleState =
+  | "REQUESTED"
+  | "VALIDATING"
+  | "PLANNED"
+  | "PROVISIONING"
+  | "CONFIGURING"
+  | "MIGRATING"
+  | "VERIFYING"
+  | "HEALTHY"
+  | "DEGRADED"
+  | "FAILED"
+  | "RESTORING"
+  | "UPGRADING"
+  | "DESTROY_PENDING";
+
+export type PlanOperationKind =
+  | "allocate-project"
+  | "checkout-supabase-release"
+  | "generate-project-secrets"
+  | "configure-network"
+  | "configure-storage"
+  | "configure-runtime"
+  | "start-services"
+  | "apply-migrations"
+  | "verify-health"
+  | "reconcile-services"
+  | "upgrade-project"
+  | "backup-project"
+  | "restore-project"
+  | "destroy-project";
+
+export interface PlanOperation {
+  id: string;
+  kind: PlanOperationKind;
+  summary: string;
+  requiresApproval: boolean;
+  dependsOn: readonly string[];
+}
+
+export interface ProvisioningPlan {
+  projectId: string;
+  desired: ResolvedFactoryManifest;
+  operations: readonly PlanOperation[];
+  cloudManagementCredentialsRequired: false;
+  exposesSecretValues: false;
+}
+
+export interface ObservedProjectState {
+  exists: boolean;
+  state?: LifecycleState;
+  release?: string;
+  postgresMajor?: 15 | 17;
+  services?: readonly SupabaseService[];
+  healthy?: boolean;
+}
+
+export interface ProjectRecord {
+  id: string;
+  desired: ResolvedFactoryManifest;
+  state: LifecycleState;
+  createdAt: string;
+  updatedAt: string;
+  publicUrl?: string;
+  publishableKeyConfigured: boolean;
+  secretKeyConfigured: boolean;
+  databaseCredentialConfigured: boolean;
+  lastBackupAt?: string;
+  lastRestoreDrillAt?: string;
+}
