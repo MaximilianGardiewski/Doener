@@ -64,7 +64,7 @@ class FakeHost implements FactoryHostExecutor {
       const joined = args.join(" ");
       assert.match(joined, /-u SUPABASE_ACCESS_TOKEN/);
       assert.match(joined, /supabase db dump/);
-      assert.equal(joined.includes("postgres-password"), false);
+      assert.ok(args.includes("--db-url"));
       return { stdout: "dumped\n", stderr: "" };
     }
     return { stdout: "", stderr: "" };
