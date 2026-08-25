@@ -8,12 +8,12 @@ import {
   renderFactoryComposeOverride,
   resolveDockerRuntimeLayout,
 } from "./docker-compose.ts";
-import type { ResolvedFactoryManifest } from "./types.ts";
+import type { ResolvedFactoryManifest, SupabaseService } from "./types.ts";
 
 const UPSTREAM_REPO = "https://github.com/supabase/supabase.git";
 const MIN_COMPOSE = [2, 24, 4] as const;
 
-const GENERATED_SECRET_KEYS = [
+const REQUIRED_GENERATED_SECRET_KEYS = [
   "POSTGRES_PASSWORD",
   "JWT_SECRET",
   "ANON_KEY",
@@ -29,6 +29,9 @@ const GENERATED_SECRET_KEYS = [
   "REALTIME_DB_ENC_KEY",
   "VAULT_ENC_KEY",
   "PG_META_CRYPTO_KEY",
+] as const;
+
+const OPTIONAL_GENERATED_SECRET_KEYS = [
   "LOGFLARE_PUBLIC_ACCESS_TOKEN",
   "LOGFLARE_PRIVATE_ACCESS_TOKEN",
   "S3_PROTOCOL_ACCESS_KEY_ID",
@@ -67,7 +70,7 @@ export interface DockerRuntimeState {
   release: string;
   upstreamCommit: string;
   postgresMajor: 15 | 17;
-  services: readonly string[];
+  services: readonly SupabaseService[];
   publicUrl: string;
   preparedAt: string;
 }
@@ -77,13 +80,13 @@ export interface PreparedDockerRuntime {
   generatedSecretRefs: Readonly<Record<string, SecretRef>>;
 }
 
-function semverParts(value: string): [number, number, number] {
+export function parseComposeVersion(value: string): [number, number, number] {
   const match = value.match(/(\d+)\.(\d+)\.(\d+)/);
   if (!match) throw new Error(`could not parse Docker Compose version: ${value}`);
   return [Number(match[1]), Number(match[2]), Number(match[3])];
 }
 
-function atLeast(current: readonly number[], minimum: readonly number[]): boolean {
+export function versionAtLeast(current: readonly number[], minimum: readonly number[]): boolean {
   for (let i = 0; i < 3; i += 1) {
     if ((current[i] ?? 0) > (minimum[i] ?? 0)) return true;
     if ((current[i] ?? 0) < (minimum[i] ?? 0)) return false;
@@ -103,19 +106,36 @@ function trimSlash(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
+function optionalEnvValues(source: string, keys: readonly string[]): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const key of keys) {
+    const match = source.match(new RegExp(`^${key}=(.+)$`, "m"));
+    if (match?.[1]) values[key] = match[1];
+  }
+  return values;
+}
+
 export class DockerRuntimePreparer {
+  readonly host: FactoryHostExecutor;
+  readonly secretStore: SecretStore;
+  readonly now: () => Date;
+
   constructor(
-    readonly host: FactoryHostExecutor,
-    readonly secretStore: SecretStore,
-    readonly now: () => Date = () => new Date(),
-  ) {}
+    host: FactoryHostExecutor,
+    secretStore: SecretStore,
+    now: () => Date = () => new Date(),
+  ) {
+    this.host = host;
+    this.secretStore = secretStore;
+    this.now = now;
+  }
 
   async checkPrerequisites(): Promise<void> {
     await this.host.exec("git", ["--version"]);
     await this.host.exec("sh", ["--version"]).catch(async () => this.host.exec("sh", ["-c", "exit 0"]));
     const compose = await this.host.exec("docker", ["compose", "version", "--short"]);
-    const version = semverParts(compose.stdout.trim() || compose.stderr.trim());
-    if (!atLeast(version, MIN_COMPOSE)) {
+    const version = parseComposeVersion(compose.stdout.trim() || compose.stderr.trim());
+    if (!versionAtLeast(version, MIN_COMPOSE)) {
       throw new Error(`Docker Compose >= ${MIN_COMPOSE.join(".")} is required for deterministic Factory overrides`);
     }
   }
@@ -220,7 +240,10 @@ export class DockerRuntimePreparer {
       }
     }
 
-    const generated = requireEnvValues(env, GENERATED_SECRET_KEYS);
+    const generated = {
+      ...requireEnvValues(env, REQUIRED_GENERATED_SECRET_KEYS),
+      ...optionalEnvValues(env, OPTIONAL_GENERATED_SECRET_KEYS),
+    };
     const refs: Record<string, SecretRef> = {};
     for (const [key, value] of Object.entries(generated)) {
       refs[key] = await this.secretStore.put(`projects/${manifest.project.id}/supabase/${key}`, value);
@@ -236,7 +259,6 @@ export class DockerRuntimePreparer {
     await this.#bootstrapOfficialRuntime(input);
     const generatedSecretRefs = await this.#configureRuntime(input);
 
-    // Resolve/validate the merged Compose model before images are started.
     await this.host.exec("docker", ["compose", "config", "--quiet"], { cwd: input.placement.projectRoot });
 
     const layout = resolveDockerRuntimeLayout(input.manifest, {
