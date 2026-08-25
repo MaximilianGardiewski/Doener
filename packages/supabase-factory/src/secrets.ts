@@ -38,12 +38,13 @@ function validateKey(key: string): void {
  */
 export class EncryptedJsonSecretStore implements SecretStore {
   readonly name = "encrypted-json-v1";
+  readonly path: string;
+  readonly #masterKey: Uint8Array;
 
-  constructor(
-    readonly path: string,
-    private readonly masterKey: Uint8Array,
-  ) {
+  constructor(path: string, masterKey: Uint8Array) {
     if (masterKey.byteLength !== 32) throw new Error("secret-store master key must be exactly 32 bytes");
+    this.path = path;
+    this.#masterKey = masterKey;
   }
 
   async #readPlain(): Promise<Record<string, string>> {
@@ -60,7 +61,7 @@ export class EncryptedJsonSecretStore implements SecretStore {
       throw new Error("unsupported encrypted secret-store format");
     }
 
-    const decipher = createDecipheriv("aes-256-gcm", this.masterKey, Buffer.from(payload.iv, "base64"));
+    const decipher = createDecipheriv("aes-256-gcm", this.#masterKey, Buffer.from(payload.iv, "base64"));
     decipher.setAuthTag(Buffer.from(payload.authTag, "base64"));
     const plaintext = Buffer.concat([
       decipher.update(Buffer.from(payload.ciphertext, "base64")),
@@ -78,7 +79,7 @@ export class EncryptedJsonSecretStore implements SecretStore {
 
   async #writePlain(values: Record<string, string>): Promise<void> {
     const iv = randomBytes(12);
-    const cipher = createCipheriv("aes-256-gcm", this.masterKey, iv);
+    const cipher = createCipheriv("aes-256-gcm", this.#masterKey, iv);
     const ciphertext = Buffer.concat([cipher.update(JSON.stringify(values), "utf8"), cipher.final()]);
     const payload: EncryptedFilePayload = {
       version: 1,
