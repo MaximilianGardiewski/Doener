@@ -14,6 +14,7 @@ import {
   type HostCommandOptions,
   type HostCommandResult,
   type ProjectRuntimeBindingProvider,
+  type PublicEndpointVerifier,
   type SecretRef,
   type SecretStore,
 } from "../src/index.ts";
@@ -95,10 +96,33 @@ class FakeRuntime implements DockerRuntimeController {
   async readState(): Promise<DockerRuntimeState | undefined> { return this.state; }
 }
 
-test("Docker provider allocates, resolves bindings, starts runtime and reports only credential status", async () => {
+class FakePublicEndpointVerifier implements PublicEndpointVerifier {
+  healthy = true;
+  calls = 0;
+
+  async verify(input: Parameters<PublicEndpointVerifier["verify"]>[0]) {
+    this.calls += 1;
+    assert.match(input.publicUrl, /^https:\/\//);
+    assert.match(input.publishableKey, /SUPABASE_PUBLISHABLE_KEY/);
+    assert.match(input.secretKey, /SUPABASE_SECRET_KEY/);
+    return {
+      healthy: this.healthy,
+      checks: {
+        httpsBoundary: this.healthy,
+        authHealth: this.healthy,
+        restWithSecretKey: this.healthy,
+        apiKeyEnforcement: this.healthy,
+      },
+      authVersion: "v2.test",
+    };
+  }
+}
+
+test("Docker provider allocates, resolves bindings, starts runtime and requires public endpoint health", async () => {
   const secretStore = new MemorySecretStore();
   const fakeHost = new FakeHost();
   const runtime = new FakeRuntime(secretStore);
+  const publicEndpointVerifier = new FakePublicEndpointVerifier();
   let bindingCalls = 0;
   const bindings: ProjectRuntimeBindingProvider = {
     async resolve(manifest, _placement) {
@@ -125,6 +149,7 @@ test("Docker provider allocates, resolves bindings, starts runtime and reports o
     secretStore,
     bindings,
     runtimeFactory: () => runtime,
+    publicEndpointVerifier,
   });
   const plan = planProject({
     apiVersion: FACTORY_API_VERSION,
@@ -139,6 +164,7 @@ test("Docker provider allocates, resolves bindings, starts runtime and reports o
   assert.equal(result.databaseCredentialConfigured, true);
   assert.equal(bindingCalls, 1);
   assert.equal(runtime.starts, 1);
+  assert.ok(publicEndpointVerifier.calls >= 1);
   assert.match(result.publicUrl ?? "", /^https:\/\/api\.provider-app/);
 
   const observed = await provider.observe("provider-app");
@@ -147,10 +173,53 @@ test("Docker provider allocates, resolves bindings, starts runtime and reports o
   assert.equal(observed.upstreamCommit, plan.desired.supabase.upstreamCommit);
 });
 
+test("running containers remain DEGRADED when the public Envoy path is unhealthy", async () => {
+  const secretStore = new MemorySecretStore();
+  const fakeHost = new FakeHost();
+  const runtime = new FakeRuntime(secretStore);
+  runtime.state = {
+    version: 1,
+    projectId: "degraded-app",
+    hostId: "node-a",
+    apiGatewayPort: 18000,
+    composeProjectName: "sbf-degraded-app",
+    realtimeTenantName: "sbf-degraded-app",
+    release: "self-hosted/v0.8.0",
+    upstreamCommit: "241bb11c0627f2981746d37033f57dbfa81d29b0",
+    postgresMajor: 17,
+    services: ["database", "auth", "rest", "gateway"],
+    publicUrl: "https://api.degraded-app.example.invalid",
+    preparedAt: "2026-08-26T00:00:00.000Z",
+  };
+  for (const key of ["SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY", "POSTGRES_PASSWORD"]) {
+    await secretStore.put(`projects/degraded-app/supabase/${key}`, `generated-${key}`);
+  }
+  const placementStore = new MemoryPlacementStore();
+  await placementStore.put({ projectId: "degraded-app", hostId: "node-a", projectRoot: "/srv/sbf/degraded-app", apiGatewayPort: 18000 });
+  const publicEndpointVerifier = new FakePublicEndpointVerifier();
+  publicEndpointVerifier.healthy = false;
+  const provider = new DockerComposeInfrastructureProvider({
+    scheduler: new ProjectScheduler([{
+      id: "node-a", enabled: true, projectRoot: "/srv/sbf", gatewayPortStart: 18000, gatewayPortEnd: 18005, maxProjects: 6,
+    }], placementStore),
+    hosts: new HostExecutorRegistry([fakeHost]),
+    secretStore,
+    bindings: { async resolve() { return { endpoints: { publicUrl: runtime.state!.publicUrl, siteUrl: "https://degraded-app.example.invalid" } }; } },
+    runtimeFactory: () => runtime,
+    publicEndpointVerifier,
+  });
+
+  const observed = await provider.observe("degraded-app");
+  assert.equal(observed.exists, true);
+  assert.equal(observed.healthy, false);
+  assert.equal(observed.state, "DEGRADED");
+});
+
 test("Docker provider refuses upgrade operations even when generic apply is called", async () => {
   const secretStore = new MemorySecretStore();
   const fakeHost = new FakeHost();
   const runtime = new FakeRuntime(secretStore);
+  const publicEndpointVerifier = new FakePublicEndpointVerifier();
   runtime.state = {
     version: 1,
     projectId: "upgrade-app",
@@ -165,6 +234,9 @@ test("Docker provider refuses upgrade operations even when generic apply is call
     publicUrl: "https://api.upgrade-app.example.invalid",
     preparedAt: "2026-08-26T00:00:00.000Z",
   };
+  for (const key of ["SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY", "POSTGRES_PASSWORD"]) {
+    await secretStore.put(`projects/upgrade-app/supabase/${key}`, `generated-${key}`);
+  }
 
   const placementStore = new MemoryPlacementStore();
   await placementStore.put({ projectId: "upgrade-app", hostId: "node-a", projectRoot: "/srv/sbf/upgrade-app", apiGatewayPort: 18000 });
@@ -186,6 +258,7 @@ test("Docker provider refuses upgrade operations even when generic apply is call
       },
     },
     runtimeFactory: () => runtime,
+    publicEndpointVerifier,
   });
   const desired = {
     apiVersion: FACTORY_API_VERSION,
