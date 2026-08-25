@@ -6,7 +6,9 @@ import {
   ATOMIC_INGREDIENT_VISUALS,
   DONER_MEAT_VISUAL,
   FLATBREAD_VISUAL,
+  TOMATO_EXTRA_VISUAL,
   TOMATO_VISUAL,
+  atomicInstanceContribution,
   atomicInstanceCount,
   atomicInstancePlan,
   atomicProductFormContribution,
@@ -25,41 +27,58 @@ const commerce = await readFile(new URL("apps/mcello/public/motion/commerce.js",
 const motionCss = await readFile(new URL("apps/mcello/public/motion.css", root), "utf8");
 const sw = await readFile(new URL("apps/mcello/public/sw.js", root), "utf8");
 
-test("ingredient.tomato.slice has deterministic normal and extra instance plans", () => {
-  assert.equal(TOMATO_VISUAL.assetId, "ingredient.tomato.slice");
-  assert.equal(TOMATO_VISUAL.assetUrl, "/media/ingredients/ingredient.tomato.slice.png");
-  assert.equal(tomatoInstanceContribution("Tomate"), 3);
-  assert.equal(tomatoInstanceContribution("Extra Tomate"), 2);
+test("the tomato layer and its extra overlay have deterministic instance plans", () => {
+  assert.equal(TOMATO_VISUAL.assetId, "ingredient.tomato.layer");
+  assert.equal(TOMATO_VISUAL.assetUrl, "/media/ingredients/ingredient.tomato.layer.png");
+  assert.equal(TOMATO_EXTRA_VISUAL.assetId, "ingredient.tomato.layer.extra");
+  assert.equal(TOMATO_EXTRA_VISUAL.assetUrl, "/media/ingredients/ingredient.tomato.layer.extra.png");
+
+  /*
+   * D076 stores one governed master per role, so the base master already depicts
+   * the three slices that D075 rendered as three repeated instances. "Tomate" is
+   * therefore one instance, and "Extra Tomate" is a separate overlay master on
+   * its own host rather than two further instances of the base. The 3 -> 5 slice
+   * intent survives inside the imagery; the runtime contract is now 1 + 1.
+   */
+  assert.equal(tomatoInstanceContribution("Tomate"), 1);
   assert.equal(tomatoInstanceContribution("Getrocknete Tomaten"), 0);
-  assert.equal(tomatoInstanceCount(["Tomate"]), 3);
-  assert.equal(tomatoInstanceCount(["Tomate", "Extra Tomate"]), 5);
+  assert.equal(tomatoInstanceCount(["Tomate"]), 1);
+  assert.equal(tomatoInstanceCount(["Tomate", "Extra Tomate"]), 1, "extra never adds a second base instance");
+  assert.equal(atomicInstanceContribution(TOMATO_EXTRA_VISUAL, "Extra Tomate"), 1);
+  assert.equal(atomicInstanceContribution(TOMATO_EXTRA_VISUAL, "Tomate"), 0);
 
-  const normal = tomatoInstancePlan([], 3);
-  const extra = tomatoInstancePlan(normal.desiredKeys, 5);
-  assert.deepEqual(extra.desiredKeys.slice(0, 3), normal.desiredKeys);
-  assert.deepEqual(extra.addedKeys, ["ingredient.tomato.slice:3", "ingredient.tomato.slice:4"]);
-  assert.deepEqual(extra.removedKeys, []);
+  // Extra Tomate is one delta on its own host: 0 -> 1 -> 0 against a stable key.
+  const none = atomicInstancePlan(TOMATO_EXTRA_VISUAL, [], 0);
+  assert.deepEqual(none.desiredKeys, []);
 
-  const removed = tomatoInstancePlan(extra.desiredKeys, 3);
-  assert.deepEqual(removed.desiredKeys, normal.desiredKeys);
+  const added = atomicInstancePlan(TOMATO_EXTRA_VISUAL, none.desiredKeys, 1);
+  assert.deepEqual(added.desiredKeys, ["ingredient.tomato.layer.extra:0"]);
+  assert.deepEqual(added.addedKeys, ["ingredient.tomato.layer.extra:0"]);
+  assert.deepEqual(added.removedKeys, []);
+
+  const removed = atomicInstancePlan(TOMATO_EXTRA_VISUAL, added.desiredKeys, 0);
+  assert.deepEqual(removed.desiredKeys, []);
   assert.deepEqual(removed.addedKeys, []);
-  assert.deepEqual(removed.removedKeys, ["ingredient.tomato.slice:3", "ingredient.tomato.slice:4"]);
-  assert.deepEqual(tomatoInstancePlan([], 5), tomatoInstancePlan([], 5));
-  assert.deepEqual(atomicInstancePlan(TOMATO_VISUAL, [], 5), tomatoInstancePlan([], 5));
-  assert.equal(atomicInstanceCount(TOMATO_VISUAL, ["Tomate", "Extra Tomate"]), 5);
+  assert.deepEqual(removed.removedKeys, ["ingredient.tomato.layer.extra:0"]);
+
+  // Re-adding reuses the same key, so a rapid reversal cannot orphan a node.
+  assert.deepEqual(atomicInstancePlan(TOMATO_EXTRA_VISUAL, [], 1), added);
+  assert.deepEqual(tomatoInstancePlan([], 1), tomatoInstancePlan([], 1));
+  assert.deepEqual(atomicInstancePlan(TOMATO_VISUAL, [], 1), tomatoInstancePlan([], 1));
+  assert.equal(atomicInstanceCount(TOMATO_VISUAL, ["Tomate", "Extra Tomate"]), 1);
 });
 
-test("the existing FoodStage instantiates one canonical PNG instead of a finished tomato layer", () => {
+test("the FoodStage instantiates the governed tomato layer master as one SVG image", () => {
   assert.match(atomicRenderer, /createElementNS\(SVG_NS, "image"\)/);
   assert.match(atomicRenderer, /image\.setAttribute\("href", visual\.assetUrl\)/);
-  assert.match(renderer, /data-atomic-ingredient-host="ingredient\.tomato\.slice"/);
+  assert.match(renderer, /data-atomic-ingredient-host="ingredient\.tomato\.layer"/);
   assert.match(atomicRenderer, /wrapper\.dataset\.ingredientInstanceKey/);
   assert.doesNotMatch(renderer, /mc-food-layer--tomate"[^\n]*<ellipse/);
   assert.doesNotMatch(renderer + atomicRenderer, /Math\.random/);
   assert.doesNotMatch(renderer + atomicRenderer + commerce, /priceDeltaCents|configuredPrice|basePrice|availability|soldOut/);
   assert.match(sw, /"\/ingredient-visuals\.js"/);
   const appShell = sw.slice(sw.indexOf("const APP_SHELL"), sw.indexOf("self.addEventListener(\"install\""));
-  assert.doesNotMatch(appShell, /ingredient\.tomato\.slice\.png/, "large ingredient media must cache on demand");
+  assert.doesNotMatch(appShell, /ingredient\.tomato\.layer\.png/, "large ingredient media must cache on demand");
 });
 
 test("static slot transforms and delta animation live on separate SVG nodes", () => {
@@ -81,16 +100,24 @@ test("static slot transforms and delta animation live on separate SVG nodes", ()
 
 test("governed ingredient families are ready while host filtering prevents unbound requests", () => {
   const ready = ATOMIC_INGREDIENT_VISUALS.filter((visual) => visual.runtimeReady);
+  /*
+   * D076 layer contract, in registry order. Kept as an explicit literal rather
+   * than derived from the export, so an accidental registry edit fails here
+   * instead of silently agreeing with itself.
+   */
   const expectedAssetIds = [
-    "ingredient.tomato.slice",
-    "ingredient.cucumber.slice",
-    "ingredient.lettuce.iceberg.leaf",
-    "ingredient.onion.ring",
-    "ingredient.flatbread.pocket",
-    "ingredient.sauce.garlic.ribbon",
-    "ingredient.sauce.curry.ribbon",
-    "ingredient.meat.doner.shaving",
-    "ingredient.falafel.ball",
+    "ingredient.flatbread.base",
+    "ingredient.sauce.garlic.layer",
+    "ingredient.sauce.curry.layer",
+    "ingredient.sauce.hot.layer",
+    "ingredient.tomato.layer",
+    "ingredient.tomato.layer.extra",
+    "ingredient.cucumber.layer",
+    "ingredient.onion.layer",
+    "ingredient.meat.doner.layer",
+    "ingredient.falafel.layer",
+    "ingredient.lettuce.layer",
+    "ingredient.flatbread.lid",
   ];
   assert.deepEqual(ATOMIC_INGREDIENT_VISUALS.map((visual) => visual.assetId), expectedAssetIds);
   assert.deepEqual(ready.map((visual) => visual.assetId), expectedAssetIds);
@@ -110,28 +137,54 @@ test("flatbread is driven only by explicit product-form metadata", () => {
   assert.doesNotMatch(renderer, /productName|includes\([^\n]*(?:fladenbrot|yufka)/i);
 });
 
-test("all nine atomic families have separate fallback-safe hosts", () => {
+test("all twelve layer families have separate hosts and keep their vector fallback where one exists", () => {
   const hostIds = [...renderer.matchAll(/data-atomic-ingredient-host="([^"]+)"/g)]
     .map((match) => match[1]);
-  assert.deepEqual(hostIds.sort(), [
-    "ingredient.cucumber.slice",
-    "ingredient.falafel.ball",
-    "ingredient.flatbread.pocket",
-    "ingredient.lettuce.iceberg.leaf",
-    "ingredient.meat.doner.shaving",
-    "ingredient.onion.ring",
-    "ingredient.sauce.curry.ribbon",
-    "ingredient.sauce.garlic.ribbon",
-    "ingredient.tomato.slice",
-  ].sort());
-  assert.equal(new Set(hostIds).size, 9);
-  assert.match(renderer, /ingredient\.lettuce\.iceberg\.leaf"><path/);
-  assert.match(renderer, /ingredient\.meat\.doner\.shaving">\s*<path/);
-  assert.match(renderer, /ingredient\.falafel\.ball">\s*<circle/);
-  assert.match(renderer, /ingredient\.cucumber\.slice"><g/);
-  assert.match(renderer, /ingredient\.onion\.ring"><g/);
-  assert.match(renderer, /ingredient\.sauce\.curry\.ribbon"><path/);
-  assert.match(renderer, /ingredient\.sauce\.garlic\.ribbon"><path/);
+  assert.deepEqual(hostIds.slice().sort(), [
+    "ingredient.cucumber.layer",
+    "ingredient.falafel.layer",
+    "ingredient.flatbread.base",
+    "ingredient.flatbread.lid",
+    "ingredient.lettuce.layer",
+    "ingredient.meat.doner.layer",
+    "ingredient.onion.layer",
+    "ingredient.sauce.curry.layer",
+    "ingredient.sauce.garlic.layer",
+    "ingredient.sauce.hot.layer",
+    "ingredient.tomato.layer",
+    "ingredient.tomato.layer.extra",
+  ]);
+  assert.equal(new Set(hostIds).size, 12, "every layer role owns its own host");
+
+  /*
+   * Filling and sauce hosts keep their inline illustration, so an option that
+   * never resolves to a governed master still renders something. The CSS below
+   * hides it again as soon as the atomic runtime reports ready.
+   */
+  assert.match(renderer, /ingredient\.lettuce\.layer"><path/);
+  assert.match(renderer, /ingredient\.meat\.doner\.layer">\s*<path/);
+  assert.match(renderer, /ingredient\.falafel\.layer">\s*<circle/);
+  assert.match(renderer, /ingredient\.cucumber\.layer"><g/);
+  assert.match(renderer, /ingredient\.onion\.layer"><g/);
+  assert.match(renderer, /ingredient\.sauce\.curry\.layer"><path/);
+  assert.match(renderer, /ingredient\.sauce\.garlic\.layer"><path/);
+  assert.match(renderer, /ingredient\.sauce\.hot\.layer"><path/);
+
+  /*
+   * Bread and tomato hosts are deliberately empty. Under D076 the bread is
+   * driven by product-form metadata and falls back to the separate vector
+   * vessel, not to art inside the host; the tomato layers have no schematic
+   * stand-in that would read as anything but a defect inside a photoreal stack.
+   */
+  for (const emptyHost of [
+    "ingredient.flatbread.base",
+    "ingredient.flatbread.lid",
+    "ingredient.tomato.layer",
+    "ingredient.tomato.layer.extra",
+  ]) {
+    assert.match(renderer, new RegExp(`data-atomic-ingredient-host="${emptyHost.replace(/\./g, "\\.")}"></g>`));
+  }
+
   assert.match(rendererCss, /> :not\(\.mc-ingredient-instance\) \{\s*display: none;/);
   assert.match(rendererCss, /data-builder-product-form="flatbread-pocket"[\s\S]*data-flatbread-vector-fallback/);
 });

@@ -45,7 +45,9 @@ test("flatbread uses explicit product-form metadata while Yufka never binds the 
   assert.match(js, /const BUILDER_PRODUCT_FORMS = new Set\(\["flatbread-pocket", "yufka-wrap"\]\)/);
   assert.match(js, /modal\?\.dataset\.builderProductForm/);
   assert.match(js, /productForm === "flatbread-pocket"/);
-  assert.match(js, /data-atomic-ingredient-host="ingredient\.flatbread\.pocket"/);
+  // D076 splits the bread into two masters so the filling sits between them.
+  assert.match(js, /data-atomic-ingredient-host="ingredient\.flatbread\.base"/);
+  assert.match(js, /data-atomic-ingredient-host="ingredient\.flatbread\.lid"/);
   assert.match(js, /productForm,/);
   assert.match(css, /data-builder-product-form="flatbread-pocket"/);
   assert.match(css, /data-flatbread-atomic-ready="true"/);
