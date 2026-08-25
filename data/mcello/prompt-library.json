@@ -97,6 +97,19 @@
       "prompt": "Create exactly ONE isolated spicy sauce layer for the Mcello exploded döner builder. A single appetizing chili-red to warm red-orange sauce ribbon and controlled drizzle shape, broad horizontal silhouette designed to lie across visible döner filling, viewed from the same top-three-quarter camera as the other Mcello ingredient layers. Adult editorial food illustration with tactile ink-and-paper character, restrained spicy red-orange palette with subtle warm highlights, restrained charcoal edge definition, clean readable outline and generous empty neutral space around the single sauce subject so it can be background-removed into a transparent 2.5D layer. No container, no spoon, no plate, no bread and no other ingredients.",
       "negativePrompt": "multiple sauces, curry yellow sauce, white garlic sauce, sauce cup, bottle, squeeze bottle, spoon, plate, whole döner, bread, meat, lettuce, tomato, cucumber, onion, whole chili pepper as main subject, flames, hands, people, text, logo, watermark, neon, purple, blue glow, glossy plastic, photorealistic stock photo",
       "generationRule": "Generate this asset alone. Do not batch Scharf with Curry or Knoblauch."
+    },
+    {
+      "id": "tomato-slice-layer-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "executed-qa-approved-runtime-demo",
+      "usage": "interactive-builder-layer-candidate",
+      "targetSlot": "fresh.tomato",
+      "assetKind": "ingredient-layer",
+      "requestId": "b44d4921-1810-4b31-9a82-d26ead463024",
+      "prompt": "Exactly ONE isolated fresh tomato slice for a premium photorealistic 2.5D Döner configurator ingredient asset. A single round red tomato cross-section slice, juicy translucent flesh, clearly visible seed chambers, natural moisture and realistic food texture, appetizing but not over-saturated. Camera: slightly elevated top-three-quarter view, matching an exploded Döner ingredient stack. Soft premium studio lighting from upper left, gentle dimensional highlights, crisp realistic edges. Center the slice with generous clean neutral empty space around it so it can be cleanly cut out and reused as a master asset. No plate, no bread, no kebab, no salad, no cucumber, no onion, no sauce, no hands, no utensils, no packaging, no text, no logo. Generate only the single tomato slice.",
+      "negativePrompt": "multiple tomato slices, whole tomato, vine, stem, plate, bowl, bread, döner, kebab, meat, lettuce, cucumber, onion, sauce, hands, utensils, table props, text, logo, watermark, illustration, cartoon, CGI, hard black shadow, cropped edges",
+      "generationRule": "Generate exactly one tomato-slice master. Reuse the same approved master deterministically for multiple visible slices in the presentation layer instead of generating a baked multi-slice composition.",
+      "qaNote": "Passed single-subject, transparent-cutout, top-three-quarter camera and reusable-master QA; published to a local runtime path for presentation-only demo scope."
     }
   ]
 }

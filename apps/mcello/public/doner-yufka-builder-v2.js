@@ -172,7 +172,11 @@ function stageMarkup() {
           <g fill="#d5b56a" opacity=".7"><circle cx="223" cy="294" r="5"/><circle cx="248" cy="318" r="4"/><circle cx="326" cy="264" r="5"/><circle cx="352" cy="294" r="4"/><circle cx="431" cy="280" r="5"/><circle cx="297" cy="370" r="5"/><circle cx="387" cy="374" r="5"/></g>
         </g>
 
-        <g class="mc-food-layer mc-food-layer--tomate" data-food-layer="Tomate"><g fill="#e9583f" stroke="#a9342d" stroke-width="4"><ellipse cx="222" cy="368" rx="60" ry="26" transform="rotate(-12 222 368)"/><ellipse cx="356" cy="352" rx="64" ry="27" transform="rotate(7 356 352)"/><ellipse cx="486" cy="374" rx="60" ry="26" transform="rotate(-8 486 374)"/></g><g fill="#ffc9a4" opacity=".7"><ellipse cx="222" cy="368" rx="30" ry="8" transform="rotate(-12 222 368)"/><ellipse cx="356" cy="352" rx="32" ry="8" transform="rotate(7 356 352)"/><ellipse cx="486" cy="374" rx="30" ry="8" transform="rotate(-8 486 374)"/></g></g>
+        <g class="mc-food-layer mc-food-layer--tomate" data-food-layer="Tomate" data-asset-id="fresh-tomato-slice-master-v1">
+          <image class="mc-fresh-raster mc-fresh-raster--tomato" href="/assets/ingredients/fresh/tomato-slice-master.png" x="176" y="334" width="112" height="77" transform="rotate(-12 232 372)" preserveAspectRatio="xMidYMid meet"/>
+          <image class="mc-fresh-raster mc-fresh-raster--tomato" href="/assets/ingredients/fresh/tomato-slice-master.png" x="298" y="317" width="118" height="81" transform="rotate(7 357 357)" preserveAspectRatio="xMidYMid meet"/>
+          <image class="mc-fresh-raster mc-fresh-raster--tomato" href="/assets/ingredients/fresh/tomato-slice-master.png" x="430" y="340" width="112" height="77" transform="rotate(-8 486 378)" preserveAspectRatio="xMidYMid meet"/>
+        </g>
 
         <g class="mc-food-layer mc-food-layer--gurke" data-food-layer="Gurke"><g fill="#a7ce65" stroke="#477739" stroke-width="5"><ellipse cx="212" cy="418" rx="48" ry="23" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="49" ry="23" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="48" ry="23" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="44" ry="22" transform="rotate(-10 536 404)"/></g><g fill="#d7eca0" opacity=".9"><ellipse cx="212" cy="418" rx="29" ry="11" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="29" ry="11" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="29" ry="11" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="26" ry="10" transform="rotate(-10 536 404)"/></g></g>
 
