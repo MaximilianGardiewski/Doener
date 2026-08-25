@@ -235,12 +235,18 @@ export const STACK_PAINT_ORDER = Object.freeze([
 ]);
 
 /* Distance between two neighbouring layers in the exploded view, in SVG user units. */
-export const STACK_EXPLODE_GAP = 9;
+export const STACK_EXPLODE_GAP = 34;
 
 /*
  * Derived from the layer's rank in the paint order rather than stored per slot,
  * so adding or reordering a layer can never leave a hand-tuned offset behind
  * that no longer matches the stack. Negative moves up, positive moves down.
+ *
+ * Pass the layers that are actually on screen as `order`. Ranking against the
+ * full twelve would space the visible layers by the ranks of the ones that are
+ * absent, leaving gaps where an unselected ingredient would have been; ranking
+ * against the visible set spreads them evenly, which is what an exploded view
+ * is for.
  */
 export function stackExplodeOffset(assetId, order = STACK_PAINT_ORDER) {
   const index = order.indexOf(assetId);

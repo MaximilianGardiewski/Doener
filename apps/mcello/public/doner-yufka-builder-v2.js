@@ -145,7 +145,7 @@ function acceptedOptionLabels(groupMap) {
 }
 
 /* Plate the technical HUD is drawn on, in the stage's own viewBox coordinates. */
-const HUD_PLATE = { x: 148, y: 192, width: 464, height: 396, radius: 22 };
+const HUD_PLATE = { x: 148, y: 146, width: 464, height: 480, radius: 22 };
 
 /*
  * Blueprint HUD, drawn FIRST inside the stage SVG so every layer master paints
@@ -345,7 +345,7 @@ function wrapStackShells(root) {
     const shell = document.createElementNS(SVG_NS, "g");
     shell.setAttribute("class", "mc-stack-shell");
     shell.dataset.stackShell = assetId;
-    shell.style.setProperty("--shell-offset", `${stackExplodeOffset(assetId)}px`);
+    // Offset is assigned per update, once the visible set is known -- see applyStackOffsets.
     host.before(shell);
     shell.append(host);
   }
@@ -423,9 +423,23 @@ function setImageVisibility(active) {
  * aligned on one axis by construction. A readout that invented numbers would be
  * exactly the kind of fake authenticity D068 rules out.
  */
+/*
+ * Spreads the layers that are actually on screen evenly around the centre.
+ * Ranking against the full twelve would leave a gap wherever an unselected
+ * ingredient would have sat, so the fan-out is computed against the visible
+ * set instead and re-applied whenever the selection changes.
+ */
+function applyStackOffsets(root, present) {
+  for (const shell of root.querySelectorAll("[data-stack-shell]")) {
+    const offset = stackExplodeOffset(shell.dataset.stackShell, present);
+    shell.style.setProperty("--shell-offset", `${offset}px`);
+  }
+}
+
 function updateHudReadout(root, counts) {
   const present = STACK_PAINT_ORDER.filter((assetId) => (counts.get(assetId) || 0) > 0);
-  const span = stackExplodeSpan(present);
+  applyStackOffsets(root, present);
+  const span = stackExplodeSpan(present, present);
   const write = (selector, value) => {
     const node = root.querySelector(selector);
     if (node) node.textContent = value;

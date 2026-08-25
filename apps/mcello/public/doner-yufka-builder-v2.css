@@ -295,12 +295,30 @@
  * composes the nested transforms, so an ingredient added while the stack is
  * open inherits the offset without extra code.
  */
+/*
+ * Order matters. CSS applies the right-hand function first, so the layer is
+ * scaled about the shared stack centre and only then moved by its full offset.
+ * Written the other way round the separation would shrink along with the
+ * layers, and the fan-out would barely read.
+ */
 .mc-stack-shell {
-  transform: translateY(calc(var(--stack-explode, 0) * var(--shell-offset, 0px)));
+  transform-box: view-box;
+  transform-origin: 380px 347px;
+  transform:
+    translateY(calc(var(--stack-explode, 0) * var(--shell-offset, 0px)))
+    scale(var(--stack-scale, 1));
   transition: transform 620ms cubic-bezier(.22, .72, .24, 1);
 }
 
-.mc-food-stage-v4[data-stack-state="exploded"] { --stack-explode: 1; }
+/*
+ * Fanning out needs more room than the assembled stack, and the stage is close
+ * to square while an exploded stack wants portrait. Shrinking the layers while
+ * keeping the full offsets buys that room without a second canvas size.
+ */
+.mc-food-stage-v4[data-stack-state="exploded"] {
+  --stack-explode: 1;
+  --stack-scale: .72;
+}
 
 .mc-stage-stack-toggle {
   justify-self: center;

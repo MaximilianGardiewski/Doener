@@ -101,7 +101,11 @@ test("the blueprint HUD is decorative and cannot take a tap from a modifier opti
 
   // The readout is written from stage state, never hard-coded into the markup.
   assert.match(js, /function updateHudReadout\(root, counts\)/);
-  assert.match(js, /stackExplodeSpan\(present\)/);
+  assert.match(js, /stackExplodeSpan\(present, present\)/);
+  // The fan-out ranks against the visible layers, not all twelve, so an
+  // unselected ingredient cannot leave a hole in the exploded stack.
+  assert.match(js, /function applyStackOffsets\(root, present\)/);
+  assert.match(js, /stackExplodeOffset\(shell\.dataset\.stackShell, present\)/);
   assert.doesNotMatch(js, /Gesamthöhe\s*\d/);
 
   /*
@@ -124,8 +128,20 @@ test("the exploded stack is presentation-only and never rides on the atomic host
    */
   assert.match(js, /function wrapStackShells\(root\)/);
   assert.match(js, /shell\.dataset\.stackShell = assetId/);
-  assert.match(css, /\.mc-stack-shell \{[\s\S]*?transform: translateY\(calc\(var\(--stack-explode, 0\) \* var\(--shell-offset, 0px\)\)\)/);
-  assert.match(css, /\[data-stack-state="exploded"\] \{ --stack-explode: 1; \}/);
+  const shellStart = css.indexOf(".mc-stack-shell {");
+  const shellRule = css.slice(shellStart, css.indexOf("}", shellStart));
+  assert.match(shellRule, /translateY\(calc\(var\(--stack-explode, 0\) \* var\(--shell-offset, 0px\)\)\)/);
+  /*
+   * Separation must not shrink with the layers. CSS applies the right-hand
+   * function first, so scale has to come after translateY in the source for the
+   * layer to be scaled about the stack centre and then moved by its full offset.
+   */
+  assert.ok(
+    shellRule.indexOf("translateY(") < shellRule.indexOf("scale(var(--stack-scale"),
+    "translateY must precede scale so the offset is applied unscaled",
+  );
+  const explodedRule = css.slice(css.indexOf(".mc-food-stage-v4[data-stack-state=\"exploded\"] {"));
+  assert.match(explodedRule, /--stack-explode: 1;/);
 
   // Tap is always sufficient (D065), and the control reports its state.
   assert.match(js, /data-stage-stack-toggle/);
