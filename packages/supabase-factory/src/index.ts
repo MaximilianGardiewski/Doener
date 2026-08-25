@@ -4,3 +4,4 @@ export * from "./planner.ts";
 export * from "./registry.ts";
 export * from "./provider.ts";
 export * from "./control-plane.ts";
+export * from "./docker-compose.ts";
