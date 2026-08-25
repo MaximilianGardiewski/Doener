@@ -1,0 +1,61 @@
+name: Mcello ingest Adobe sauce assets
+
+on:
+  push:
+    branches:
+      - feat/mcello-notebook-design-slice-v1
+    paths:
+      - .github/workflows/mcello-ingest-adobe-sauce-assets.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mcello-ingest-adobe-sauce-assets
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/mcello-notebook-design-slice-v1
+          fetch-depth: 0
+
+      - name: Download approved Adobe sauce masters
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="apps/mcello/public/assets/ingredients/sauces"
+          mkdir -p "$target"
+
+          curl --fail --location --retry 3 --retry-all-errors \
+            --output "$target/sauce-curry-master.png" \
+            "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:fd525d71-c2e5-41ed-b51c-24da0f590dac"
+
+          curl --fail --location --retry 3 --retry-all-errors \
+            --output "$target/sauce-garlic-master.png" \
+            "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:f2b9d109-b14a-4690-93cb-2d43d36216aa"
+
+          curl --fail --location --retry 3 --retry-all-errors \
+            --output "$target/sauce-spicy-master.png" \
+            "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:6a1e0f75-77f4-487f-bc04-02dba0fd81fc"
+
+          for file in "$target"/*.png; do
+            file "$file"
+            file "$file" | grep -q "PNG image data"
+            test "$(stat -c%s "$file")" -gt 10000
+          done
+
+      - name: Commit governed runtime assets and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/mcello/public/assets/ingredients/sauces
+          git rm .github/workflows/mcello-ingest-adobe-sauce-assets.yml
+          git commit -m "assets(mcello): ingest Adobe sauce masters"
+          git push origin HEAD:feat/mcello-notebook-design-slice-v1
