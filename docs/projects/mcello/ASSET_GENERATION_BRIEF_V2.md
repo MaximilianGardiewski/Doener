@@ -28,9 +28,30 @@ Measured on 2026-08-25, in this session:
 
 | Surface | Text-to-image | Note |
 |---|---|---|
-| Adobe for creativity connector | No | Its own initialization document states generative capabilities are unavailable here; `image_generative_expand` is the single exception |
+| Adobe for creativity connector | No | Verified against the connector's full 89-tool permission list on 2026-08-25: it contains no text-to-image tool of any kind. See the capability note below |
 | Higgsfield / Recraft connector | No | `recraft_v4_1` is the right model and was priced at 8 credits per 2K image, but submission returns `Requires basic plan or higher` |
 | Any other connected service | No | They produce designs, diagrams or video, not isolated ingredient cutouts |
+
+### What the Adobe connector actually does, so nobody re-derives it
+
+Checked against the complete tool list, not the marketing copy. The connector is
+a full **conversion** pipeline and a zero-capability **generator**.
+
+- **Creating an image from a prompt: absent.** No tool in the list does it.
+- **`image_generative_expand` is generative but edge-bound.** Its only parameter is
+  `expandPixels` per side — there is no prompt. It extends what is already in the
+  frame; it cannot invent a subject. Useful for the onion layer that runs past the
+  frame edge, useless for a new layer.
+- **`image_fill_area` is not generative, despite the name.** It fills a masked
+  region with a *solid colour* at an opacity and blend mode — a fill layer, not a
+  Firefly fill. Do not plan around it as a generative step.
+- **Everything the asset pipeline needs is present:** `image_remove_background`
+  (verified at 2400 px with no downscale), the selection and mask tools,
+  `image_crop_and_resize` / `image_crop_to_bounds`, `image_apply_adjustments` and
+  the individual tone controls, `image_apply_auto_tone`, `image_apply_preset`,
+  `image_auto_straighten`, and `image_vectorize`.
+
+So the split is clean: generate elsewhere, convert here.
 
 So it runs in a Codex session whose connector exposes `image_generate`, in the Firefly web interface,
 or here once the Recraft plan is upgraded. `recraft_v4_1` is worth preferring if it becomes
