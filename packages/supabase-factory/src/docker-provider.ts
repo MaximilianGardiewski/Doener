@@ -24,10 +24,6 @@ function hasUpgrade(plan: ProvisioningPlan): boolean {
   return plan.operations.some((operation) => operation.kind === "upgrade-project");
 }
 
-function expectedConfigured(state: DockerRuntimeState, key: string): boolean {
-  return state.projectId.length > 0 && key.length > 0;
-}
-
 export class DockerComposeInfrastructureProvider implements InfrastructureProvider {
   readonly scheduler: ProjectScheduler;
   readonly hosts: HostExecutorRegistry;
@@ -113,13 +109,20 @@ export class DockerComposeInfrastructureProvider implements InfrastructureProvid
     const state = await runtime.readState(placement.projectRoot);
     if (!state) throw new Error(`project ${plan.projectId} runtime state disappeared after apply`);
 
+    const secretPrefix = `projects/${plan.projectId}/supabase`;
+    const [publishableKeyConfigured, secretKeyConfigured, databaseCredentialConfigured] = await Promise.all([
+      this.secretStore.has(`${secretPrefix}/SUPABASE_PUBLISHABLE_KEY`),
+      this.secretStore.has(`${secretPrefix}/SUPABASE_SECRET_KEY`),
+      this.secretStore.has(`${secretPrefix}/POSTGRES_PASSWORD`),
+    ]);
+
     return {
       projectId: plan.projectId,
       state: observed.healthy ? "HEALTHY" : "DEGRADED",
       publicUrl: state.publicUrl,
-      publishableKeyConfigured: expectedConfigured(state, "SUPABASE_PUBLISHABLE_KEY"),
-      secretKeyConfigured: expectedConfigured(state, "SUPABASE_SECRET_KEY"),
-      databaseCredentialConfigured: expectedConfigured(state, "POSTGRES_PASSWORD"),
+      publishableKeyConfigured,
+      secretKeyConfigured,
+      databaseCredentialConfigured,
     };
   }
 }
