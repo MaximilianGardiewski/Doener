@@ -160,7 +160,9 @@ function stageMarkup() {
       <g clip-path="url(#mcPocketClip)" transform="translate(0 4)">
         <path d="M150 268h460v230H150Z" fill="url(#mcBreadInner)" opacity=".82"/>
 
-        <g class="mc-food-layer mc-food-layer--salat" data-food-layer="Salat"><path d="M156 356c30-34 60-32 87-3 22-44 54-50 84-14 25-44 58-47 88-9 30-43 63-41 91 1 26-29 39-26 52 4v122H156Z" fill="#7fb04d" stroke="#4f7a34" stroke-width="5"/><path d="M206 372c48 14 90 32 125 56m48-52c-24 26-40 51-47 78m123-75c-24 19-41 44-51 73" fill="none" stroke="#b0d270" stroke-width="7" stroke-linecap="round" opacity=".7"/></g>
+        <g class="mc-food-layer mc-food-layer--salat" data-food-layer="Salat" data-asset-id="fresh-lettuce-layer-master-v1">
+          <image class="mc-fresh-raster mc-fresh-raster--lettuce" href="/assets/ingredients/fresh/lettuce-layer-master.png" x="170" y="312" width="420" height="183" preserveAspectRatio="xMidYMid meet"/>
+        </g>
 
         <g class="mc-food-layer mc-food-layer--protein mc-food-layer--fleisch" data-food-layer="Fleisch">
           <path d="M186 262c40-30 76-24 104 8l-26 68-86-16Z" fill="url(#mcMeat)" stroke="#5c2f22" stroke-width="4"/><path d="M284 238c42-21 81-9 107 28l-30 68-91-23Z" fill="#9b5033" stroke="#5c2f22" stroke-width="4"/><path d="M388 259c36-21 72-9 105 34l-37 59-85-25Z" fill="#823c29" stroke="#5c2f22" stroke-width="4"/><path d="M498 250c36-18 70-4 96 36l-38 56-83-26Z" fill="#a15b38" stroke="#5c2f22" stroke-width="4"/><path d="M240 332c41-17 79-5 111 37l-40 56-92-29Z" fill="#ab5c38" stroke="#5c2f22" stroke-width="4"/><path d="M352 331c42-18 86-5 125 38l-44 57-103-33Z" fill="#8b452e" stroke="#5c2f22" stroke-width="4"/>

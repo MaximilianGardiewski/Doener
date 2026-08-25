@@ -135,6 +135,32 @@ test("Zwiebel uses one governed local Adobe three-ring master with no Adobe runt
   assert.doesNotMatch(js + css, /photoshop-api|firefly\.adobe|short-url/i);
 });
 
+test("Salat uses one governed local Adobe horizontal master with no Adobe runtime dependency", async () => {
+  const id = "fresh-lettuce-layer-master-v1";
+  const publicPath = "/assets/ingredients/fresh/lettuce-layer-master.png";
+  const repoPath = "apps/mcello/public/assets/ingredients/fresh/lettuce-layer-master.png";
+  assert.ok(js.includes(`data-asset-id=\"${id}\"`));
+  assert.equal(js.split(`href=\"${publicPath}\"`).length - 1, 1, "the lettuce master should be rendered once");
+  assert.ok(sw.includes(publicPath));
+  const file = await stat(new URL(repoPath, root));
+  assert.ok(file.size > 10_000, `${repoPath} must be a real PNG asset`);
+  const manifestAsset = assetManifest.assets.find((asset) => asset.id === id);
+  assert.ok(manifestAsset, `${id} must be governed in the asset manifest`);
+  assert.equal(manifestAsset.status, "approved-runtime");
+  assert.equal(manifestAsset.runtimeScope, "presentation-only-local-demo");
+  assert.equal(manifestAsset.runtimeReady, true);
+  assert.equal(manifestAsset.slot, "fresh.lettuce");
+  assert.equal(manifestAsset.publicPath, publicPath);
+  assert.equal(manifestAsset.productionMappingStatus, "awaiting-owner-confirmed-domain-option-id");
+  assert.equal(manifestAsset.qa?.safeMarginNormalized, "pass");
+  const prompt = promptLibrary.prompts.find((entry) => entry.id === "lettuce-layer-v1");
+  assert.ok(prompt, "lettuce-layer-v1 must be recorded in the prompt library");
+  assert.equal(prompt.status, "executed-qa-approved-runtime-demo");
+  assert.equal(prompt.targetSlot, "fresh.lettuce");
+  assert.match(prompt.generationRule, /exactly one cohesive horizontal lettuce layer/i);
+  assert.doesNotMatch(js + css, /photoshop-api|firefly\.adobe|short-url/i);
+});
+
 test("SauceDeck uses governed local Adobe sauce masters with no Adobe runtime dependency", async () => {
   const assets = [
     ["sauce-curry-master-v1", "/assets/ingredients/sauces/sauce-curry-master.png", "apps/mcello/public/assets/ingredients/sauces/sauce-curry-master.png"],

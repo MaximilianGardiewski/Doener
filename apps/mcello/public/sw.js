@@ -1,4 +1,4 @@
-const CACHE = "mcello-public-shell-v40";
+const CACHE = "mcello-public-shell-v41";
 const APP_SHELL = [
   "/vendor/fonts/fonts.css",
   "/vendor/fonts/inter-latin-variable.woff2",
@@ -12,6 +12,7 @@ const APP_SHELL = [
   "/assets/ingredients/fresh/tomato-slice-master.png",
   "/assets/ingredients/fresh/cucumber-slice-master.png",
   "/assets/ingredients/fresh/red-onion-ring-master.png",
+  "/assets/ingredients/fresh/lettuce-layer-master.png",
   "/vendor/gsap/gsap.min.js", "/vendor/gsap/ScrollTrigger.min.js", "/vendor/gsap/Flip.min.js",
   "/operations-shell.js", "/operations-shell.css", "/operations-theke.css",
   "/handbook.html", "/handbook.js", "/handbook.css", "/handbook/shared.md", "/handbook/staff.md", "/handbook/admin.md",

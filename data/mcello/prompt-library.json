@@ -136,6 +136,19 @@
       "negativePrompt": "diced onion, chopped onion pile, whole onion bulb, onion skin pile, full sandwich, döner, kebab, bread, tomato, cucumber, lettuce, meat, sauce, bowl, plate, garnish, table, hands, utensils, packaging, text, logo, watermark, illustration, cartoon, CGI, cropped edges",
       "generationRule": "Generate exactly three red onion rings as one grouped reusable master layer. Do not generate a whole sandwich or bake other ingredients into the asset.",
       "qaNote": "Passed three-ring, transparent-cutout, top-three-quarter camera and reusable-master QA; published to a local runtime path for presentation-only demo scope."
+    },
+    {
+      "id": "lettuce-layer-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "executed-qa-approved-runtime-demo",
+      "usage": "interactive-builder-layer-candidate",
+      "targetSlot": "fresh.lettuce",
+      "assetKind": "ingredient-layer",
+      "requestId": "de4c04d0-54e9-4d59-9f84-f63c69b0583a",
+      "prompt": "Create exactly ONE isolated leafy lettuce layer for a premium döner / yufka ingredient asset. Photorealistic fresh green lettuce arranged as one cohesive sandwich layer, fluffy but compact enough for a döner filling stack, curly leaf edges, natural variation, crisp texture, subtle moisture, appetizing freshness and studio-quality food detail. Slightly elevated top-three-quarter camera matching the existing Mcello exploded döner ingredient stack, soft premium studio lighting from upper left, crisp realistic edges, broad horizontal silhouette, generous clean neutral empty space around the ingredient so it can be cleanly cut out. No bread, no tomato, no cucumber, no onion, no plate, no table, no hands, no sauce, no text, no packaging, no background scene.",
+      "negativePrompt": "salad bowl, mixed salad, cabbage pile, whole lettuce head, full sandwich, döner, kebab, bread, tomato, cucumber, onion, meat, sauce, bowl, plate, garnish, table, hands, utensils, packaging, text, logo, watermark, illustration, cartoon, CGI, cropped edges",
+      "generationRule": "Generate exactly one cohesive horizontal lettuce layer as a reusable master. Do not generate a whole salad or bake other ingredients into the asset.",
+      "qaNote": "Passed single-layer, transparent-cutout, top-three-quarter camera and reusable-master QA. A transparent pad normalization pass was required after the first extract crop compressed the requested margin."
     }
   ]
 }
