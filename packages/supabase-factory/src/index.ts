@@ -10,3 +10,4 @@ export * from "./placement.ts";
 export * from "./host.ts";
 export * from "./env-file.ts";
 export * from "./docker-runtime.ts";
+export * from "./docker-provider.ts";
