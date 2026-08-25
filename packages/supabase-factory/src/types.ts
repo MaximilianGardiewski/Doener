@@ -2,6 +2,7 @@ export const FACTORY_API_VERSION = "factory.supabase.local/v1" as const;
 
 export const SUPABASE_BASELINE = {
   release: "self-hosted/v0.8.0",
+  upstreamCommit: "241bb11c0627f2981746d37033f57dbfa81d29b0",
   postgresMajor: 17,
   gateway: "envoy",
 } as const;
@@ -30,6 +31,8 @@ export interface ProjectIdentity {
 
 export interface SupabaseVersionSpec {
   release?: string;
+  /** Exact commit the self-hosted release tag must resolve to. Required for a non-baseline release. */
+  upstreamCommit?: string;
   postgresMajor?: 15 | 17;
 }
 
@@ -81,6 +84,7 @@ export interface ResolvedFactoryManifest {
   profile: ProjectProfileName;
   supabase: {
     release: string;
+    upstreamCommit: string;
     postgresMajor: 15 | 17;
     gateway: "envoy";
   };
@@ -156,6 +160,7 @@ export interface ObservedProjectState {
   exists: boolean;
   state?: LifecycleState;
   release?: string;
+  upstreamCommit?: string;
   postgresMajor?: 15 | 17;
   services?: readonly SupabaseService[];
   healthy?: boolean;
