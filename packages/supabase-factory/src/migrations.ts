@@ -1,14 +1,9 @@
+import { cloudlessCommand } from "./cloudless-env.ts";
 import type { FactoryHostExecutor, HostExecutorRegistry } from "./host.ts";
 import type { ProjectPlacement, ProjectScheduler } from "./placement.ts";
 import type { SecretStore } from "./secrets.ts";
 
 export const SUPABASE_CLI_BASELINE = "2.115.0" as const;
-
-const CLOUD_ENV_KEYS = [
-  "SUPABASE_ACCESS_TOKEN",
-  "SUPABASE_PROJECT_ID",
-  "SUPABASE_PROJECT_REF",
-] as const;
 
 export interface MigrationSource {
   /** Absolute project checkout root containing supabase/migrations. */
@@ -63,11 +58,6 @@ function redact(value: string, secrets: readonly string[]): string {
     }
   }
   return safe;
-}
-
-function cloudlessCommand(command: string, args: readonly string[]): readonly string[] {
-  const unset = CLOUD_ENV_KEYS.flatMap((key) => ["-u", key]);
-  return [...unset, command, ...args];
 }
 
 export class DockerMigrationController {
