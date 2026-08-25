@@ -38,6 +38,8 @@ const PROFILES: Record<ProjectProfileName, ProfileDefaults> = {
 };
 
 const PROJECT_ID = /^[a-z][a-z0-9-]{1,62}[a-z0-9]$/;
+const SELF_HOST_RELEASE = /^self-hosted\/v\d+\.\d+\.\d+$/;
+const COMMIT_SHA = /^[0-9a-f]{40}$/;
 
 function withFeatureOverrides(
   profileServices: readonly SupabaseService[],
@@ -66,6 +68,26 @@ function withFeatureOverrides(
   if (features?.studio === "disabled") services.delete("studio");
 
   return [...services].sort();
+}
+
+function resolveVersion(input: SupabaseFactoryManifest): ResolvedFactoryManifest["supabase"] {
+  const release = input.supabase?.release ?? SUPABASE_BASELINE.release;
+  if (!SELF_HOST_RELEASE.test(release)) {
+    throw new Error("supabase.release must be an explicit self-hosted/vX.Y.Z release tag");
+  }
+
+  const usingBaseline = release === SUPABASE_BASELINE.release;
+  const upstreamCommit = input.supabase?.upstreamCommit ?? (usingBaseline ? SUPABASE_BASELINE.upstreamCommit : undefined);
+  if (!upstreamCommit || !COMMIT_SHA.test(upstreamCommit)) {
+    throw new Error("a verified 40-character upstreamCommit is required for non-baseline Supabase releases");
+  }
+
+  const postgresMajor = input.supabase?.postgresMajor ?? SUPABASE_BASELINE.postgresMajor;
+  if (postgresMajor === 15 && input.profile === "production-critical") {
+    throw new Error("new production-critical projects must use PostgreSQL 17");
+  }
+
+  return { release, upstreamCommit, postgresMajor, gateway: "envoy" };
 }
 
 export function resolveManifest(input: SupabaseFactoryManifest): ResolvedFactoryManifest {
@@ -101,20 +123,11 @@ export function resolveManifest(input: SupabaseFactoryManifest): ResolvedFactory
     throw new Error("public Studio exposure is forbidden by factory policy");
   }
 
-  const postgresMajor = input.supabase?.postgresMajor ?? SUPABASE_BASELINE.postgresMajor;
-  if (postgresMajor === 15 && input.profile === "production-critical") {
-    throw new Error("new production-critical projects must use PostgreSQL 17");
-  }
-
   return {
     apiVersion: FACTORY_API_VERSION,
     project: { ...input.project, id },
     profile: input.profile,
-    supabase: {
-      release: input.supabase?.release ?? SUPABASE_BASELINE.release,
-      postgresMajor,
-      gateway: "envoy",
-    },
+    supabase: resolveVersion(input),
     services,
     storage: {
       backend: storageBackend,
