@@ -5,3 +5,8 @@ export * from "./registry.ts";
 export * from "./provider.ts";
 export * from "./control-plane.ts";
 export * from "./docker-compose.ts";
+export * from "./secrets.ts";
+export * from "./placement.ts";
+export * from "./host.ts";
+export * from "./env-file.ts";
+export * from "./docker-runtime.ts";
