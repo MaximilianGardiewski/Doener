@@ -28,7 +28,7 @@ function createOperations(desired: ResolvedFactoryManifest): PlanOperation[] {
     op(
       "checkout",
       "checkout-supabase-release",
-      `Pin official Supabase ${desired.supabase.release} with PostgreSQL ${desired.supabase.postgresMajor}`,
+      `Pin official Supabase ${desired.supabase.release}@${desired.supabase.upstreamCommit.slice(0, 12)} with PostgreSQL ${desired.supabase.postgresMajor}`,
       ["allocate"],
     ),
     op("secrets", "generate-project-secrets", "Generate project-owned API, JWT, database and dashboard secrets", ["checkout"]),
@@ -87,12 +87,14 @@ function reconcileOperations(desired: ResolvedFactoryManifest, observed: Observe
     );
   }
 
-  if (observed.release !== undefined && observed.release !== desired.supabase.release) {
+  const releaseDrift = observed.release !== undefined && observed.release !== desired.supabase.release;
+  const commitDrift = observed.upstreamCommit !== undefined && observed.upstreamCommit !== desired.supabase.upstreamCommit;
+  if (releaseDrift || commitDrift) {
     operations.push(
       op(
         "upgrade-supabase",
         "upgrade-project",
-        `Plan Supabase ${observed.release} -> ${desired.supabase.release} staged upgrade`,
+        `Plan Supabase ${observed.release ?? "unknown"}@${observed.upstreamCommit?.slice(0, 12) ?? "unknown"} -> ${desired.supabase.release}@${desired.supabase.upstreamCommit.slice(0, 12)} staged upgrade`,
         operations.map((item) => item.id),
         true,
       ),
