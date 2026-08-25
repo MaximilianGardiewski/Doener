@@ -132,6 +132,7 @@ export type PlanOperationKind =
   | "configure-storage"
   | "configure-runtime"
   | "start-services"
+  | "configure-backup"
   | "apply-migrations"
   | "verify-health"
   | "reconcile-services"
