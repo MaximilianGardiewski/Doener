@@ -7,6 +7,7 @@ import {
   FACTORY_API_VERSION,
   JsonFileProjectRegistry,
   MemoryProjectRegistry,
+  SUPABASE_BASELINE,
   SupabaseFactoryControlPlane,
   assertApproved,
   planProject,
@@ -31,6 +32,7 @@ function manifest(overrides: Partial<SupabaseFactoryManifest> = {}): SupabaseFac
 test("production webapp resolves to pinned Envoy/PG17 baseline and S3 storage", () => {
   const resolved = resolveManifest(manifest());
   assert.equal(resolved.supabase.release, "self-hosted/v0.8.0");
+  assert.equal(resolved.supabase.upstreamCommit, SUPABASE_BASELINE.upstreamCommit);
   assert.equal(resolved.supabase.postgresMajor, 17);
   assert.equal(resolved.supabase.gateway, "envoy");
   assert.equal(resolved.storage.backend, "s3");
@@ -51,11 +53,14 @@ test("factory policy refuses public database and Studio exposure", () => {
   assert.throws(() => resolveManifest(manifest({ security: { studioPublic: true } })), /public Studio/);
 });
 
-test("new project plan is cloud-management-token free and does not expose secrets", () => {
+test("new project plan is cloud-management-token free, secret-free and schema-neutral", () => {
   const plan = planProject(manifest());
   assert.equal(plan.cloudManagementCredentialsRequired, false);
   assert.equal(plan.exposesSecretValues, false);
   assert.ok(plan.operations.some((operation) => operation.kind === "generate-project-secrets"));
+  assert.ok(plan.operations.some((operation) => operation.kind === "configure-backup"));
+  assert.equal(plan.operations.some((operation) => operation.kind === "apply-migrations"), false);
+  assert.equal(plan.operations.some((operation) => operation.kind === "backup-project"), false);
 
   const serialized = JSON.stringify(plan);
   for (const forbidden of ["SUPABASE_ACCESS_TOKEN", "supabase login", "supabase link", "sbp_"]) {
@@ -68,6 +73,7 @@ test("reconcile is idempotent when observed state already matches desired state"
   const plan = planProject(manifest(), {
     exists: true,
     release: desired.supabase.release,
+    upstreamCommit: desired.supabase.upstreamCommit,
     postgresMajor: desired.supabase.postgresMajor,
     services: desired.services,
     healthy: true,
@@ -75,11 +81,12 @@ test("reconcile is idempotent when observed state already matches desired state"
   assert.deepEqual(plan.operations, []);
 });
 
-test("version changes become explicit approval-gated upgrade operations", () => {
+test("version or upstream commit changes become explicit approval-gated upgrade operations", () => {
   const desired = resolveManifest(manifest());
   const plan = planProject(manifest(), {
     exists: true,
     release: "self-hosted/v0.7.2",
+    upstreamCommit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     postgresMajor: desired.supabase.postgresMajor,
     services: desired.services,
     healthy: true,
@@ -129,6 +136,7 @@ class FakeProvider implements InfrastructureProvider {
     this.observed = {
       exists: true,
       release: plan.desired.supabase.release,
+      upstreamCommit: plan.desired.supabase.upstreamCommit,
       postgresMajor: plan.desired.supabase.postgresMajor,
       services: plan.desired.services,
       healthy: true,
