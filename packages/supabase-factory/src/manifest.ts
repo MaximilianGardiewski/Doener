@@ -84,6 +84,12 @@ export function resolveManifest(input: SupabaseFactoryManifest): ResolvedFactory
   const production = input.project.environment === "production";
   const storageBackend = input.storage?.backend ?? (production && storageEnabled ? "s3" : "file");
 
+  if (storageEnabled && !services.includes("rest")) {
+    throw new Error("Storage requires REST in the official self-hosted Docker runtime");
+  }
+  if (services.includes("analytics")) {
+    throw new Error("Analytics is not enabled in Docker Provider V1 until the project-scoped Vector routing overlay is available");
+  }
   if (production && storageEnabled && storageBackend !== "s3") {
     throw new Error("production projects with Storage must use an S3-compatible backend");
   }
