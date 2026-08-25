@@ -168,6 +168,117 @@ function createCartFlightGhost(rect, renderedSrc = null) {
 }
 
 let fallbackCartFlightGhost = null;
+const fallbackIngredientBatches = new Map();
+let fallbackIngredientBatchSequence = 0;
+
+function normalizeIngredientVisualBatch(detail) {
+  const rawChanges = Array.isArray(detail?.changes) ? detail.changes : [detail];
+  const claimedInstances = new Set();
+  const changes = rawChanges.flatMap((change) => {
+    const selection = change?.selection;
+    const source = change?.instances;
+    const candidates = source && typeof source[Symbol.iterator] === "function" ? [...source] : [];
+    const instances = [...new Set(candidates.filter((node) => node instanceof Element))]
+      .filter((node) => {
+        if (claimedInstances.has(node)) return false;
+        claimedInstances.add(node);
+        return true;
+      });
+    if (!instances.length || (selection !== "added" && selection !== "removed")) return [];
+    const assetId = typeof change?.assetId === "string" && change.assetId.trim()
+      ? change.assetId.trim()
+      : null;
+    return [{ assetId, selection, instances }];
+  });
+
+  const settleCallbacks = typeof detail?.settle === "function"
+    ? [detail.settle]
+    : rawChanges.map((change) => change?.settle).filter((settle) => typeof settle === "function");
+  let settled = false;
+  const settle = () => {
+    if (settled) return;
+    settled = true;
+    for (const callback of new Set(settleCallbacks)) callback();
+  };
+  return { changes, settle };
+}
+
+function fallbackIngredientBatchesOverlap(batch, candidate) {
+  if ([...candidate.assetIds].some((assetId) => assetId && batch.assetIds.has(assetId))) return true;
+  return [...candidate.instances].some((instance) => batch.instances.has(instance));
+}
+
+function clearFallbackIngredientInstance(instance, batchId) {
+  if (batchId && instance.dataset.motionIngredientBatch !== batchId) return;
+  instance.classList.remove("motion-ingredient-instance-change");
+  delete instance.dataset.motionSelection;
+  delete instance.dataset.motionIngredientBatch;
+}
+
+function settleFallbackIngredientBatch(batch) {
+  if (!batch || batch.settled) return;
+  batch.settled = true;
+  fallbackIngredientBatches.delete(batch.id);
+  window.clearTimeout(batch.timeout);
+  for (const [instance, handler] of batch.handlers) {
+    instance.removeEventListener("animationend", handler);
+    clearFallbackIngredientInstance(instance, batch.id);
+  }
+  batch.settle();
+}
+
+function settleFallbackIngredientBatches() {
+  for (const batch of [...fallbackIngredientBatches.values()]) settleFallbackIngredientBatch(batch);
+}
+
+function settleOverlappingFallbackIngredientBatches(changes) {
+  const candidate = {
+    assetIds: new Set(changes.map((change) => change.assetId).filter(Boolean)),
+    instances: new Set(changes.flatMap((change) => change.instances)),
+  };
+  for (const batch of [...fallbackIngredientBatches.values()]) {
+    if (fallbackIngredientBatchesOverlap(batch, candidate)) settleFallbackIngredientBatch(batch);
+  }
+}
+
+function runFallbackIngredientBatch({ changes, settle }) {
+  settleOverlappingFallbackIngredientBatches(changes);
+  const id = `fallback-ingredient-batch-${++fallbackIngredientBatchSequence}`;
+  const instances = new Set(changes.flatMap((change) => change.instances));
+  const batch = {
+    id,
+    assetIds: new Set(changes.map((change) => change.assetId).filter(Boolean)),
+    instances,
+    handlers: new Map(),
+    timeout: 0,
+    settle,
+    settled: false,
+  };
+  const pending = new Set(instances);
+  const finish = () => {
+    if (!pending.size) settleFallbackIngredientBatch(batch);
+  };
+
+  for (const change of changes) {
+    for (const instance of change.instances) {
+      instance.classList.remove("motion-ingredient-instance-change");
+      instance.dataset.motionSelection = change.selection;
+      instance.dataset.motionIngredientBatch = id;
+      const handler = (event) => {
+        if (event.target !== instance || batch.settled) return;
+        pending.delete(instance);
+        finish();
+      };
+      batch.handlers.set(instance, handler);
+      instance.addEventListener("animationend", handler);
+    }
+  }
+  fallbackIngredientBatches.set(id, batch);
+  const firstInstance = instances.values().next().value;
+  if (firstInstance) void firstInstance.getBoundingClientRect();
+  for (const instance of instances) instance.classList.add("motion-ingredient-instance-change");
+  batch.timeout = window.setTimeout(() => settleFallbackIngredientBatch(batch), 460);
+}
 
 /*
  * GSAP-unavailable path: a bounded CSS keyframe carries the same ghost to the
@@ -208,7 +319,13 @@ function launchCartFlight(sourceRect, renderedSrc = null) {
 
 function installCommerceMotionContracts() {
   syncCommerceEngineLabels();
-  reducedMotion.addEventListener?.("change", syncCommerceEngineLabels);
+  const handleCommerceMotionPreferenceChange = () => {
+    syncCommerceEngineLabels();
+    if (!reducedMotion.matches) return;
+    commerceMotionV3?.settleIngredientBatches?.();
+    settleFallbackIngredientBatches();
+  };
+  reducedMotion.addEventListener?.("change", handleCommerceMotionPreferenceChange);
 
   /*
    * Capture phase snapshots the source geometry while the product is still on
@@ -261,6 +378,7 @@ function installCommerceMotionContracts() {
           restartMotionClass(source, "motion-product-activate", 320);
           restartMotionClass(modal, "motion-product-open", 380);
         }
+        if (!reducedMotion.matches) commerceMotionV3?.animateStageReveal({ stage: activeFoodStage() });
       });
     }
 
@@ -278,6 +396,33 @@ function installCommerceMotionContracts() {
     }
   });
 
+  /*
+   * Atomic ingredient renderers reconcile stable instance nodes after the
+   * application has accepted a modifier change. They hand only the added or
+   * removed inner media nodes to this existing motion facade; static slot
+   * transforms remain on their outer SVG wrappers.
+   */
+  document.addEventListener("mcello:ingredient-visual-delta", (event) => {
+    const detail = event instanceof CustomEvent ? event.detail : null;
+    if (!detail) return;
+    const { changes, settle } = normalizeIngredientVisualBatch(detail);
+    event.preventDefault();
+    if (!changes.length) {
+      settle();
+      return;
+    }
+
+    if (reducedMotion.matches) {
+      settle();
+      return;
+    }
+
+    settleOverlappingFallbackIngredientBatches(changes);
+    const handledByV3 = Boolean(commerceMotionV3?.animateIngredientBatch({ changes, settle }));
+    if (handledByV3) return;
+    runFallbackIngredientBatch({ changes, settle });
+  });
+
   document.addEventListener("change", (event) => {
     const input = event.target instanceof HTMLInputElement
       ? event.target.closest("#modifierGroups input")
@@ -285,6 +430,7 @@ function installCommerceMotionContracts() {
     if (!input) return;
 
     const option = input.closest(".modifier-option");
+    if (option?.dataset.atomicIngredient) return;
     const selection = input.checked ? "added" : "removed";
     const foodStage = activeFoodStage();
     const handledByV3 = !reducedMotion.matches && Boolean(commerceMotionV3?.animateIngredientChange({

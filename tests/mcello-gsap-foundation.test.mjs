@@ -104,5 +104,5 @@ test("D074 contract preserves progressive enhancement, domain truth and rollback
   assert.match(contract, /prefers-reduced-motion/);
   assert.match(contract, /price \/ modifier validity \/ sold-out \/ cart \/ checkout \/ role \/ RLS truth/);
   assert.match(contract, /Every GSAP migration must remain independently reversible/);
-  assert.match(contract, /does \*\*not\*\* authorize:\n\n- production deployment/);
+  assert.match(contract, /does \*\*not\*\* authorize:\r?\n\r?\n- production deployment/);
 });

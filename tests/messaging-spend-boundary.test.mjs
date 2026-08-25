@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { chmod, mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
 
@@ -13,8 +12,15 @@ const preflight = await readFile(new URL("infra/selfhost/preflight.sh", root), "
 const envExample = await readFile(new URL("infra/selfhost/app.env.example", root), "utf8");
 const server = await readFile(new URL("apps/mcello/server.mjs", root), "utf8");
 const publicIndex = await readFile(new URL("apps/mcello/public/index.html", root), "utf8");
-const preflightPath = fileURLToPath(new URL("infra/selfhost/preflight.sh", root));
-const bashPreflightPath = preflightPath.replaceAll("\\", "/");
+
+function bashWorkingDirectory(directory) {
+  const resolved = spawnSync("bash", ["-lc", "pwd"], {
+    cwd: directory,
+    encoding: "utf8",
+  });
+  assert.equal(resolved.status, 0, resolved.stderr || resolved.stdout);
+  return resolved.stdout.trim();
+}
 
 function includesAll(source, markers) {
   for (const marker of markers) assert.equal(source.includes(marker), true, `missing: ${marker}`);
@@ -40,9 +46,20 @@ async function runPreflight(extraLines = []) {
     "",
   ].join("\n"));
 
-  return spawnSync("bash", [bashPreflightPath, envFile], {
+  // Windows checkouts may materialize the tracked shell script with CRLF.
+  // Execute a byte-for-byte-equivalent LF copy so WSL/Git Bash can parse it.
+  await writeFile(path.join(temp, "preflight.sh"), preflight.replaceAll("\r\n", "\n"));
+  const bashTemp = bashWorkingDirectory(temp);
+  const runner = path.join(temp, "run-preflight.sh");
+  await writeFile(runner, [
+    "#!/usr/bin/env bash",
+    `export PATH=${JSON.stringify(`${bashTemp}/bin`)}:"$PATH"`,
+    `exec bash ${JSON.stringify(`${bashTemp}/preflight.sh`)} ${JSON.stringify(`${bashTemp}/app.env`)}`,
+    "",
+  ].join("\n"));
+
+  return spawnSync("bash", [`${bashTemp}/run-preflight.sh`], {
     cwd: temp,
-    env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
     encoding: "utf8",
   });
 }

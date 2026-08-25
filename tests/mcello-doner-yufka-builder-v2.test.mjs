@@ -37,12 +37,25 @@ test("FoodStage mirrors actual checked modifier inputs and never owns commerce s
   assert.match(js, /input\?\.checked/);
   assert.match(js, /data-food-layer/);
   assert.match(js, /dataset\.assemblyVisualLayers/);
-  assert.match(js, /Stilisierte Präsentationsillustration/);
+  assert.match(js, /KI-Zutatenvisualisierung · keine Produktfotografie/);
   assert.doesNotMatch(js, /\.checked\s*=|localStorage|sessionStorage|fetch\s*\(|cart\s*=|configuredPrice|configurationValid/);
 });
 
-test("cartoon assembly has distinct ingredient layers and purposeful lightweight motion", () => {
-  for (const ingredient of ["Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"]) {
+test("flatbread uses explicit product-form metadata while Yufka never binds the pocket master", () => {
+  assert.match(js, /const BUILDER_PRODUCT_FORMS = new Set\(\["flatbread-pocket", "yufka-wrap"\]\)/);
+  assert.match(js, /modal\?\.dataset\.builderProductForm/);
+  assert.match(js, /productForm === "flatbread-pocket"/);
+  // D076 splits the bread into two masters so the filling sits between them.
+  assert.match(js, /data-atomic-ingredient-host="ingredient\.flatbread\.base"/);
+  assert.match(js, /data-atomic-ingredient-host="ingredient\.flatbread\.lid"/);
+  assert.match(js, /productForm,/);
+  assert.match(css, /data-builder-product-form="flatbread-pocket"/);
+  assert.match(css, /data-flatbread-atomic-ready="true"/);
+  assert.doesNotMatch(js, /(?:name|title|slug)[^\n]*includes\([^\n]*(?:fladenbrot|yufka)/i);
+});
+
+test("presentation assembly has distinct ingredient layers and purposeful lightweight motion", () => {
+  for (const ingredient of ["Fladenbrot", "Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"]) {
     assert.match(js, new RegExp(`data-food-layer=\\"${ingredient}\\"`));
   }
   assert.match(css, /mc-food-stage-v4/);
@@ -59,4 +72,88 @@ test("Döner/Yufka presentation code remains in refreshed offline shell while bu
   assert.match(sw, /doner-yufka-builder-v2\.js/);
   assert.match(sw, /doner-yufka-builder-v2\.css/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);
+});
+
+test("the blueprint HUD is decorative and cannot take a tap from a modifier option", () => {
+  // aria-hidden in markup, pointer-transparent in CSS. Both halves are required:
+  // one keeps it out of the accessibility tree, the other out of hit testing.
+  assert.match(js, /class="mc-stage-hud mc-stage-hud--ground" aria-hidden="true"/);
+  assert.match(js, /class="mc-stage-hud mc-stage-hud--brackets" aria-hidden="true"/);
+  assert.match(js, /class="mc-stage-hud__annotations" aria-hidden="true"/);
+  assert.match(css, /\.mc-stage-hud,[\s\S]*?\.mc-stage-hud__annotations \*\s*\{\s*pointer-events: none;/);
+
+  /*
+   * Drawn before the first layer host. That ordering is what lets the beams read
+   * as passing through the stack: every master is a transparent PNG, so the
+   * beams survive in the negative space instead of being covered wholesale.
+   */
+  // Compare the call sites inside stageMarkup, not the function definitions,
+  // which appear earlier in the file and would make this pass for free.
+  const stage = js.slice(js.indexOf("function stageMarkup()"));
+  assert.ok(
+    stage.indexOf("${hudGroundMarkup()}") < stage.indexOf('data-atomic-ingredient-host="ingredient.flatbread.base"'),
+    "the HUD ground must be painted before the first layer host",
+  );
+  assert.ok(
+    stage.indexOf("${hudBracketsMarkup()}") > stage.indexOf('data-atomic-ingredient-host="ingredient.flatbread.lid"'),
+    "registration brackets must be painted after the last layer host",
+  );
+
+  // The readout is written from stage state, never hard-coded into the markup.
+  assert.match(js, /function updateHudReadout\(root, counts\)/);
+  assert.match(js, /stackExplodeSpan\(present, present\)/);
+  // The fan-out ranks against the visible layers, not all twelve, so an
+  // unselected ingredient cannot leave a hole in the exploded stack.
+  assert.match(js, /function applyStackOffsets\(root, present\)/);
+  assert.match(js, /stackExplodeOffset\(shell\.dataset\.stackShell, present\)/);
+  assert.doesNotMatch(js, /Gesamthöhe\s*\d/);
+
+  /*
+   * No second palette. A literal colour is only allowed as the fallback inside
+   * var(--token, …); anything else would be a new raw value, which
+   * brand-system.css rules out until Visual Gate B approves a calibrated one.
+   */
+  const hudCss = css.slice(css.indexOf("Blueprint HUD and exploded stack"));
+  const bareColours = hudCss
+    .replace(/var\(--[a-z0-9-]+, *(?:#[0-9a-f]{3,8}|rgba?\([^)]*\))\)/gi, "")
+    .match(/#[0-9a-f]{3,8}\b|\brgba?\(/gi);
+  assert.equal(bareColours, null, `HUD colours must come from tokens, found: ${bareColours}`);
+});
+
+test("the exploded stack is presentation-only and never rides on the atomic host", () => {
+  /*
+   * A ready atomic host is pinned to `transform: none` so per-instance delta
+   * animation stays the only motion inside it. The exploded offset therefore
+   * has to live on a wrapper, or the two would fight.
+   */
+  assert.match(js, /function wrapStackShells\(root\)/);
+  assert.match(js, /shell\.dataset\.stackShell = assetId/);
+  const shellStart = css.indexOf(".mc-stack-shell {");
+  const shellRule = css.slice(shellStart, css.indexOf("}", shellStart));
+  assert.match(shellRule, /translateY\(calc\(var\(--stack-explode, 0\) \* var\(--shell-offset, 0px\)\)\)/);
+  /*
+   * Separation must not shrink with the layers. CSS applies the right-hand
+   * function first, so scale has to come after translateY in the source for the
+   * layer to be scaled about the stack centre and then moved by its full offset.
+   */
+  assert.ok(
+    shellRule.indexOf("translateY(") < shellRule.indexOf("scale(var(--stack-scale"),
+    "translateY must precede scale so the offset is applied unscaled",
+  );
+  const explodedRule = css.slice(css.indexOf(".mc-food-stage-v4[data-stack-state=\"exploded\"] {"));
+  assert.match(explodedRule, /--stack-explode: 1;/);
+
+  // Tap is always sufficient (D065), and the control reports its state.
+  assert.match(js, /data-stage-stack-toggle/);
+  assert.match(js, /toggle\.setAttribute\("aria-pressed"/);
+  assert.match(css, /\.mc-stage-stack-toggle \{[\s\S]*?min-height: 44px;/);
+
+  // Reduced motion reaches the same composition without the movement.
+  assert.match(js, /if \(reducedMotionQuery\?\.matches\) \{\s*setStackState\(stageRoot, false\);/);
+  const reduced = css.slice(css.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
+  assert.match(reduced, /\.mc-stack-shell \{ transition: none !important; \}/);
+
+  // Fanning the stack out must not touch selection or emit an ingredient delta.
+  const setState = js.slice(js.indexOf("function setStackState"), js.indexOf("function ensureStage"));
+  assert.doesNotMatch(setState, /reconcileAtomicIngredients|dispatchEvent|\.checked/);
 });

@@ -22,6 +22,8 @@ test("Cloudflare mirror fakes menu read only, never backend health or checkout",
   assert.match(build, /cloudflare-preview-read-only/);
   assert.match(build, /never production catalog truth/i);
   assert.match(build, /priceDeltaCents, 0/);
+  assert.match(build, /builderPresentation:\s*\{/);
+  assert.match(build, /productForms: \{ \.\.\.presentation\.donerYufka\.productForms \}/);
 });
 
 test("Cloudflare remote acceptance proves configurator and real GSAP takeovers", () => {

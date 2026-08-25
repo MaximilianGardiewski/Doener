@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello Döner/Yufka-Konfigurator — Konzept-Demo</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preload" href="/vendor/fonts/inter-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/brand-system.css" />
+  <style>
+    /*
+     * Real markup contract that doner-yufka-builder-v2.js expects (#productModal,
+     * #modalImage, #modifierGroups with .modifier-group/.modifier-option +
+     * data-group-name/data-option-name) plus real modifier-option/field styles
+     * copied verbatim from index.html's inline <style> (they live inline there,
+     * not in styles.css). The builder script itself is the real, unmodified one —
+     * it injects doner-yufka-builder-v2.css and paints real ingredient PNGs from
+     * /media/ingredients/. Only the modifier DATA is static here instead of
+     * coming from the backend, exactly like the other /concept snapshots.
+     */
+    .field{display:grid;gap:7px;margin-top:12px}.field span{font-size:13px;color:var(--muted)}
+    .modifier-group{margin-top:16px;padding:16px;border:1px solid rgba(255,255,255,.07);border-radius:18px;background:#1c1c18}
+    .modifier-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px}.modifier-head small{color:var(--muted)}
+    .modifier-options{display:grid;gap:8px}.modifier-option{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid rgba(255,255,255,.06);border-radius:13px;background:#24231e;cursor:pointer}
+    .modifier-option:has(input:checked){border-color:rgba(215,169,76,.45);background:#2b2418}
+    .modifier-option span:last-child{margin-left:auto;color:var(--gold-2)}
+    .snapshot-note{position:fixed;left:18px;bottom:18px;z-index:200;max-width:360px;color:var(--muted);font-size:13px;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;background:rgba(16,17,15,.92);backdrop-filter:blur(8px)}
+    .snapshot-note a{color:var(--gold-2)}
+  </style>
+</head>
+<body class="mcello-public-v2" data-experience-mode="public">
+  <header class="site-header site-header-v2">
+    <div class="shell nav">
+      <a class="brand" href="/" aria-label="Mcello Start"><div class="brand-mark">M</div><div><strong>MCELLO</strong><span>Kebap · Pizza · Bistro</span></div></a>
+      <nav class="nav-links" aria-label="Konzept-Navigation"><a href="/concept/">Konzept-Übersicht</a></nav>
+    </div>
+  </header>
+
+  <p class="snapshot-note">Läuft mit dem echten Builder-Code (<code>doner-yufka-builder-v2.js</code>) und echten Zutaten-Assets — interaktiv, Häkchen ändern die Schichten live. Nur die Menü-Daten sind hier statisch statt vom Backend geladen.</p>
+
+  <div class="modal-backdrop open" id="productModal" data-builder-product-form="flatbread-pocket" aria-hidden="false">
+    <div class="modal" role="dialog" aria-modal="true">
+      <img class="modal-hero" id="modalImage" src="/media/placeholder.svg" alt="" />
+      <div class="modal-content">
+        <div class="tag">Konfigurator</div>
+        <h2 id="modalTitle">Drehspieß im Fladenbrot</h2>
+        <p id="modalDescription">Kalb- und Putenfleisch, frisch vom Spieß.</p>
+        <div id="modifierGroups">
+          <div class="modifier-group" data-group-name="Basis">
+            <div class="modifier-head"><strong>Basis</strong><small>1 auswählen</small></div>
+            <div class="modifier-options">
+              <label class="modifier-option" data-option-name="Fleisch"><input type="radio" name="basis" checked /><span>Fleisch</span><span></span></label>
+              <label class="modifier-option" data-option-name="Falafel"><input type="radio" name="basis" /><span>Falafel</span><span></span></label>
+            </div>
+          </div>
+          <div class="modifier-group" data-group-name="Gemüse">
+            <div class="modifier-head"><strong>Gemüse</strong><small>bis zu 4</small></div>
+            <div class="modifier-options">
+              <label class="modifier-option" data-option-name="Salat"><input type="checkbox" checked /><span>Salat</span><span></span></label>
+              <label class="modifier-option" data-option-name="Tomate"><input type="checkbox" checked /><span>Tomate</span><span></span></label>
+              <label class="modifier-option" data-option-name="Gurke"><input type="checkbox" checked /><span>Gurke</span><span></span></label>
+              <label class="modifier-option" data-option-name="Zwiebel"><input type="checkbox" /><span>Zwiebel</span><span></span></label>
+            </div>
+          </div>
+          <div class="modifier-group" data-group-name="Soße">
+            <div class="modifier-head"><strong>Soße</strong><small>bis zu 3</small></div>
+            <div class="modifier-options">
+              <label class="modifier-option" data-option-name="Curry"><input type="checkbox" checked /><span>Curry</span><span></span></label>
+              <label class="modifier-option" data-option-name="Knoblauch"><input type="checkbox" /><span>Knoblauch</span><span></span></label>
+              <label class="modifier-option" data-option-name="Scharf"><input type="checkbox" /><span>Scharf</span><span></span></label>
+            </div>
+          </div>
+        </div>
+        <div class="option-box"><strong>Besonderer Wunsch</strong><textarea rows="2" style="width:100%;margin-top:12px;background:#11110f;color:white;border:1px solid var(--line);border-radius:14px;padding:12px" placeholder="V1: Freitext erlaubt"></textarea></div>
+        <div class="modal-footer"><button class="pill" data-product hidden>Demo-Trigger</button><button class="primary">In den Warenkorb · 8,50&nbsp;€</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/doner-yufka-builder-v2.js"></script>
+  <script type="module">
+    // Minimal motion bootstrap for this static demo page — the real app wires
+    // this through motion.js's full init chain (homepage reveals, hero depth,
+    // commerce). This page only needs the commerce slice's stage-reveal and
+    // ingredient-batch animations, so it loads the same real engine +
+    // commerce module directly instead of dragging in the homepage-only code.
+    document.querySelector('[data-product]')?.click();
+
+    const { loadMcelloMotionEngine } = await import('/motion/engine.js');
+    const engine = await loadMcelloMotionEngine();
+    if (!engine.available) {
+      console.warn('Mcello motion engine unavailable on this demo page:', engine.reason);
+    } else {
+      const { createCommerceMotion } = await import('/motion/commerce.js');
+      const commerceMotionV3 = createCommerceMotion(engine);
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+      requestAnimationFrame(() => {
+        const stage = document.querySelector('#productModal.open [data-food-stage-v4="true"]');
+        if (!reducedMotion.matches) commerceMotionV3?.animateStageReveal({ stage });
+      });
+
+      document.addEventListener('mcello:ingredient-visual-delta', (event) => {
+        const detail = event instanceof CustomEvent ? event.detail : null;
+        if (!detail) return;
+        event.preventDefault();
+        const { changes, settle } = detail;
+        if (!changes?.length || reducedMotion.matches) {
+          settle?.();
+          return;
+        }
+        const handled = commerceMotionV3?.animateIngredientBatch({ changes, settle });
+        if (!handled) settle?.();
+      });
+    }
+  </script>
+</body>
+</html>

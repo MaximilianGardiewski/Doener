@@ -1,0 +1,116 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.sauce.hot.layer",
+  "ingredient": "hot-sauce-layer",
+  "visual": {
+    "role": "stacked-configurator-layer",
+    "subject": "layer-hot-sauce",
+    "layerName": "Scharf",
+    "view": "isometric-45",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "single-layer-instance",
+      "extraSelection": "separate-extra-layer-master",
+      "separateExtraAssetAllowed": true
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D076",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.sauce.hot.layer.owner-library.png",
+      "mediaType": "image/png",
+      "width": 1523,
+      "height": 520,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "bytes": 898998,
+      "sha256": "ee46f9d405d1efd36f06a07461b8c039f1b8cc6ddc09e1ec503d98ddf8ef7814"
+    },
+    "master": {
+      "path": "master/ingredient.sauce.hot.layer.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 468562,
+      "sha256": "dc2a8ad691851b8c5d3d06d8cec13f955b200aa2f68421cf1a0e186c02d3996a"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "unverified — owner-supplied asset library",
+    "workflow": "The owner delivered an already cut-out transparent PNG in an asset-library archive. Claude Code ran only the deterministic local alpha-bbox extract and the 1024 square normalization. No Adobe processing was applied in this pass.",
+    "reference": {
+      "localFound": false,
+      "adobeFound": false,
+      "used": false
+    },
+    "board": {
+      "id": null,
+      "url": null,
+      "name": null,
+      "reason": "The owner archive shares a name with an Adobe board, but the association is not verifiable from the delivered file, so no board is claimed."
+    },
+    "selectedGeneration": {
+      "seed": null,
+      "requestId": null,
+      "requestIdCaptured": false,
+      "requestIdReason": "The file arrived through an owner-supplied archive; no generation request is observable from it.",
+      "assetUrn": null,
+      "width": 1523,
+      "height": 520,
+      "promptSource": null,
+      "promptVerbatimCaptured": false,
+      "briefPrompt": null,
+      "briefNegativePrompt": null
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
+          "requestId": null
+        },
+        {
+          "step": "local-normalize-to-transparent-square-1024-master",
+          "requestId": null
+        }
+      ],
+      "toneTarget": "not re-aligned in this pass; the delivered cutout was accepted as authored",
+      "cameraAxisNote": "D076 specifies one isometric 45 degree axis for every layer. The delivered set is not uniform on that axis; this is recorded rather than corrected, because camera angle is not something image editing can fix."
+    },
+    "ownerSuppliedLibrary": {
+      "archive": "Döner Konfigurator — Komplette Asset Library FINAL.zip",
+      "originalFileName": "Döner Konfigurator — Komplette Asset Library FINAL-15.png",
+      "receivedOn": "2026-08-25",
+      "generatorKnown": false,
+      "seedKnown": false,
+      "promptKnown": false,
+      "note": "Generator, seed and prompt are not recoverable from the delivered file and are deliberately left null rather than reconstructed. The asset stays provisional and non-documentary under D068."
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.sauce.hot.layer.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}

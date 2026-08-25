@@ -79,3 +79,36 @@ test("ingredient motion stays presentation-only and available offline", () => {
   assert.match(sw, /"\/motion\/commerce\.js"/);
   assert.match(sw, /"\/vendor\/gsap\/gsap\.min\.js"/);
 });
+
+test("atomic ingredient events normalize legacy single deltas and simultaneous batch changes", () => {
+  assert.match(motion, /mcello:ingredient-visual-delta/);
+  assert.match(motion, /Array\.isArray\(detail\?\.changes\) \? detail\.changes : \[detail\]/);
+  assert.match(motion, /animateIngredientBatch\(\{ changes, settle \}\)/);
+  assert.match(motion, /if \(option\?\.dataset\.atomicIngredient\) return/);
+  assert.match(commerce, /function animateIngredientBatch/);
+  assert.match(commerce, /const activeIngredientBatches = new Map\(\)/);
+  assert.match(commerce, /change\.selection === "added"/);
+  assert.match(commerce, /timeline\.fromTo\(/);
+  assert.match(commerce, /timeline\.to\(/);
+  assert.doesNotMatch(commerce, /Math\.random/);
+});
+
+test("ingredient batches are overlap-safe and clean SVG presentation residue centrally", () => {
+  assert.match(commerce, /function ingredientBatchesOverlap/);
+  assert.match(commerce, /settleIngredientBatch\(batch\)/);
+  assert.match(commerce, /function clearIngredientInstancePresentation/);
+  assert.match(commerce, /clearProps: "opacity,transform,transformOrigin"/);
+  assert.match(commerce, /removeAttribute\?\.\("data-svg-origin"\)/);
+  assert.match(commerce, /removeAttribute\?\.\("style"\)/);
+  assert.match(commerce, /delete instance\.dataset\.motionIngredientBatch/);
+});
+
+test("Reduced Motion settles live GSAP and CSS ingredient batches without disabling later motion", () => {
+  assert.match(motion, /const handleCommerceMotionPreferenceChange = \(\) =>/);
+  assert.match(motion, /if \(!reducedMotion\.matches\) return/);
+  assert.match(motion, /commerceMotionV3\?\.settleIngredientBatches\?\.\(\)/);
+  assert.match(motion, /settleFallbackIngredientBatches\(\)/);
+  assert.match(motion, /const fallbackIngredientBatches = new Map\(\)/);
+  assert.match(motion, /settleOverlappingFallbackIngredientBatches\(changes\)/);
+  assert.match(css, /motion-ingredient-instance-change\[data-motion-ingredient-batch\]/);
+});
