@@ -54,16 +54,15 @@ function createOperations(desired: ResolvedFactoryManifest): PlanOperation[] {
       desired.services.includes("storage") ? ["storage"] : ["secrets", "network"],
     ),
     op("start", "start-services", `Start only required services: ${desired.services.join(", ")}`, ["runtime"]),
-    op("migrate", "apply-migrations", "Dry-run canonical migrations, then apply only through the approved release path", ["start"]),
-    op("verify", "verify-health", "Verify gateway, Auth, schema, Storage and project health contracts", ["migrate"]),
+    op("verify", "verify-health", "Verify gateway, Auth, Storage and runtime health contracts before application schema deployment", ["start"]),
   );
 
   if (desired.backup.logical !== "off" || desired.backup.pitr || desired.backup.storageReplication) {
     operations.push(
       op(
-        "backup-baseline",
-        "backup-project",
-        "Create and verify first project backup set (database, Storage, config/key material references)",
+        "backup-policy",
+        "configure-backup",
+        "Configure project backup policy; actual backups and restore drills remain explicit lifecycle operations",
         ["verify"],
       ),
     );
