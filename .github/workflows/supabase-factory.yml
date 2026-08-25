@@ -58,14 +58,16 @@ jobs:
             exit 1
           fi
 
-          # SUPABASE_ACCESS_TOKEN may only appear in the defensive deny/unset list.
+          # SUPABASE_ACCESS_TOKEN may appear only in the explicit defensive
+          # CLOUD_ENV_KEYS deny/unset lists used by direct self-hosted DB operators.
           token_hits="$(grep -R --line-number --exclude='*.test.ts' --exclude='README.md' \
             'SUPABASE_ACCESS_TOKEN' packages/supabase-factory/src || true)"
           if [[ -n "$token_hits" ]]; then
-            unexpected="$(printf '%s\n' "$token_hits" | grep -v 'migrations.ts:.*"SUPABASE_ACCESS_TOKEN"' || true)"
+            unexpected="$(printf '%s\n' "$token_hits" | \
+              grep -Ev '(migrations|backup)\.ts:.*const CLOUD_ENV_KEYS.*"SUPABASE_ACCESS_TOKEN"' || true)"
             if [[ -n "$unexpected" ]]; then
               printf '%s\n' "$unexpected"
-              echo 'SUPABASE_ACCESS_TOKEN may only be referenced to remove it from migration command environments.' >&2
+              echo 'SUPABASE_ACCESS_TOKEN may only be referenced in defensive DB-operator unset lists.' >&2
               exit 1
             fi
           fi
