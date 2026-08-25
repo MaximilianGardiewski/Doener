@@ -1,0 +1,57 @@
+name: Supabase Factory
+
+on:
+  pull_request:
+    paths:
+      - "packages/supabase-factory/**"
+      - ".github/workflows/supabase-factory.yml"
+      - "tsconfig.json"
+      - "package.json"
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/supabase-factory/**"
+      - ".github/workflows/supabase-factory.yml"
+      - "tsconfig.json"
+      - "package.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-factory-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install workspace dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Typecheck monorepo
+        run: npm run typecheck
+
+      - name: Test Supabase Factory
+        run: npm --workspace @business-web/supabase-factory test
+
+      - name: Guard against Supabase Cloud management dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R --line-number --exclude='*.test.ts' --exclude='README.md' \
+            -E 'SUPABASE_ACCESS_TOKEN|supabase[[:space:]]+login|supabase[[:space:]]+link|sbp_' \
+            packages/supabase-factory/src; then
+            echo 'Supabase Factory core must not depend on Supabase Cloud management credentials.' >&2
+            exit 1
+          fi
