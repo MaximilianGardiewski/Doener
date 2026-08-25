@@ -333,6 +333,65 @@
       "notes": "One Adobe-generated tomato-slice master is reused three times inside the presentation layer. Production modifier-option ID mapping remains pending owner-confirmed catalog truth."
     },
     {
+      "id": "fresh-cucumber-slice-master-v1",
+      "version": 1,
+      "kind": "ingredient-layer",
+      "productFamilies": [
+        "doner",
+        "yufka"
+      ],
+      "slot": "fresh.cucumber",
+      "path": "apps/mcello/public/assets/ingredients/fresh/cucumber-slice-master.png",
+      "publicPath": "/assets/ingredients/fresh/cucumber-slice-master.png",
+      "status": "approved-runtime",
+      "runtimeScope": "presentation-only-local-demo",
+      "documentary": false,
+      "provenance": "generated-product-visual",
+      "mappingType": "modifier-option",
+      "domainMapping": {
+        "presentationGroupKey": "doner-yufka-gemuese",
+        "presentationOptionKey": "gurke",
+        "productionOptionId": null
+      },
+      "productionMappingStatus": "awaiting-owner-confirmed-domain-option-id",
+      "generator": "Adobe Firefly",
+      "promptId": "cucumber-slice-layer-v1",
+      "generatedAt": "2026-08-25",
+      "generationRequestId": "d767ebd2-8b81-4656-a078-1a466d8b822f",
+      "backgroundRemovalRequestId": "8407bb10-807b-4e45-9ca3-7a729231f9af",
+      "cropRequestId": "c3689f36-00ba-4cca-994a-8c3ec2a3eaee",
+      "stagingOutput": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:7c2f9c4d-6e2c-430f-a02d-73bed3635455",
+      "stagingDimensions": {
+        "width": 2174,
+        "height": 1116
+      },
+      "fireflyBoardId": "urn:aaid:sc:EU:bea31d70-9090-4de1-9b2e-e4feeeec4ef7",
+      "fireflyBoardEntityId": "5b68a677-f847-4335-8c79-24052ab7d31f",
+      "zIndex": 50,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.49
+      },
+      "animationPreset": "ingredient.drop.light",
+      "rendererBranch": "interactive-builder",
+      "runtimeDependency": true,
+      "runtimeReady": true,
+      "reusePolicy": "grouped-four-slice-master-single-layer",
+      "publishGatesPassed": [
+        "asset-qa-approved",
+        "provenance-recorded",
+        "runtime-path-local-or-governed-media"
+      ],
+      "qa": {
+        "fourSlices": "pass",
+        "transparentCutout": "pass",
+        "cameraConsistency": "pass",
+        "reusableMaster": "pass",
+        "noDocumentaryClaim": "pass"
+      },
+      "notes": "One Adobe-generated grouped four-slice cucumber master is used as the presentation layer. Production modifier-option ID mapping remains pending owner-confirmed catalog truth."
+    },
+    {
       "id": "doner-core-layer-pack-v1",
       "kind": "ingredient-layer-pack",
       "status": "production-active-runtime-assets",
@@ -373,7 +432,8 @@
         "sauce-spicy-master-v1"
       ],
       "qaApprovedRuntimeAssets": [
-        "fresh-tomato-slice-master-v1"
+        "fresh-tomato-slice-master-v1",
+        "fresh-cucumber-slice-master-v1"
       ]
     },
     {

@@ -178,7 +178,9 @@ function stageMarkup() {
           <image class="mc-fresh-raster mc-fresh-raster--tomato" href="/assets/ingredients/fresh/tomato-slice-master.png" x="430" y="340" width="112" height="77" transform="rotate(-8 486 378)" preserveAspectRatio="xMidYMid meet"/>
         </g>
 
-        <g class="mc-food-layer mc-food-layer--gurke" data-food-layer="Gurke"><g fill="#a7ce65" stroke="#477739" stroke-width="5"><ellipse cx="212" cy="418" rx="48" ry="23" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="49" ry="23" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="48" ry="23" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="44" ry="22" transform="rotate(-10 536 404)"/></g><g fill="#d7eca0" opacity=".9"><ellipse cx="212" cy="418" rx="29" ry="11" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="29" ry="11" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="29" ry="11" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="26" ry="10" transform="rotate(-10 536 404)"/></g></g>
+        <g class="mc-food-layer mc-food-layer--gurke" data-food-layer="Gurke" data-asset-id="fresh-cucumber-slice-master-v1">
+          <image class="mc-fresh-raster mc-fresh-raster--cucumber" href="/assets/ingredients/fresh/cucumber-slice-master.png" x="210" y="278" width="340" height="174" preserveAspectRatio="xMidYMid meet"/>
+        </g>
 
         <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel"><g fill="none" stroke="#dcb0d6" stroke-width="8" stroke-linecap="round" opacity=".92"><path d="M232 330c26-24 56-21 74 6 12 20 4 39-17 48-22 10-45 2-53-16-7-17 3-34 22-40"/><path d="M356 310c25-22 55-17 70 11 11 22 0 40-23 47-23 6-44-4-49-23-5-18 6-33 27-37"/><path d="M470 340c23-20 49-16 62 9 9 19 0 35-21 42-21 7-40-2-46-19-5-17 5-31 24-36"/></g></g>
 

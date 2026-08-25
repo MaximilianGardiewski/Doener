@@ -110,6 +110,19 @@
       "negativePrompt": "multiple tomato slices, whole tomato, vine, stem, plate, bowl, bread, döner, kebab, meat, lettuce, cucumber, onion, sauce, hands, utensils, table props, text, logo, watermark, illustration, cartoon, CGI, hard black shadow, cropped edges",
       "generationRule": "Generate exactly one tomato-slice master. Reuse the same approved master deterministically for multiple visible slices in the presentation layer instead of generating a baked multi-slice composition.",
       "qaNote": "Passed single-subject, transparent-cutout, top-three-quarter camera and reusable-master QA; published to a local runtime path for presentation-only demo scope."
+    },
+    {
+      "id": "cucumber-slice-layer-v1",
+      "tool": "Adobe Firefly image_generate",
+      "status": "executed-qa-approved-runtime-demo",
+      "usage": "interactive-builder-layer-candidate",
+      "targetSlot": "fresh.cucumber",
+      "assetKind": "ingredient-layer",
+      "requestId": "d767ebd2-8b81-4656-a078-1a466d8b822f",
+      "prompt": "Create exactly FOUR isolated fresh cucumber slices for a premium döner / yufka ingredient layer. Photorealistic food asset, fresh crisp cucumber texture, pale green interior with visible seed pattern, darker green peel, slight natural moisture, appetizing and clean, studio-quality food rendering. Arrange the slices as a modular grouped ingredient layer suitable for an interactive sandwich builder. Keep them clearly separated but visually cohesive. Slightly elevated top-three-quarter camera matching an exploded döner ingredient stack, soft premium studio lighting from upper left, crisp realistic edges, generous clean neutral empty space around the grouped ingredient so it can be cleanly cut out. No bread, no plate, no table, no hands, no salad mix, no background scene, no sauces, no text, no packaging.",
+      "negativePrompt": "full sandwich, döner, kebab, bread, other vegetables, tomato, onion, lettuce, chopped cucumber pile, bowl, plate, garnish, countertop, hands, utensils, packaging, text, logo, watermark, illustration, cartoon, CGI, cropped edges",
+      "generationRule": "Generate exactly four cucumber slices as one grouped reusable master layer. Do not generate a whole sandwich or bake other ingredients into the asset.",
+      "qaNote": "Passed four-slice, transparent-cutout, top-three-quarter camera and reusable-master QA; published to a local runtime path for presentation-only demo scope."
     }
   ]
 }

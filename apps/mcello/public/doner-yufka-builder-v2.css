@@ -73,6 +73,7 @@
 .mc-food-layer--sauce { transform: translate3d(-18px,0,0) scaleX(.72); transform-origin: left center; transition-duration: 300ms; }
 .mc-sauce-deck .mc-food-layer--sauce[data-sauce-slot] { transform-box: fill-box; transform-origin: center center; }
 .mc-sauce-raster { pointer-events: none; filter: drop-shadow(0 4px 5px rgba(67, 42, 18, .18)); }
+.mc-fresh-raster { pointer-events: none; filter: drop-shadow(0 4px 5px rgba(67, 42, 18, .15)); }
 .mc-food-layer--curry { transition-delay: 20ms; }
 .mc-food-layer--knoblauch { transition-delay: 50ms; }
 .mc-food-layer--scharf { transition-delay: 80ms; }

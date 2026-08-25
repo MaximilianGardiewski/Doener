@@ -83,6 +83,32 @@ test("Tomate uses one governed local Adobe master instanced deterministically wi
   assert.doesNotMatch(js + css, /photoshop-api|firefly\.adobe|short-url/i);
 });
 
+test("Gurke uses one governed local Adobe four-slice master with no Adobe runtime dependency", async () => {
+  const id = "fresh-cucumber-slice-master-v1";
+  const publicPath = "/assets/ingredients/fresh/cucumber-slice-master.png";
+  const repoPath = "apps/mcello/public/assets/ingredients/fresh/cucumber-slice-master.png";
+  assert.ok(js.includes(`data-asset-id=\"${id}\"`));
+  assert.equal(js.split(`href=\"${publicPath}\"`).length - 1, 1, "the grouped cucumber master should be rendered once");
+  assert.ok(sw.includes(publicPath));
+  const file = await stat(new URL(repoPath, root));
+  assert.ok(file.size > 10_000, `${repoPath} must be a real PNG asset`);
+  const manifestAsset = assetManifest.assets.find((asset) => asset.id === id);
+  assert.ok(manifestAsset, `${id} must be governed in the asset manifest`);
+  assert.equal(manifestAsset.status, "approved-runtime");
+  assert.equal(manifestAsset.runtimeScope, "presentation-only-local-demo");
+  assert.equal(manifestAsset.runtimeReady, true);
+  assert.equal(manifestAsset.slot, "fresh.cucumber");
+  assert.equal(manifestAsset.publicPath, publicPath);
+  assert.equal(manifestAsset.productionMappingStatus, "awaiting-owner-confirmed-domain-option-id");
+  assert.match(manifestAsset.reusePolicy || "", /grouped-four-slice-master/i);
+  const prompt = promptLibrary.prompts.find((entry) => entry.id === "cucumber-slice-layer-v1");
+  assert.ok(prompt, "cucumber-slice-layer-v1 must be recorded in the prompt library");
+  assert.equal(prompt.status, "executed-qa-approved-runtime-demo");
+  assert.equal(prompt.targetSlot, "fresh.cucumber");
+  assert.match(prompt.generationRule, /exactly four cucumber slices/i);
+  assert.doesNotMatch(js + css, /photoshop-api|firefly\.adobe|short-url/i);
+});
+
 test("SauceDeck uses governed local Adobe sauce masters with no Adobe runtime dependency", async () => {
   const assets = [
     ["sauce-curry-master-v1", "/assets/ingredients/sauces/sauce-curry-master.png", "apps/mcello/public/assets/ingredients/sauces/sauce-curry-master.png"],
