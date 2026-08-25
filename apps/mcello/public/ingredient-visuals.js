@@ -108,10 +108,10 @@ export const FLATBREAD_VISUAL = defineVisual({
   runtimeReady: true,
   baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 460,
+  instanceSize: 396,
   optionRules: [],
   productFormRules: [{ forms: ["flatbread-pocket"], count: 1 }],
-  slots: [{ x: 380, y: 460, rotation: 0, scale: 1 }],
+  slots: [{ x: 380, y: 430, rotation: 0, scale: 1 }],
 });
 
 /* Deckel: the second flatbread master (D076). Always the last-painted layer,
@@ -124,10 +124,10 @@ export const FLATBREAD_LID_VISUAL = defineVisual({
   runtimeReady: true,
   baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 300,
+  instanceSize: 340,
   optionRules: [],
   productFormRules: [{ forms: ["flatbread-pocket"], count: 1 }],
-  slots: [{ x: 380, y: 250, rotation: 0, scale: 1 }],
+  slots: [{ x: 380, y: 274, rotation: 0, scale: 1 }],
 });
 
 export const GARLIC_SAUCE_VISUAL = defineVisual({
@@ -211,6 +211,56 @@ export const ATOMIC_INGREDIENT_VISUALS = Object.freeze([
   LETTUCE_VISUAL,
   FLATBREAD_LID_VISUAL,
 ]);
+
+/*
+ * Paint order of the D076 stack, bottom to top. This mirrors the SVG document
+ * order in doner-yufka-builder-v2.js, which is what actually decides z-order --
+ * ATOMIC_INGREDIENT_VISUALS above is grouped for reading, not for stacking.
+ * Keeping the order here as data lets the exploded view and the stage's
+ * dimension readout derive from one list instead of each guessing.
+ */
+export const STACK_PAINT_ORDER = Object.freeze([
+  "ingredient.flatbread.base",
+  "ingredient.sauce.curry.layer",
+  "ingredient.sauce.garlic.layer",
+  "ingredient.sauce.hot.layer",
+  "ingredient.tomato.layer",
+  "ingredient.tomato.layer.extra",
+  "ingredient.cucumber.layer",
+  "ingredient.onion.layer",
+  "ingredient.meat.doner.layer",
+  "ingredient.falafel.layer",
+  "ingredient.lettuce.layer",
+  "ingredient.flatbread.lid",
+]);
+
+/* Distance between two neighbouring layers in the exploded view, in SVG user units. */
+export const STACK_EXPLODE_GAP = 9;
+
+/*
+ * Derived from the layer's rank in the paint order rather than stored per slot,
+ * so adding or reordering a layer can never leave a hand-tuned offset behind
+ * that no longer matches the stack. Negative moves up, positive moves down.
+ */
+export function stackExplodeOffset(assetId, order = STACK_PAINT_ORDER) {
+  const index = order.indexOf(assetId);
+  if (index < 0) return 0;
+  const middle = (order.length - 1) / 2;
+  return Number(((middle - index) * STACK_EXPLODE_GAP).toFixed(2));
+}
+
+/*
+ * Total height the exploded stack spans, measured over the layers actually on
+ * screen. The stage prints this as its "Gesamthöhe" readout, so the number is a
+ * real measurement of the current selection and never decorative text.
+ */
+export function stackExplodeSpan(activeAssetIds, order = STACK_PAINT_ORDER) {
+  const offsets = [...new Set(activeAssetIds)]
+    .filter((assetId) => order.includes(assetId))
+    .map((assetId) => stackExplodeOffset(assetId, order));
+  if (offsets.length < 2) return 0;
+  return Number((Math.max(...offsets) - Math.min(...offsets)).toFixed(2));
+}
 
 export function normalizeIngredientOptionName(value) {
   return String(value || "").trim().toLocaleLowerCase("de");

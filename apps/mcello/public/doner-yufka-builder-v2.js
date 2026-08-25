@@ -1,4 +1,11 @@
-import { TOMATO_VISUAL, atomicVisualForOption } from "./ingredient-visuals.js";
+import {
+  STACK_EXPLODE_GAP,
+  STACK_PAINT_ORDER,
+  TOMATO_VISUAL,
+  atomicVisualForOption,
+  stackExplodeOffset,
+  stackExplodeSpan,
+} from "./ingredient-visuals.js";
 import { reconcileAtomicIngredients } from "./atomic-ingredient-renderer.js";
 
 const stylesheet = document.createElement("link");
@@ -137,9 +144,76 @@ function acceptedOptionLabels(groupMap) {
     .flatMap((group) => [...group.querySelectorAll(".modifier-option")]))];
 }
 
+/* Plate the technical HUD is drawn on, in the stage's own viewBox coordinates. */
+const HUD_PLATE = { x: 148, y: 192, width: 464, height: 396, radius: 22 };
+
+/*
+ * Blueprint HUD, drawn FIRST inside the stage SVG so every layer master paints
+ * over it. That ordering is the whole trick: each master is a transparent PNG,
+ * so the beams stay visible exactly in the negative space between and around
+ * the layers and read as passing through the stack, with no clip path or mask.
+ *
+ * Decorative only -- aria-hidden here, pointer-events:none in CSS -- so it can
+ * never absorb a tap meant for a modifier option. Every colour comes from the
+ * existing D001/D029 amber tokens; the HUD introduces no new palette.
+ */
+function hudGroundMarkup() {
+  const { x, y, width, height, radius } = HUD_PLATE;
+  const gridStep = 26;
+  const verticals = [];
+  for (let line = x + gridStep; line < x + width; line += gridStep) {
+    verticals.push(`<line x1="${line}" y1="${y}" x2="${line}" y2="${y + height}"/>`);
+  }
+  const horizontals = [];
+  for (let line = y + gridStep; line < y + height; line += gridStep) {
+    horizontals.push(`<line x1="${x}" y1="${line}" x2="${x + width}" y2="${line}"/>`);
+  }
+  // Ticks sit on the paint-order ranks, so the scale measures the real stack.
+  const ticks = STACK_PAINT_ORDER.map((_, index) => {
+    const tickY = y + 40 + (index * ((height - 80) / (STACK_PAINT_ORDER.length - 1)));
+    const long = index === 0 || index === STACK_PAINT_ORDER.length - 1;
+    return `<line x1="${x + 18}" y1="${tickY.toFixed(1)}" x2="${x + (long ? 34 : 27)}" y2="${tickY.toFixed(1)}"/>`;
+  }).join("");
+
+  return `
+      <g class="mc-stage-hud mc-stage-hud--ground" aria-hidden="true">
+        <clipPath id="mcHudPlate"><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${radius}"/></clipPath>
+        <rect class="mc-stage-hud__plate" x="${x}" y="${y}" width="${width}" height="${height}" rx="${radius}"/>
+        <g class="mc-stage-hud__grid" clip-path="url(#mcHudPlate)">${verticals.join("")}${horizontals.join("")}</g>
+        <g class="mc-stage-hud__beams">
+          <line x1="336" y1="${y - 12}" x2="336" y2="${y + height + 12}"/>
+          <line x1="380" y1="${y - 20}" x2="380" y2="${y + height + 20}"/>
+          <line x1="424" y1="${y - 12}" x2="424" y2="${y + height + 12}"/>
+        </g>
+        <g class="mc-stage-hud__scale">
+          <line x1="${x + 18}" y1="${y + 34}" x2="${x + 18}" y2="${y + height - 34}"/>
+          ${ticks}
+        </g>
+      </g>`;
+}
+
+/* Registration brackets, painted last so they always sit above every layer. */
+function hudBracketsMarkup() {
+  const { x, y, width, height } = HUD_PLATE;
+  const arm = 22;
+  const right = x + width;
+  const bottom = y + height;
+  const corners = [
+    `M${x} ${y + arm}V${y}h${arm}`,
+    `M${right - arm} ${y}h${arm}v${arm}`,
+    `M${right} ${bottom - arm}V${bottom}h-${arm}`,
+    `M${x + arm} ${bottom}H${x}v-${arm}`,
+  ];
+  return `
+      <g class="mc-stage-hud mc-stage-hud--brackets" aria-hidden="true">
+        ${corners.map((path) => `<path d="${path}"/>`).join("")}
+      </g>`;
+}
+
 function stageMarkup() {
   return `
     <div class="mc-food-stage-v4__halo" aria-hidden="true"></div>
+    <div class="mc-food-stage-v4__frame">
     <svg class="mc-food-stage-v4__art" viewBox="140 140 480 470" aria-hidden="true">
       <defs>
         <linearGradient id="mcBread" x1="0" y1="0" x2=".2" y2="1"><stop offset="0" stop-color="#f6d9a4"/><stop offset=".54" stop-color="#dea461"/><stop offset="1" stop-color="#b06f36"/></linearGradient>
@@ -147,6 +221,7 @@ function stageMarkup() {
         <linearGradient id="mcMeat" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b4633c"/><stop offset=".5" stop-color="#87432c"/><stop offset="1" stop-color="#5a2d21"/></linearGradient>
         <filter id="mcStageShadow"><feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#3a2418" flood-opacity=".26"/></filter>
       </defs>
+${hudGroundMarkup()}
 
       <ellipse cx="380" cy="562" rx="196" ry="24" fill="#2a1c14" opacity=".18"/>
 
@@ -199,10 +274,28 @@ function stageMarkup() {
 
       <!-- Deckel: the second flatbread master (D076). Always the last-painted layer. -->
       <g class="mc-food-layer mc-food-layer--flatbread-lid" data-food-layer="Deckel" data-atomic-ingredient-host="ingredient.flatbread.lid"></g>
+${hudBracketsMarkup()}
     </svg>
+    <!--
+      Dimension readout. Kept in HTML rather than SVG text on purpose: the stage
+      SVG scales down to roughly half size on a phone, and in-SVG text would
+      shrink with it. It lives inside __frame, which is the only element that
+      tracks the SVG's own box -- the stage itself drops to position:static at
+      some breakpoints, so anchoring here would place the labels on the modal.
+      These values are written from the real stack state, never hard-coded, so
+      the HUD reports the stage instead of decorating it.
+    -->
+    <div class="mc-stage-hud__annotations" aria-hidden="true">
+      <span class="mc-stage-hud__label mc-stage-hud__label--axis">Z-Achse <b data-hud-axis>0,00</b></span>
+      <span class="mc-stage-hud__label mc-stage-hud__label--gap">Schichtabstand <b data-hud-gap>0</b></span>
+      <span class="mc-stage-hud__label mc-stage-hud__label--span">Gesamthöhe <b data-hud-span>0</b></span>
+      <span class="mc-stage-hud__label mc-stage-hud__label--count">Schichten <b data-hud-count>0</b></span>
+    </div>
+    </div>
     <div class="mc-food-stage-v4__caption">
       <span>DEIN MCELLO</span>
       <strong data-food-stage-summary>Auswahl wird aufgebaut …</strong>
+      <button type="button" class="mc-stage-stack-toggle" data-stage-stack-toggle aria-pressed="false">Schichten auffächern</button>
       <small>Stilisierte Präsentation mit KI-Zutatenvisualisierung · keine Produktfotografie</small>
     </div>`;
 }
@@ -235,6 +328,42 @@ function attachSpotlight(stage) {
   });
 }
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/*
+ * Every layer host gets its own shell group, and the shell is the only node the
+ * exploded view transforms. The host itself cannot carry that offset: CSS pins a
+ * ready atomic host to `transform: none` so the per-instance delta animation
+ * stays the only thing moving inside it. Wrapping keeps the two mechanisms
+ * independent, and SVG composes nested transforms for free, so an ingredient
+ * added while the stack is fanned out inherits the offset with no extra code.
+ */
+function wrapStackShells(root) {
+  for (const host of root.querySelectorAll("[data-atomic-ingredient-host]")) {
+    const assetId = host.dataset.atomicIngredientHost;
+    if (host.parentElement?.dataset.stackShell === assetId) continue;
+    const shell = document.createElementNS(SVG_NS, "g");
+    shell.setAttribute("class", "mc-stack-shell");
+    shell.dataset.stackShell = assetId;
+    shell.style.setProperty("--shell-offset", `${stackExplodeOffset(assetId)}px`);
+    host.before(shell);
+    shell.append(host);
+  }
+}
+
+/*
+ * Presentation state only. Fanning the stack out changes nothing about what is
+ * selected, what it costs or whether it can be ordered, and emits no delta.
+ */
+function setStackState(root, exploded) {
+  if (!root) return;
+  root.dataset.stackState = exploded ? "exploded" : "assembled";
+  const toggle = root.querySelector("[data-stage-stack-toggle]");
+  if (!toggle) return;
+  toggle.setAttribute("aria-pressed", exploded ? "true" : "false");
+  toggle.textContent = exploded ? "Schichten schließen" : "Schichten auffächern";
+}
+
 function ensureStage() {
   if (stageRoot?.isConnected) return stageRoot;
   if (!foodStageImage?.parentElement) return null;
@@ -244,8 +373,28 @@ function ensureStage() {
   stageRoot.setAttribute("role", "img");
   stageRoot.setAttribute("aria-label", "Stilisierte interaktive Döner- und Yufka-Vorschau");
   stageRoot.innerHTML = stageMarkup();
+  wrapStackShells(stageRoot);
   foodStageImage.before(stageRoot);
   attachSpotlight(stageRoot);
+
+  stageRoot.querySelector("[data-stage-stack-toggle]")?.addEventListener("click", () => {
+    setStackState(stageRoot, stageRoot.dataset.stackState !== "exploded");
+  });
+
+  /*
+   * The stack opens fanned out and settles together, so the build is legible
+   * before the finished product is shown. Under reduced motion it simply starts
+   * assembled -- the same final composition, reached without the movement.
+   */
+  if (reducedMotionQuery?.matches) {
+    setStackState(stageRoot, false);
+  } else {
+    setStackState(stageRoot, true);
+    const settle = stageRoot;
+    window.setTimeout(() => {
+      if (settle.isConnected && settle.dataset.stackState === "exploded") setStackState(settle, false);
+    }, 900);
+  }
   return stageRoot;
 }
 
@@ -265,6 +414,26 @@ function setImageVisibility(active) {
     foodStageImage.removeAttribute("aria-hidden");
     foodStageImage.setAttribute("data-builder-food-stage", "true");
   }
+}
+
+/*
+ * Writes the HUD's dimension readout from the layers that are actually on the
+ * stage. Nothing here is a fixed caption: the span is measured over the present
+ * layers, the count is the count, and the axis stays 0,00 because the stack is
+ * aligned on one axis by construction. A readout that invented numbers would be
+ * exactly the kind of fake authenticity D068 rules out.
+ */
+function updateHudReadout(root, counts) {
+  const present = STACK_PAINT_ORDER.filter((assetId) => (counts.get(assetId) || 0) > 0);
+  const span = stackExplodeSpan(present);
+  const write = (selector, value) => {
+    const node = root.querySelector(selector);
+    if (node) node.textContent = value;
+  };
+  write("[data-hud-axis]", "0,00");
+  write("[data-hud-gap]", `${STACK_EXPLODE_GAP}`);
+  write("[data-hud-span]", `${String(span).replace(".", ",")}`);
+  write("[data-hud-count]", `${present.length}`);
 }
 
 function roleSummary(selected, role, fallback) {
@@ -300,6 +469,7 @@ function updateStage(groupMap) {
   root.dataset.tomatoInstanceCount = String(tomatoCount);
   modal.dataset.tomatoInstanceCount = String(tomatoCount);
   root.dataset.flatbreadAtomicReady = String((atomic.counts.get("ingredient.flatbread.base") || 0) > 0);
+  updateHudReadout(root, atomic.counts);
 
   const summary = [
     roleSummary(selected, "basis", "Basis wählen"),

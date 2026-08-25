@@ -73,3 +73,71 @@ test("Döner/Yufka presentation code remains in refreshed offline shell while bu
   assert.match(sw, /doner-yufka-builder-v2\.css/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);
 });
+
+test("the blueprint HUD is decorative and cannot take a tap from a modifier option", () => {
+  // aria-hidden in markup, pointer-transparent in CSS. Both halves are required:
+  // one keeps it out of the accessibility tree, the other out of hit testing.
+  assert.match(js, /class="mc-stage-hud mc-stage-hud--ground" aria-hidden="true"/);
+  assert.match(js, /class="mc-stage-hud mc-stage-hud--brackets" aria-hidden="true"/);
+  assert.match(js, /class="mc-stage-hud__annotations" aria-hidden="true"/);
+  assert.match(css, /\.mc-stage-hud,[\s\S]*?\.mc-stage-hud__annotations \*\s*\{\s*pointer-events: none;/);
+
+  /*
+   * Drawn before the first layer host. That ordering is what lets the beams read
+   * as passing through the stack: every master is a transparent PNG, so the
+   * beams survive in the negative space instead of being covered wholesale.
+   */
+  // Compare the call sites inside stageMarkup, not the function definitions,
+  // which appear earlier in the file and would make this pass for free.
+  const stage = js.slice(js.indexOf("function stageMarkup()"));
+  assert.ok(
+    stage.indexOf("${hudGroundMarkup()}") < stage.indexOf('data-atomic-ingredient-host="ingredient.flatbread.base"'),
+    "the HUD ground must be painted before the first layer host",
+  );
+  assert.ok(
+    stage.indexOf("${hudBracketsMarkup()}") > stage.indexOf('data-atomic-ingredient-host="ingredient.flatbread.lid"'),
+    "registration brackets must be painted after the last layer host",
+  );
+
+  // The readout is written from stage state, never hard-coded into the markup.
+  assert.match(js, /function updateHudReadout\(root, counts\)/);
+  assert.match(js, /stackExplodeSpan\(present\)/);
+  assert.doesNotMatch(js, /Gesamthöhe\s*\d/);
+
+  /*
+   * No second palette. A literal colour is only allowed as the fallback inside
+   * var(--token, …); anything else would be a new raw value, which
+   * brand-system.css rules out until Visual Gate B approves a calibrated one.
+   */
+  const hudCss = css.slice(css.indexOf("Blueprint HUD and exploded stack"));
+  const bareColours = hudCss
+    .replace(/var\(--[a-z0-9-]+, *(?:#[0-9a-f]{3,8}|rgba?\([^)]*\))\)/gi, "")
+    .match(/#[0-9a-f]{3,8}\b|\brgba?\(/gi);
+  assert.equal(bareColours, null, `HUD colours must come from tokens, found: ${bareColours}`);
+});
+
+test("the exploded stack is presentation-only and never rides on the atomic host", () => {
+  /*
+   * A ready atomic host is pinned to `transform: none` so per-instance delta
+   * animation stays the only motion inside it. The exploded offset therefore
+   * has to live on a wrapper, or the two would fight.
+   */
+  assert.match(js, /function wrapStackShells\(root\)/);
+  assert.match(js, /shell\.dataset\.stackShell = assetId/);
+  assert.match(css, /\.mc-stack-shell \{[\s\S]*?transform: translateY\(calc\(var\(--stack-explode, 0\) \* var\(--shell-offset, 0px\)\)\)/);
+  assert.match(css, /\[data-stack-state="exploded"\] \{ --stack-explode: 1; \}/);
+
+  // Tap is always sufficient (D065), and the control reports its state.
+  assert.match(js, /data-stage-stack-toggle/);
+  assert.match(js, /toggle\.setAttribute\("aria-pressed"/);
+  assert.match(css, /\.mc-stage-stack-toggle \{[\s\S]*?min-height: 44px;/);
+
+  // Reduced motion reaches the same composition without the movement.
+  assert.match(js, /if \(reducedMotionQuery\?\.matches\) \{\s*setStackState\(stageRoot, false\);/);
+  const reduced = css.slice(css.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
+  assert.match(reduced, /\.mc-stack-shell \{ transition: none !important; \}/);
+
+  // Fanning the stack out must not touch selection or emit an ingredient delta.
+  const setState = js.slice(js.indexOf("function setStackState"), js.indexOf("function ensureStage"));
+  assert.doesNotMatch(setState, /reconcileAtomicIngredients|dispatchEvent|\.checked/);
+});

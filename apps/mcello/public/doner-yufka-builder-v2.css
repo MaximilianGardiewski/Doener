@@ -41,10 +41,23 @@
   pointer-events: none;
 }
 
-.mc-food-stage-v4__art {
+/*
+ * The only element that tracks the SVG's own box. The stage around it drops to
+ * position:static at some breakpoints, so the HUD readout anchors here instead
+ * and stays on the artwork rather than escaping across the whole modal.
+ */
+.mc-food-stage-v4__frame {
   position: relative;
   z-index: 1;
   width: min(100%, 760px);
+  display: grid;
+  place-items: center;
+}
+
+.mc-food-stage-v4__art {
+  position: relative;
+  z-index: 1;
+  width: 100%;
   height: auto;
   overflow: visible;
   filter: drop-shadow(0 22px 26px rgba(74, 44, 22, .22));
@@ -164,7 +177,7 @@
     min-height: 330px;
     padding: 10px 14px 54px;
   }
-  .mc-food-stage-v4__art { width: min(100%, 520px); }
+  .mc-food-stage-v4__frame { width: min(100%, 520px); }
   .mc-food-stage-v4__caption { padding: 9px 11px; border-radius: 14px; }
   .mc-food-stage-v4__caption > small { display: none; }
 }
@@ -175,8 +188,10 @@
     height: 100%;
     padding: 2px 8px 44px;
   }
-  #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"] .mc-food-stage-v4__art {
+  #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"] .mc-food-stage-v4__frame {
     width: min(100%, 410px);
+  }
+  #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"] .mc-food-stage-v4__art {
     max-height: calc(100dvh - 58px);
   }
   #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"] .mc-food-stage-v4__caption {
@@ -187,4 +202,126 @@
 @media (prefers-reduced-motion: reduce) {
   .mc-food-layer { transition: none !important; }
   .mc-food-stage-v4__art { filter: none; }
+}
+
+/* ── Blueprint HUD and exploded stack (D076) ───────────────────────────────
+ *
+ * The technical layer is amber only. Every colour below resolves to a token
+ * that already exists under D001/D029, so the HUD adds no second palette.
+ *
+ * The whole HUD is decorative. It is aria-hidden in markup and pointer
+ * transparent here, so it can never absorb a tap meant for a modifier option.
+ */
+.mc-stage-hud,
+.mc-stage-hud__annotations,
+.mc-stage-hud__annotations * {
+  pointer-events: none;
+}
+
+.mc-stage-hud__plate {
+  fill: var(--ink-1000, #0b0c0b);
+  fill-opacity: .84;
+}
+
+.mc-stage-hud__grid line {
+  stroke: var(--line, rgba(241, 202, 117, .17));
+  stroke-width: .5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Painted before every layer, so a transparent master lets them show through
+   the stack instead of lying on top of it. */
+.mc-stage-hud__beams line {
+  stroke: var(--amber-300, #f1ca75);
+  stroke-width: 1;
+  stroke-opacity: .42;
+  vector-effect: non-scaling-stroke;
+  transition: stroke-opacity 420ms ease;
+}
+
+.mc-stage-hud__scale line,
+.mc-stage-hud--brackets path {
+  stroke: var(--line-strong, rgba(241, 202, 117, .38));
+  vector-effect: non-scaling-stroke;
+}
+
+.mc-stage-hud__scale line { stroke-width: 1; }
+.mc-stage-hud--brackets path { fill: none; stroke-width: 1.5; }
+
+/* Fanning the stack out is when the axis matters, so the beams come forward. */
+.mc-food-stage-v4[data-stack-state="exploded"] .mc-stage-hud__beams line {
+  stroke-opacity: .9;
+}
+
+/*
+ * Dimension readout. Deliberately HTML rather than SVG text: the stage SVG
+ * scales to roughly half size on a phone and in-SVG text would shrink with it.
+ * Each label carries its own dark chip because it sits over the warm cream
+ * stage ground, where bare amber text would not be readable.
+ */
+.mc-stage-hud__annotations {
+  position: absolute;
+  inset: clamp(10px, 2vw, 20px);
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-content: space-between;
+  justify-content: space-between;
+  gap: 6px;
+  font-family: var(--font-body, system-ui, sans-serif);
+  font-size: clamp(9px, 1.05vw, 11px);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.mc-stage-hud__label {
+  padding: 4px 8px;
+  border: 1px solid var(--line, rgba(241, 202, 117, .17));
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--ink-1000, #0b0c0b) 88%, transparent);
+  color: var(--amber-300, #f1ca75);
+  white-space: nowrap;
+}
+
+.mc-stage-hud__label b { font-weight: 700; }
+.mc-stage-hud__label--gap,
+.mc-stage-hud__label--count { text-align: right; }
+
+/*
+ * The shell is the only node the exploded view moves. Its host cannot carry the
+ * offset, because a ready atomic host is pinned to `transform: none` above so
+ * that per-instance delta animation stays the only motion inside it. SVG
+ * composes the nested transforms, so an ingredient added while the stack is
+ * open inherits the offset without extra code.
+ */
+.mc-stack-shell {
+  transform: translateY(calc(var(--stack-explode, 0) * var(--shell-offset, 0px)));
+  transition: transform 620ms cubic-bezier(.22, .72, .24, 1);
+}
+
+.mc-food-stage-v4[data-stack-state="exploded"] { --stack-explode: 1; }
+
+.mc-stage-stack-toggle {
+  justify-self: center;
+  margin-top: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid var(--line-strong, rgba(241, 202, 117, .38));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-1000, #0b0c0b) 78%, transparent);
+  color: var(--amber-300, #f1ca75);
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.mc-stage-stack-toggle:hover { background: color-mix(in srgb, var(--ink-1000, #0b0c0b) 92%, transparent); }
+.mc-stage-stack-toggle:focus-visible { outline: 2px solid var(--focus-ring, #f1ca75); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-stack-shell { transition: none !important; }
+  .mc-stage-hud__beams line { transition: none !important; }
 }
