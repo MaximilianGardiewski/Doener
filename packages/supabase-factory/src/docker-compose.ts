@@ -180,11 +180,11 @@ export function renderFactoryRuntimeEnv(
 
 /** Replace the official single-project Realtime DNS/Host convention in the
  * copied project runtime. The pinned upstream checkout itself is never modified.
+ * Re-applying the same project-specific patch is intentionally a no-op.
  */
 export function patchEnvoyRealtimeConfig(source: string, realtimeDnsName: string): string {
   const marker = "realtime-dev.supabase-realtime";
-  if (!source.includes(marker)) {
-    throw new Error("pinned Envoy config no longer contains the expected Realtime host marker; review upstream before upgrading");
-  }
-  return source.replaceAll(marker, realtimeDnsName);
+  if (source.includes(marker)) return source.replaceAll(marker, realtimeDnsName);
+  if (source.includes(realtimeDnsName)) return source;
+  throw new Error("pinned Envoy config no longer contains the expected Realtime host marker; review upstream before upgrading");
 }
