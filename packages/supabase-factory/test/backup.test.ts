@@ -137,7 +137,8 @@ test("production-critical backup requires and verifies S3 plus PITR providers", 
   assert.equal(result.database.schema, true);
   assert.equal(result.database.data, true);
   assert.equal(result.database.pgsodiumRootKey, true);
-  assert.equal(result.storage?.ref, "s3-snapshot://backup-app/001");
+  const storageRef = result.storage && "ref" in result.storage ? result.storage.ref : undefined;
+  assert.equal(storageRef, "s3-snapshot://backup-app/001");
   assert.equal(result.pitr?.provider, "wal-g");
   assert.equal(storageVerified, true);
   assert.equal(result.cloudManagementCredentialsRequired, false);
