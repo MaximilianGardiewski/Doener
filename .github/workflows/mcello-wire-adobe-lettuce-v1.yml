@@ -1,0 +1,192 @@
+name: Mcello wire Adobe lettuce v1
+
+on:
+  push:
+    branches:
+      - feat/mcello-notebook-design-slice-v1
+    paths:
+      - .github/workflows/mcello-wire-adobe-lettuce-v1.yml
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: feat/mcello-notebook-design-slice-v1
+          fetch-depth: 0
+
+      - name: Wire lettuce runtime metadata and presentation layer
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          asset_id = 'fresh-lettuce-layer-master-v1'
+          public_path = '/assets/ingredients/fresh/lettuce-layer-master.png'
+          repo_path = 'apps/mcello/public/assets/ingredients/fresh/lettuce-layer-master.png'
+          p = Path(repo_path)
+          if not p.exists() or p.stat().st_size < 10000 or p.read_bytes()[:8] != b'\x89PNG\r\n\x1a\n':
+              raise SystemExit('lettuce runtime PNG missing or invalid')
+
+          js_path = Path('apps/mcello/public/doner-yufka-builder-v2.js')
+          js = js_path.read_text(encoding='utf-8')
+          if f'data-asset-id="{asset_id}"' not in js:
+              start_marker = '        <g class="mc-food-layer mc-food-layer--salat" data-food-layer="Salat">'
+              end_marker = '\n\n        <g class="mc-food-layer mc-food-layer--protein mc-food-layer--fleisch"'
+              start = js.index(start_marker)
+              end = js.index(end_marker, start)
+              new_block = '\n'.join([
+                  '        <g class="mc-food-layer mc-food-layer--salat" data-food-layer="Salat" data-asset-id="fresh-lettuce-layer-master-v1">',
+                  '          <image class="mc-fresh-raster mc-fresh-raster--lettuce" href="/assets/ingredients/fresh/lettuce-layer-master.png" x="170" y="312" width="420" height="183" preserveAspectRatio="xMidYMid meet"/>',
+                  '        </g>',
+              ])
+              js_path.write_text(js[:start] + new_block + js[end:], encoding='utf-8')
+
+          sw_path = Path('apps/mcello/public/sw.js')
+          sw = sw_path.read_text(encoding='utf-8')
+          if public_path not in sw:
+              match = re.search(r'const CACHE = "mcello-public-shell-v(\d+)";', sw)
+              if not match:
+                  raise SystemExit('service worker cache version missing')
+              sw = re.sub(r'const CACHE = "mcello-public-shell-v\d+";', f'const CACHE = "mcello-public-shell-v{int(match.group(1)) + 1}";', sw, count=1)
+              anchor = '  "/assets/ingredients/fresh/red-onion-ring-master.png",\n'
+              if anchor not in sw:
+                  raise SystemExit('service worker onion asset anchor missing')
+              sw_path.write_text(sw.replace(anchor, anchor + f'  "{public_path}",\n', 1), encoding='utf-8')
+
+          manifest_path = Path('data/mcello/asset-manifest.json')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          lettuce_asset = {
+              'id': asset_id,
+              'version': 1,
+              'kind': 'ingredient-layer',
+              'productFamilies': ['doner', 'yufka'],
+              'slot': 'fresh.lettuce',
+              'path': repo_path,
+              'publicPath': public_path,
+              'status': 'approved-runtime',
+              'runtimeScope': 'presentation-only-local-demo',
+              'documentary': False,
+              'provenance': 'generated-product-visual',
+              'mappingType': 'modifier-option',
+              'domainMapping': {'presentationGroupKey': 'doner-yufka-gemuese', 'presentationOptionKey': 'salat', 'productionOptionId': None},
+              'productionMappingStatus': 'awaiting-owner-confirmed-domain-option-id',
+              'generator': 'Adobe Firefly',
+              'promptId': 'lettuce-layer-v1',
+              'generatedAt': '2026-08-25',
+              'generationRequestId': 'de4c04d0-54e9-4d59-9f84-f63c69b0583a',
+              'backgroundRemovalRequestId': 'd68f2db1-4b0c-401c-8d50-e7c03c5e865f',
+              'cropRequestId': 'dce06378-5152-4167-a504-193cd56e6b9e',
+              'normalizationRequestId': 'a07f1191-edfe-4534-967d-c4baa7e409bb',
+              'stagingOutput': 'https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:68c1c221-4753-4bc1-a6c0-ff056ac19920',
+              'stagingDimensions': {'width': 2304, 'height': 1000},
+              'fireflyBoardId': 'urn:aaid:sc:EU:bea31d70-9090-4de1-9b2e-e4feeeec4ef7',
+              'fireflyBoardEntityId': '331e4bf6-311e-4b9c-b07e-d4eab2a8cb51',
+              'zIndex': 30,
+              'anchor': {'x': 0.5, 'y': 0.58},
+              'animationPreset': 'ingredient.drop.light',
+              'rendererBranch': 'interactive-builder',
+              'runtimeDependency': True,
+              'runtimeReady': True,
+              'reusePolicy': 'single-horizontal-lettuce-master-single-layer',
+              'publishGatesPassed': ['asset-qa-approved', 'provenance-recorded', 'runtime-path-local-or-governed-media'],
+              'qa': {'singleLayer': 'pass', 'transparentCutout': 'pass', 'cameraConsistency': 'pass', 'safeMarginNormalized': 'pass', 'reusableMaster': 'pass', 'noDocumentaryClaim': 'pass'},
+              'notes': 'One Adobe-generated horizontal lettuce master is used as the presentation layer. The first extract crop compressed the requested margin, so a transparent pad normalization pass established the final safe runtime margin. Production modifier-option ID mapping remains pending owner-confirmed catalog truth.',
+          }
+          existing = next((a for a in manifest['assets'] if a.get('id') == asset_id), None)
+          if existing:
+              existing.clear(); existing.update(lettuce_asset)
+          else:
+              idx = next((i for i, a in enumerate(manifest['assets']) if a.get('id') == 'doner-core-layer-pack-v1'), len(manifest['assets']))
+              manifest['assets'].insert(idx, lettuce_asset)
+          pack = next((a for a in manifest['assets'] if a.get('id') == 'doner-core-layer-pack-v1'), None)
+          if pack:
+              approved = pack.setdefault('qaApprovedRuntimeAssets', [])
+              if asset_id not in approved:
+                  approved.append(asset_id)
+              pack['status'] = 'production-active-runtime-assets'
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          prompt_path = Path('data/mcello/prompt-library.json')
+          library = json.loads(prompt_path.read_text(encoding='utf-8'))
+          prompt_entry = {
+              'id': 'lettuce-layer-v1',
+              'tool': 'Adobe Firefly image_generate',
+              'status': 'executed-qa-approved-runtime-demo',
+              'usage': 'interactive-builder-layer-candidate',
+              'targetSlot': 'fresh.lettuce',
+              'assetKind': 'ingredient-layer',
+              'requestId': 'de4c04d0-54e9-4d59-9f84-f63c69b0583a',
+              'prompt': 'Create exactly ONE isolated leafy lettuce layer for a premium döner / yufka ingredient asset. Photorealistic fresh green lettuce arranged as one cohesive sandwich layer, fluffy but compact enough for a döner filling stack, curly leaf edges, natural variation, crisp texture, subtle moisture, appetizing freshness and studio-quality food detail. Slightly elevated top-three-quarter camera matching the existing Mcello exploded döner ingredient stack, soft premium studio lighting from upper left, crisp realistic edges, broad horizontal silhouette, generous clean neutral empty space around the ingredient so it can be cleanly cut out. No bread, no tomato, no cucumber, no onion, no plate, no table, no hands, no sauce, no text, no packaging, no background scene.',
+              'negativePrompt': 'salad bowl, mixed salad, cabbage pile, whole lettuce head, full sandwich, döner, kebab, bread, tomato, cucumber, onion, meat, sauce, bowl, plate, garnish, table, hands, utensils, packaging, text, logo, watermark, illustration, cartoon, CGI, cropped edges',
+              'generationRule': 'Generate exactly one cohesive horizontal lettuce layer as a reusable master. Do not generate a whole salad or bake other ingredients into the asset.',
+              'qaNote': 'Passed single-layer, transparent-cutout, top-three-quarter camera and reusable-master QA. A transparent pad normalization pass was required after the first extract crop compressed the requested margin.',
+          }
+          existing_prompt = next((p for p in library['prompts'] if p.get('id') == prompt_entry['id']), None)
+          if existing_prompt:
+              existing_prompt.clear(); existing_prompt.update(prompt_entry)
+          else:
+              library['prompts'].append(prompt_entry)
+          prompt_path.write_text(json.dumps(library, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/mcello-doner-yufka-builder-v2.test.mjs')
+          tests = test_path.read_text(encoding='utf-8')
+          if 'Salat uses one governed local Adobe horizontal master' not in tests:
+              marker = 'test("SauceDeck uses governed local Adobe sauce masters with no Adobe runtime dependency", async () => {'
+              if marker not in tests:
+                  raise SystemExit('lettuce test insertion marker missing')
+              lines = [
+                  'test("Salat uses one governed local Adobe horizontal master with no Adobe runtime dependency", async () => {',
+                  '  const id = "fresh-lettuce-layer-master-v1";',
+                  '  const publicPath = "/assets/ingredients/fresh/lettuce-layer-master.png";',
+                  '  const repoPath = "apps/mcello/public/assets/ingredients/fresh/lettuce-layer-master.png";',
+                  '  assert.ok(js.includes(`data-asset-id=\\"${id}\\"`));',
+                  '  assert.equal(js.split(`href=\\"${publicPath}\\"`).length - 1, 1, "the lettuce master should be rendered once");',
+                  '  assert.ok(sw.includes(publicPath));',
+                  '  const file = await stat(new URL(repoPath, root));',
+                  '  assert.ok(file.size > 10_000, `${repoPath} must be a real PNG asset`);',
+                  '  const manifestAsset = assetManifest.assets.find((asset) => asset.id === id);',
+                  '  assert.ok(manifestAsset, `${id} must be governed in the asset manifest`);',
+                  '  assert.equal(manifestAsset.status, "approved-runtime");',
+                  '  assert.equal(manifestAsset.runtimeScope, "presentation-only-local-demo");',
+                  '  assert.equal(manifestAsset.runtimeReady, true);',
+                  '  assert.equal(manifestAsset.slot, "fresh.lettuce");',
+                  '  assert.equal(manifestAsset.publicPath, publicPath);',
+                  '  assert.equal(manifestAsset.productionMappingStatus, "awaiting-owner-confirmed-domain-option-id");',
+                  '  assert.equal(manifestAsset.qa?.safeMarginNormalized, "pass");',
+                  '  const prompt = promptLibrary.prompts.find((entry) => entry.id === "lettuce-layer-v1");',
+                  '  assert.ok(prompt, "lettuce-layer-v1 must be recorded in the prompt library");',
+                  '  assert.equal(prompt.status, "executed-qa-approved-runtime-demo");',
+                  '  assert.equal(prompt.targetSlot, "fresh.lettuce");',
+                  '  assert.match(prompt.generationRule, /exactly one cohesive horizontal lettuce layer/i);',
+                  '  assert.doesNotMatch(js + css, /photoshop-api|firefly\\.adobe|short-url/i);',
+                  '});',
+                  '',
+                  '',
+              ]
+              test_path.write_text(tests.replace(marker, '\n'.join(lines) + marker, 1), encoding='utf-8')
+          PY
+
+      - name: Validate Mcello static asset contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/mcello-doner-yufka-builder-v2.test.mjs
+
+      - name: Commit runtime wiring and remove one-shot helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/mcello-wire-adobe-lettuce-v1.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat(mcello): wire Adobe lettuce master'
+          git push origin HEAD:feat/mcello-notebook-design-slice-v1
