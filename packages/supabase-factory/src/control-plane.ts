@@ -4,11 +4,19 @@ import type { ProjectRegistry } from "./registry.ts";
 import type { ProjectRecord, ProvisioningPlan, SupabaseFactoryManifest } from "./types.ts";
 
 export class SupabaseFactoryControlPlane {
+  readonly registry: ProjectRegistry;
+  readonly provider: InfrastructureProvider;
+  readonly now: () => Date;
+
   constructor(
-    readonly registry: ProjectRegistry,
-    readonly provider: InfrastructureProvider,
-    readonly now: () => Date = () => new Date(),
-  ) {}
+    registry: ProjectRegistry,
+    provider: InfrastructureProvider,
+    now: () => Date = () => new Date(),
+  ) {
+    this.registry = registry;
+    this.provider = provider;
+    this.now = now;
+  }
 
   async plan(manifest: SupabaseFactoryManifest): Promise<ProvisioningPlan> {
     const observed = await this.provider.observe(manifest.project.id);
