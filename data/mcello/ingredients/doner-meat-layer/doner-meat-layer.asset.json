@@ -27,14 +27,14 @@
   },
   "files": {
     "source": {
-      "path": "source/ingredient.meat.doner.layer.firefly-seed-65998.png",
+      "path": "source/ingredient.meat.doner.layer.owner-library.png",
       "mediaType": "image/png",
-      "width": 512,
-      "height": 512,
+      "width": 2050,
+      "height": 1517,
       "bitDepth": 8,
-      "pngColorType": "RGB",
-      "bytes": 370070,
-      "sha256": "91fc2eaf5eaccbb3c06b54af28c82dc3b1b7d9071911c8baafb3164a9b416c8a"
+      "pngColorType": "RGBA",
+      "bytes": 6859382,
+      "sha256": "6ee1305b235c29b036207236d7c05c547beb3b59b3e2afc29f82cf66578c4af2"
     },
     "master": {
       "path": "master/ingredient.meat.doner.layer.png",
@@ -45,8 +45,8 @@
       "pngColorType": "RGBA",
       "transparent": true,
       "canvas": "square",
-      "bytes": 1187565,
-      "sha256": "d14e55d49cd67ae018262f29e6116f31af2c32bd01d9b38a5eb37c0bb028a022"
+      "bytes": 1923948,
+      "sha256": "f85ccc3e44e1da56feb70fd55d025dc51398ad86e9b69df71b3e76e4f613c720"
     },
     "webDerivative": {
       "status": "blocked-no-existing-repository-converter",
@@ -55,54 +55,34 @@
     }
   },
   "provenance": {
-    "provider": "Adobe Firefly",
-    "workflow": "Generated through the Firefly web interface driven by Claude Code in the owner's browser, then Adobe cutout and tone alignment plus a deterministic local extract and normalization",
+    "provider": "unverified — owner-supplied asset library",
+    "workflow": "The owner delivered an already cut-out transparent PNG in an asset-library archive. Claude Code ran only the deterministic local alpha-bbox extract and the 1024 square normalization. No Adobe processing was applied in this pass.",
     "reference": {
       "localFound": false,
       "adobeFound": false,
       "used": false
     },
     "board": {
-      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
-      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
-      "name": "Mcello V1 - Ingredient System - Doener"
+      "id": null,
+      "url": null,
+      "name": null,
+      "reason": "The owner archive shares a name with an Adobe board, but the association is not verifiable from the delivered file, so no board is claimed."
     },
     "selectedGeneration": {
-      "seed": 65998,
+      "seed": null,
       "requestId": null,
       "requestIdCaptured": false,
-      "requestIdReason": "The Firefly web interface exposes no generation request id; the resulting Firefly asset URN identifies the generation.",
-      "assetUrn": "urn:aaid:sc:EU:d0966e0e-14e8-4a4e-b4c5-96a71edb6da0",
-      "width": 512,
-      "height": 512,
-      "sourceResolutionNote": "The Firefly web interface returned 512 x 512 for this run, unlike the 2048 x 2048 the API produced for the first eight layers. The master is upscaled from this source and is measurably softer.",
-      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
-      "promptRevisedFromBrief": true,
-      "promptRevisionReason": "The briefed wording produced the wrong subject and was sharpened: cucumber came back halved lengthwise, lettuce came back as a whole head, meat came back as a geometric stack.",
-      "briefPrompt": "A loose irregular scattering of thin roasted meat shavings tumbled into one low uneven pile, ragged torn edges, crisp browned tips, glistening juicy surface, warm Turkish spice seasoning, no neat stack, no straight rows, no plate, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
-      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+      "requestIdReason": "The file arrived through an owner-supplied archive; no generation request is observable from it.",
+      "assetUrn": null,
+      "width": 2050,
+      "height": 1517,
+      "promptSource": null,
+      "promptVerbatimCaptured": false,
+      "briefPrompt": null,
+      "briefNegativePrompt": null
     },
     "masterProcessing": {
       "steps": [
-        {
-          "step": "adobe-remove-background",
-          "requestId": "251981d7-1a2f-437d-a759-6bacef42fde4"
-        },
-        {
-          "step": "adobe-apply-adjustments",
-          "requestId": "862a2ae7-6918-4b3e-b074-c2d697654a8d",
-          "options": {
-            "gamma": 1.5,
-            "darks": 22
-          }
-        },
-        {
-          "step": "adobe-apply-adjustments",
-          "requestId": "47c36e3a-7c60-4e17-aabb-d91a3bb27118",
-          "options": {
-            "gamma": 1.24
-          }
-        },
         {
           "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
           "requestId": null
@@ -112,7 +92,17 @@
           "requestId": null
         }
       ],
-      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+      "toneTarget": "not re-aligned in this pass; the delivered cutout was accepted as authored",
+      "cameraAxisNote": "D076 specifies one isometric 45 degree axis for every layer. The delivered set is not uniform on that axis; this is recorded rather than corrected, because camera angle is not something image editing can fix."
+    },
+    "ownerSuppliedLibrary": {
+      "archive": "Döner Konfigurator — Komplette Asset Library FINAL.zip",
+      "originalFileName": "Döner Konfigurator — Komplette Asset Library FINAL-3.png",
+      "receivedOn": "2026-08-25",
+      "generatorKnown": false,
+      "seedKnown": false,
+      "promptKnown": false,
+      "note": "Generator, seed and prompt are not recoverable from the delivered file and are deliberately left null rather than reconstructed. The asset stays provisional and non-documentary under D068."
     }
   },
   "delivery": {

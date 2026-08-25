@@ -27,14 +27,14 @@
   },
   "files": {
     "source": {
-      "path": "source/ingredient.sauce.hot.layer.firefly-seed-76005.png",
+      "path": "source/ingredient.sauce.hot.layer.owner-library.png",
       "mediaType": "image/png",
-      "width": 2048,
-      "height": 2048,
+      "width": 1523,
+      "height": 520,
       "bitDepth": 8,
-      "pngColorType": "RGB",
-      "bytes": 2330773,
-      "sha256": "9d583ee8b930c1ab70ee3b6bcb6d3a3b69b00e190be4e6a1b293cb01f5770c20"
+      "pngColorType": "RGBA",
+      "bytes": 898998,
+      "sha256": "ee46f9d405d1efd36f06a07461b8c039f1b8cc6ddc09e1ec503d98ddf8ef7814"
     },
     "master": {
       "path": "master/ingredient.sauce.hot.layer.png",
@@ -45,8 +45,8 @@
       "pngColorType": "RGBA",
       "transparent": true,
       "canvas": "square",
-      "bytes": 479772,
-      "sha256": "d75855210e43ebb91a97075eda21fc8b4f8acf76660794008941a2def65e70d8"
+      "bytes": 468562,
+      "sha256": "dc2a8ad691851b8c5d3d06d8cec13f955b200aa2f68421cf1a0e186c02d3996a"
     },
     "webDerivative": {
       "status": "blocked-no-existing-repository-converter",
@@ -55,45 +55,34 @@
     }
   },
   "provenance": {
-    "provider": "Adobe Firefly",
-    "workflow": "Codex session generated the raw layer; Claude Code ran the Adobe cutout and tone alignment, then the deterministic local extract and normalization",
+    "provider": "unverified — owner-supplied asset library",
+    "workflow": "The owner delivered an already cut-out transparent PNG in an asset-library archive. Claude Code ran only the deterministic local alpha-bbox extract and the 1024 square normalization. No Adobe processing was applied in this pass.",
     "reference": {
       "localFound": false,
       "adobeFound": false,
       "used": false
     },
     "board": {
-      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
-      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
-      "name": "Mcello V1 - Ingredient System - Doener"
+      "id": null,
+      "url": null,
+      "name": null,
+      "reason": "The owner archive shares a name with an Adobe board, but the association is not verifiable from the delivered file, so no board is claimed."
     },
     "selectedGeneration": {
-      "seed": 76005,
+      "seed": null,
       "requestId": null,
       "requestIdCaptured": false,
-      "requestIdReason": "The generation ran in a separate Codex session; only the resulting Firefly asset URN is observable from here.",
-      "assetUrn": "urn:aaid:sc:EU:4883af4b-419c-49da-bec3-e916923fba38",
-      "width": 2048,
-      "height": 2048,
-      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
+      "requestIdReason": "The file arrived through an owner-supplied archive; no generation request is observable from it.",
+      "assetUrn": null,
+      "width": 1523,
+      "height": 520,
+      "promptSource": null,
       "promptVerbatimCaptured": false,
-      "briefPrompt": "One poured layer of glossy deep-red chili sauce with visible fine chili flakes, smooth appetizing surface, softly irregular spreading edge, natural thickness, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
-      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+      "briefPrompt": null,
+      "briefNegativePrompt": null
     },
     "masterProcessing": {
       "steps": [
-        {
-          "step": "adobe-remove-background",
-          "requestId": "85055de6-6cf2-47dc-bfa4-689a0c05caf7"
-        },
-        {
-          "step": "adobe-apply-adjustments",
-          "requestId": "316dc3c1-b724-4d37-8339-1b53f97aa709",
-          "options": {
-            "gamma": 1.5,
-            "darks": 20
-          }
-        },
         {
           "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
           "requestId": null
@@ -103,7 +92,17 @@
           "requestId": null
         }
       ],
-      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+      "toneTarget": "not re-aligned in this pass; the delivered cutout was accepted as authored",
+      "cameraAxisNote": "D076 specifies one isometric 45 degree axis for every layer. The delivered set is not uniform on that axis; this is recorded rather than corrected, because camera angle is not something image editing can fix."
+    },
+    "ownerSuppliedLibrary": {
+      "archive": "Döner Konfigurator — Komplette Asset Library FINAL.zip",
+      "originalFileName": "Döner Konfigurator — Komplette Asset Library FINAL-15.png",
+      "receivedOn": "2026-08-25",
+      "generatorKnown": false,
+      "seedKnown": false,
+      "promptKnown": false,
+      "note": "Generator, seed and prompt are not recoverable from the delivered file and are deliberately left null rather than reconstructed. The asset stays provisional and non-documentary under D068."
     }
   },
   "delivery": {

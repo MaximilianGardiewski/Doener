@@ -69,9 +69,9 @@ export const CUCUMBER_VISUAL = defineVisual({
   runtimeReady: true,
   baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 260,
+  instanceSize: 205,
   optionRules: [{ names: ["gurke", "gurken", "salatgurke", "salatgurken"], count: 1 }],
-  slots: [{ x: 380, y: 380, rotation: 0, scale: 1 }],
+  slots: [{ x: 380, y: 384, rotation: 0, scale: 1 }],
 });
 
 export const LETTUCE_VISUAL = defineVisual({
@@ -82,9 +82,9 @@ export const LETTUCE_VISUAL = defineVisual({
   runtimeReady: true,
   baseInstanceCount: 1,
   extraInstanceCount: 0,
-  instanceSize: 300,
+  instanceSize: 268,
   optionRules: [{ names: ["salat", "eisbergsalat", "eisberg salat"], count: 1 }],
-  slots: [{ x: 380, y: 296, rotation: 0, scale: 1 }],
+  slots: [{ x: 380, y: 302, rotation: 0, scale: 1 }],
 });
 
 export const ONION_VISUAL = defineVisual({
@@ -127,7 +127,7 @@ export const FLATBREAD_LID_VISUAL = defineVisual({
   instanceSize: 340,
   optionRules: [],
   productFormRules: [{ forms: ["flatbread-pocket"], count: 1 }],
-  slots: [{ x: 380, y: 274, rotation: 0, scale: 1 }],
+  slots: [{ x: 380, y: 264, rotation: 0, scale: 1 }],
 });
 
 export const GARLIC_SAUCE_VISUAL = defineVisual({
