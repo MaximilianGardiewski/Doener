@@ -87,6 +87,11 @@ const attachedRuntimeSchema = z.object({
   allowHttp: z.boolean().optional(),
 }).strict();
 
+const repositoryStateSchema = z.object({
+  projectJson: z.string().min(2),
+  lockJson: z.string().min(2).optional(),
+}).strict();
+
 const schemas: Partial<Record<FactoryToolName, z.ZodType<Record<string, unknown>>>> = {
   "factory.repository.bootstrap": z.object({
     projectId: projectIdSchema,
@@ -95,6 +100,8 @@ const schemas: Partial<Record<FactoryToolName, z.ZodType<Record<string, unknown>
     profile: profileSchema.optional(),
   }).strict(),
   "factory.repository.validate": z.object({ projectJson: z.string().min(2) }).strict(),
+  "factory.repository.status": repositoryStateSchema,
+  "factory.repository.sync": repositoryStateSchema,
   "factory.repository.plan": z.object({ projectJson: z.string().min(2) }).strict(),
   "factory.runtime.attach": attachedRuntimeSchema,
   "factory.runtime.get": z.object({ projectId: projectIdSchema }).strict(),
@@ -194,7 +201,7 @@ function buildServer(api: FactoryAgentApi, principal: FactoryPrincipal): McpServ
   const server = new McpServer(
     { name: "supabase-factory", version: "0.1.0" },
     {
-      instructions: "Coordinate GitHub-authored, isolated self-hosted Supabase projects. Prefer factory.repository.bootstrap/validate/plan for repository workflows. Read/plan before mutation. Never request or expose secret values. Runtime attach/detach changes only Factory's development inventory; deployment infrastructure remains adapter-owned. Destructive lifecycle operations remain approval-gated.",
+      instructions: "Coordinate GitHub-authored, isolated self-hosted Supabase projects. Prefer factory.repository.bootstrap for new repos, then repository.status/sync/plan for existing repos. GitHub writes are performed by the GitHub connector, never by Factory. Read/plan before mutation. Never request or expose secret values. Runtime attach/detach changes only Factory's development inventory; deployment infrastructure remains adapter-owned. Destructive lifecycle operations remain approval-gated.",
     },
   );
 
