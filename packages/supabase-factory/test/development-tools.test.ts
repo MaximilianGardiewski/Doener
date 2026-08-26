@@ -74,6 +74,137 @@ test("repository validate and plan use project.json as source of truth without a
   assert.equal((await factory.registry.list()).length, 0);
 });
 
+test("repository status and sync create a missing lock once and then become a no-op", async () => {
+  const factory = createDevelopmentFactory();
+  const bootstrap = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.bootstrap",
+    arguments: { projectId: "sync-app", environment: "development" },
+    requestId: "repo-bootstrap-sync",
+  }) as { projectJson: string };
+
+  const status = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.status",
+    arguments: { projectJson: bootstrap.projectJson },
+    requestId: "repo-status-missing-lock",
+  }) as {
+    projectCanonical: boolean;
+    lockPresent: boolean;
+    lockCurrent: boolean;
+    needsSync: boolean;
+    writePaths: string[];
+  };
+  assert.equal(status.projectCanonical, true);
+  assert.equal(status.lockPresent, false);
+  assert.equal(status.lockCurrent, false);
+  assert.equal(status.needsSync, true);
+  assert.deepEqual(status.writePaths, [".supabase-factory/lock.json"]);
+
+  const sync = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.sync",
+    arguments: { projectJson: bootstrap.projectJson },
+    requestId: "repo-sync-create-lock",
+  }) as {
+    writes: Array<{ path: string; content: string; reason: string }>;
+    status: { needsSync: boolean };
+  };
+  assert.equal(sync.writes.length, 1);
+  assert.equal(sync.writes[0]?.path, ".supabase-factory/lock.json");
+  assert.equal(sync.writes[0]?.reason, "create-lock");
+
+  const second = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.sync",
+    arguments: { projectJson: bootstrap.projectJson, lockJson: sync.writes[0]!.content },
+    requestId: "repo-sync-noop",
+  }) as { writes: unknown[]; status: { needsSync: boolean; lockCurrent: boolean } };
+  assert.deepEqual(second.writes, []);
+  assert.equal(second.status.needsSync, false);
+  assert.equal(second.status.lockCurrent, true);
+});
+
+test("repository sync refreshes a stale lock without rewriting an already canonical project", async () => {
+  const factory = createDevelopmentFactory();
+  const original = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.bootstrap",
+    arguments: { projectId: "stale-lock-app", environment: "development", profile: "webapp" },
+    requestId: "repo-bootstrap-stale",
+  }) as { projectJson: string; lockJson: string };
+
+  const changedObject = JSON.parse(original.projectJson) as Record<string, unknown>;
+  changedObject.profile = "minimal";
+  const changed = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.validate",
+    arguments: { projectJson: JSON.stringify(changedObject) },
+    requestId: "repo-canonical-changed",
+  }) as { projectJson: string };
+
+  const sync = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.sync",
+    arguments: { projectJson: changed.projectJson, lockJson: original.lockJson },
+    requestId: "repo-sync-stale-lock",
+  }) as {
+    writes: Array<{ path: string; reason: string }>;
+    status: { projectCanonical: boolean; lockCurrent: boolean };
+  };
+  assert.equal(sync.status.projectCanonical, true);
+  assert.equal(sync.status.lockCurrent, false);
+  assert.deepEqual(sync.writes.map((write) => [write.path, write.reason]), [
+    [".supabase-factory/lock.json", "refresh-stale-lock"],
+  ]);
+});
+
+test("repository sync canonicalizes formatting without churning a semantically current lock", async () => {
+  const factory = createDevelopmentFactory();
+  const bootstrap = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.bootstrap",
+    arguments: { projectId: "format-app", environment: "development" },
+    requestId: "repo-bootstrap-format",
+  }) as { projectJson: string; lockJson: string };
+  const minified = JSON.stringify(JSON.parse(bootstrap.projectJson));
+
+  const sync = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.sync",
+    arguments: { projectJson: minified, lockJson: bootstrap.lockJson },
+    requestId: "repo-sync-format",
+  }) as {
+    writes: Array<{ path: string; content: string; reason: string }>;
+    status: { projectCanonical: boolean; lockCurrent: boolean };
+  };
+  assert.equal(sync.status.projectCanonical, false);
+  assert.equal(sync.status.lockCurrent, true);
+  assert.equal(sync.writes.length, 1);
+  assert.equal(sync.writes[0]?.path, ".supabase-factory/project.json");
+  assert.equal(sync.writes[0]?.reason, "canonicalize-project-manifest");
+  assert.equal(sync.writes[0]?.content, bootstrap.projectJson);
+});
+
+test("repository sync never echoes an untrusted stale lock payload", async () => {
+  const factory = createDevelopmentFactory();
+  const bootstrap = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.bootstrap",
+    arguments: { projectId: "safe-sync-app", environment: "development" },
+    requestId: "repo-bootstrap-safe-sync",
+  }) as { projectJson: string };
+  const marker = "DO_NOT_ECHO_THIS_CURRENT_LOCK_PAYLOAD";
+
+  const sync = await factory.api.invoke({
+    principal: planner,
+    tool: "factory.repository.sync",
+    arguments: { projectJson: bootstrap.projectJson, lockJson: `{\"malicious\":\"${marker}\"}` },
+    requestId: "repo-sync-safe-output",
+  });
+  assert.equal(JSON.stringify(sync).includes(marker), false);
+});
+
 test("development runtime tools attach and detach only Factory inventory, never the runtime itself", async () => {
   const factory = createDevelopmentFactory();
   const descriptor = {
@@ -138,6 +269,8 @@ test("repository tools remain available with a future provider while attached-ru
   const factory = createDevelopmentFactory({ provider });
   assert.ok(factory.api.handlers["factory.repository.bootstrap"]);
   assert.ok(factory.api.handlers["factory.repository.validate"]);
+  assert.ok(factory.api.handlers["factory.repository.status"]);
+  assert.ok(factory.api.handlers["factory.repository.sync"]);
   assert.ok(factory.api.handlers["factory.repository.plan"]);
   assert.equal(factory.api.handlers["factory.runtime.attach"], undefined);
   assert.equal(factory.api.handlers["factory.runtime.detach"], undefined);
