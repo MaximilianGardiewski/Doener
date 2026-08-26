@@ -4,6 +4,7 @@ export * from "./planner.ts";
 export * from "./registry.ts";
 export * from "./provider.ts";
 export * from "./control-plane.ts";
+export * from "./adoption.ts";
 export * from "./attached-runtime.ts";
 export * from "./development-tools.ts";
 export * from "./development-factory.ts";
