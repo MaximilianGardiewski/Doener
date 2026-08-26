@@ -122,6 +122,7 @@ jobs:
     env:
       UPSTREAM_DIR: /tmp/supabase-factory-upstream
       FACTORY_CI_OVERRIDE: /tmp/supabase-factory-upstream/docker/factory-ci.override.yml
+      FACTORY_MIGRATION_FIXTURE: /tmp/supabase-factory-migration-fixture
     steps:
       - name: Checkout Factory source
         uses: actions/checkout@v4
@@ -218,11 +219,18 @@ jobs:
           FACTORY_SMOKE_POSTGRES_PASSWORD="$postgres_password" \
           node --experimental-strip-types packages/supabase-factory/integration/self-host-smoke.ts
 
-      - name: Dry-run and apply repository migration with pinned CLI
+      - name: Dry-run and apply isolated repository migration with pinned CLI
         shell: bash
-        working-directory: packages/supabase-factory/integration/fixture-app
         run: |
           set -euo pipefail
+          rm -rf "$FACTORY_MIGRATION_FIXTURE"
+          mkdir -p "$FACTORY_MIGRATION_FIXTURE"
+          cp -R packages/supabase-factory/integration/fixture-app/supabase "$FACTORY_MIGRATION_FIXTURE/supabase"
+          cd "$FACTORY_MIGRATION_FIXTURE"
+
+          test "$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | wc -l)" -eq 1
+          test -f supabase/migrations/20260826133000_factory_ci_marker.sql
+
           env_file="$UPSTREAM_DIR/docker/.env"
           postgres_password="$(grep '^POSTGRES_PASSWORD=' "$env_file" | head -n1 | cut -d= -f2-)"
           db_url="$(POSTGRES_PASSWORD="$postgres_password" node - <<'NODE'
@@ -252,6 +260,12 @@ jobs:
           test "$cli_version" = "2.115.0"
 
           run_cli /tmp/factory-migration-dry-run.log db push --db-url "$db_url" --dry-run
+          grep -q '20260826133000_factory_ci_marker.sql' /tmp/factory-migration-dry-run.log
+          if grep -q 'platform_core_part1' /tmp/factory-migration-dry-run.log; then
+            echo 'Fixture isolation failed: application migrations leaked into Factory smoke.' >&2
+            exit 1
+          fi
+
           run_cli /tmp/factory-migration-apply.log db push --db-url "$db_url"
           run_cli /tmp/factory-migration-list.log migration list --db-url "$db_url"
           if ! grep -q '20260826133000' /tmp/factory-migration-list.log; then
@@ -297,5 +311,5 @@ jobs:
             docker compose "${args[@]}" --project-directory "$UPSTREAM_DIR/docker" \
               down -v --remove-orphans || true
           fi
-          sudo rm -rf "$UPSTREAM_DIR"
+          sudo rm -rf "$UPSTREAM_DIR" "$FACTORY_MIGRATION_FIXTURE"
           rm -f /tmp/factory-migration-dry-run.log /tmp/factory-migration-apply.log /tmp/factory-migration-list.log
