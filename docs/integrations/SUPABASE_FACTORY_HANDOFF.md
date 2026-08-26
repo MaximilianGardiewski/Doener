@@ -20,6 +20,25 @@ The repository has been declaratively adopted into Supabase Factory as the proje
 
 Supabase Factory is intended to provide isolated self-hosted Supabase runtimes while keeping application repositories portable and secret-free.
 
+## Validated baseline
+
+The latest fully validated code baseline is commit `dece01eef6d892ec11aef2efba445f130185d0d3` on `feat/supabase-factory-v1`.
+
+At that baseline:
+
+- monorepo TypeScript typecheck passes;
+- Factory unit/contract suite is **139/139 passing**, 0 failed, 0 skipped;
+- `.supabase-factory/project.json` and `.supabase-factory/lock.json` are checked for canonical consistency in CI;
+- the portable-development dependency guard passes;
+- the Supabase Cloud-management dependency guard passes;
+- the disposable official Self-Hosted Supabase integration smoke passes;
+- the isolated pinned-CLI repository migration smoke passes;
+- the remaining repository checks on that code commit are green.
+
+Later commits add only Claude/Cross-agent guardrails and handoff documentation. Those documentation-only changes do not invalidate the validated Factory code baseline.
+
+When starting a new Claude Code session, prefer the current branch head, but use the validated baseline above when deciding whether the underlying Factory implementation is known-good.
+
 ## Development rule
 
 For current development, GitHub/repository state plus the Factory contract are canonical. Backend/schema/Auth/Storage/Realtime work must be expressed so it can be reproduced by the Factory workflow.
@@ -64,6 +83,8 @@ For every such workstream:
 - keep shared platform decisions in shared docs/packages;
 - never create a second accidental Supabase backend because a chat or agent cannot see prior context.
 
+A chat may propose a feature or architecture, but it must not independently choose a Supabase backend. Before implementation, translate the chat result into repository-local decisions and let the Factory contract remain authoritative.
+
 ## Claude Code startup checklist
 
 At the beginning of a meaningful Claude Code session:
@@ -73,8 +94,9 @@ At the beginning of a meaningful Claude Code session:
 3. read `AGENTS.md` and `CLAUDE.md`;
 4. read `.claude/skills/supabase-factory/SKILL.md`;
 5. read `.supabase-factory/project.json` and `.supabase-factory/lock.json`;
-6. inspect relevant project decision docs and migrations;
-7. state which Factory project/repository contract will be used before backend changes.
+6. read this handoff and inspect relevant project decision docs/migrations;
+7. state which Factory project/repository contract will be used before backend changes;
+8. if the task came from another chat, persist its implementation-relevant decisions into the repository before depending on them.
 
 If those files conflict with conversational instructions, stop and surface the conflict rather than guessing.
 
