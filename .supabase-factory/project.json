@@ -1,0 +1,9 @@
+{
+  "apiVersion": "factory.supabase.local/v1",
+  "project": {
+    "id": "business-web-factory",
+    "environment": "development",
+    "displayName": "Business Web Factory"
+  },
+  "profile": "realtime"
+}
