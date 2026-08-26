@@ -25,4 +25,5 @@ export * from "./health.ts";
 export * from "./upgrade.ts";
 export * from "./pg-upgrade.ts";
 export * from "./agent-api.ts";
+export * from "./service-composition.ts";
 export * from "./edge.ts";
