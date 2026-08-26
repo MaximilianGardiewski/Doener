@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  CLOUDFLARE_QUICK_TUNNEL_PREFLIGHT_REQUIREMENTS,
   FactoryHostPreflight,
   type FactoryHostExecutor,
   type HostCommandOptions,
@@ -68,6 +69,21 @@ test("Cloudflare Tunnel absence blocks tunnel profile but not Caddy-only fallbac
   const tunnel = await new FactoryHostPreflight(host).run({ cloudflared: true });
   assert.equal(tunnel.ready, false);
   assert.ok(tunnel.missingRequired.includes("cloudflared"));
+});
+
+test("Quick Tunnel preflight requires cloudflared but not Caddy or wildcard DNS tooling", async () => {
+  const host = new FakeHost();
+  host.failures.add("caddy");
+  host.failures.add("getent");
+  const quick = await new FactoryHostPreflight(host).run(CLOUDFLARE_QUICK_TUNNEL_PREFLIGHT_REQUIREMENTS);
+  assert.equal(quick.missingRequired.includes("caddy"), false);
+  assert.equal(quick.missingRequired.includes("dns-resolver"), false);
+  assert.equal(quick.missingRequired.includes("cloudflared"), false);
+
+  host.failures.add("cloudflared");
+  const blocked = await new FactoryHostPreflight(host).run(CLOUDFLARE_QUICK_TUNNEL_PREFLIGHT_REQUIREMENTS);
+  assert.equal(blocked.ready, false);
+  assert.ok(blocked.missingRequired.includes("cloudflared"));
 });
 
 test("optional WAL-G absence does not block non-PITR host but blocks PITR host", async () => {
