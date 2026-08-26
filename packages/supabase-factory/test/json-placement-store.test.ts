@@ -5,14 +5,14 @@ import { join } from "node:path";
 import test from "node:test";
 import { JsonFilePlacementStore } from "../src/index.ts";
 
-async function store() {
+async function placementFixture() {
   const root = await mkdtemp(join(tmpdir(), "sbf-placement-"));
   const path = join(root, "placements.json");
   return { path, store: new JsonFilePlacementStore(path) };
 }
 
 test("JSON placement store persists restart-safe project placement with mode 0600", async () => {
-  const { path, store: first } = await store();
+  const { path, store: first } = await placementFixture();
   await first.put({
     projectId: "alpha-app",
     hostId: "factory-node",
@@ -34,7 +34,7 @@ test("JSON placement store persists restart-safe project placement with mode 060
 });
 
 test("JSON placement store refuses two projects on the same host gateway port", async () => {
-  const { store } = await store();
+  const { store } = await placementFixture();
   await store.put({ projectId: "alpha-app", hostId: "node-a", projectRoot: "/srv/alpha", apiGatewayPort: 18001 });
   await assert.rejects(
     () => store.put({ projectId: "beta-app", hostId: "node-a", projectRoot: "/srv/beta", apiGatewayPort: 18001 }),
@@ -44,7 +44,7 @@ test("JSON placement store refuses two projects on the same host gateway port", 
 });
 
 test("concurrent placement writes are serialized without losing unrelated projects", async () => {
-  const { store } = await store();
+  const { store } = await placementFixture();
   await Promise.all([
     store.put({ projectId: "alpha-app", hostId: "node-a", projectRoot: "/srv/alpha", apiGatewayPort: 18001 }),
     store.put({ projectId: "beta-app", hostId: "node-a", projectRoot: "/srv/beta", apiGatewayPort: 18002 }),
@@ -54,7 +54,7 @@ test("concurrent placement writes are serialized without losing unrelated projec
 });
 
 test("placement deletion persists across a new store instance", async () => {
-  const { path, store: first } = await store();
+  const { path, store: first } = await placementFixture();
   await first.put({ projectId: "alpha-app", hostId: "node-a", projectRoot: "/srv/alpha", apiGatewayPort: 18001 });
   await first.delete("alpha-app");
   assert.deepEqual(await new JsonFilePlacementStore(path).list(), []);
