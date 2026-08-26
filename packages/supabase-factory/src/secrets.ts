@@ -30,11 +30,51 @@ function validateKey(key: string): void {
 }
 
 /**
- * Development/single-host secret store. The master key is supplied by the
- * process (for example from systemd credentials, TPM-backed injection or a
- * protected file outside the project tree) and is never written by this class.
- * Production can replace this adapter with Vault/SOPS/KMS without changing the
- * control plane.
+ * Ephemeral host-neutral store for tests, CI and development composition.
+ * Nothing here assumes a filesystem, operating system, container runtime or
+ * secret-manager vendor. Production/deployment adapters replace it behind the
+ * same SecretStore interface.
+ */
+export class MemorySecretStore implements SecretStore {
+  readonly name: string;
+  readonly #values = new Map<string, string>();
+
+  constructor(name = "memory-v1") {
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$/.test(name)) throw new Error("invalid memory secret-store name");
+    this.name = name;
+  }
+
+  async put(key: string, value: string): Promise<SecretRef> {
+    validateKey(key);
+    if (!value.length) throw new Error("refusing to store an empty secret");
+    this.#values.set(key, value);
+    return { store: this.name, key };
+  }
+
+  async get(ref: SecretRef): Promise<string> {
+    if (ref.store !== this.name) throw new Error(`secret belongs to a different store: ${ref.store}`);
+    validateKey(ref.key);
+    const value = this.#values.get(ref.key);
+    if (value === undefined) throw new Error(`secret not found: ${ref.key}`);
+    return value;
+  }
+
+  async has(key: string): Promise<boolean> {
+    validateKey(key);
+    return this.#values.has(key);
+  }
+
+  async delete(key: string): Promise<void> {
+    validateKey(key);
+    this.#values.delete(key);
+  }
+}
+
+/**
+ * Filesystem-backed development/single-host secret store. The master key is
+ * supplied by the process and is never written by this class. It is an adapter,
+ * not a requirement of the Factory core; Vault/SOPS/KMS or another SecretStore
+ * can replace it without changing control-plane/MCP logic.
  */
 export class EncryptedJsonSecretStore implements SecretStore {
   readonly name = "encrypted-json-v1";
