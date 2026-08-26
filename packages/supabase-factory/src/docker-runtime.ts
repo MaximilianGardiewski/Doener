@@ -1,4 +1,5 @@
 import { dirname } from "node:path";
+import { renderAuthRuntimeEnvironment, type AuthRuntimeSecretRefs } from "./auth-runtime.ts";
 import { patchEnvFile, requireEnvValues } from "./env-file.ts";
 import type { FactoryHostExecutor } from "./host.ts";
 import type { ProjectPlacement } from "./placement.ts";
@@ -58,6 +59,7 @@ export interface DockerRuntimeInput {
   placement: ProjectPlacement;
   endpoints: DockerRuntimeEndpoints;
   s3?: ExternalS3RuntimeConfig;
+  auth?: AuthRuntimeSecretRefs;
 }
 
 export interface DockerRuntimeState {
@@ -210,6 +212,7 @@ export class DockerRuntimePreparer {
       STORAGE_TENANT_ID: manifest.project.id,
       GLOBAL_S3_BUCKET: manifest.storage.bucketPrefix,
       REGION: manifest.storage.region,
+      ...(await renderAuthRuntimeEnvironment(manifest, input.auth, this.secretStore)),
     };
 
     if (manifest.services.includes("storage") && manifest.storage.backend === "s3") {
