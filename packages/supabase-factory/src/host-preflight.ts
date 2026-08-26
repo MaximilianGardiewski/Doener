@@ -42,6 +42,16 @@ export interface HostPreflightRequirements {
   ramStaging?: boolean;
 }
 
+/**
+ * Domainless TryCloudflare needs cloudflared but no Caddy or wildcard-DNS
+ * resolver contract. Backup/migration requirements keep their normal defaults.
+ */
+export const CLOUDFLARE_QUICK_TUNNEL_PREFLIGHT_REQUIREMENTS = Object.freeze({
+  caddy: false,
+  cloudflared: true,
+  dnsResolver: false,
+}) satisfies HostPreflightRequirements;
+
 function firstVersion(value: string): string | undefined {
   return value.match(/\b\d+(?:\.\d+){1,3}(?:[-+][0-9A-Za-z.-]+)?\b/)?.[0];
 }
