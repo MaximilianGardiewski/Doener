@@ -5,6 +5,7 @@ export * from "./registry.ts";
 export * from "./provider.ts";
 export * from "./control-plane.ts";
 export * from "./attached-runtime.ts";
+export * from "./development-tools.ts";
 export * from "./development-factory.ts";
 export * from "./repository-contract.ts";
 export * from "./docker-compose.ts";
