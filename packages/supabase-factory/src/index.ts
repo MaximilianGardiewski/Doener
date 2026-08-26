@@ -15,6 +15,7 @@ export * from "./docker-provider.ts";
 export * from "./cloudless-env.ts";
 export * from "./migrations.ts";
 export * from "./backup.ts";
+export * from "./backup-catalog.ts";
 export * from "./restore.ts";
 export * from "./local-backup-store.ts";
 export * from "./remote-backup-store.ts";
