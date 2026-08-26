@@ -23,6 +23,8 @@ class FakeHost implements FactoryHostExecutor {
     if (file === "supabase") return { stdout: `${this.supabaseVersion}\n`, stderr: "" };
     if (file === "caddy") return { stdout: "v2.10.2 h1:abc\n", stderr: "" };
     if (file === "cloudflared") return { stdout: "cloudflared version 2026.8.1 (built 2026-08-12)\n", stderr: "" };
+    if (file === "systemctl") return { stdout: "systemd 258 (258.1-1)\n", stderr: "" };
+    if (file === "journalctl") return { stdout: "systemd 258 (258.1-1)\n", stderr: "" };
     if (file === "aws") return { stdout: "aws-cli/2.28.14 Python/3.13.7 Linux/6.8\n", stderr: "" };
     if (file === "rclone") return { stdout: "rclone v1.71.0\n", stderr: "" };
     if (file === "wal-g") return { stdout: "wal-g version v3.0.7\n", stderr: "" };
@@ -71,19 +73,23 @@ test("Cloudflare Tunnel absence blocks tunnel profile but not Caddy-only fallbac
   assert.ok(tunnel.missingRequired.includes("cloudflared"));
 });
 
-test("Quick Tunnel preflight requires cloudflared but not Caddy or wildcard DNS tooling", async () => {
+test("Quick Tunnel preflight requires cloudflared + systemd journal but not Caddy or wildcard DNS tooling", async () => {
   const host = new FakeHost();
   host.failures.add("caddy");
   host.failures.add("getent");
   const quick = await new FactoryHostPreflight(host).run(CLOUDFLARE_QUICK_TUNNEL_PREFLIGHT_REQUIREMENTS);
+  assert.equal(quick.ready, true);
   assert.equal(quick.missingRequired.includes("caddy"), false);
   assert.equal(quick.missingRequired.includes("dns-resolver"), false);
-  assert.equal(quick.missingRequired.includes("cloudflared"), false);
 
   host.failures.add("cloudflared");
+  host.failures.add("systemctl");
+  host.failures.add("journalctl");
   const blocked = await new FactoryHostPreflight(host).run(CLOUDFLARE_QUICK_TUNNEL_PREFLIGHT_REQUIREMENTS);
   assert.equal(blocked.ready, false);
   assert.ok(blocked.missingRequired.includes("cloudflared"));
+  assert.ok(blocked.missingRequired.includes("systemd"));
+  assert.ok(blocked.missingRequired.includes("systemd-journal"));
 });
 
 test("optional WAL-G absence does not block non-PITR host but blocks PITR host", async () => {
