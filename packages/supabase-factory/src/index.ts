@@ -16,3 +16,4 @@ export * from "./backup.ts";
 export * from "./restore.ts";
 export * from "./local-backup-store.ts";
 export * from "./health.ts";
+export * from "./upgrade.ts";
