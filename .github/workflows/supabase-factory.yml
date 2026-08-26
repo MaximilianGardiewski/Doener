@@ -45,6 +45,29 @@ jobs:
       - name: Test Supabase Factory
         run: npm --workspace @business-web/supabase-factory test
 
+      - name: Guard portable development boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            packages/supabase-factory/src/development-factory.ts
+            packages/supabase-factory/src/attached-runtime.ts
+            packages/supabase-factory/src/repository-contract.ts
+          )
+
+          # Current-phase composition may depend on portable Factory interfaces,
+          # but never directly on deployment/host adapters.
+          if grep -nE '^import .*"\./(docker|host|host-preflight|placement|json-placement-store|edge|cloudflare|quick|single-host|mcp-node)' "${files[@]}"; then
+            echo 'Portable development code imported a deployment-specific Factory adapter.' >&2
+            exit 1
+          fi
+
+          # No filesystem/process/socket binding belongs in the portable current-phase layer.
+          if grep -nE '^import .*"node:(fs|path|child_process|http|https|net|tls|os)' "${files[@]}"; then
+            echo 'Portable development code imported an OS/filesystem/server-specific Node module.' >&2
+            exit 1
+          fi
+
       - name: Guard against Supabase Cloud management dependencies
         shell: bash
         run: |
