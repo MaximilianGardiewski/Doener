@@ -51,6 +51,7 @@ jobs:
           set -euo pipefail
           files=(
             packages/supabase-factory/src/development-factory.ts
+            packages/supabase-factory/src/development-tools.ts
             packages/supabase-factory/src/attached-runtime.ts
             packages/supabase-factory/src/repository-contract.ts
           )
