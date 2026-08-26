@@ -5,6 +5,7 @@ import {
   type FactoryAuditLog,
   type FactoryAuthorizationPolicy,
 } from "./agent-api.ts";
+import { createAdoptionToolHandlers } from "./adoption.ts";
 import { MemoryAttachedRuntimeCatalog, AttachedSelfHostedInfrastructureProvider, type AttachedRuntimeCatalog } from "./attached-runtime.ts";
 import { MemoryBackupCatalog, type BackupCatalog } from "./backup-catalog.ts";
 import { SupabaseFactoryControlPlane } from "./control-plane.ts";
@@ -72,10 +73,11 @@ export interface DevelopmentFactory {
  * composition. Deployment-specific adapters can be supplied later through the
  * same interfaces without changing ChatGPT/MCP/control-plane behavior.
  *
- * The default ChatGPT tool surface additionally exposes repository bootstrap /
- * validation / planning. When the default attached-runtime catalog is present,
- * secret-free runtime attach/get/list/detach tools are exposed too. None of
- * these tools call GitHub or mutate deployment infrastructure directly.
+ * The default ChatGPT tool surface exposes repository bootstrap/status/sync/
+ * planning plus existing-project adoption planning/preparation. When the default
+ * attached-runtime catalog is present, secret-free runtime attach/get/list/
+ * detach tools are exposed too. None of these tools call GitHub, Supabase Cloud
+ * management APIs or mutate deployment infrastructure directly.
  */
 export function createDevelopmentFactory(options: DevelopmentFactoryOptions = {}): DevelopmentFactory {
   const registry = options.registry ?? new MemoryProjectRegistry();
@@ -103,6 +105,7 @@ export function createDevelopmentFactory(options: DevelopmentFactoryOptions = {}
   const handlers = {
     ...services.handlers(),
     ...createRepositoryDevelopmentToolHandlers(controlPlane),
+    ...createAdoptionToolHandlers(),
     ...(runtimeCatalog ? createAttachedRuntimeDevelopmentToolHandlers(runtimeCatalog) : {}),
   };
   const api = new FactoryAgentApi({
