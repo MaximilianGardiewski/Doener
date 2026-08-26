@@ -7,6 +7,7 @@ export * from "./control-plane.ts";
 export * from "./docker-compose.ts";
 export * from "./secrets.ts";
 export * from "./placement.ts";
+export * from "./json-placement-store.ts";
 export * from "./host.ts";
 export * from "./host-preflight.ts";
 export * from "./env-file.ts";
