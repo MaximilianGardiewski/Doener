@@ -13,6 +13,13 @@ export type FactoryPermission =
   | "admin";
 
 export type FactoryToolName =
+  | "factory.repository.bootstrap"
+  | "factory.repository.validate"
+  | "factory.repository.plan"
+  | "factory.runtime.attach"
+  | "factory.runtime.get"
+  | "factory.runtime.list"
+  | "factory.runtime.detach"
   | "factory.project.plan"
   | "factory.project.create"
   | "factory.project.get"
@@ -47,6 +54,13 @@ export interface FactoryToolDefinition {
 }
 
 export const FACTORY_TOOL_DEFINITIONS: readonly FactoryToolDefinition[] = [
+  { name: "factory.repository.bootstrap", description: "Generate secret-free .supabase-factory project and lock files for a repository without selecting a deployment target.", permission: "plan", mutating: false, destructive: false },
+  { name: "factory.repository.validate", description: "Validate and canonicalize a repository project.json and derive its deterministic deployment-neutral lock.", permission: "plan", mutating: false, destructive: false },
+  { name: "factory.repository.plan", description: "Validate repository project.json and return the Factory provisioning plan plus deterministic lock without applying changes.", permission: "plan", mutating: false, destructive: false },
+  { name: "factory.runtime.attach", description: "Attach a secret-free descriptor for an already-running self-hosted Supabase development runtime. The runtime itself is not mutated.", permission: "provision", mutating: true, destructive: false },
+  { name: "factory.runtime.get", description: "Read one attached self-hosted development runtime descriptor without exposing credentials.", permission: "read", mutating: false, destructive: false },
+  { name: "factory.runtime.list", description: "List attached self-hosted development runtime descriptors without exposing credentials.", permission: "read", mutating: false, destructive: false },
+  { name: "factory.runtime.detach", description: "Remove only Factory's attachment reference to a development runtime. The runtime is not stopped or destroyed.", permission: "provision", mutating: true, destructive: false },
   { name: "factory.project.plan", description: "Plan desired self-hosted Supabase project state without applying changes.", permission: "plan", mutating: false, destructive: false },
   { name: "factory.project.create", description: "Create or converge an isolated self-hosted Supabase project.", permission: "provision", mutating: true, destructive: false },
   { name: "factory.project.get", description: "Read one secret-free Factory project record.", permission: "read", mutating: false, destructive: false },
