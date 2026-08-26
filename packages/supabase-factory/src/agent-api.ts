@@ -18,6 +18,8 @@ export type FactoryToolName =
   | "factory.repository.status"
   | "factory.repository.sync"
   | "factory.repository.plan"
+  | "factory.adopt.plan"
+  | "factory.adopt.prepare"
   | "factory.runtime.attach"
   | "factory.runtime.get"
   | "factory.runtime.list"
@@ -61,6 +63,8 @@ export const FACTORY_TOOL_DEFINITIONS: readonly FactoryToolDefinition[] = [
   { name: "factory.repository.status", description: "Compare project.json and the current lock without returning secret data; report whether GitHub files are canonical and synchronized.", permission: "plan", mutating: false, destructive: false },
   { name: "factory.repository.sync", description: "Return only the secret-free repository file writes needed to canonicalize project.json and refresh its deterministic lock. Factory does not write GitHub directly.", permission: "plan", mutating: false, destructive: false },
   { name: "factory.repository.plan", description: "Validate repository project.json and return the Factory provisioning plan plus deterministic lock without applying changes.", permission: "plan", mutating: false, destructive: false },
+  { name: "factory.adopt.plan", description: "Plan a staged migration from an existing Supabase Cloud or self-hosted project into Factory management using only secret-free source inventory.", permission: "plan", mutating: false, destructive: false },
+  { name: "factory.adopt.prepare", description: "Generate the secret-free Factory repository files and transfer checklist for an existing Supabase adoption without mutating the source or provisioning a runtime.", permission: "plan", mutating: false, destructive: false },
   { name: "factory.runtime.attach", description: "Attach a secret-free descriptor for an already-running self-hosted Supabase development runtime. The runtime itself is not mutated.", permission: "provision", mutating: true, destructive: false },
   { name: "factory.runtime.get", description: "Read one attached self-hosted development runtime descriptor without exposing credentials.", permission: "read", mutating: false, destructive: false },
   { name: "factory.runtime.list", description: "List attached self-hosted development runtime descriptors without exposing credentials.", permission: "read", mutating: false, destructive: false },
@@ -170,6 +174,10 @@ function projectIdFromInput(input: unknown): string | undefined {
   const project = record.project;
   if (project && typeof project === "object" && typeof (project as Record<string, unknown>).id === "string") {
     return (project as Record<string, unknown>).id as string;
+  }
+  const target = record.target;
+  if (target && typeof target === "object" && typeof (target as Record<string, unknown>).projectId === "string") {
+    return (target as Record<string, unknown>).projectId as string;
   }
   const manifest = record.manifest;
   if (manifest && typeof manifest === "object") {
