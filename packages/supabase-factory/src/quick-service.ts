@@ -1,11 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import {
-  CloudflareQuickTunnelController,
-  FactoryHostPreflight,
-  LocalHostExecutor,
-  createSingleHostQuickTunnelFactory,
-} from "./index.ts";
+import { CloudflareQuickTunnelController } from "./cloudflare-quick-tunnel.ts";
+import { FactoryHostPreflight } from "./host-preflight.ts";
+import { LocalHostExecutor } from "./host.ts";
+import { createSingleHostQuickTunnelFactory } from "./single-host-quick-factory.ts";
 
 function envString(name: string, fallback?: string): string {
   const value = process.env[name]?.trim();
