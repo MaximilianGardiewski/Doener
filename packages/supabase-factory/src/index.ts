@@ -30,3 +30,4 @@ export * from "./service-composition.ts";
 export * from "./mcp.ts";
 export * from "./mcp-node.ts";
 export * from "./edge.ts";
+export * from "./cloudflare-edge.ts";
