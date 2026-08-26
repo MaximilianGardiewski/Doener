@@ -9,6 +9,8 @@ export type HostCapability =
   | "supabase-cli"
   | "caddy"
   | "cloudflared"
+  | "systemd"
+  | "systemd-journal"
   | "aws-cli"
   | "rclone"
   | "wal-g"
@@ -34,6 +36,8 @@ export interface HostPreflightReport {
 export interface HostPreflightRequirements {
   caddy?: boolean;
   cloudflared?: boolean;
+  systemd?: boolean;
+  systemdJournal?: boolean;
   awsCli?: boolean;
   rclone?: boolean;
   walG?: boolean;
@@ -43,12 +47,15 @@ export interface HostPreflightRequirements {
 }
 
 /**
- * Domainless TryCloudflare needs cloudflared but no Caddy or wildcard-DNS
- * resolver contract. Backup/migration requirements keep their normal defaults.
+ * Domainless TryCloudflare needs cloudflared + systemd/journald, but no Caddy
+ * or wildcard-DNS resolver contract. Backup/migration requirements keep their
+ * normal defaults.
  */
 export const CLOUDFLARE_QUICK_TUNNEL_PREFLIGHT_REQUIREMENTS = Object.freeze({
   caddy: false,
   cloudflared: true,
+  systemd: true,
+  systemdJournal: true,
   dnsResolver: false,
 }) satisfies HostPreflightRequirements;
 
@@ -94,6 +101,8 @@ export class FactoryHostPreflight {
     const required = {
       caddy: requirements.caddy ?? true,
       cloudflared: requirements.cloudflared ?? false,
+      systemd: requirements.systemd ?? false,
+      systemdJournal: requirements.systemdJournal ?? false,
       awsCli: requirements.awsCli ?? true,
       rclone: requirements.rclone ?? true,
       walG: requirements.walG ?? false,
@@ -130,6 +139,8 @@ export class FactoryHostPreflight {
 
     checks.push(await commandCheck(this.host, "caddy", required.caddy, "caddy", ["version"]));
     checks.push(await commandCheck(this.host, "cloudflared", required.cloudflared, "cloudflared", ["--version"]));
+    checks.push(await commandCheck(this.host, "systemd", required.systemd, "systemctl", ["--version"]));
+    checks.push(await commandCheck(this.host, "systemd-journal", required.systemdJournal, "journalctl", ["--version"]));
     checks.push(await commandCheck(this.host, "aws-cli", required.awsCli, "aws", ["--version"]));
     checks.push(await commandCheck(this.host, "rclone", required.rclone, "rclone", ["version"]));
     checks.push(await commandCheck(this.host, "wal-g", required.walG, "wal-g", ["--version"]));
