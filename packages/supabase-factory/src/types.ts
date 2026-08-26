@@ -52,6 +52,35 @@ export interface StorageSpec {
   region?: string;
 }
 
+export interface SmtpSpec {
+  adminEmail: string;
+  host: string;
+  port: number;
+  senderName: string;
+}
+
+export interface AuthEmailSpec {
+  enabled?: boolean;
+  /** Auto-confirm is useful for controlled/dev flows; production normally leaves this false. */
+  autoConfirm?: boolean;
+  /** Non-secret SMTP routing. Credentials are injected separately as SecretRefs. */
+  smtp?: SmtpSpec;
+}
+
+export interface AuthPhoneSpec {
+  enabled?: boolean;
+  autoConfirm?: boolean;
+}
+
+export interface AuthSpec {
+  /** Global signup gate. Defaults to true only when an explicit signup method is enabled. */
+  signupEnabled?: boolean;
+  anonymousUsers?: boolean;
+  jwtExpirySeconds?: number;
+  email?: AuthEmailSpec;
+  phone?: AuthPhoneSpec;
+}
+
 export interface BackupSpec {
   logical?: "off" | "daily" | "hourly";
   pitr?: boolean;
@@ -74,6 +103,7 @@ export interface SupabaseFactoryManifest {
   supabase?: SupabaseVersionSpec;
   features?: FeatureSpec;
   storage?: StorageSpec;
+  auth?: AuthSpec;
   backup?: BackupSpec;
   security?: SecuritySpec;
 }
@@ -93,6 +123,20 @@ export interface ResolvedFactoryManifest {
     backend: StorageBackend;
     bucketPrefix: string;
     region: string;
+  };
+  auth: {
+    signupEnabled: boolean;
+    anonymousUsers: boolean;
+    jwtExpirySeconds: number;
+    email: {
+      enabled: boolean;
+      autoConfirm: boolean;
+      smtp?: SmtpSpec;
+    };
+    phone: {
+      enabled: boolean;
+      autoConfirm: boolean;
+    };
   };
   backup: {
     logical: "off" | "daily" | "hourly";
