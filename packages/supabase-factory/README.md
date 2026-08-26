@@ -1,33 +1,50 @@
 # Supabase Factory
 
-Self-hosted control plane for provisioning and operating isolated Supabase Self-Hosted projects **without Supabase Cloud management credentials**.
+Portable control plane for operating isolated **Supabase Self-Hosted** projects without using Supabase Cloud as the management plane.
 
-Factory is intended to make the normal operating surface:
+## Current phase
+
+We are **not selecting or integrating a permanent server yet**.
+
+The development target is:
 
 ```text
-Maxi / operator
-      |
-      v
-   ChatGPT
-      |
-      v
- Factory MCP
-      |
-      v
-Supabase Factory
-      |
-      +-- isolated Supabase project A
-      +-- isolated Supabase project B
-      +-- isolated Supabase project C
+GitHub
+  |
+  | source / CI / review
+  v
+ChatGPT <-> authenticated Factory MCP
+                    |
+                    v
+             Supabase Factory core
+                    |
+                    v
+        self-hosted Supabase runtime
 ```
 
-The package currently lives in the Doener/BusinessWebFactory monorepo so repository CI can exercise the complete contract. It is extraction-friendly and can move into a dedicated Factory service after the real-host deployment contract is proven.
+The important rule is that the Factory core does not care where that self-hosted runtime physically executes.
+
+During development it may be supplied locally, by a test harness or ephemerally in GitHub CI. Later it can move to a VPS, dedicated server, home server, container platform or another destination through an adapter **without changing ChatGPT prompts, MCP tools, manifests or the control-plane model**.
+
+A self-hosted Supabase process obviously needs compute somewhere when it runs; choosing and operating that compute is simply **not an architecture decision in the current phase**.
+
+See [`docs/DEVELOPMENT_MODEL.md`](docs/DEVELOPMENT_MODEL.md).
+
+## What we use now
+
+- **GitHub** — source of truth, PRs, CI and reproducible project history
+- **ChatGPT** — intended human-facing orchestration surface
+- **Factory MCP** — authenticated agent/tool boundary
+- **Supabase Factory core** — manifests, planning, lifecycle contracts, authorization, audit and state
+- **Supabase Self-Hosted** — application backend/runtime target
+
+No permanent Linux host, system service, DNS provider, reverse proxy or tunnel is required by the current core-development contract.
 
 ## Core independence goal
 
-Factory does not use Supabase Cloud as a management plane.
+Factory never uses Supabase Cloud as a project-management dependency.
 
-No project lifecycle operation requires:
+Normal project lifecycle code must not require:
 
 - `SUPABASE_ACCESS_TOKEN`
 - `sbp_*`
@@ -36,421 +53,231 @@ No project lifecycle operation requires:
 - hosted Supabase project refs
 - Supabase Platform Management API
 
-One logical Factory project owns one isolated self-hosted Supabase runtime, database, Auth namespace, API/JWT material, migration state, Storage namespace and lifecycle state.
+The CI guard enforces this boundary.
 
-Shared lower-level infrastructure such as one Linux host, reverse proxy, monitoring, object-storage provider or SMTP provider is allowed below that isolation boundary.
+## Reviewed Supabase baseline — 2026-08-26
 
-## Reviewed baseline — 2026-08-26
-
-- Supabase Self-Hosted release: `self-hosted/v0.8.0`
+- Self-Hosted release: `self-hosted/v0.8.0`
 - exact reviewed upstream commit: `241bb11c0627f2981746d37033f57dbfa81d29b0`
 - PostgreSQL 17 for new projects
 - Envoy gateway
-- Docker Compose production runtime
 - Supabase CLI `2.115.0` for direct self-hosted migration/logical-backup operations
-- modern `sb_publishable_*` / `sb_secret_*` API keys plus ES256/JWKS material
+- modern `sb_publishable_*` / `sb_secret_*` API-key model plus ES256/JWKS material
 - MCP TypeScript SDK v2 / MCP 2026-07-28
 
-Primary upstream references:
+## Portable architecture
 
-- https://supabase.com/docs/guides/self-hosting
-- https://supabase.com/docs/guides/self-hosting/docker
-- https://supabase.com/docs/guides/self-hosting/updating
-- https://supabase.com/docs/guides/self-hosting/auth/config
-- https://supabase.com/docs/guides/self-hosting/self-hosted-auth-keys
-- https://supabase.com/docs/guides/self-hosting/postgres-upgrade-17
-- https://supabase.com/docs/guides/self-hosting/self-hosted-s3
-- https://supabase.com/docs/guides/self-hosting/self-hosted-envoy
-- https://supabase.com/docs/guides/self-hosting/self-hosted-proxy-https
-- https://supabase.com/docs/reference/cli/supabase-db-push
-- https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/
-- https://developers.cloudflare.com/tunnel/
+### Layer A — core
 
-## Edge modes
-
-Factory deliberately keeps the edge replaceable.
-
-### 1. Domainless Cloudflare Quick Tunnel — bootstrap/dev/E2E
-
-This is the easiest way to prove the real host without owning a domain or binding Factory to Cloudflare's management API.
+This layer must remain deployment-neutral:
 
 ```text
-ChatGPT / MCP client
-        |
-        | HTTPS + bearer
-        v
-https://<random>.trycloudflare.com/mcp
-        |
-        v
-Factory MCP on 127.0.0.1:18787
-        |
-        v
-Supabase Factory
-        |
-        +-- Project A Envoy 127.0.0.1:18001
-        |       |
-        |       v
-        |   anonymous Quick Tunnel
-        |       |
-        |       v
-        |   https://<random>.trycloudflare.com
-        |
-        +-- Project B Envoy 127.0.0.1:18002
+manifest
+planner
+control plane
+InfrastructureProvider interface
+ProjectRegistry interface
+SecretStore interface
+lifecycle service interfaces
+FactoryAgentApi
+authorization + audit
+MCP schemas + handler
 ```
 
-`CloudflareQuickTunnelController` and `CloudflareQuickTunnelRuntimeBindingProvider` provide:
+No OS, Docker, SSH, DNS, Cloudflare, Caddy or server filesystem is required here.
 
-- no custom domain
-- no DNS zone
-- no Cloudflare account requirement
-- no Cloudflare API token
-- no Cloudflare OAuth token
-- no Wrangler session
-- no Cloudflare management MCP dependency
-- one Factory-owned systemd unit per development/staging project
-- direct `cloudflared` routing to the project's loopback Envoy port
-- random public HTTPS URL captured automatically
-- actual public URL injected as Factory `publicUrl` and Supabase `SITE_URL` before runtime preparation
-- isolated systemd `HOME` so an operator `~/.cloudflared/config.yaml` cannot interfere
-- URL parsing only from the current systemd `InvocationID`, avoiding stale journal URLs
-- no automatic `cloudflared` restart, because a new process may receive a different URL
-- fail-closed behavior for `production` and `production-critical`
+### Layer B — current development integration
 
-Cloudflare documents Quick Tunnels as testing/development infrastructure. Factory therefore never promotes this mode to production.
+`createDevelopmentFactory()` is now the default composition for this phase.
 
-See:
+Its defaults are deliberately host-neutral:
 
-- `docs/CLOUDFLARE_QUICK_TUNNEL.md`
-- `docs/QUICK_SERVICE.md`
+- `MemoryProjectRegistry`
+- `MemoryBackupCatalog`
+- `MemorySecretStore`
+- `MemoryFactoryAuditLog`
+- `MemoryAttachedRuntimeCatalog`
+- `AttachedSelfHostedInfrastructureProvider`
+- `FactoryServiceComposition`
+- `FactoryAgentApi`
 
-### 2. Stable named Cloudflare Tunnel — production option
+It can create the Factory MCP HTTP handler but does not bind a network socket or decide how that handler is exposed.
 
-Already implemented as a separate edge path:
+### Attached self-hosted runtime
 
-```text
-*.supabase.example.com
-        |
-        v
-Cloudflare Tunnel
-        |
-        v
-127.0.0.1:18080 Caddy host router
-        |
-        +-- host A -> Envoy 18001
-        +-- host B -> Envoy 18002
-```
+`AttachedSelfHostedInfrastructureProvider` allows development to point Factory at an already-running Supabase Self-Hosted runtime.
 
-The named-tunnel design uses one static wildcard ingress and one one-time tunnel credential. Normal project creation changes only the local Caddy route; it does not call Cloudflare's configuration API and does not restart `cloudflared`.
+The runtime descriptor contains only:
 
-### 3. Direct Caddy wildcard HTTPS — Cloudflare-independent fallback
+- Factory project ID
+- self-hosted Supabase gateway URL
+- Supabase release
+- exact upstream commit
+- PostgreSQL major version
+- enabled Supabase services
 
-Factory can also operate with wildcard DNS pointing directly to the host. Caddy owns public TLS/ACME and proxies only to loopback Envoy ports.
+Credentials remain behind `SecretStore` references.
 
-## Quick Service: no custom TypeScript wiring
+The provider can observe and health-check the runtime. It deliberately does **not**:
 
-The single-host Quick Service turns the package from a library into an install-once control plane.
+- provision a server
+- start Docker
+- SSH anywhere
+- install packages
+- create systemd units
+- manage DNS
+- call Cloudflare
+- select a hosting provider
 
-### Bootstrap
+If runtime drift requires infrastructure mutation, it fails closed. A future deployment adapter will implement that mutation through the same `InfrastructureProvider` interface.
 
-```bash
-sudo npm --workspace @business-web/supabase-factory run bootstrap:quick
-```
+## ChatGPT / MCP contract
 
-Defaults:
+`FactoryAgentApi` remains the transport-neutral boundary and MCP remains the intended ChatGPT integration.
 
-- configuration secrets: `/etc/supabase-factory`
-- persistent Factory state: `/var/lib/supabase-factory`
-- isolated project roots: `/srv/supabase-factory/projects`
+Implemented tool families include:
 
-The bootstrap creates, only when missing:
+- project plan/create/get/list/reconcile
+- health
+- migration plan/apply
+- backup create/verify when a backup implementation is composed
+- restore drill when composed
+- Supabase release upgrade plan/apply when composed
+- PostgreSQL 17 plan/apply when composed
 
-- `/etc/supabase-factory/master-key`
-- `/etc/supabase-factory/mcp-token`
+Unsupported destructive actions remain unregistered / `TOOL_NOT_CONFIGURED` rather than being faked.
 
-Secret files are mode `0600`. Bootstrap is idempotent and never overwrites an existing secret. If encrypted Factory state exists but the original master key is missing, bootstrap refuses to invent a replacement key.
+MCP guarantees include:
 
-### Start locally
+- authorization before handler execution
+- Zod-v4 tool input validation
+- only configured handlers appear in `tools/list`
+- read-only/destructive annotations
+- replaceable authentication
+- strict Host and optional Origin validation
+- no SecretStore or raw execution surface exposed to the agent
+- secret-free audit metadata
 
-```bash
-sudo npm --workspace @business-web/supabase-factory run serve:quick
-```
+A real MCP-v2 client roundtrip is covered by CI.
 
-Expected shape:
+## Health contract
 
-```json
-{"status":"READY","loopbackMcpUrl":"http://127.0.0.1:18787/mcp"}
-```
+A runtime is not considered healthy just because something is listening.
 
-### Start with a temporary public Factory MCP endpoint
+Factory verifies the self-hosted endpoint contract:
 
-For a domainless ChatGPT/remote-MCP E2E:
+- Auth health succeeds with the publishable key
+- REST succeeds with the secret key
+- REST rejects a request without an API key
+- HTTPS is required unless local/ephemeral development explicitly allows HTTP
+- privileged probes never follow redirects
 
-```bash
-sudo FACTORY_EXPOSE_MCP_QUICK=true \
-  npm --workspace @business-web/supabase-factory run serve:quick
-```
-
-Expected shape:
-
-```json
-{
-  "status": "READY",
-  "loopbackMcpUrl": "http://127.0.0.1:18787/mcp",
-  "publicMcpUrl": "https://<random>.trycloudflare.com/mcp"
-}
-```
-
-The bearer token is intentionally not printed. The MCP listener itself stays bound to loopback; the Quick Tunnel is outbound transport only.
-
-## Single-host composition
-
-`createSingleHostQuickTunnelFactory(...)` and `startSingleHostQuickTunnelFactory(...)` construct the working service from a small configuration instead of requiring handwritten dependency wiring.
-
-The composition includes:
-
-- `LocalHostExecutor`
-- encrypted `SecretStore`
-- persistent `JsonFilePlacementStore`
-- `ProjectScheduler`
-- `CloudflareQuickTunnelRuntimeBindingProvider`
-- `DockerRuntimePreparer`
-- `DockerComposeInfrastructureProvider`
-- public HTTPS/Auth/REST health verification
-- persistent project registry
-- backup catalog
-- direct self-hosted migration controller
-- agent authorization
-- secret-free audit log
-- authenticated MCP v2 handler
-- loopback Node MCP server
-
-`JsonFilePlacementStore` persists project-to-host-to-Envoy-port assignment using atomic writes and mode `0600`, preventing port reuse after Factory restarts.
-
-The quick composition intentionally wires only lifecycle services whose deployment dependencies are fully configured. Backup/restore/upgrade modules exist, but quick-service handlers for those remain absent until their concrete DR/storage dependencies are supplied. Missing tools fail closed as `TOOL_NOT_CONFIGURED`.
-
-## Project lifecycle and Docker isolation
-
-Implemented profiles:
-
-- `minimal`
-- `webapp`
-- `realtime`
-- `full`
-- `production-critical`
-
-Core behavior:
-
-- idempotent desired-state planning/reconciliation
-- exact Supabase release + upstream commit pinning
-- stable host placement and unique Envoy ports
-- project-scoped Compose and Realtime identities
-- project-scoped credential namespace
-- Envoy loopback binding
-- PostgreSQL/Supavisor and Studio kept private
-- deterministic Compose overlays
-- optional services disabled when not required
-- Docker Compose >= `2.24.4`
-
-## Auth and secrets
-
-- AES-256-GCM encrypted local SecretStore
-- generated DB/API/JWT credentials never appear in agent-facing project records
-- official Supabase key-generation utilities
-- publishable/secret API-key model
-- asymmetric signing material
-- email, phone and anonymous signup disabled by default
-- JWT expiry capped at 604800 seconds
-- production email Auth requires explicit SMTP configuration
-- SMTP credentials are SecretRefs only
-- production phone Auth fails closed until an SMS provider binding exists
-
-The central `cloudless-env.ts` deny policy removes Supabase Cloud project-management variables before direct self-hosted DB operations. CI rejects Cloud-login/link/token dependencies in Factory source.
+The same verifier works regardless of where the runtime eventually lives.
 
 ## Migrations
 
-Provisioning is schema-neutral. Application schema deployment is a separate lifecycle:
+Provisioning and application schema remain separate lifecycle concerns.
+
+Current migration contract:
 
 ```text
 factory.migrations.plan
-  -> verify placement
-  -> verify exact Supabase CLI 2.115.0
+  -> exact Supabase CLI version
   -> optional exact source Git SHA / clean tracked tree
-  -> strip Cloud-management variables
+  -> Cloud-management variables stripped
   -> supabase db push --db-url ... --dry-run
 
 factory.migrations.apply
   -> explicit APPLY_MIGRATIONS
   -> fresh dry-run
-  -> direct private db push
+  -> direct self-hosted db push
   -> migration-history verification
 ```
 
-No `supabase link` is used.
+The current Docker migration implementation is one adapter. The lifecycle interface itself is not Docker-specific.
 
-## Backup, DR and restore primitives
+## Backup / restore / upgrade contracts
 
-The full Factory package already includes:
+The project already contains implementations and tests for:
 
-- Supabase-aware roles/schema/data logical dumps
-- `pgsodium_root.key` preservation
-- encrypted runtime configuration
-- AES-256-GCM `.sbf` backup artifacts
-- SHA-256 verification
-- S3 off-host encrypted artifact store
-- remote re-download verification
-- persistent backup catalog keyed by `projectId + backupId`
-- rclone S3 Storage DR mirror with checksum/download verification
-- WAL-G restore points, base backup and WAL continuity gate
+- Supabase-aware roles/schema/data logical backup
+- `pgsodium_root.key`
+- AES-256-GCM `.sbf` artifacts
+- persistent backup catalog
+- off-host S3 artifact verification
+- Storage DR mirror
+- WAL-G PITR continuity verification
 - disposable restore drills
+- staged Supabase release upgrades
+- PostgreSQL 15 -> 17 upgrade gates
 
-Restore order follows the controlled Factory contract:
+These are retained because their **contracts** matter now, but production storage/network/host choices are not selected in this phase.
 
-1. roles
-2. schema
-3. `session_replication_role=replica`
-4. data
-5. Storage verification
-6. public health/integrity verification
-7. disposable target cleanup
+## Deployment adapters already explored — parked for later
 
-## Upgrades
+Earlier work produced optional adapters for:
 
-### Supabase releases
+- Docker Compose project provisioning
+- host placement / persistent port allocation
+- Caddy wildcard routing
+- named Cloudflare Tunnel routing
+- Cloudflare Quick Tunnels
+- host preflight
+- single-host bootstrap/service packaging
 
-- exact target tag and commit verification
-- official `update.sh --dry-run`
-- explicit `APPLY_SUPABASE_UPGRADE`
-- fresh verified encrypted backup before mutation
-- overlay reconciliation
-- final health verification
+They remain in the repository so the work is not lost, but they are **not the current default architecture and not a prerequisite for development**.
 
-### PostgreSQL 15 -> 17
+In particular, we are not currently deciding:
 
-- separate controller; never mixed with Supabase release changes
-- free-space gate: `2 * DB data size + 5 GiB`
-- refuses stale prior-upgrade state
-- refuses unsupported removed extensions instead of silently dropping them
-- fresh verified backup
-- official `utils/upgrade-pg17.sh --yes`
-- PG17 verification
-- preserved PG15 and pgsodium rollback material
+```text
+Ubuntu vs another OS
+VPS vs dedicated server vs home server
+Cloudflare vs direct TLS
+systemd vs containers vs another service manager
+specific DNS/domain topology
+```
 
-## Agent authorization and audit
-
-`FactoryAgentApi` is the transport-neutral boundary.
-
-- authorization occurs before handler execution
-- viewer/planner/operator/administrator roles
-- tool definitions mark mutating/destructive behavior
-- Docker executors and SecretStore are never exposed as tools
-- file audit is JSONL mode `0600`
-- audit contains request/principal/tool/project/outcome metadata only
-- arguments and outputs are not logged
-- internal errors are flattened before agent exposure
-
-## Authenticated MCP v2
-
-Factory implements MCP SDK v2 / MCP 2026-07-28.
-
-- real `McpServer.registerTool(...)`
-- only configured Factory handlers appear in `tools/list`
-- Zod-v4 boundary validation
-- read-only/destructive annotations
-- replaceable `FactoryMcpAuthenticator`
-- current trusted/private mode uses SecretStore-backed bearer authentication
-- SHA-256/timing-safe token comparison
-- strict Host validation
-- optional Origin allowlist
-- authentication before MCP protocol handling
-- stateless JSON request/response mode
-- Node MCP listener binds loopback only
-
-CI includes a real MCP-v2 client connection, tool discovery and tool invocation through `FactoryAgentApi` and audit.
-
-## Host preflight
-
-`FactoryHostPreflight` is non-mutating and returns a machine-readable readiness report.
-
-Capabilities include:
-
-- Git
-- Docker
-- Docker Compose >= `2.24.4`
-- exact Supabase CLI `2.115.0`
-- Caddy when the selected edge requires it
-- `cloudflared` when the selected edge requires it
-- systemd / journald for Quick Tunnel service management
-- AWS CLI when off-host artifact storage requires it
-- rclone when Storage DR requires it
-- WAL-G when PITR requires it
-- DNS resolver when wildcard DNS verification requires it
-- writable `/dev/shm` when secure plaintext backup staging requires it
-
-The Quick Service core profile requires Cloudflared + systemd/journal but does not require Caddy, wildcard DNS, AWS CLI, rclone, WAL-G or `/dev/shm` merely to create/migrate development projects.
+Those decisions come later.
 
 ## Core invariants
 
-1. One logical project owns one isolated Supabase runtime and credential namespace.
-2. Shared infrastructure exists only below the project isolation boundary.
-3. Desired state is idempotent.
-4. Supabase Cloud project-management credentials are absent from project lifecycle execution.
-5. Agent APIs return status/references, not secret values.
-6. Production PostgreSQL and Studio remain private.
-7. Public `HEALTHY` requires real HTTPS/Auth/REST key-enforcement checks.
-8. Backup, Storage replication and PITR are independently verifiable.
-9. PITR fails closed when WAL continuity cannot be proven.
-10. Moving upstream `master` is never deployed; release+commit are pinned.
-11. PG major upgrades preserve rollback material until explicit cleanup.
-12. Factory MCP never exposes SecretStore or raw host execution.
-13. Quick Tunnels are bootstrap/dev only and are forbidden for production-critical operation.
-14. Cloudflare management APIs are not part of the Quick Tunnel project lifecycle.
-15. The stable Cloudflare edge and direct-Caddy edge remain replaceable production options.
+1. One logical project owns one isolated self-hosted Supabase identity and lifecycle state.
+2. Supabase Cloud management credentials are absent from the Factory lifecycle.
+3. ChatGPT/MCP sees status and references, never secret values.
+4. Manifests and MCP tools are stable across deployment adapters.
+5. Runtime health is verified at the Supabase API boundary.
+6. Infrastructure mutation belongs to `InfrastructureProvider`, not to the core.
+7. Development can attach a self-hosted runtime without choosing its permanent host.
+8. Later deployment adapters may be replaced without redesigning the core.
+9. Unsupported destructive behavior fails closed.
+10. Upstream Supabase releases/commits remain pinned and reviewable.
 
-## Current validation
+## Validation
 
-PR #103 / `feat/supabase-factory-v1` dedicated Factory gate currently passes:
+On PR #103 / `feat/supabase-factory-v1`, the dedicated Factory gate currently passes:
 
 - monorepo TypeScript typecheck
-- **117/117 Factory contract/integration tests**
-- **0 failures**
+- **121/121 Factory tests**
+- **0 failed**
 - **0 skipped**
 - Supabase Cloud management-dependency guard
 
-The test surface includes:
+The new development tests explicitly verify:
 
-- Docker isolation and runtime overlays
-- secure Auth defaults
-- secret storage
-- persistent placement
-- Cloudflare named-tunnel routing contracts
-- anonymous Quick Tunnel routing and URL capture
-- current-systemd-invocation parsing
-- Quick Tunnel production refusal and safe cleanup
-- Quick Service bootstrap secret safety/idempotence
-- single-host no-custom-wiring composition
-- public health
-- migrations
-- encrypted local/off-host backup roundtrips
-- backup catalog
-- Storage DR
-- WAL-G PITR
-- restore drills
-- release upgrade and PG17 gates
-- agent authorization/audit
-- real MCP-v2 client roundtrip
+- in-memory SecretStore without OS/filesystem dependency
+- attaching a self-hosted Supabase runtime without Docker/systemd/DNS/Cloudflare assumptions
+- detecting release drift while refusing deployment mutation
+- keeping the reviewed Supabase baseline independent from deployment destination
 
-Self-host Release and Mcello Cloudflare Preview are also green on the same validated code head. The general repository CI covers the wider monorepo/browser surface independently.
+## Current roadmap
 
-## Remaining deployment work
+The next work should stay inside the current toolchain:
 
-The library/control-plane side is now substantially complete. Remaining work is deployment proof, not another architecture rewrite:
+1. strengthen the portable Development Factory contract;
+2. make the ChatGPT-facing MCP workflow ergonomic and project-oriented;
+3. add an ephemeral real Supabase Self-Hosted integration smoke in GitHub CI/test infrastructure, without selecting a permanent server;
+4. exercise migrations and project lifecycle against that disposable runtime;
+5. tighten generated project handoff/config so a later deployment adapter can take over cleanly;
+6. only then choose permanent hosting/networking and plug in the appropriate adapter.
 
-1. run the Quick-Service preflight on the actual Ubuntu target host;
-2. install only missing host prerequisites using that host's actual Linux distribution;
-3. run the disposable real-host E2E: Factory MCP -> project create -> random HTTPS -> Auth/REST/Realtime -> migration;
-4. connect the generated Factory MCP endpoint to the intended ChatGPT MCP client and prove a real ChatGPT tool call;
-5. configure the selected off-host backup/Storage/PITR providers and wire those existing modules into the deployed service;
-6. run backup + restore drill on the real host;
-7. choose a stable production edge only when production is required;
-8. keep live restore, project destroy and key rotation fail-closed until their explicit rollback/approval contracts are implemented and tested;
-9. extract Factory into a dedicated repository/service after the real-host contract is proven.
+The server question is intentionally deferred.
