@@ -14,7 +14,7 @@ export interface FactoryRepositoryLock {
   deploymentTargetSelected: false;
 }
 
-const SECRET_LIKE_KEY = /(^|[-_.])(password|passwd|secret|token|private[-_.]?key|access[-_.]?key|service[-_.]?role)([-_.]|$)/i;
+const SECRET_LIKE_KEY = /password|passwd|secret|token|private[-_.]?key|access[-_.]?key|service[-_.]?role/i;
 const CLOUD_MANAGEMENT_VALUE = /\bsbp_[A-Za-z0-9_-]+\b|SUPABASE_ACCESS_TOKEN|supabase\s+(?:login|link)/i;
 
 function walkForForbiddenRepositoryContent(value: unknown, path = "$"): void {
@@ -38,7 +38,7 @@ function walkForForbiddenRepositoryContent(value: unknown, path = "$"): void {
 }
 
 function canonicalManifest(manifest: SupabaseFactoryManifest): SupabaseFactoryManifest {
-  const resolved = resolveManifest(manifest);
+  resolveManifest(manifest);
   return {
     apiVersion: manifest.apiVersion,
     project: {
@@ -64,9 +64,6 @@ function canonicalManifest(manifest: SupabaseFactoryManifest): SupabaseFactoryMa
     } : {}),
     ...(manifest.backup ? { backup: { ...manifest.backup } } : {}),
     ...(manifest.security ? { security: { ...manifest.security } } : {}),
-    // Calling resolveManifest above is intentional validation; no resolved
-    // defaults are written into project.json so the declarative source stays concise.
-    ...(resolved ? {} : {}),
   };
 }
 
