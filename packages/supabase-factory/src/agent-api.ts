@@ -64,7 +64,7 @@ export const FACTORY_TOOL_DEFINITIONS: readonly FactoryToolDefinition[] = [
   { name: "factory.upgrade.apply", description: "Apply a Supabase release update only after verified backup and explicit approval.", permission: "upgrade", mutating: true, destructive: false },
   { name: "factory.pg17.plan", description: "Preflight a PostgreSQL 15 to 17 migration including disk and extension gates.", permission: "upgrade", mutating: false, destructive: false },
   { name: "factory.pg17.apply", description: "Run the guarded PostgreSQL 15 to 17 upgrade with rollback preservation.", permission: "upgrade", mutating: true, destructive: false },
-  { name: "factory.health.check", description: "Verify containers plus HTTPS Envoy/Auth/REST key enforcement.", permission: "read", mutating: false, destructive: false },
+  { name: "factory.health.check", description: "Verify the configured self-hosted runtime and Auth/REST key enforcement.", permission: "read", mutating: false, destructive: false },
   { name: "factory.audit.get", description: "Read Factory lifecycle audit metadata. Audit entries never contain secret values.", permission: "admin", mutating: false, destructive: false },
 ] as const;
 
@@ -109,6 +109,19 @@ export interface FactoryAuditEntry {
 
 export interface FactoryAuditLog {
   append(entry: FactoryAuditEntry): Promise<void>;
+}
+
+/** Ephemeral audit adapter for tests/CI/development; no filesystem required. */
+export class MemoryFactoryAuditLog implements FactoryAuditLog {
+  readonly #entries: FactoryAuditEntry[] = [];
+
+  async append(entry: FactoryAuditEntry): Promise<void> {
+    this.#entries.push(structuredClone(entry));
+  }
+
+  list(): readonly FactoryAuditEntry[] {
+    return this.#entries.map((entry) => structuredClone(entry));
+  }
 }
 
 export class FileFactoryAuditLog implements FactoryAuditLog {
