@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "sourcePath": ".supabase-factory/project.json",
+  "manifestSha256": "9fc24679acb18d5f6f9112beb0df8bc6189f42905fe874d95e0f978c557aa0a8",
+  "resolved": {
+    "apiVersion": "factory.supabase.local/v1",
+    "project": {
+      "id": "business-web-factory",
+      "environment": "development",
+      "displayName": "Business Web Factory"
+    },
+    "profile": "realtime",
+    "supabase": {
+      "release": "self-hosted/v0.8.0",
+      "upstreamCommit": "241bb11c0627f2981746d37033f57dbfa81d29b0",
+      "postgresMajor": 17,
+      "gateway": "envoy"
+    },
+    "services": [
+      "auth",
+      "database",
+      "gateway",
+      "realtime",
+      "rest",
+      "storage",
+      "studio"
+    ],
+    "storage": {
+      "backend": "file",
+      "bucketPrefix": "business-web-factory",
+      "region": "eu-central-1"
+    },
+    "auth": {
+      "signupEnabled": false,
+      "anonymousUsers": false,
+      "jwtExpirySeconds": 3600,
+      "email": {
+        "enabled": false,
+        "autoConfirm": false
+      },
+      "phone": {
+        "enabled": false,
+        "autoConfirm": false
+      }
+    },
+    "backup": {
+      "logical": "daily",
+      "pitr": false,
+      "storageReplication": true,
+      "restoreDrill": "monthly"
+    },
+    "security": {
+      "rlsRequired": true,
+      "databasePublic": false,
+      "studioPublic": false,
+      "requireHttps": false,
+      "allowLegacyApiKeys": false
+    }
+  },
+  "containsSecretValues": false,
+  "deploymentTargetSelected": false
+}
