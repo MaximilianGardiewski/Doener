@@ -87,6 +87,41 @@ function bootstrapManifest(input: unknown): SupabaseFactoryManifest {
   };
 }
 
+function sameJson(left: string, right: string): boolean {
+  try {
+    return JSON.stringify(JSON.parse(left)) === JSON.stringify(JSON.parse(right));
+  } catch {
+    return false;
+  }
+}
+
+function repositorySyncState(projectJson: string, currentLockJson?: string) {
+  const manifest = parseFactoryRepositoryManifest(projectJson);
+  const desired = repositoryResult(manifest);
+  const projectCanonical = projectJson.trim() === desired.projectJson.trim();
+  const lockPresent = Boolean(currentLockJson);
+  const lockCurrent = currentLockJson ? sameJson(currentLockJson, desired.lockJson) : false;
+  const writePaths = [
+    ...(!projectCanonical ? [FACTORY_REPOSITORY_MANIFEST_PATH] : []),
+    ...(!lockCurrent ? [FACTORY_REPOSITORY_LOCK_PATH] : []),
+  ];
+  return {
+    manifest,
+    desired,
+    status: {
+      valid: true,
+      projectCanonical,
+      lockPresent,
+      lockCurrent,
+      needsSync: writePaths.length > 0,
+      writePaths,
+      manifestSha256: desired.lock.manifestSha256,
+      containsSecretValues: false as const,
+      deploymentTargetSelected: false as const,
+    },
+  };
+}
+
 function attachedRuntime(input: unknown): AttachedSelfHostedRuntime {
   const args = object(input);
   const services = args.services;
@@ -123,6 +158,36 @@ export function createRepositoryDevelopmentToolHandlers(
       const args = object(input);
       const manifest = parseFactoryRepositoryManifest(requiredString(args, "projectJson"));
       return { valid: true, ...repositoryResult(manifest) };
+    },
+    "factory.repository.status": async (input) => {
+      const args = object(input);
+      const projectJson = requiredString(args, "projectJson");
+      const lockJson = optionalString(args, "lockJson");
+      return repositorySyncState(projectJson, lockJson).status;
+    },
+    "factory.repository.sync": async (input) => {
+      const args = object(input);
+      const projectJson = requiredString(args, "projectJson");
+      const lockJson = optionalString(args, "lockJson");
+      const state = repositorySyncState(projectJson, lockJson);
+      const writes = [
+        ...(!state.status.projectCanonical ? [{
+          path: FACTORY_REPOSITORY_MANIFEST_PATH,
+          content: state.desired.projectJson,
+          reason: "canonicalize-project-manifest" as const,
+        }] : []),
+        ...(!state.status.lockCurrent ? [{
+          path: FACTORY_REPOSITORY_LOCK_PATH,
+          content: state.desired.lockJson,
+          reason: state.status.lockPresent ? "refresh-stale-lock" as const : "create-lock" as const,
+        }] : []),
+      ];
+      return {
+        status: state.status,
+        writes,
+        migrationsPath: state.desired.paths.migrations,
+        secretsBelongInRepository: false as const,
+      };
     },
     "factory.repository.plan": async (input) => {
       const args = object(input);
