@@ -98,6 +98,7 @@ jobs:
     timeout-minutes: 25
     env:
       UPSTREAM_DIR: /tmp/supabase-factory-upstream
+      FACTORY_CI_OVERRIDE: /tmp/supabase-factory-upstream/docker/factory-ci.override.yml
     steps:
       - name: Checkout Factory source
         uses: actions/checkout@v4
@@ -143,8 +144,8 @@ jobs:
           cp .env.example .env
           sh utils/generate-keys.sh --update-env >/dev/null
 
-          # Ephemeral CI only: Envoy is reachable from this runner, never from a
-          # public interface. Permanent hosting/networking is deliberately absent.
+          # Ephemeral CI only: Envoy and PostgreSQL are reachable from this
+          # runner via loopback. No permanent host/networking decision is made.
           sed -i \
             -e 's|^API_GW_HTTP_PORT=.*$|API_GW_HTTP_PORT=127.0.0.1:54321|' \
             -e 's|^SUPABASE_PUBLIC_URL=.*$|SUPABASE_PUBLIC_URL=http://127.0.0.1:54321|' \
@@ -155,6 +156,13 @@ jobs:
             -e 's|^ENABLE_PHONE_SIGNUP=.*$|ENABLE_PHONE_SIGNUP=false|' \
             .env
 
+          cat > factory-ci.override.yml <<'YAML'
+          services:
+            db:
+              ports:
+                - "127.0.0.1:54322:5432"
+          YAML
+
           grep -q '^API_GW_HTTP_PORT=127.0.0.1:54321$' .env
           grep -q '^DISABLE_SIGNUP=true$' .env
 
@@ -163,7 +171,10 @@ jobs:
         working-directory: /tmp/supabase-factory-upstream/docker
         run: |
           set -euo pipefail
-          docker compose up -d --wait db auth rest meta studio api-gw
+          docker compose \
+            -f docker-compose.yml \
+            -f factory-ci.override.yml \
+            up -d --wait db auth rest meta studio api-gw
 
       - name: Run Factory against real Self-Hosted runtime
         shell: bash
@@ -186,18 +197,46 @@ jobs:
           FACTORY_SMOKE_POSTGRES_PASSWORD="$postgres_password" \
           node --experimental-strip-types packages/supabase-factory/integration/self-host-smoke.ts
 
+      - name: Dry-run and apply repository migration with pinned CLI
+        shell: bash
+        working-directory: packages/supabase-factory/integration/fixture-app
+        run: |
+          set -euo pipefail
+          env_file="$UPSTREAM_DIR/docker/.env"
+          postgres_password="$(grep '^POSTGRES_PASSWORD=' "$env_file" | head -n1 | cut -d= -f2-)"
+          db_url="$(POSTGRES_PASSWORD="$postgres_password" node - <<'NODE'
+          const url = new URL('postgresql://postgres@127.0.0.1:54322/postgres');
+          url.password = process.env.POSTGRES_PASSWORD;
+          process.stdout.write(url.toString());
+          NODE
+          )"
+          echo "::add-mask::$postgres_password"
+          echo "::add-mask::$db_url"
+          unset SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_ID SUPABASE_PROJECT_REF || true
+
+          cli_version="$(npx --yes supabase@2.115.0 --version)"
+          test "$cli_version" = "2.115.0"
+
+          npx --yes supabase@2.115.0 db push --db-url "$db_url" --dry-run >/tmp/factory-migration-dry-run.log 2>&1
+          npx --yes supabase@2.115.0 db push --db-url "$db_url" >/tmp/factory-migration-apply.log 2>&1
+          npx --yes supabase@2.115.0 migration list --db-url "$db_url" >/tmp/factory-migration-list.log 2>&1
+          grep -q '20260826133000' /tmp/factory-migration-list.log
+
+          marker="$(docker exec supabase-db psql -U postgres -d postgres -Atc \
+            "select coalesce(to_regclass('public.factory_ci_marker')::text, '');")"
+          test "$marker" = "factory_ci_marker"
+
+          rm -f /tmp/factory-migration-dry-run.log /tmp/factory-migration-apply.log /tmp/factory-migration-list.log
+
       - name: Diagnostics on failure
         if: failure()
         shell: bash
         run: |
           if [ -f "$UPSTREAM_DIR/docker/docker-compose.yml" ]; then
-            docker compose \
-              -f "$UPSTREAM_DIR/docker/docker-compose.yml" \
-              --project-directory "$UPSTREAM_DIR/docker" \
-              ps || true
-            docker compose \
-              -f "$UPSTREAM_DIR/docker/docker-compose.yml" \
-              --project-directory "$UPSTREAM_DIR/docker" \
+            args=(-f "$UPSTREAM_DIR/docker/docker-compose.yml")
+            if [ -f "$FACTORY_CI_OVERRIDE" ]; then args+=(-f "$FACTORY_CI_OVERRIDE"); fi
+            docker compose "${args[@]}" --project-directory "$UPSTREAM_DIR/docker" ps || true
+            docker compose "${args[@]}" --project-directory "$UPSTREAM_DIR/docker" \
               logs --no-color --tail=200 db auth rest meta studio api-gw || true
           fi
 
@@ -206,9 +245,10 @@ jobs:
         shell: bash
         run: |
           if [ -f "$UPSTREAM_DIR/docker/docker-compose.yml" ]; then
-            docker compose \
-              -f "$UPSTREAM_DIR/docker/docker-compose.yml" \
-              --project-directory "$UPSTREAM_DIR/docker" \
+            args=(-f "$UPSTREAM_DIR/docker/docker-compose.yml")
+            if [ -f "$FACTORY_CI_OVERRIDE" ]; then args+=(-f "$FACTORY_CI_OVERRIDE"); fi
+            docker compose "${args[@]}" --project-directory "$UPSTREAM_DIR/docker" \
               down -v --remove-orphans || true
           fi
           sudo rm -rf "$UPSTREAM_DIR"
+          rm -f /tmp/factory-migration-dry-run.log /tmp/factory-migration-apply.log /tmp/factory-migration-list.log
