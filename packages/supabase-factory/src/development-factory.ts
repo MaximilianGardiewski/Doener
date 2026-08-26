@@ -8,6 +8,10 @@ import {
 import { MemoryAttachedRuntimeCatalog, AttachedSelfHostedInfrastructureProvider, type AttachedRuntimeCatalog } from "./attached-runtime.ts";
 import { MemoryBackupCatalog, type BackupCatalog } from "./backup-catalog.ts";
 import { SupabaseFactoryControlPlane } from "./control-plane.ts";
+import {
+  createAttachedRuntimeDevelopmentToolHandlers,
+  createRepositoryDevelopmentToolHandlers,
+} from "./development-tools.ts";
 import { FetchPublicEndpointVerifier, type PublicEndpointVerifier } from "./health.ts";
 import { createFactoryMcpHttpHandler, type FactoryMcpAuthenticator, type FactoryMcpHttpHandler } from "./mcp.ts";
 import type { InfrastructureProvider } from "./provider.ts";
@@ -67,6 +71,11 @@ export interface DevelopmentFactory {
  * systemd, DNS, Cloudflare, Linux distribution or filesystem assumption in this
  * composition. Deployment-specific adapters can be supplied later through the
  * same interfaces without changing ChatGPT/MCP/control-plane behavior.
+ *
+ * The default ChatGPT tool surface additionally exposes repository bootstrap /
+ * validation / planning. When the default attached-runtime catalog is present,
+ * secret-free runtime attach/get/list/detach tools are exposed too. None of
+ * these tools call GitHub or mutate deployment infrastructure directly.
  */
 export function createDevelopmentFactory(options: DevelopmentFactoryOptions = {}): DevelopmentFactory {
   const registry = options.registry ?? new MemoryProjectRegistry();
@@ -91,10 +100,15 @@ export function createDevelopmentFactory(options: DevelopmentFactoryOptions = {}
     now: options.now,
   });
   const audit = options.audit ?? new MemoryFactoryAuditLog();
+  const handlers = {
+    ...services.handlers(),
+    ...createRepositoryDevelopmentToolHandlers(controlPlane),
+    ...(runtimeCatalog ? createAttachedRuntimeDevelopmentToolHandlers(runtimeCatalog) : {}),
+  };
   const api = new FactoryAgentApi({
     authorization: options.authorization ?? new StaticRoleAuthorizationPolicy(),
     audit,
-    handlers: services.handlers(),
+    handlers,
     now: options.now,
   });
 
