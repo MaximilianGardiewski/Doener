@@ -12,6 +12,9 @@ import { FACTORY_API_VERSION } from "./types.ts";
 
 const projectIdSchema = z.string().regex(/^[a-z][a-z0-9-]{1,62}[a-z0-9]$/);
 const gitShaSchema = z.string().regex(/^[0-9a-f]{40}$/);
+const profileSchema = z.enum(["minimal", "webapp", "realtime", "full", "production-critical"]);
+const environmentSchema = z.enum(["development", "staging", "production"]);
+const serviceSchema = z.enum(["database", "auth", "rest", "gateway", "storage", "realtime", "functions", "studio", "analytics"]);
 const smtpSchema = z.object({
   adminEmail: z.string().email(),
   host: z.string().min(1),
@@ -23,10 +26,10 @@ const manifestSchema = z.object({
   apiVersion: z.literal(FACTORY_API_VERSION),
   project: z.object({
     id: projectIdSchema,
-    environment: z.enum(["development", "staging", "production"]),
+    environment: environmentSchema,
     displayName: z.string().min(1).optional(),
   }).strict(),
-  profile: z.enum(["minimal", "webapp", "realtime", "full", "production-critical"]),
+  profile: profileSchema,
   supabase: z.object({
     release: z.string().regex(/^self-hosted\/v\d+\.\d+\.\d+$/).optional(),
     upstreamCommit: gitShaSchema.optional(),
@@ -74,7 +77,29 @@ const migrationSourceSchema = z.object({
   allowDirtyTrackedFiles: z.boolean().optional(),
 }).strict();
 
+const attachedRuntimeSchema = z.object({
+  projectId: projectIdSchema,
+  publicUrl: z.string().url(),
+  release: z.string().regex(/^self-hosted\/v\d+\.\d+\.\d+$/),
+  upstreamCommit: gitShaSchema,
+  postgresMajor: z.union([z.literal(15), z.literal(17)]),
+  services: z.array(serviceSchema).min(1),
+  allowHttp: z.boolean().optional(),
+}).strict();
+
 const schemas: Partial<Record<FactoryToolName, z.ZodType<Record<string, unknown>>>> = {
+  "factory.repository.bootstrap": z.object({
+    projectId: projectIdSchema,
+    environment: environmentSchema,
+    displayName: z.string().min(1).optional(),
+    profile: profileSchema.optional(),
+  }).strict(),
+  "factory.repository.validate": z.object({ projectJson: z.string().min(2) }).strict(),
+  "factory.repository.plan": z.object({ projectJson: z.string().min(2) }).strict(),
+  "factory.runtime.attach": attachedRuntimeSchema,
+  "factory.runtime.get": z.object({ projectId: projectIdSchema }).strict(),
+  "factory.runtime.list": z.object({}).strict(),
+  "factory.runtime.detach": z.object({ projectId: projectIdSchema }).strict(),
   "factory.project.plan": z.object({ manifest: manifestSchema }).strict(),
   "factory.project.create": z.object({ manifest: manifestSchema, approvedOperationIds: z.array(z.string().min(1)).optional() }).strict(),
   "factory.project.get": z.object({ projectId: projectIdSchema }).strict(),
@@ -169,7 +194,7 @@ function buildServer(api: FactoryAgentApi, principal: FactoryPrincipal): McpServ
   const server = new McpServer(
     { name: "supabase-factory", version: "0.1.0" },
     {
-      instructions: "Operate isolated self-hosted Supabase projects. Read/plan before mutation. Never request or expose secret values. Destructive lifecycle operations remain approval-gated.",
+      instructions: "Coordinate GitHub-authored, isolated self-hosted Supabase projects. Prefer factory.repository.bootstrap/validate/plan for repository workflows. Read/plan before mutation. Never request or expose secret values. Runtime attach/detach changes only Factory's development inventory; deployment infrastructure remains adapter-owned. Destructive lifecycle operations remain approval-gated.",
     },
   );
 
