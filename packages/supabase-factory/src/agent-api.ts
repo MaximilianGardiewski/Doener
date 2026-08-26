@@ -15,6 +15,8 @@ export type FactoryPermission =
 export type FactoryToolName =
   | "factory.repository.bootstrap"
   | "factory.repository.validate"
+  | "factory.repository.status"
+  | "factory.repository.sync"
   | "factory.repository.plan"
   | "factory.runtime.attach"
   | "factory.runtime.get"
@@ -56,6 +58,8 @@ export interface FactoryToolDefinition {
 export const FACTORY_TOOL_DEFINITIONS: readonly FactoryToolDefinition[] = [
   { name: "factory.repository.bootstrap", description: "Generate secret-free .supabase-factory project and lock files for a repository without selecting a deployment target.", permission: "plan", mutating: false, destructive: false },
   { name: "factory.repository.validate", description: "Validate and canonicalize a repository project.json and derive its deterministic deployment-neutral lock.", permission: "plan", mutating: false, destructive: false },
+  { name: "factory.repository.status", description: "Compare project.json and the current lock without returning secret data; report whether GitHub files are canonical and synchronized.", permission: "plan", mutating: false, destructive: false },
+  { name: "factory.repository.sync", description: "Return only the secret-free repository file writes needed to canonicalize project.json and refresh its deterministic lock. Factory does not write GitHub directly.", permission: "plan", mutating: false, destructive: false },
   { name: "factory.repository.plan", description: "Validate repository project.json and return the Factory provisioning plan plus deterministic lock without applying changes.", permission: "plan", mutating: false, destructive: false },
   { name: "factory.runtime.attach", description: "Attach a secret-free descriptor for an already-running self-hosted Supabase development runtime. The runtime itself is not mutated.", permission: "provision", mutating: true, destructive: false },
   { name: "factory.runtime.get", description: "Read one attached self-hosted development runtime descriptor without exposing credentials.", permission: "read", mutating: false, destructive: false },
