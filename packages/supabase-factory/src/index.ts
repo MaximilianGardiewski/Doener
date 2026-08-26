@@ -22,3 +22,4 @@ export * from "./s3-storage-backup.ts";
 export * from "./walg-pitr.ts";
 export * from "./health.ts";
 export * from "./upgrade.ts";
+export * from "./pg-upgrade.ts";
