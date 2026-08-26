@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "name": "Supabase Factory",
+  "slug": "supabase-factory",
+  "version": "0.1.0",
+  "kind": "source-bundle",
+  "description": "Reusable ChatGPT/Codex workflow for repository-driven self-hosted Supabase provisioning and adoption.",
+  "note": "This is a repository source descriptor, not an OpenAI platform manifest. Final plugin/app publication is performed in the ChatGPT workspace/Plugin Directory UI.",
+  "skill": "skills/supabase-factory/SKILL.md",
+  "app": {
+    "implementation": "../../packages/supabase-factory",
+    "transport": "MCP Streamable HTTP",
+    "endpoint": "/mcp",
+    "auth": "FactoryMcpAuthenticator"
+  },
+  "dependencies": {
+    "requiredApps": ["GitHub", "Supabase Factory"],
+    "optionalApps": ["Supabase"]
+  },
+  "repositoryContract": {
+    "manifest": ".supabase-factory/project.json",
+    "lock": ".supabase-factory/lock.json",
+    "migrations": "supabase/migrations/"
+  },
+  "security": {
+    "repositoryContainsSecrets": false,
+    "supabaseCloudManagementTokenRequiredByFactory": false,
+    "destructiveOperationsRequireExplicitApproval": true
+  }
+}
