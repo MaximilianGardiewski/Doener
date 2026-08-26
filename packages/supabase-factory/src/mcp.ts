@@ -92,6 +92,28 @@ const repositoryStateSchema = z.object({
   lockJson: z.string().min(2).optional(),
 }).strict();
 
+const adoptionAvailabilitySchema = z.enum(["available", "unavailable", "unknown"]);
+const adoptionSourceSchema = z.object({
+  provider: z.enum(["supabase-cloud", "self-hosted"]),
+  projectRef: z.string().min(1).optional(),
+  displayName: z.string().min(1).optional(),
+  region: z.string().min(1).optional(),
+  status: z.string().min(1).optional(),
+  postgresMajor: z.union([z.literal(15), z.literal(17)]),
+  databaseExport: adoptionAvailabilitySchema,
+  authExport: adoptionAvailabilitySchema,
+  storageExport: adoptionAvailabilitySchema,
+  edgeFunctionsExport: adoptionAvailabilitySchema,
+  edgeFunctionSlugs: z.array(z.string().min(1)).optional(),
+}).strict();
+const adoptionTargetSchema = z.object({
+  projectId: projectIdSchema,
+  environment: environmentSchema,
+  profile: profileSchema,
+  displayName: z.string().min(1).optional(),
+}).strict();
+const adoptionSchema = z.object({ source: adoptionSourceSchema, target: adoptionTargetSchema }).strict();
+
 const schemas: Partial<Record<FactoryToolName, z.ZodType<Record<string, unknown>>>> = {
   "factory.repository.bootstrap": z.object({
     projectId: projectIdSchema,
@@ -103,6 +125,8 @@ const schemas: Partial<Record<FactoryToolName, z.ZodType<Record<string, unknown>
   "factory.repository.status": repositoryStateSchema,
   "factory.repository.sync": repositoryStateSchema,
   "factory.repository.plan": z.object({ projectJson: z.string().min(2) }).strict(),
+  "factory.adopt.plan": adoptionSchema,
+  "factory.adopt.prepare": adoptionSchema,
   "factory.runtime.attach": attachedRuntimeSchema,
   "factory.runtime.get": z.object({ projectId: projectIdSchema }).strict(),
   "factory.runtime.list": z.object({}).strict(),
@@ -201,7 +225,7 @@ function buildServer(api: FactoryAgentApi, principal: FactoryPrincipal): McpServ
   const server = new McpServer(
     { name: "supabase-factory", version: "0.1.0" },
     {
-      instructions: "Coordinate GitHub-authored, isolated self-hosted Supabase projects. Prefer factory.repository.bootstrap for new repos, then repository.status/sync/plan for existing repos. GitHub writes are performed by the GitHub connector, never by Factory. Read/plan before mutation. Never request or expose secret values. Runtime attach/detach changes only Factory's development inventory; deployment infrastructure remains adapter-owned. Destructive lifecycle operations remain approval-gated.",
+      instructions: "Coordinate GitHub-authored, isolated self-hosted Supabase projects. Prefer factory.repository.bootstrap for new repos, repository.status/sync/plan for existing repos, and factory.adopt.plan/prepare for existing Supabase migrations. GitHub writes are performed by the GitHub connector, never by Factory. Read/plan before mutation. Never request or expose secret values. Runtime attach/detach changes only Factory's development inventory; deployment infrastructure remains adapter-owned. Destructive lifecycle operations remain approval-gated.",
     },
   );
 
