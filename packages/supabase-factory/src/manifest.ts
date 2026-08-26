@@ -3,6 +3,7 @@ import {
   SUPABASE_BASELINE,
   type ProjectProfileName,
   type ResolvedFactoryManifest,
+  type SmtpSpec,
   type SupabaseFactoryManifest,
   type SupabaseService,
 } from "./types.ts";
@@ -40,6 +41,7 @@ const PROFILES: Record<ProjectProfileName, ProfileDefaults> = {
 const PROJECT_ID = /^[a-z][a-z0-9-]{1,62}[a-z0-9]$/;
 const SELF_HOST_RELEASE = /^self-hosted\/v\d+\.\d+\.\d+$/;
 const COMMIT_SHA = /^[0-9a-f]{40}$/;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function withFeatureOverrides(
   profileServices: readonly SupabaseService[],
@@ -90,6 +92,57 @@ function resolveVersion(input: SupabaseFactoryManifest): ResolvedFactoryManifest
   return { release, upstreamCommit, postgresMajor, gateway: "envoy" };
 }
 
+function validateSmtp(smtp: SmtpSpec, production: boolean): void {
+  if (!smtp.host.trim() || /\s/.test(smtp.host)) throw new Error("auth.email.smtp.host must be a non-empty hostname without whitespace");
+  if (!Number.isInteger(smtp.port) || smtp.port < 1 || smtp.port > 65535) throw new Error("auth.email.smtp.port must be an integer between 1 and 65535");
+  if (!smtp.senderName.trim()) throw new Error("auth.email.smtp.senderName is required");
+  if (!smtp.adminEmail.trim()) throw new Error("auth.email.smtp.adminEmail is required");
+  if (production && !EMAIL.test(smtp.adminEmail)) throw new Error("production auth.email.smtp.adminEmail must be a valid email address");
+}
+
+function resolveAuth(
+  input: SupabaseFactoryManifest,
+  services: readonly SupabaseService[],
+  production: boolean,
+): ResolvedFactoryManifest["auth"] {
+  const emailEnabled = input.auth?.email?.enabled ?? false;
+  const phoneEnabled = input.auth?.phone?.enabled ?? false;
+  const anonymousUsers = input.auth?.anonymousUsers ?? false;
+  const signupEnabled = input.auth?.signupEnabled ?? (emailEnabled || phoneEnabled || anonymousUsers);
+  const jwtExpirySeconds = input.auth?.jwtExpirySeconds ?? 3600;
+  const smtp = input.auth?.email?.smtp;
+
+  if (!Number.isInteger(jwtExpirySeconds) || jwtExpirySeconds < 300 || jwtExpirySeconds > 604800) {
+    throw new Error("auth.jwtExpirySeconds must be an integer between 300 and 604800 seconds");
+  }
+  if ((emailEnabled || phoneEnabled || anonymousUsers) && !services.includes("auth")) {
+    throw new Error("Auth signup methods cannot be enabled when the Auth service is disabled");
+  }
+  if (!emailEnabled && smtp) throw new Error("auth.email.smtp cannot be configured while email Auth is disabled");
+  if (smtp) validateSmtp(smtp, production);
+  if (production && emailEnabled && !smtp) {
+    throw new Error("production email Auth requires explicit production SMTP configuration");
+  }
+  if (production && phoneEnabled) {
+    throw new Error("production phone Auth is not enabled until an explicit SMS provider binding is configured");
+  }
+
+  return {
+    signupEnabled,
+    anonymousUsers,
+    jwtExpirySeconds,
+    email: {
+      enabled: emailEnabled,
+      autoConfirm: input.auth?.email?.autoConfirm ?? false,
+      ...(smtp ? { smtp: { ...smtp } } : {}),
+    },
+    phone: {
+      enabled: phoneEnabled,
+      autoConfirm: input.auth?.phone?.autoConfirm ?? false,
+    },
+  };
+}
+
 export function resolveManifest(input: SupabaseFactoryManifest): ResolvedFactoryManifest {
   if (input.apiVersion !== FACTORY_API_VERSION) {
     throw new Error(`Unsupported apiVersion: ${input.apiVersion}`);
@@ -134,6 +187,7 @@ export function resolveManifest(input: SupabaseFactoryManifest): ResolvedFactory
       bucketPrefix: input.storage?.bucketPrefix ?? id,
       region: input.storage?.region ?? "eu-central-1",
     },
+    auth: resolveAuth(input, services, production),
     backup: {
       logical: input.backup?.logical ?? profile.backup.logical,
       pitr: input.backup?.pitr ?? profile.backup.pitr,
