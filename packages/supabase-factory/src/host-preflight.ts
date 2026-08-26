@@ -8,6 +8,7 @@ export type HostCapability =
   | "docker-compose"
   | "supabase-cli"
   | "caddy"
+  | "cloudflared"
   | "aws-cli"
   | "rclone"
   | "wal-g"
@@ -32,6 +33,7 @@ export interface HostPreflightReport {
 
 export interface HostPreflightRequirements {
   caddy?: boolean;
+  cloudflared?: boolean;
   awsCli?: boolean;
   rclone?: boolean;
   walG?: boolean;
@@ -81,6 +83,7 @@ export class FactoryHostPreflight {
   async run(requirements: HostPreflightRequirements = {}): Promise<HostPreflightReport> {
     const required = {
       caddy: requirements.caddy ?? true,
+      cloudflared: requirements.cloudflared ?? false,
       awsCli: requirements.awsCli ?? true,
       rclone: requirements.rclone ?? true,
       walG: requirements.walG ?? false,
@@ -116,6 +119,7 @@ export class FactoryHostPreflight {
     checks.push(supabase);
 
     checks.push(await commandCheck(this.host, "caddy", required.caddy, "caddy", ["version"]));
+    checks.push(await commandCheck(this.host, "cloudflared", required.cloudflared, "cloudflared", ["--version"]));
     checks.push(await commandCheck(this.host, "aws-cli", required.awsCli, "aws", ["--version"]));
     checks.push(await commandCheck(this.host, "rclone", required.rclone, "rclone", ["version"]));
     checks.push(await commandCheck(this.host, "wal-g", required.walG, "wal-g", ["--version"]));
