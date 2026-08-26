@@ -56,14 +56,11 @@ jobs:
             packages/supabase-factory/src/repository-contract.ts
           )
 
-          # Current-phase composition may depend on portable Factory interfaces,
-          # but never directly on deployment/host adapters.
           if grep -nE '^import .*"\./(docker|host|host-preflight|placement|json-placement-store|edge|cloudflare|quick|single-host|mcp-node)' "${files[@]}"; then
             echo 'Portable development code imported a deployment-specific Factory adapter.' >&2
             exit 1
           fi
 
-          # No filesystem/process/socket binding belongs in the portable current-phase layer.
           if grep -nE '^import .*"node:(fs|path|child_process|http|https|net|tls|os)' "${files[@]}"; then
             echo 'Portable development code imported an OS/filesystem/server-specific Node module.' >&2
             exit 1
@@ -74,7 +71,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Cloud project binding/login is never allowed in Factory source.
           if grep -R --line-number --exclude='*.test.ts' --exclude='README.md' \
             -E 'supabase[[:space:]]+login|supabase[[:space:]]+link|sbp_' \
             packages/supabase-factory/src; then
@@ -82,9 +78,6 @@ jobs:
             exit 1
           fi
 
-          # The Cloud access-token variable name may exist in exactly one source
-          # file: the central deny policy that removes it before self-hosted DB
-          # operator commands. Any second occurrence is a review-stopping failure.
           token_hits="$(grep -R --line-number --exclude='*.test.ts' --exclude='README.md' \
             'SUPABASE_ACCESS_TOKEN' packages/supabase-factory/src || true)"
           if [[ -n "$token_hits" ]]; then
@@ -196,16 +189,26 @@ jobs:
       - name: Diagnostics on failure
         if: failure()
         shell: bash
-        working-directory: /tmp/supabase-factory-upstream/docker
         run: |
-          docker compose ps || true
-          docker compose logs --no-color --tail=200 db auth rest meta studio api-gw || true
+          if [ -f "$UPSTREAM_DIR/docker/docker-compose.yml" ]; then
+            docker compose \
+              -f "$UPSTREAM_DIR/docker/docker-compose.yml" \
+              --project-directory "$UPSTREAM_DIR/docker" \
+              ps || true
+            docker compose \
+              -f "$UPSTREAM_DIR/docker/docker-compose.yml" \
+              --project-directory "$UPSTREAM_DIR/docker" \
+              logs --no-color --tail=200 db auth rest meta studio api-gw || true
+          fi
 
       - name: Destroy disposable runtime
         if: always()
         shell: bash
         run: |
-          if [ -d "$UPSTREAM_DIR/docker" ]; then
-            docker compose --project-directory "$UPSTREAM_DIR/docker" down -v --remove-orphans || true
+          if [ -f "$UPSTREAM_DIR/docker/docker-compose.yml" ]; then
+            docker compose \
+              -f "$UPSTREAM_DIR/docker/docker-compose.yml" \
+              --project-directory "$UPSTREAM_DIR/docker" \
+              down -v --remove-orphans || true
           fi
-          rm -rf "$UPSTREAM_DIR"
+          sudo rm -rf "$UPSTREAM_DIR"
