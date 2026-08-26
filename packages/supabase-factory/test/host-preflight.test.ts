@@ -21,6 +21,7 @@ class FakeHost implements FactoryHostExecutor {
     if (file === "docker" && args[0] === "compose") return { stdout: `${this.composeVersion}\n`, stderr: "" };
     if (file === "supabase") return { stdout: `${this.supabaseVersion}\n`, stderr: "" };
     if (file === "caddy") return { stdout: "v2.10.2 h1:abc\n", stderr: "" };
+    if (file === "cloudflared") return { stdout: "cloudflared version 2026.8.1 (built 2026-08-12)\n", stderr: "" };
     if (file === "aws") return { stdout: "aws-cli/2.28.14 Python/3.13.7 Linux/6.8\n", stderr: "" };
     if (file === "rclone") return { stdout: "rclone v1.71.0\n", stderr: "" };
     if (file === "wal-g") return { stdout: "wal-g version v3.0.7\n", stderr: "" };
@@ -38,10 +39,11 @@ class FakeHost implements FactoryHostExecutor {
 
 test("production host preflight reports ready when pinned/core capabilities are present", async () => {
   const host = new FakeHost();
-  const report = await new FactoryHostPreflight(host).run({ walG: true });
+  const report = await new FactoryHostPreflight(host).run({ walG: true, cloudflared: true });
   assert.equal(report.ready, true);
   assert.deepEqual(report.missingRequired, []);
   assert.equal(report.checks.find((check) => check.capability === "supabase-cli")?.version, "2.115.0");
+  assert.equal(report.checks.find((check) => check.capability === "cloudflared")?.ok, true);
   assert.equal(report.checks.find((check) => check.capability === "ram-staging")?.ok, true);
 });
 
@@ -54,6 +56,18 @@ test("host preflight fails closed on Supabase CLI version drift and old Compose"
   assert.ok(report.missingRequired.includes("supabase-cli"));
   assert.ok(report.missingRequired.includes("docker-compose"));
   assert.match(report.checks.find((check) => check.capability === "supabase-cli")?.detail ?? "", /pinned 2\.115\.0/);
+});
+
+test("Cloudflare Tunnel absence blocks tunnel profile but not Caddy-only fallback", async () => {
+  const host = new FakeHost();
+  host.failures.add("cloudflared");
+
+  const caddyOnly = await new FactoryHostPreflight(host).run({ cloudflared: false });
+  assert.equal(caddyOnly.missingRequired.includes("cloudflared"), false);
+
+  const tunnel = await new FactoryHostPreflight(host).run({ cloudflared: true });
+  assert.equal(tunnel.ready, false);
+  assert.ok(tunnel.missingRequired.includes("cloudflared"));
 });
 
 test("optional WAL-G absence does not block non-PITR host but blocks PITR host", async () => {
