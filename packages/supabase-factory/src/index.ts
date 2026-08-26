@@ -23,3 +23,4 @@ export * from "./walg-pitr.ts";
 export * from "./health.ts";
 export * from "./upgrade.ts";
 export * from "./pg-upgrade.ts";
+export * from "./agent-api.ts";
