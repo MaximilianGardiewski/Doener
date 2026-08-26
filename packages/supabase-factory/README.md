@@ -22,23 +22,52 @@ ChatGPT <-> authenticated Factory MCP
         self-hosted Supabase runtime
 ```
 
-The important rule is that the Factory core does not care where that self-hosted runtime physically executes.
+The Factory core does not care where that self-hosted runtime physically executes. During development it may be local, supplied by a test harness or created ephemerally in GitHub CI. Later it can move behind any deployment adapter **without changing ChatGPT prompts, MCP tools, repository manifests or the control-plane model**.
 
-During development it may be supplied locally, by a test harness or ephemerally in GitHub CI. Later it can move to a VPS, dedicated server, home server, container platform or another destination through an adapter **without changing ChatGPT prompts, MCP tools, manifests or the control-plane model**.
+A self-hosted Supabase process obviously needs compute while it runs; choosing and operating permanent compute is simply **not an architecture decision in the current phase**.
 
-A self-hosted Supabase process obviously needs compute somewhere when it runs; choosing and operating that compute is simply **not an architecture decision in the current phase**.
+See:
 
-See [`docs/DEVELOPMENT_MODEL.md`](docs/DEVELOPMENT_MODEL.md).
+- [`docs/DEVELOPMENT_MODEL.md`](docs/DEVELOPMENT_MODEL.md)
+- [`docs/GITHUB_CHATGPT_WORKFLOW.md`](docs/GITHUB_CHATGPT_WORKFLOW.md)
 
 ## What we use now
 
 - **GitHub** — source of truth, PRs, CI and reproducible project history
-- **ChatGPT** — intended human-facing orchestration surface
+- **ChatGPT** — human-facing orchestration surface
 - **Factory MCP** — authenticated agent/tool boundary
 - **Supabase Factory core** — manifests, planning, lifecycle contracts, authorization, audit and state
 - **Supabase Self-Hosted** — application backend/runtime target
 
-No permanent Linux host, system service, DNS provider, reverse proxy or tunnel is required by the current core-development contract.
+No permanent Linux host, system service, DNS provider, reverse proxy or tunnel is required by the current development contract.
+
+## GitHub-first repository contract
+
+Each application repository can carry two **secret-free** Factory files:
+
+```text
+.supabase-factory/project.json
+.supabase-factory/lock.json
+```
+
+`project.json` is the desired state edited by the user/ChatGPT. `lock.json` is the deterministic Factory-generated handoff containing the resolved Supabase release, exact upstream commit, PostgreSQL version, service set and policy defaults.
+
+The lock explicitly records:
+
+```text
+containsSecretValues: false
+deploymentTargetSelected: false
+```
+
+The repository parser rejects secret-like fields and Supabase Cloud management material so GitHub never becomes the secret store. Secrets remain behind the `SecretStore` interface.
+
+Application schema remains normal repository code under:
+
+```text
+supabase/migrations/
+```
+
+This deliberately separates runtime/lifecycle policy from application database schema.
 
 ## Core independence goal
 
@@ -82,13 +111,14 @@ lifecycle service interfaces
 FactoryAgentApi
 authorization + audit
 MCP schemas + handler
+repository contract
 ```
 
 No OS, Docker, SSH, DNS, Cloudflare, Caddy or server filesystem is required here.
 
 ### Layer B — current development integration
 
-`createDevelopmentFactory()` is now the default composition for this phase.
+`createDevelopmentFactory()` is the default composition for this phase.
 
 Its defaults are deliberately host-neutral:
 
@@ -129,7 +159,7 @@ The provider can observe and health-check the runtime. It deliberately does **no
 - call Cloudflare
 - select a hosting provider
 
-If runtime drift requires infrastructure mutation, it fails closed. A future deployment adapter will implement that mutation through the same `InfrastructureProvider` interface.
+If runtime drift requires infrastructure mutation, it fails closed. A future deployment adapter implements that mutation through the same `InfrastructureProvider` interface.
 
 ## ChatGPT / MCP contract
 
@@ -248,32 +278,46 @@ Those decisions come later.
 5. Runtime health is verified at the Supabase API boundary.
 6. Infrastructure mutation belongs to `InfrastructureProvider`, not to the core.
 7. Development can attach a self-hosted runtime without choosing its permanent host.
-8. Later deployment adapters may be replaced without redesigning the core.
-9. Unsupported destructive behavior fails closed.
-10. Upstream Supabase releases/commits remain pinned and reviewable.
+8. GitHub stores desired state and migrations, never runtime secrets.
+9. `.supabase-factory/lock.json` is deployment-neutral and reproducible.
+10. Later deployment adapters may be replaced without redesigning the core.
+11. Unsupported destructive behavior fails closed.
+12. Upstream Supabase releases/commits remain pinned and reviewable.
+
+## CI-enforced portability boundary
+
+The dedicated workflow now rejects direct deployment dependencies in the current development modules. `development-factory.ts`, `attached-runtime.ts` and `repository-contract.ts` are prevented from importing Docker/host/Cloudflare/edge/single-host adapters or filesystem/process/socket-oriented Node modules.
+
+This makes the server-agnostic separation a tested code boundary rather than only a documentation rule.
 
 ## Validation
 
-On PR #103 / `feat/supabase-factory-v1`, the dedicated Factory gate currently passes:
+On PR #103 / `feat/supabase-factory-v1`, the dedicated Factory gate passes:
 
 - monorepo TypeScript typecheck
-- **121/121 Factory tests**
+- **126/126 Factory tests**
 - **0 failed**
 - **0 skipped**
+- portable-development dependency guard
 - Supabase Cloud management-dependency guard
 
-The new development tests explicitly verify:
+The tests explicitly verify:
 
 - in-memory SecretStore without OS/filesystem dependency
 - attaching a self-hosted Supabase runtime without Docker/systemd/DNS/Cloudflare assumptions
 - detecting release drift while refusing deployment mutation
-- keeping the reviewed Supabase baseline independent from deployment destination
+- exact reviewed Supabase baseline independent from deployment destination
+- stable `.supabase-factory/project.json` and `lock.json` paths
+- secret-free deterministic lock generation
+- rejection of secret-like repository fields
+- rejection of Supabase Cloud management material in repository manifests
+- manifest hash drift when declarative desired state changes
 
 ## Current roadmap
 
-The next work should stay inside the current toolchain:
+The next work stays inside the current toolchain:
 
-1. strengthen the portable Development Factory contract;
+1. strengthen the GitHub repository contract and ChatGPT project workflow;
 2. make the ChatGPT-facing MCP workflow ergonomic and project-oriented;
 3. add an ephemeral real Supabase Self-Hosted integration smoke in GitHub CI/test infrastructure, without selecting a permanent server;
 4. exercise migrations and project lifecycle against that disposable runtime;
