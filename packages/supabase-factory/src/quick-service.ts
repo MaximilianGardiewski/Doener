@@ -67,8 +67,8 @@ export interface QuickServiceRuntime {
 export async function startQuickService(): Promise<QuickServiceRuntime> {
   const dataDir = envString("FACTORY_DATA_DIR", "/var/lib/supabase-factory");
   const projectRoot = envString("FACTORY_PROJECT_ROOT", "/srv/supabase-factory/projects");
-  const masterKeyFile = envString("FACTORY_MASTER_KEY_FILE");
-  const tokenFile = envString("FACTORY_MCP_TOKEN_FILE");
+  const masterKeyFile = envString("FACTORY_MASTER_KEY_FILE", "/etc/supabase-factory/master-key");
+  const tokenFile = envString("FACTORY_MCP_TOKEN_FILE", "/etc/supabase-factory/mcp-token");
   const hostId = envString("FACTORY_HOST_ID", "local");
   const gatewayPortStart = envInteger("FACTORY_GATEWAY_PORT_START", 18001);
   const gatewayPortEnd = envInteger("FACTORY_GATEWAY_PORT_END", 18100);
