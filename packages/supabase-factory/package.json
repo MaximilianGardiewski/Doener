@@ -9,6 +9,11 @@
   "scripts": {
     "test": "node --experimental-strip-types --test test/*.test.ts"
   },
+  "dependencies": {
+    "@modelcontextprotocol/node": "2.0.0",
+    "@modelcontextprotocol/server": "2.0.0",
+    "zod": "^4.2.0"
+  },
   "engines": {
     "node": ">=22"
   }
