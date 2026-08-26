@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { SUPABASE_CLOUD_MANAGEMENT_ENV_KEYS } from "./cloudless-env.ts";
 import { resolveManifest } from "./manifest.ts";
 import type { ResolvedFactoryManifest, SupabaseFactoryManifest } from "./types.ts";
 
@@ -15,7 +16,14 @@ export interface FactoryRepositoryLock {
 }
 
 const SECRET_LIKE_KEY = /password|passwd|secret|token|private[-_.]?key|access[-_.]?key|service[-_.]?role/i;
-const CLOUD_MANAGEMENT_VALUE = /\bsbp_[A-Za-z0-9_-]+\b|SUPABASE_ACCESS_TOKEN|supabase\s+(?:login|link)/i;
+const CLOUD_MANAGEMENT_PREFIX = ["sbp", "_"].join("");
+const CLOUD_MANAGEMENT_COMMAND = /supabase\s+(?:login|link)/i;
+
+function containsCloudManagementContent(value: string): boolean {
+  return SUPABASE_CLOUD_MANAGEMENT_ENV_KEYS.some((key) => value.includes(key))
+    || value.includes(CLOUD_MANAGEMENT_PREFIX)
+    || CLOUD_MANAGEMENT_COMMAND.test(value);
+}
 
 function walkForForbiddenRepositoryContent(value: unknown, path = "$"): void {
   if (Array.isArray(value)) {
@@ -23,7 +31,7 @@ function walkForForbiddenRepositoryContent(value: unknown, path = "$"): void {
     return;
   }
   if (!value || typeof value !== "object") {
-    if (typeof value === "string" && CLOUD_MANAGEMENT_VALUE.test(value)) {
+    if (typeof value === "string" && containsCloudManagementContent(value)) {
       throw new Error(`repository manifest contains forbidden Cloud-management content at ${path}`);
     }
     return;
