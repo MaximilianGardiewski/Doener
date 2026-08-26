@@ -1,0 +1,16 @@
+project_id = "factory-ci-fixture"
+
+[api]
+enabled = true
+
+[db]
+major_version = 17
+
+[auth]
+enabled = true
+
+[storage]
+enabled = false
+
+[realtime]
+enabled = false
