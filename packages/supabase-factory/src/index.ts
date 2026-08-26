@@ -8,6 +8,7 @@ export * from "./docker-compose.ts";
 export * from "./secrets.ts";
 export * from "./placement.ts";
 export * from "./host.ts";
+export * from "./host-preflight.ts";
 export * from "./env-file.ts";
 export * from "./auth-runtime.ts";
 export * from "./docker-runtime.ts";
