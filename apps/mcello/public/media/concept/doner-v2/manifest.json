@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-13",
+  "purpose": "Concept-only cinematic FoodStage assets; not documentary Mcello product photography.",
+  "source": {
+    "model": "gpt_image_2_5",
+    "variant": "sunburst",
+    "source_canvas": [
+      2048,
+      2048
+    ],
+    "source_format": "RGB PNG",
+    "alpha": false
+  },
+  "normalization": {
+    "canvas": [
+      768,
+      768
+    ],
+    "format": "webp",
+    "quality": 82,
+    "alpha": false,
+    "background": "#000000",
+    "foreground_width_pct": 82.03,
+    "crop_threshold": "max(R,G,B)>10",
+    "padding": {
+      "horizontal_pct": 5.5,
+      "vertical_pct": 10
+    },
+    "resize": "aspect-preserving, centered on black canvas"
+  },
+  "total_binary_bytes": 277816,
+  "assets": [
+    {
+      "file": "upper-pide.webp",
+      "source_job_id": "e145416c-e451-4c3d-91dd-93ed509408d2",
+      "width": 768,
+      "height": 768,
+      "foreground_width_pct": 82.03
+    },
+    {
+      "file": "lower-pide.webp",
+      "source_job_id": "2a252f59-72e5-4749-9a50-2bb53ef482bb",
+      "width": 768,
+      "height": 768,
+      "foreground_width_pct": 82.03
+    },
+    {
+      "file": "veal-doner.webp",
+      "source_job_id": "1578b688-71ca-4e60-adb3-b97a305aa5c7",
+      "width": 768,
+      "height": 768,
+      "foreground_width_pct": 82.03
+    },
+    {
+      "file": "tomato.webp",
+      "source_job_id": "c32c9bf0-6dbe-454c-b45f-27511b92185e",
+      "width": 768,
+      "height": 768,
+      "foreground_width_pct": 82.03
+    },
+    {
+      "file": "cucumber.webp",
+      "source_job_id": "d6d4fc31-68ee-4af4-a482-bcbabffbf98a",
+      "width": 768,
+      "height": 768,
+      "foreground_width_pct": 82.03
+    },
+    {
+      "file": "red-onion.webp",
+      "source_job_id": "b23f5419-a200-4802-a62b-a90e11af275d",
+      "width": 768,
+      "height": 768,
+      "foreground_width_pct": 82.03
+    },
+    {
+      "file": "iceberg-lettuce.webp",
+      "source_job_id": "fc69c411-a1cc-4779-b58d-0b552cacffc4",
+      "width": 768,
+      "height": 768,
+      "foreground_width_pct": 82.03
+    },
+    {
+      "file": "garlic-sauce.webp",
+      "source_job_id": "4b9c7ef5-7f47-45e0-bab0-12a7824f3bcd",
+      "width": 768,
+      "height": 768,
+      "foreground_width_pct": 82.03
+    },
+    {
+      "file": "spicy-sauce.webp",
+      "source_job_id": "5e9dc598-63a5-4189-95b3-a6d49ac6daa1",
+      "width": 768,
+      "height": 768,
+      "foreground_width_pct": 82.03
+    }
+  ]
+}

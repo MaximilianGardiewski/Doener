@@ -78,7 +78,7 @@ Generated sequentially on 2026-11-13 with GPT Image 2.5 Sunburst. Each request u
 1. Normalize the nine foreground bounds and per-layer scale while preserving the original 2048×2048 canvases.
 2. Prototype the stack on a pure-black FoodStage; the existing near-black edge pixels can composite directly without a cutout pass.
 3. Only create alpha cutouts if a non-black stage is approved; protect dark bread/meat edges during background removal.
-4. Resume modular short-video tests after the Higgsfield rate limit clears. Do not repeat a single 30-second generation.
+4. Keep the completed Seedance 2.0 clip as Sequence A. Generate separate short tests for Assembly, Hero Shot and Reverse Assembly; do not repeat a single 30-second generation.
 5. Integrate the accepted visual layer into the active FoodStage path without moving price, modifier, order or KDS authority.
 
 
@@ -101,7 +101,9 @@ Neither attempt is still processing. No video URL exists for either job. Do not 
 - `seedance_2_5` is available and advertises `supports_unlim: true`. It supports `omni_reference`, 4–30 seconds, 480p/720p/1080p/4k, and standard/high bitrate.
 - `seedance_2_0` (regular model, not only Mini) is also available and advertises `supports_unlim: true`. It supports 4–15 seconds, 480p/720p/1080p/4k, `std`/`fast` mode, and standard/high bitrate.
 - Higgsfield returned an unmetered Seedance 2.0 unlimited allowance valid through `2026-11-16T06:11:44Z`.
-- A 5-second, 9:16, 720p Seedance 2.0 reference probe with all nine images and `use_unlim: true` was attempted. The backend returned `429 rate_limit_reached` before returning a job ID; no generation result exists.
+- Short Sequence A test completed as job `1a847724-0970-45e5-a272-8d25fca8afd6`: Seedance 2.0, 5 seconds, 9:16, 720p, `std`, high bitrate, silent, all nine V2 references, `use_unlim: true`.
+- Result: [Open MP4](https://d8j0ntlcm91z4.cloudfront.net/user_3JRwc3yt99NOndRPayVoeVEs4kF/hf_20261113_090952_1a847724-0970-45e5-a272-8d25fca8afd6.mp4). Verified media: H.264, 720×1280, 24 fps, 121 frames, 5.042 seconds, 3,041,995 bytes.
+- Visual inspection classifies this as a usable first Exploded View test: the nine food layers remain separated in a vertical stack with subtle movement and a stable low side-profile. It does not perform the assembly transition and is not an Assembly/Reverse clip.
 
 ### Repository integration baseline
 
@@ -132,3 +134,28 @@ All nine V2 jobs resolve to completed PNGs with direct result URLs. The files we
 - References: all nine V2 image job IDs; the API confirmed all nine were mapped to `image_references`.
 - Shot scope: Sequence A only — fixed-camera, separated vertical ingredient stack; no assembly in this short test.
 - Last live status check: `in_progress` on 2026-11-13. No final result URL is available yet. Do not resubmit while this job remains active.
+
+
+### Optimized WebP derivatives — 2026-11-13
+
+Nine normalized concept assets are stored in `apps/mcello/public/media/concept/doner-v2/` for the black FoodStage prototype.
+
+- Output: 768×768 WebP, quality 82, RGB, no alpha channel.
+- Foreground width: 82.03% of each canvas; each ingredient is centered on the same black canvas.
+- Processing: foreground bounding box from max(R,G,B)>10, 5.5% horizontal and 10% vertical padding, aspect-preserving resize, black canvas.
+- Total binary size: 277,816 bytes across nine files.
+- The original 2048×2048 PNGs remain in Higgsfield and are the source masters.
+- These are AI-generated concept assets, not owner-confirmed photographs or production food-media truth. They must not be used as documentary product photos.
+- Because the output is opaque, render it only on the matching black stage unless a separately validated background-removal pass is approved.
+
+See `apps/mcello/public/media/concept/doner-v2/manifest.json` for per-asset source job IDs and processing metadata.
+
+
+### Seedance 2.0 — short Sequence A result
+
+- Job ID: `1a847724-0970-45e5-a272-8d25fca8afd6`
+- Status: `completed`
+- Model: `seedance_2_0`; 5 seconds; 9:16; 720p; `std`; high bitrate; silent; nine image references; Unlimited requested.
+- Output: H.264, 720×1280, 24 fps, 121 frames, 5.042 seconds, 3,041,995 bytes.
+- [Open generated MP4](https://d8j0ntlcm91z4.cloudfront.net/user_3JRwc3yt99NOndRPayVoeVEs4kF/hf_20261113_090952_1a847724-0970-45e5-a272-8d25fca8afd6.mp4).
+- Visual verdict: useful as the first Exploded View test. The components remain visibly separated in a vertical stack, with subtle movement and a stable low side-profile. The clip does not assemble the layers; separate Assembly, Hero and Reverse clips remain outstanding.
