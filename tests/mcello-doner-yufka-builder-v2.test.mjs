@@ -11,19 +11,19 @@ const presentation = JSON.parse(await readFile(new URL("data/mcello/builder-pres
 
 const ids = ["warm-013","warm-014","warm-015","warm-016","warm-017","warm-018"];
 const groupByName = new Map(presentation.donerYufka.groups.map((group) => [group.name, group]));
+const imageLayers = ["upper-pide","lower-pide","veal","tomato","cucumber","red-onion","iceberg-lettuce","garlic-sauce","spicy-sauce"];
 
-test("Döner/Yufka presentation remains scoped by exact local fixture product links", () => {
+test("Pide FoodStage is scoped to Fladenbrot variants, not Yufka", () => {
   const seeded = new Map(seed.items.map((item) => [item[0], item]));
   assert.deepEqual(presentation.donerYufka.productSourceIds, ids);
   for (const id of ids) assert.ok(seeded.has(id));
+  assert.match(js, /new Set\(\["warm-013", "warm-014", "warm-015"\]\)/);
+  assert.doesNotMatch(js, /warm-016|warm-017|warm-018/);
   assert.match(js, /presentationGroupMap/);
   assert.match(js, /dataset\.productBuilder = "doner-yufka"/);
-  assert.match(js, /Basis/);
-  assert.match(js, /Gemüse/);
-  assert.match(js, /Soße/);
 });
 
-test("local presentation adds basis and fresh assumptions without mutating provisional production seed", () => {
+test("local presentation groups remain assumptions and do not mutate the provisional menu seed", () => {
   const selected = seed.items.filter((item) => ids.includes(item[0]));
   assert.ok(selected.every((item) => Array.isArray(item[5]) && item[5].length === 0));
   assert.deepEqual(groupByName.get("Basis").options.map((option) => option.name), ["Fleisch", "Falafel"]);
@@ -32,31 +32,32 @@ test("local presentation adds basis and fresh assumptions without mutating provi
   assert.match(presentation.notes.join("\n"), /presentation assumptions/i);
 });
 
-test("FoodStage mirrors actual checked modifier inputs and never owns commerce state", () => {
+test("FoodStage mirrors checked modifier inputs and never owns commerce state", () => {
   assert.match(js, /querySelector\("input"\)/);
   assert.match(js, /input\?\.checked/);
   assert.match(js, /data-food-layer/);
   assert.match(js, /dataset\.assemblyVisualLayers/);
-  assert.match(js, /Stilisierte Präsentationsillustration/);
+  assert.match(js, /KI-Konzeptvisualisierung/);
   assert.doesNotMatch(js, /\.checked\s*=|localStorage|sessionStorage|fetch\s*\(|cart\s*=|configuredPrice|configurationValid/);
 });
 
-test("cartoon assembly has distinct ingredient layers and purposeful lightweight motion", () => {
-  for (const ingredient of ["Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"]) {
-    assert.match(js, new RegExp(`data-food-layer=\\"${ingredient}\\"`));
+test("cinematic layer stack uses all nine local WebP assets and reduced-motion support", () => {
+  for (const layer of imageLayers) assert.match(js, new RegExp('data-food-layer="' + layer + '"'));
+  assert.match(css, /mix-blend-mode:\s*screen/);
+  assert.match(css, /data-builder-orientation="portrait"/);
+  assert.match(css, /visibility:\s*visible\s*!important/);
+  assert.match(css, /pointer-events:\s*auto\s*!important/);
+  assert.match(css, /prefers-reduced-motion:\s*reduce/);
+  assert.match(sw, /mcello-public-shell-v36/);
+  for (const file of ["upper-pide.webp","lower-pide.webp","veal-doner.webp","tomato.webp","cucumber.webp","red-onion.webp","iceberg-lettuce.webp","garlic-sauce.webp","spicy-sauce.webp"]) {
+    assert.ok(sw.includes("/media/concept/doner-v2/" + file));
   }
-  assert.match(css, /mc-food-stage-v4/);
-  assert.match(css, /transform/);
-  assert.match(css, /opacity/);
-  assert.match(css, /prefers-reduced-motion: reduce/);
-  assert.match(css, /Stilisierte|illustration/i);
-  assert.doesNotMatch(js + css, /https:\/\//i);
-  assert.doesNotMatch(js + css, /firefly|photoshop-api|short-url/i);
+  assert.doesNotMatch(js + css, /Stilisierte Präsentationsillustration|https:\/\//i);
 });
 
-test("Döner/Yufka presentation code remains in refreshed offline shell while business data stays network-only", () => {
-  assert.match(sw, /mcello-public-shell-v\d+/);
+test("the existing adapter remains the single active FoodStage implementation", () => {
   assert.match(sw, /doner-yufka-builder-v2\.js/);
   assert.match(sw, /doner-yufka-builder-v2\.css/);
+  assert.doesNotMatch(sw, /doner-yufka-cinematic-stage/);
   assert.match(sw, /url\.pathname\.startsWith\("\/api\/"\)/);
 });
