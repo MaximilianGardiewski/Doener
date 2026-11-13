@@ -202,6 +202,7 @@ See `apps/mcello/public/media/concept/doner-v2/manifest.json` for per-asset sour
 - Desktop browser smoke test (1440×900): one stage root; 9/9 images loaded; 9 active layers; 7/7 ingredient callouts visible; controls in the adjacent column; toggle changed exploded → assembled; no JavaScript errors.
 - Mobile touch/portrait smoke test (390×844): modal visible; orientation gate hidden; stage 388×354 px; controls 388×438 px below it; 9/9 images loaded; 7/7 ingredient callouts visible; exploded is the default view; toggle changed to assembled; no JavaScript errors.
 - Test fixture note: the Vercel preview's `/api/menu` endpoint returned HTTP 404. For the browser smoke test only, modifier groups were injected as a fixture. This verifies layout, image loading and toggle behavior, but does not verify the live menu/API data path.
+- Interaction smoke test: unchecking Tomato deactivates its image and callout and removes it from the live summary; assembled mode hides the callouts; Yufka product `warm-016` opens without creating a Pide FoodStage. The mobile assembled state matches the second reference screenshot.
 - Full Node test suite: 382/382 passed. Price calculation, modifier validation and KDS logic were not changed.
 - Preview: https://doener-git-assets-mcello-food-v1-maximiliangardiewskis-projects.vercel.app
 
