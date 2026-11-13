@@ -65,7 +65,7 @@ Generated sequentially on 2026-11-13 with GPT Image 2.5 Sunburst. Each request u
 - Resolution: 720p
 - Bitrate: High
 - Job ID: `c4ead4ea-24fc-40a2-935e-ef7269cac80f`
-- Status at manifest update: in progress
+- Final status on 2026-11-13 live recheck: `nsfw` (moderation rejection); no video result was produced.
 - The prompt references all nine V2 image jobs and requests a locked 12-degree side-profile camera, black background, a separated Z-axis exploded stack, then sequential assembly from lower pide through sauces, meat, vegetables, onion and upper crust.
 
 ## Production follow-up
@@ -75,3 +75,38 @@ Generated sequentially on 2026-11-13 with GPT Image 2.5 Sunburst. Each request u
 3. Normalize canvas bounds, ingredient scale and layer alignment. The current opaque black outputs are not alpha cutouts.
 4. Only after visual approval, prepare production-ready cutouts and integrate them into the configurator.
 5. Keep pricing and modifier logic in the menu engine; these files are presentation assets only.
+
+
+## Live verification update — 2026-11-13
+
+### Video job status
+
+Both Seedance 2.5 jobs were queried directly through Higgsfield `jobs_wait` and are terminal:
+
+| Attempt | Job ID | Verified status | Output |
+|---|---|---|---|
+| 1 | `c4ead4ea-24fc-40a2-935e-ef7269cac80f` | `nsfw` | None |
+| 2 | `37ffcf3c-7f9d-4126-94b9-0384f97f62c0` | `nsfw` | None |
+
+Neither attempt is still processing. No video URL exists for either job. Do not treat either job as a usable animation source.
+
+### Current model catalog check
+
+- `gpt_image_2_5` is available; variant `sunburst`, quality `medium`, resolution `2k`, and background `opaque` are valid catalog values. The model advertises `supports_unlim: true`.
+- `seedance_2_5` is available and advertises `supports_unlim: true`. It supports `omni_reference`, 4–30 seconds, 480p/720p/1080p/4k, and standard/high bitrate.
+- `seedance_2_0` (regular model, not only Mini) is also available and advertises `supports_unlim: true`. It supports 4–15 seconds, 480p/720p/1080p/4k, `std`/`fast` mode, and standard/high bitrate.
+- Unlimited capability is confirmed by the model catalog. No new generation was submitted during this verification.
+
+### Repository integration baseline
+
+- Main Mcello app entry: `apps/mcello/public/index.html`.
+- Device preview: `apps/mcello/public/configurator-preview.html` and `configurator-preview.js`.
+- Existing döner/yufka presentation adapter: `apps/mcello/public/doner-yufka-builder-v2.js` with `doner-yufka-builder-v2.css`.
+- The current adapter is a stylized inline SVG FoodStage with CSS layer transitions. It maps visible modifier metadata to presentation layers and does not own price/order logic.
+- The inspected page import chain is `index.html → public-content.js → builder-core-v2.js`; `public-content.js` imports the generic builder core, while the inspected generic builder core imports the pizza adapter. The döner/yufka adapter is not imported by this visible entry chain, so its activation must be verified/fixed before replacing its visuals.
+- Mcello's runtime is plain HTML/JavaScript, with `gsap@3.15.0` as an app dependency and a separate motion system. The inspected Mcello app is not a React TSX shell.
+- The existing `packages/menu-engine` package remains the domain boundary. Keep visual assets and animations outside price, modifier validity, order payload and KDS authority.
+
+### Asset inspection limitation
+
+All nine V2 job records resolve to completed 2048×2048 PNG outputs with direct result URLs. The generation gallery was opened for the nine exact job IDs. Automated pixel inspection/download was not available in this execution environment, so exact RGB background uniformity, silhouette bounds, scale matching and alpha content remain unverified. The opaque/no-remove-bg parameters are verified; no claim of transparent cutouts or final visual approval is made.
