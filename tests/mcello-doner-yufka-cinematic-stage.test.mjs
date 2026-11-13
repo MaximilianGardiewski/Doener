@@ -42,6 +42,8 @@ test("all nine concept layers are local, normalized and referenced by the servic
 test("Döner/Yufka remains usable in portrait and honors reduced motion", () => {
   assert.match(css, /data-builder-orientation="portrait"/);
   assert.match(css, /builder-orientation-gate/);
+  assert.match(css, /visibility:\s*visible\s*!important/);
+  assert.match(css, /pointer-events:\s*auto\s*!important/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
   assert.match(css, /mix-blend-mode:\s*screen/);
 });

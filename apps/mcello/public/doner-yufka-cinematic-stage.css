@@ -92,6 +92,8 @@
 }
 #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"][data-builder-orientation="portrait"] .modal[data-builder-version="core-v2"] {
   display: grid !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
   grid-template-columns: 1fr;
   grid-template-rows: minmax(260px, 42svh) minmax(0, 1fr);
 }
