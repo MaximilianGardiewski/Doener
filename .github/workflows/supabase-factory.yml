@@ -1,0 +1,315 @@
+name: Supabase Factory
+
+on:
+  pull_request:
+    paths:
+      - "packages/supabase-factory/**"
+      - ".supabase-factory/**"
+      - "supabase/**"
+      - ".github/workflows/supabase-factory.yml"
+      - "tsconfig.json"
+      - "package.json"
+  push:
+    branches:
+      - main
+    paths:
+      - "packages/supabase-factory/**"
+      - ".supabase-factory/**"
+      - "supabase/**"
+      - ".github/workflows/supabase-factory.yml"
+      - "tsconfig.json"
+      - "package.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-factory-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install workspace dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Typecheck monorepo
+        run: npm run typecheck
+
+      - name: Test Supabase Factory
+        run: npm --workspace @business-web/supabase-factory test
+
+      - name: Verify adopted repository contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types --input-type=module - <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import {
+            parseFactoryRepositoryManifest,
+            renderFactoryRepositoryLock,
+            renderFactoryRepositoryManifest,
+          } from './packages/supabase-factory/src/index.ts';
+          const projectSource = await readFile('.supabase-factory/project.json', 'utf8');
+          const lockSource = await readFile('.supabase-factory/lock.json', 'utf8');
+          const manifest = parseFactoryRepositoryManifest(projectSource);
+          if (projectSource !== renderFactoryRepositoryManifest(manifest)) throw new Error('project.json is not canonical');
+          if (lockSource !== renderFactoryRepositoryLock(manifest)) throw new Error('lock.json is stale or non-canonical');
+          NODE
+
+      - name: Guard portable development boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            packages/supabase-factory/src/development-factory.ts
+            packages/supabase-factory/src/development-tools.ts
+            packages/supabase-factory/src/adoption.ts
+            packages/supabase-factory/src/attached-runtime.ts
+            packages/supabase-factory/src/repository-contract.ts
+          )
+
+          if grep -nE '^import .*"\./(docker|host|host-preflight|placement|json-placement-store|edge|cloudflare|quick|single-host|mcp-node)' "${files[@]}"; then
+            echo 'Portable development code imported a deployment-specific Factory adapter.' >&2
+            exit 1
+          fi
+
+          if grep -nE '^import .*"node:(fs|path|child_process|http|https|net|tls|os)' "${files[@]}"; then
+            echo 'Portable development code imported an OS/filesystem/server-specific Node module.' >&2
+            exit 1
+          fi
+
+      - name: Guard against Supabase Cloud management dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if grep -R --line-number --exclude='*.test.ts' --exclude='README.md' \
+            -E 'supabase[[:space:]]+login|supabase[[:space:]]+link|sbp_' \
+            packages/supabase-factory/src; then
+            echo 'Supabase Factory core must not depend on Supabase Cloud project binding.' >&2
+            exit 1
+          fi
+
+          token_hits="$(grep -R --line-number --exclude='*.test.ts' --exclude='README.md' \
+            'SUPABASE_ACCESS_TOKEN' packages/supabase-factory/src || true)"
+          if [[ -n "$token_hits" ]]; then
+            unexpected="$(printf '%s\n' "$token_hits" | \
+              grep -v 'packages/supabase-factory/src/cloudless-env.ts:' || true)"
+            if [[ -n "$unexpected" ]]; then
+              printf '%s\n' "$unexpected"
+              echo 'SUPABASE_ACCESS_TOKEN may only exist in cloudless-env.ts deny policy.' >&2
+              exit 1
+            fi
+          fi
+
+          grep -q 'SUPABASE_CLOUD_MANAGEMENT_ENV_KEYS.flatMap' packages/supabase-factory/src/cloudless-env.ts
+          grep -q '\["-u", key\]' packages/supabase-factory/src/cloudless-env.ts
+
+  disposable-self-host:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      UPSTREAM_DIR: /tmp/supabase-factory-upstream
+      FACTORY_CI_OVERRIDE: /tmp/supabase-factory-upstream/docker/factory-ci.override.yml
+      FACTORY_MIGRATION_FIXTURE: /tmp/supabase-factory-migration-fixture
+    steps:
+      - name: Checkout Factory source
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install workspace dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Resolve reviewed Supabase baseline
+        id: baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          commit="$(node --experimental-strip-types --input-type=module - <<'NODE'
+          import { SUPABASE_BASELINE } from './packages/supabase-factory/src/index.ts';
+          process.stdout.write(SUPABASE_BASELINE.upstreamCommit);
+          NODE
+          )"
+          test "${#commit}" -eq 40
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch exact official Self-Hosted source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$UPSTREAM_DIR"
+          git init -q "$UPSTREAM_DIR"
+          git -C "$UPSTREAM_DIR" remote add origin https://github.com/supabase/supabase.git
+          git -C "$UPSTREAM_DIR" fetch -q --depth=1 origin "${{ steps.baseline.outputs.commit }}"
+          git -C "$UPSTREAM_DIR" checkout -q --detach FETCH_HEAD
+          actual="$(git -C "$UPSTREAM_DIR" rev-parse HEAD)"
+          test "$actual" = "${{ steps.baseline.outputs.commit }}"
+
+      - name: Configure disposable loopback-only Self-Hosted runtime
+        shell: bash
+        working-directory: /tmp/supabase-factory-upstream/docker
+        run: |
+          set -euo pipefail
+          cp .env.example .env
+          sh utils/generate-keys.sh --update-env >/dev/null
+
+          sed -i \
+            -e 's|^API_GW_HTTP_PORT=.*$|API_GW_HTTP_PORT=127.0.0.1:54321|' \
+            -e 's|^SUPABASE_PUBLIC_URL=.*$|SUPABASE_PUBLIC_URL=http://127.0.0.1:54321|' \
+            -e 's|^API_EXTERNAL_URL=.*$|API_EXTERNAL_URL=http://127.0.0.1:54321/auth/v1|' \
+            -e 's|^SITE_URL=.*$|SITE_URL=http://127.0.0.1:54321|' \
+            -e 's|^DISABLE_SIGNUP=.*$|DISABLE_SIGNUP=true|' \
+            -e 's|^ENABLE_EMAIL_SIGNUP=.*$|ENABLE_EMAIL_SIGNUP=false|' \
+            -e 's|^ENABLE_PHONE_SIGNUP=.*$|ENABLE_PHONE_SIGNUP=false|' \
+            .env
+
+          cat > factory-ci.override.yml <<'YAML'
+          services:
+            db:
+              ports:
+                - "127.0.0.1:54322:5432"
+          YAML
+
+          grep -q '^API_GW_HTTP_PORT=127.0.0.1:54321$' .env
+          grep -q '^DISABLE_SIGNUP=true$' .env
+
+      - name: Start disposable official Supabase services
+        shell: bash
+        working-directory: /tmp/supabase-factory-upstream/docker
+        run: |
+          set -euo pipefail
+          docker compose \
+            -f docker-compose.yml \
+            -f factory-ci.override.yml \
+            up -d --wait db auth rest meta studio api-gw
+
+      - name: Run Factory against real Self-Hosted runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          env_file="$UPSTREAM_DIR/docker/.env"
+          anon_key="$(grep '^ANON_KEY=' "$env_file" | head -n1 | cut -d= -f2-)"
+          service_key="$(grep '^SERVICE_ROLE_KEY=' "$env_file" | head -n1 | cut -d= -f2-)"
+          postgres_password="$(grep '^POSTGRES_PASSWORD=' "$env_file" | head -n1 | cut -d= -f2-)"
+          test -n "$anon_key"
+          test -n "$service_key"
+          test -n "$postgres_password"
+          echo "::add-mask::$anon_key"
+          echo "::add-mask::$service_key"
+          echo "::add-mask::$postgres_password"
+
+          FACTORY_SMOKE_URL=http://127.0.0.1:54321 \
+          FACTORY_SMOKE_PUBLISHABLE_KEY="$anon_key" \
+          FACTORY_SMOKE_SECRET_KEY="$service_key" \
+          FACTORY_SMOKE_POSTGRES_PASSWORD="$postgres_password" \
+          node --experimental-strip-types packages/supabase-factory/integration/self-host-smoke.ts
+
+      - name: Dry-run and apply isolated repository migration with pinned CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$FACTORY_MIGRATION_FIXTURE"
+          mkdir -p "$FACTORY_MIGRATION_FIXTURE"
+          cp -R packages/supabase-factory/integration/fixture-app/supabase "$FACTORY_MIGRATION_FIXTURE/supabase"
+          cd "$FACTORY_MIGRATION_FIXTURE"
+
+          test "$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | wc -l)" -eq 1
+          test -f supabase/migrations/20260826133000_factory_ci_marker.sql
+
+          env_file="$UPSTREAM_DIR/docker/.env"
+          postgres_password="$(grep '^POSTGRES_PASSWORD=' "$env_file" | head -n1 | cut -d= -f2-)"
+          db_url="$(POSTGRES_PASSWORD="$postgres_password" node - <<'NODE'
+          const url = new URL('postgresql://postgres@127.0.0.1:54322/postgres');
+          url.password = process.env.POSTGRES_PASSWORD;
+          process.stdout.write(url.toString());
+          NODE
+          )"
+          echo "::add-mask::$postgres_password"
+          echo "::add-mask::$db_url"
+          unset SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_ID SUPABASE_PROJECT_REF || true
+
+          redact_log() {
+            local file="$1"
+            if [ -f "$file" ]; then sed "s|$postgres_password|[REDACTED]|g" "$file"; fi
+          }
+          run_cli() {
+            local log="$1"
+            shift
+            if ! npx --yes supabase@2.115.0 "$@" >"$log" 2>&1; then
+              redact_log "$log"
+              return 1
+            fi
+          }
+
+          cli_version="$(npx --yes supabase@2.115.0 --version)"
+          test "$cli_version" = "2.115.0"
+
+          run_cli /tmp/factory-migration-dry-run.log db push --db-url "$db_url" --dry-run
+          grep -q '20260826133000_factory_ci_marker.sql' /tmp/factory-migration-dry-run.log
+          if grep -q 'platform_core_part1' /tmp/factory-migration-dry-run.log; then
+            echo 'Fixture isolation failed: application migrations leaked into Factory smoke.' >&2
+            exit 1
+          fi
+
+          run_cli /tmp/factory-migration-apply.log db push --db-url "$db_url"
+          run_cli /tmp/factory-migration-list.log migration list --db-url "$db_url"
+          if ! grep -q '20260826133000' /tmp/factory-migration-list.log; then
+            redact_log /tmp/factory-migration-list.log
+            echo 'Expected migration version was not recorded.' >&2
+            exit 1
+          fi
+
+          marker="$(docker exec supabase-db psql -U postgres -d postgres -Atc \
+            "select coalesce(to_regclass('public.factory_ci_marker')::text, '');")"
+          test "$marker" = "factory_ci_marker"
+
+          rm -f /tmp/factory-migration-dry-run.log /tmp/factory-migration-apply.log /tmp/factory-migration-list.log
+
+      - name: Diagnostics on failure
+        if: failure()
+        shell: bash
+        run: |
+          env_file="$UPSTREAM_DIR/docker/.env"
+          postgres_password=""
+          if [ -f "$env_file" ]; then postgres_password="$(grep '^POSTGRES_PASSWORD=' "$env_file" | head -n1 | cut -d= -f2- || true)"; fi
+          for log in /tmp/factory-migration-dry-run.log /tmp/factory-migration-apply.log /tmp/factory-migration-list.log; do
+            if [ -f "$log" ]; then
+              echo "--- $(basename "$log") ---"
+              if [ -n "$postgres_password" ]; then sed "s|$postgres_password|[REDACTED]|g" "$log"; else cat "$log"; fi
+            fi
+          done
+          if [ -f "$UPSTREAM_DIR/docker/docker-compose.yml" ]; then
+            args=(-f "$UPSTREAM_DIR/docker/docker-compose.yml")
+            if [ -f "$FACTORY_CI_OVERRIDE" ]; then args+=(-f "$FACTORY_CI_OVERRIDE"); fi
+            docker compose "${args[@]}" --project-directory "$UPSTREAM_DIR/docker" ps || true
+            docker compose "${args[@]}" --project-directory "$UPSTREAM_DIR/docker" \
+              logs --no-color --tail=100 db auth rest meta studio api-gw || true
+          fi
+
+      - name: Destroy disposable runtime
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "$UPSTREAM_DIR/docker/docker-compose.yml" ]; then
+            args=(-f "$UPSTREAM_DIR/docker/docker-compose.yml")
+            if [ -f "$FACTORY_CI_OVERRIDE" ]; then args+=(-f "$FACTORY_CI_OVERRIDE"); fi
+            docker compose "${args[@]}" --project-directory "$UPSTREAM_DIR/docker" \
+              down -v --remove-orphans || true
+          fi
+          sudo rm -rf "$UPSTREAM_DIR" "$FACTORY_MIGRATION_FIXTURE"
+          rm -f /tmp/factory-migration-dry-run.log /tmp/factory-migration-apply.log /tmp/factory-migration-list.log
