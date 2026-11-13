@@ -26,7 +26,8 @@ Every item maps back to the binding Decision Ledger. Detailed evidence and expli
 - [ ] Interactive `FoodStage` reflects relevant structured choices while price/availability remain domain/server authoritative (`D065`)
 - [ ] Builder is complete with Tap-only interaction; drag-and-drop is never required (`D065`)
 - [ ] Mcello Originals support `Genau so` and prefilled `Anpassen` from the actual standard recipe (`D066`)
-- [ ] Builder presentation layers use one coherent warm editorial cartoon-food language and remain explicitly illustrative rather than documentary Mcello media (`D071`)
+- [ ] Governed atomic Ingredient and assembled-Döner layers use the scoped warm photorealistic language while remaining explicitly generated, provisional and non-documentary; `D075` supersedes only the cartoon rendering clause of `D071` for these layers (`D068`, `D071`, `D075`)
+- [ ] Assembled Döner stage stacks exactly one governed layer master per ingredient role on one shared camera/lighting contract, with a separate flatbread base and lid, while Yufka keeps its vector vessel and requests no ingredient master (`D076`)
 
 ## Ordering
 - [x] Own independent first-party ordering core; no third-party marketplace required (`D002`)

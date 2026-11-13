@@ -92,6 +92,19 @@ html[data-mcello-hero-engine="gsap"] .hero-media-v2 .hero-photo {
   --motion-food-scale: .992;
 }
 
+.motion-ingredient-instance-change[data-motion-ingredient-batch] {
+  animation: mcello-ingredient-instance-add 340ms cubic-bezier(.22,.85,.28,1.18) both;
+}
+
+.motion-ingredient-instance-change[data-motion-ingredient-batch][data-motion-selection="removed"] {
+  animation: mcello-ingredient-instance-remove 200ms cubic-bezier(.4,0,1,1) both;
+}
+
+[data-motion-ingredient-engine="gsap"].mc-ingredient-instance__media {
+  animation: none;
+  transition: none;
+}
+
 .sticky-order.motion-cart-confirm {
   animation: mcello-cart-confirm var(--motion-food,320ms) var(--motion-ease-out) both;
 }
@@ -122,6 +135,16 @@ html[data-mcello-hero-engine="gsap"] .hero-media-v2 .hero-photo {
   0% { transform: scale(1); }
   45% { transform: scale(var(--motion-choice-scale,1.018)); }
   100% { transform: scale(1); }
+}
+
+@keyframes mcello-ingredient-instance-add {
+  from { opacity: 0; transform: translate3d(0,-24px,0) scale(.72) rotate(-5deg); }
+  to { opacity: 1; transform: translate3d(0,0,0) scale(1) rotate(0); }
+}
+
+@keyframes mcello-ingredient-instance-remove {
+  from { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+  to { opacity: 0; transform: translate3d(0,10px,0) scale(.82); }
 }
 
 @keyframes mcello-food-stage-change {
@@ -168,6 +191,7 @@ html[data-mcello-hero-engine="gsap"] .hero-media-v2 .hero-photo {
   .motion-product-activate,
   .motion-product-open,
   .motion-ingredient-change,
+  .motion-ingredient-instance-change,
   .motion-food-stage-change,
   .sticky-order.motion-cart-confirm {
     opacity: 1 !important;

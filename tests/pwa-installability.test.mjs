@@ -60,3 +60,20 @@ test("offline shell never intercepts mutations or backend data routes", () => {
   assert.equal(sw.includes('"/kds.html"'), false, "staff/KDS surfaces must not be part of the public offline shell");
   assert.equal(sw.includes('"/status.html"'), false, "customer status shell must not be pre-cached");
 });
+
+test("governed ingredient media is cached on demand instead of bloating PWA install", () => {
+  const shellStart = sw.indexOf("const APP_SHELL");
+  const shellEnd = sw.indexOf("];", shellStart);
+  const appShell = sw.slice(shellStart, shellEnd + 2);
+
+  assert.doesNotMatch(appShell, /\/media\/ingredients\//, "large ingredient masters must not be fetched by cache.addAll during install");
+  assert.match(sw, /INGREDIENT_MEDIA_CACHE/);
+  assert.match(sw, /url\.pathname\.startsWith\("\/media\/ingredients\/"\)/);
+  assert.match(sw, /const networkResponse = fetch\(request\)/);
+  assert.match(sw, /const cacheableResponse = response\.clone\(\)/);
+  assert.match(sw, /event\.waitUntil\(cacheWrite\.catch\(\(\) => undefined\)\)/,
+    "cache quota/write failures must not replace a successful network response");
+  assert.match(sw, /event\.respondWith\(networkResponse\.catch/,
+    "only a network failure may activate the offline ingredient fallback");
+  assert.match(sw, /caches\.match\(request\)/, "a previously viewed ingredient remains available offline");
+});

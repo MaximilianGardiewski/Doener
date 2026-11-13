@@ -1,3 +1,13 @@
+import {
+  STACK_EXPLODE_GAP,
+  STACK_PAINT_ORDER,
+  TOMATO_VISUAL,
+  atomicVisualForOption,
+  stackExplodeOffset,
+  stackExplodeSpan,
+} from "./ingredient-visuals.js";
+import { reconcileAtomicIngredients } from "./atomic-ingredient-renderer.js";
+
 const stylesheet = document.createElement("link");
 stylesheet.rel = "stylesheet";
 stylesheet.href = "/doner-yufka-builder-v2.css";
@@ -30,6 +40,8 @@ const GROUP_ROLES = new Map([
   ["sosse", "sauce"],
   ["saucen", "sauce"],
   ["soßen", "sauce"],
+  ["extra", "extras"],
+  ["extras", "extras"],
 ]);
 
 // Ingredient token -> visual layer. Tokens come from the real option names, not from product identity.
@@ -51,7 +63,7 @@ const LAYER_TOKENS = new Map([
   ["scharf", "Scharf"],
 ]);
 
-const visualLayerNames = ["Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"];
+const visualLayerNames = ["Fladenbrot", "Deckel", "Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"];
 const ROLE_LAYERS = new Map([
   ["basis", ["Fleisch", "Falafel"]],
   ["fresh", ["Salat", "Tomate", "Gurke", "Zwiebel"]],
@@ -60,7 +72,7 @@ const ROLE_LAYERS = new Map([
 
 // Categories whose products are presented by a different stage metaphor (top-down).
 const FOREIGN_STAGE_CATEGORIES = new Set(["pizza"]);
-
+const BUILDER_PRODUCT_FORMS = new Set(["flatbread-pocket", "yufka-wrap"]);
 let stageRoot = null;
 
 function normalize(value) {
@@ -78,7 +90,13 @@ function groupName(group) {
 }
 
 function layerFor(label) {
-  return LAYER_TOKENS.get(normalize(optionName(label))) || null;
+  const name = optionName(label);
+  return LAYER_TOKENS.get(normalize(name)) || atomicVisualForOption(name)?.layerName || null;
+}
+
+function builderProductForm() {
+  const form = normalize(modal?.dataset.builderProductForm);
+  return BUILDER_PRODUCT_FORMS.has(form) ? form : "";
 }
 
 /*
@@ -121,67 +139,229 @@ function selectedNames(groupMap) {
   return selected;
 }
 
+function acceptedOptionLabels(groupMap) {
+  return [...new Set([...groupMap.values()]
+    .flatMap((group) => [...group.querySelectorAll(".modifier-option")]))];
+}
+
+/* Plate the technical HUD is drawn on, in the stage's own viewBox coordinates. */
+const HUD_PLATE = { x: 148, y: 146, width: 464, height: 480, radius: 22 };
+
+/*
+ * Blueprint HUD, drawn FIRST inside the stage SVG so every layer master paints
+ * over it. That ordering is the whole trick: each master is a transparent PNG,
+ * so the beams stay visible exactly in the negative space between and around
+ * the layers and read as passing through the stack, with no clip path or mask.
+ *
+ * Decorative only -- aria-hidden here, pointer-events:none in CSS -- so it can
+ * never absorb a tap meant for a modifier option. Every colour comes from the
+ * existing D001/D029 amber tokens; the HUD introduces no new palette.
+ */
+function hudGroundMarkup() {
+  const { x, y, width, height, radius } = HUD_PLATE;
+  const gridStep = 26;
+  const verticals = [];
+  for (let line = x + gridStep; line < x + width; line += gridStep) {
+    verticals.push(`<line x1="${line}" y1="${y}" x2="${line}" y2="${y + height}"/>`);
+  }
+  const horizontals = [];
+  for (let line = y + gridStep; line < y + height; line += gridStep) {
+    horizontals.push(`<line x1="${x}" y1="${line}" x2="${x + width}" y2="${line}"/>`);
+  }
+  // Ticks sit on the paint-order ranks, so the scale measures the real stack.
+  const ticks = STACK_PAINT_ORDER.map((_, index) => {
+    const tickY = y + 40 + (index * ((height - 80) / (STACK_PAINT_ORDER.length - 1)));
+    const long = index === 0 || index === STACK_PAINT_ORDER.length - 1;
+    return `<line x1="${x + 18}" y1="${tickY.toFixed(1)}" x2="${x + (long ? 34 : 27)}" y2="${tickY.toFixed(1)}"/>`;
+  }).join("");
+
+  return `
+      <g class="mc-stage-hud mc-stage-hud--ground" aria-hidden="true">
+        <clipPath id="mcHudPlate"><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${radius}"/></clipPath>
+        <rect class="mc-stage-hud__plate" x="${x}" y="${y}" width="${width}" height="${height}" rx="${radius}"/>
+        <g class="mc-stage-hud__grid" clip-path="url(#mcHudPlate)">${verticals.join("")}${horizontals.join("")}</g>
+        <g class="mc-stage-hud__beams">
+          <line x1="336" y1="${y - 12}" x2="336" y2="${y + height + 12}"/>
+          <line x1="380" y1="${y - 20}" x2="380" y2="${y + height + 20}"/>
+          <line x1="424" y1="${y - 12}" x2="424" y2="${y + height + 12}"/>
+        </g>
+        <g class="mc-stage-hud__scale">
+          <line x1="${x + 18}" y1="${y + 34}" x2="${x + 18}" y2="${y + height - 34}"/>
+          ${ticks}
+        </g>
+      </g>`;
+}
+
+/* Registration brackets, painted last so they always sit above every layer. */
+function hudBracketsMarkup() {
+  const { x, y, width, height } = HUD_PLATE;
+  const arm = 22;
+  const right = x + width;
+  const bottom = y + height;
+  const corners = [
+    `M${x} ${y + arm}V${y}h${arm}`,
+    `M${right - arm} ${y}h${arm}v${arm}`,
+    `M${right} ${bottom - arm}V${bottom}h-${arm}`,
+    `M${x + arm} ${bottom}H${x}v-${arm}`,
+  ];
+  return `
+      <g class="mc-stage-hud mc-stage-hud--brackets" aria-hidden="true">
+        ${corners.map((path) => `<path d="${path}"/>`).join("")}
+      </g>`;
+}
+
 function stageMarkup() {
   return `
     <div class="mc-food-stage-v4__halo" aria-hidden="true"></div>
+    <div class="mc-food-stage-v4__frame">
     <svg class="mc-food-stage-v4__art" viewBox="140 140 480 470" aria-hidden="true">
       <defs>
         <linearGradient id="mcBread" x1="0" y1="0" x2=".2" y2="1"><stop offset="0" stop-color="#f6d9a4"/><stop offset=".54" stop-color="#dea461"/><stop offset="1" stop-color="#b06f36"/></linearGradient>
         <linearGradient id="mcBreadBack" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c185"/><stop offset="1" stop-color="#c08b4b"/></linearGradient>
-        <linearGradient id="mcBreadInner" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d442c"/><stop offset="1" stop-color="#3a2820"/></linearGradient>
         <linearGradient id="mcMeat" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b4633c"/><stop offset=".5" stop-color="#87432c"/><stop offset="1" stop-color="#5a2d21"/></linearGradient>
         <filter id="mcStageShadow"><feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#3a2418" flood-opacity=".26"/></filter>
-        <clipPath id="mcPocketClip"><path d="M204 452V318c0-72 79-122 176-122s176 50 176 122v134Z"/></clipPath>
       </defs>
+${hudGroundMarkup()}
 
       <ellipse cx="380" cy="562" rx="196" ry="24" fill="#2a1c14" opacity=".18"/>
 
-      <!-- Back half of the flatbread: the filling is tucked in front of it. -->
-      <g class="mc-food-vessel mc-food-vessel--back">
+      <!-- Vector vessel back half. Yufka and untyped products keep it; the governed flatbread form hides it. -->
+      <g class="mc-food-vessel mc-food-vessel--back" data-flatbread-vector-fallback>
         <path d="M204 452V318c0-72 79-122 176-122s176 50 176 122v134Z" fill="url(#mcBreadBack)" stroke="#9c5f2d" stroke-width="5" stroke-linejoin="round"/>
         <path d="M240 320c8-48 68-80 140-80s132 32 140 80" fill="none" stroke="#f7e2b8" stroke-width="7" stroke-linecap="round" opacity=".4"/>
       </g>
 
-      <!-- Filling: every layer maps to one real, checked modifier option. -->
-      <g clip-path="url(#mcPocketClip)" transform="translate(0 4)">
-        <path d="M150 268h460v230H150Z" fill="url(#mcBreadInner)" opacity=".82"/>
+      <!--
+        D076 stacked layer stage. Paint order is the build order, bottom to top: bread base, sauces,
+        vegetables, protein, salad. There is no clip mask and no opaque inner-bread block; a layer is
+        visible because it was selected, not because a mask happens to reveal it. Every group is one
+        real, checked modifier option, or -- for the bread -- structured product-form metadata.
+      -->
+      <g class="mc-food-layer mc-food-layer--flatbread" data-food-layer="Fladenbrot" data-atomic-ingredient-host="ingredient.flatbread.base"></g>
 
-        <g class="mc-food-layer mc-food-layer--salat" data-food-layer="Salat"><path d="M156 356c30-34 60-32 87-3 22-44 54-50 84-14 25-44 58-47 88-9 30-43 63-41 91 1 26-29 39-26 52 4v122H156Z" fill="#7fb04d" stroke="#4f7a34" stroke-width="5"/><path d="M206 372c48 14 90 32 125 56m48-52c-24 26-40 51-47 78m123-75c-24 19-41 44-51 73" fill="none" stroke="#b0d270" stroke-width="7" stroke-linecap="round" opacity=".7"/></g>
+      <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--curry" data-food-layer="Curry" data-atomic-ingredient-host="ingredient.sauce.curry.layer"><path d="M172 322c66-46 136-49 206-11 58 32 109 29 158-9" fill="none" stroke="#efbd43" stroke-width="19" stroke-linecap="round"/><path d="M192 352c60-33 119-33 177-4 50 24 96 21 136-5" fill="none" stroke="#f6d56d" stroke-width="9" stroke-linecap="round"/></g>
 
-        <g class="mc-food-layer mc-food-layer--protein mc-food-layer--fleisch" data-food-layer="Fleisch">
+      <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--knoblauch" data-food-layer="Knoblauch" data-atomic-ingredient-host="ingredient.sauce.garlic.layer"><path d="M168 362c63-40 129-42 196-7 63 32 118 28 168-9" fill="none" stroke="#f6efd8" stroke-width="19" stroke-linecap="round"/><path d="M190 392c54-30 112-31 172-2 52 25 97 20 138-5" fill="none" stroke="#fff9e8" stroke-width="9" stroke-linecap="round"/></g>
+
+      <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--scharf" data-food-layer="Scharf" data-atomic-ingredient-host="ingredient.sauce.hot.layer"><path d="M174 402c62-38 129-39 196-4 59 30 113 25 162-10" fill="none" stroke="#d64736" stroke-width="19" stroke-linecap="round"/><path d="M200 430c53-27 108-27 164-1 48 22 90 18 128-5" fill="none" stroke="#ed7051" stroke-width="9" stroke-linecap="round"/></g>
+
+      <g class="mc-food-layer mc-food-layer--tomate" data-food-layer="Tomate" data-atomic-ingredient-host="ingredient.tomato.layer"></g>
+      <g class="mc-food-layer mc-food-layer--tomate-extra" data-atomic-ingredient-host="ingredient.tomato.layer.extra"></g>
+
+      <g class="mc-food-layer mc-food-layer--gurke" data-food-layer="Gurke" data-atomic-ingredient-host="ingredient.cucumber.layer"><g fill="#a7ce65" stroke="#477739" stroke-width="5"><ellipse cx="212" cy="418" rx="48" ry="23" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="49" ry="23" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="48" ry="23" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="44" ry="22" transform="rotate(-10 536 404)"/></g><g fill="#d7eca0" opacity=".9"><ellipse cx="212" cy="418" rx="29" ry="11" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="29" ry="11" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="29" ry="11" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="26" ry="10" transform="rotate(-10 536 404)"/></g></g>
+
+      <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel" data-atomic-ingredient-host="ingredient.onion.layer"><g fill="none" stroke="#dcb0d6" stroke-width="8" stroke-linecap="round" opacity=".92"><path d="M232 330c26-24 56-21 74 6 12 20 4 39-17 48-22 10-45 2-53-16-7-17 3-34 22-40"/><path d="M356 310c25-22 55-17 70 11 11 22 0 40-23 47-23 6-44-4-49-23-5-18 6-33 27-37"/><path d="M470 340c23-20 49-16 62 9 9 19 0 35-21 42-21 7-40-2-46-19-5-17 5-31 24-36"/></g></g>
+
+      <g class="mc-food-layer mc-food-layer--protein mc-food-layer--fleisch" data-food-layer="Fleisch" data-atomic-ingredient-host="ingredient.meat.doner.layer">
           <path d="M186 262c40-30 76-24 104 8l-26 68-86-16Z" fill="url(#mcMeat)" stroke="#5c2f22" stroke-width="4"/><path d="M284 238c42-21 81-9 107 28l-30 68-91-23Z" fill="#9b5033" stroke="#5c2f22" stroke-width="4"/><path d="M388 259c36-21 72-9 105 34l-37 59-85-25Z" fill="#823c29" stroke="#5c2f22" stroke-width="4"/><path d="M498 250c36-18 70-4 96 36l-38 56-83-26Z" fill="#a15b38" stroke="#5c2f22" stroke-width="4"/><path d="M240 332c41-17 79-5 111 37l-40 56-92-29Z" fill="#ab5c38" stroke="#5c2f22" stroke-width="4"/><path d="M352 331c42-18 86-5 125 38l-44 57-103-33Z" fill="#8b452e" stroke="#5c2f22" stroke-width="4"/>
           <path d="M206 282l50 18m52-39l55 21m44 5l53 22m-200 52l55 21m56-19l60 21" stroke="#dd8b5b" stroke-width="7" stroke-linecap="round" opacity=".6"/>
         </g>
 
-        <g class="mc-food-layer mc-food-layer--protein mc-food-layer--falafel" data-food-layer="Falafel">
+      <g class="mc-food-layer mc-food-layer--protein mc-food-layer--falafel" data-food-layer="Falafel" data-atomic-ingredient-host="ingredient.falafel.layer">
           <circle cx="236" cy="306" r="45" fill="#a97838" stroke="#69502e" stroke-width="5"/><circle cx="338" cy="278" r="47" fill="#b78742" stroke="#69502e" stroke-width="5"/><circle cx="444" cy="292" r="44" fill="#9b7139" stroke="#69502e" stroke-width="5"/><circle cx="536" cy="318" r="42" fill="#a8793d" stroke="#69502e" stroke-width="5"/><circle cx="290" cy="382" r="44" fill="#ae8141" stroke="#69502e" stroke-width="5"/><circle cx="398" cy="388" r="45" fill="#a5763b" stroke="#69502e" stroke-width="5"/>
           <g fill="#d5b56a" opacity=".7"><circle cx="223" cy="294" r="5"/><circle cx="248" cy="318" r="4"/><circle cx="326" cy="264" r="5"/><circle cx="352" cy="294" r="4"/><circle cx="431" cy="280" r="5"/><circle cx="297" cy="370" r="5"/><circle cx="387" cy="374" r="5"/></g>
         </g>
 
-        <g class="mc-food-layer mc-food-layer--tomate" data-food-layer="Tomate"><g fill="#e9583f" stroke="#a9342d" stroke-width="4"><ellipse cx="222" cy="368" rx="60" ry="26" transform="rotate(-12 222 368)"/><ellipse cx="356" cy="352" rx="64" ry="27" transform="rotate(7 356 352)"/><ellipse cx="486" cy="374" rx="60" ry="26" transform="rotate(-8 486 374)"/></g><g fill="#ffc9a4" opacity=".7"><ellipse cx="222" cy="368" rx="30" ry="8" transform="rotate(-12 222 368)"/><ellipse cx="356" cy="352" rx="32" ry="8" transform="rotate(7 356 352)"/><ellipse cx="486" cy="374" rx="30" ry="8" transform="rotate(-8 486 374)"/></g></g>
+      <g class="mc-food-layer mc-food-layer--salat" data-food-layer="Salat" data-atomic-ingredient-host="ingredient.lettuce.layer"><path d="M156 356c30-34 60-32 87-3 22-44 54-50 84-14 25-44 58-47 88-9 30-43 63-41 91 1 26-29 39-26 52 4v122H156Z" fill="#7fb04d" stroke="#4f7a34" stroke-width="5"/><path d="M206 372c48 14 90 32 125 56m48-52c-24 26-40 51-47 78m123-75c-24 19-41 44-51 73" fill="none" stroke="#b0d270" stroke-width="7" stroke-linecap="round" opacity=".7"/></g>
 
-        <g class="mc-food-layer mc-food-layer--gurke" data-food-layer="Gurke"><g fill="#a7ce65" stroke="#477739" stroke-width="5"><ellipse cx="212" cy="418" rx="48" ry="23" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="49" ry="23" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="48" ry="23" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="44" ry="22" transform="rotate(-10 536 404)"/></g><g fill="#d7eca0" opacity=".9"><ellipse cx="212" cy="418" rx="29" ry="11" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="29" ry="11" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="29" ry="11" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="26" ry="10" transform="rotate(-10 536 404)"/></g></g>
-
-        <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel"><g fill="none" stroke="#dcb0d6" stroke-width="8" stroke-linecap="round" opacity=".92"><path d="M232 330c26-24 56-21 74 6 12 20 4 39-17 48-22 10-45 2-53-16-7-17 3-34 22-40"/><path d="M356 310c25-22 55-17 70 11 11 22 0 40-23 47-23 6-44-4-49-23-5-18 6-33 27-37"/><path d="M470 340c23-20 49-16 62 9 9 19 0 35-21 42-21 7-40-2-46-19-5-17 5-31 24-36"/></g></g>
-
-        <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--curry" data-food-layer="Curry"><path d="M172 322c66-46 136-49 206-11 58 32 109 29 158-9" fill="none" stroke="#efbd43" stroke-width="19" stroke-linecap="round"/><path d="M192 352c60-33 119-33 177-4 50 24 96 21 136-5" fill="none" stroke="#f6d56d" stroke-width="9" stroke-linecap="round"/></g>
-        <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--knoblauch" data-food-layer="Knoblauch"><path d="M168 362c63-40 129-42 196-7 63 32 118 28 168-9" fill="none" stroke="#f6efd8" stroke-width="19" stroke-linecap="round"/><path d="M190 392c54-30 112-31 172-2 52 25 97 20 138-5" fill="none" stroke="#fff9e8" stroke-width="9" stroke-linecap="round"/></g>
-        <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--scharf" data-food-layer="Scharf"><path d="M174 402c62-38 129-39 196-4 59 30 113 25 162-10" fill="none" stroke="#d64736" stroke-width="19" stroke-linecap="round"/><path d="M200 430c53-27 108-27 164-1 48 22 90 18 128-5" fill="none" stroke="#ed7051" stroke-width="9" stroke-linecap="round"/></g>
-      </g>
-
-      <!-- Front half of the flatbread wraps the filling. -->
-      <g class="mc-food-vessel mc-food-vessel--front" filter="url(#mcStageShadow)">
+      <!-- Vector vessel front half, in front of the filling for the products that still use it (Yufka, untyped). -->
+      <g class="mc-food-vessel mc-food-vessel--front" data-flatbread-vector-fallback filter="url(#mcStageShadow)">
         <path d="M166 434c0-9 7-16 16-16h396c9 0 16 7 16 16v8c0 64-97 116-214 116S166 506 166 442Z" fill="url(#mcBread)" stroke="#9c5f2d" stroke-width="5" stroke-linejoin="round"/>
         <path d="M186 446h388" fill="none" stroke="#8a4f27" stroke-width="3" opacity=".3"/>
         <path d="M262 492c-2 22 6 40 24 54" fill="none" stroke="#ffeec6" stroke-width="8" stroke-linecap="round" opacity=".3"/>
         <path d="M448 546c26-10 46-25 60-45" fill="none" stroke="#8a4f27" stroke-width="4" stroke-linecap="round" opacity=".22"/>
       </g>
+
+      <!-- Deckel: the second flatbread master (D076). Always the last-painted layer. -->
+      <g class="mc-food-layer mc-food-layer--flatbread-lid" data-food-layer="Deckel" data-atomic-ingredient-host="ingredient.flatbread.lid"></g>
+${hudBracketsMarkup()}
     </svg>
+    <!--
+      Dimension readout. Kept in HTML rather than SVG text on purpose: the stage
+      SVG scales down to roughly half size on a phone, and in-SVG text would
+      shrink with it. It lives inside __frame, which is the only element that
+      tracks the SVG's own box -- the stage itself drops to position:static at
+      some breakpoints, so anchoring here would place the labels on the modal.
+      These values are written from the real stack state, never hard-coded, so
+      the HUD reports the stage instead of decorating it.
+    -->
+    <div class="mc-stage-hud__annotations" aria-hidden="true">
+      <span class="mc-stage-hud__label mc-stage-hud__label--axis">Z-Achse <b data-hud-axis>0,00</b></span>
+      <span class="mc-stage-hud__label mc-stage-hud__label--gap">Schichtabstand <b data-hud-gap>0</b></span>
+      <span class="mc-stage-hud__label mc-stage-hud__label--span">Gesamthöhe <b data-hud-span>0</b></span>
+      <span class="mc-stage-hud__label mc-stage-hud__label--count">Schichten <b data-hud-count>0</b></span>
+    </div>
+    </div>
     <div class="mc-food-stage-v4__caption">
       <span>DEIN MCELLO</span>
       <strong data-food-stage-summary>Auswahl wird aufgebaut …</strong>
-      <small>Stilisierte Präsentationsillustration · keine Produktfotografie</small>
+      <button type="button" class="mc-stage-stack-toggle" data-stage-stack-toggle aria-pressed="false">Schichten auffächern</button>
+      <small>Stilisierte Präsentation mit KI-Zutatenvisualisierung · keine Produktfotografie</small>
     </div>`;
+}
+
+const reducedMotionQuery = typeof window.matchMedia === "function"
+  ? window.matchMedia("(prefers-reduced-motion: reduce)")
+  : null;
+
+/*
+ * Cinematic Engineering ref: "Ein virtueller Spot folgt exakt der
+ * Cursor-Bewegung." Pure CSS custom-property update, no GSAP/WebGL --
+ * `--spot-x`/`--spot-y` feed the stage's existing radial-gradient background
+ * (doner-yufka-builder-v2.css). Skipped under reduced motion, which leaves
+ * the CSS fallback position (54% 40%) in place.
+ */
+function attachSpotlight(stage) {
+  if (!stage || stage.dataset.spotlightBound === "true" || reducedMotionQuery?.matches) return;
+  stage.dataset.spotlightBound = "true";
+  stage.addEventListener("pointermove", (event) => {
+    const rect = stage.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    stage.style.setProperty("--spot-x", `${Math.max(0, Math.min(100, x)).toFixed(1)}%`);
+    stage.style.setProperty("--spot-y", `${Math.max(0, Math.min(100, y)).toFixed(1)}%`);
+  });
+  stage.addEventListener("pointerleave", () => {
+    stage.style.removeProperty("--spot-x");
+    stage.style.removeProperty("--spot-y");
+  });
+}
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/*
+ * Every layer host gets its own shell group, and the shell is the only node the
+ * exploded view transforms. The host itself cannot carry that offset: CSS pins a
+ * ready atomic host to `transform: none` so the per-instance delta animation
+ * stays the only thing moving inside it. Wrapping keeps the two mechanisms
+ * independent, and SVG composes nested transforms for free, so an ingredient
+ * added while the stack is fanned out inherits the offset with no extra code.
+ */
+function wrapStackShells(root) {
+  for (const host of root.querySelectorAll("[data-atomic-ingredient-host]")) {
+    const assetId = host.dataset.atomicIngredientHost;
+    if (host.parentElement?.dataset.stackShell === assetId) continue;
+    const shell = document.createElementNS(SVG_NS, "g");
+    shell.setAttribute("class", "mc-stack-shell");
+    shell.dataset.stackShell = assetId;
+    // Offset is assigned per update, once the visible set is known -- see applyStackOffsets.
+    host.before(shell);
+    shell.append(host);
+  }
+}
+
+/*
+ * Presentation state only. Fanning the stack out changes nothing about what is
+ * selected, what it costs or whether it can be ordered, and emits no delta.
+ */
+function setStackState(root, exploded) {
+  if (!root) return;
+  root.dataset.stackState = exploded ? "exploded" : "assembled";
+  const toggle = root.querySelector("[data-stage-stack-toggle]");
+  if (!toggle) return;
+  toggle.setAttribute("aria-pressed", exploded ? "true" : "false");
+  toggle.textContent = exploded ? "Schichten schließen" : "Schichten auffächern";
 }
 
 function ensureStage() {
@@ -193,7 +373,28 @@ function ensureStage() {
   stageRoot.setAttribute("role", "img");
   stageRoot.setAttribute("aria-label", "Stilisierte interaktive Döner- und Yufka-Vorschau");
   stageRoot.innerHTML = stageMarkup();
+  wrapStackShells(stageRoot);
   foodStageImage.before(stageRoot);
+  attachSpotlight(stageRoot);
+
+  stageRoot.querySelector("[data-stage-stack-toggle]")?.addEventListener("click", () => {
+    setStackState(stageRoot, stageRoot.dataset.stackState !== "exploded");
+  });
+
+  /*
+   * The stack opens fanned out and settles together, so the build is legible
+   * before the finished product is shown. Under reduced motion it simply starts
+   * assembled -- the same final composition, reached without the movement.
+   */
+  if (reducedMotionQuery?.matches) {
+    setStackState(stageRoot, false);
+  } else {
+    setStackState(stageRoot, true);
+    const settle = stageRoot;
+    window.setTimeout(() => {
+      if (settle.isConnected && settle.dataset.stackState === "exploded") setStackState(settle, false);
+    }, 900);
+  }
   return stageRoot;
 }
 
@@ -215,6 +416,40 @@ function setImageVisibility(active) {
   }
 }
 
+/*
+ * Writes the HUD's dimension readout from the layers that are actually on the
+ * stage. Nothing here is a fixed caption: the span is measured over the present
+ * layers, the count is the count, and the axis stays 0,00 because the stack is
+ * aligned on one axis by construction. A readout that invented numbers would be
+ * exactly the kind of fake authenticity D068 rules out.
+ */
+/*
+ * Spreads the layers that are actually on screen evenly around the centre.
+ * Ranking against the full twelve would leave a gap wherever an unselected
+ * ingredient would have sat, so the fan-out is computed against the visible
+ * set instead and re-applied whenever the selection changes.
+ */
+function applyStackOffsets(root, present) {
+  for (const shell of root.querySelectorAll("[data-stack-shell]")) {
+    const offset = stackExplodeOffset(shell.dataset.stackShell, present);
+    shell.style.setProperty("--shell-offset", `${offset}px`);
+  }
+}
+
+function updateHudReadout(root, counts) {
+  const present = STACK_PAINT_ORDER.filter((assetId) => (counts.get(assetId) || 0) > 0);
+  applyStackOffsets(root, present);
+  const span = stackExplodeSpan(present, present);
+  const write = (selector, value) => {
+    const node = root.querySelector(selector);
+    if (node) node.textContent = value;
+  };
+  write("[data-hud-axis]", "0,00");
+  write("[data-hud-gap]", `${STACK_EXPLODE_GAP}`);
+  write("[data-hud-span]", `${String(span).replace(".", ",")}`);
+  write("[data-hud-count]", `${present.length}`);
+}
+
 function roleSummary(selected, role, fallback) {
   const names = (ROLE_LAYERS.get(role) || []).filter((name) => selected.has(name));
   return names.length ? names.join(" · ") : fallback;
@@ -223,7 +458,14 @@ function roleSummary(selected, role, fallback) {
 function updateStage(groupMap) {
   const root = ensureStage();
   if (!root) return false;
+  const productForm = builderProductForm();
+  if (productForm) root.dataset.builderProductForm = productForm;
+  else delete root.dataset.builderProductForm;
   const selected = selectedNames(groupMap);
+  if (productForm === "flatbread-pocket") {
+    selected.add("Fladenbrot");
+    selected.add("Deckel");
+  }
   for (const name of visualLayerNames) {
     const layer = root.querySelector(`[data-food-layer="${name}"]`);
     if (!layer) continue;
@@ -231,6 +473,17 @@ function updateStage(groupMap) {
     layer.dataset.active = active ? "true" : "false";
     layer.setAttribute("aria-hidden", active ? "false" : "true");
   }
+  const atomic = reconcileAtomicIngredients({
+    root,
+    optionLabels: acceptedOptionLabels(groupMap),
+    optionName,
+    productForm,
+  });
+  const tomatoCount = atomic.counts.get(TOMATO_VISUAL.assetId) || 0;
+  root.dataset.tomatoInstanceCount = String(tomatoCount);
+  modal.dataset.tomatoInstanceCount = String(tomatoCount);
+  root.dataset.flatbreadAtomicReady = String((atomic.counts.get("ingredient.flatbread.base") || 0) > 0);
+  updateHudReadout(root, atomic.counts);
 
   const summary = [
     roleSummary(selected, "basis", "Basis wählen"),
@@ -238,7 +491,10 @@ function updateStage(groupMap) {
     roleSummary(selected, "sauce", "ohne Soße"),
   ].join(" — ");
   root.querySelector("[data-food-stage-summary]").textContent = summary;
-  root.setAttribute("aria-label", `Stilisierte Döner/Yufka-Vorschau. ${summary}.`);
+  const formLabel = productForm === "flatbread-pocket"
+    ? "Döner im Fladenbrot"
+    : productForm === "yufka-wrap" ? "Döner im Yufka" : "Döner/Yufka";
+  root.setAttribute("aria-label", `Stilisierte ${formLabel}-Vorschau. ${summary}.`);
 
   modal.dataset.assemblyVisualLayers = String([...selected].filter((name) => visualLayerNames.includes(name)).length);
   modal.dataset.assemblyPresentation = "true";
@@ -250,6 +506,7 @@ function clearStage() {
   if (modal.dataset.productBuilder === "doner-yufka") delete modal.dataset.productBuilder;
   delete modal.dataset.assemblyVisualLayers;
   delete modal.dataset.assemblyPresentation;
+  delete modal.dataset.tomatoInstanceCount;
   setImageVisibility(false);
   stageRoot?.remove();
   stageRoot = null;

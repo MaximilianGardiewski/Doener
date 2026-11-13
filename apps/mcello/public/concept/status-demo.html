@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello Bestellstatus — Konzept-Snapshot</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preload" href="/vendor/fonts/inter-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/brand-system.css" />
+  <link rel="stylesheet" href="/commerce-theke.css" />
+  <style>
+    /* Same rules as the real status.html (printed-timeline direction) — frozen
+       mid-progress instead of driven by status.js, so it presents without a
+       live order token or backend. */
+    .status-wrap{width:min(calc(100% - 24px),780px);margin:52px auto 120px}
+    .status-card{margin-top:0!important;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+    .status-identity{display:grid;gap:2px;padding-bottom:22px;border-bottom:2px solid var(--mcello-copper,var(--gold))}
+    .status-identity .tag{color:var(--content-secondary,var(--muted))}
+    #orderNumber{font-variant-numeric:tabular-nums;font-size:clamp(40px,7vw,64px);font-weight:800;letter-spacing:-.04em;line-height:.92;color:var(--content-primary,var(--text));text-transform:none}
+    .status-card h1{margin-top:20px;font-size:clamp(30px,5.5vw,44px);max-width:22ch;letter-spacing:-.015em}
+    .progress-track{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:28px 0 6px;border-top:1px solid var(--rule-subtle,var(--line))}
+    .step{position:relative;padding:16px 0 0;border-radius:0;background:none;color:var(--content-secondary,var(--muted));text-align:left;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+    .step::before{content:"";position:absolute;inset:-2px auto auto 0;width:100%;height:3px;background:var(--rule-subtle,var(--line))}
+    .step.done{color:color-mix(in srgb,var(--green) 82%,var(--text))}
+    .step.done::before{background:var(--green)}
+    .step.active{color:var(--gold-2)}
+    .step.active::before{background:var(--gold)}
+    .eta{font-variant-numeric:tabular-nums;font-size:clamp(38px,7vw,58px);font-weight:800;letter-spacing:-.03em;margin:18px 0 2px}
+    .countdown{color:var(--gold-2);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+    .order-summary{margin-top:28px;padding:0;border:0;border-top:2px solid var(--mcello-copper,var(--gold));border-radius:0;background:none}
+    .order-summary>strong{display:block;padding-top:16px;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--content-secondary,var(--muted))}
+    .status-items{display:grid;gap:0;margin-top:10px}
+    .status-item{display:flex;justify-content:space-between;gap:20px;padding:14px 0;border-top:1px solid var(--rule-subtle,var(--line))}
+    .status-item>strong:last-child{font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+    .status-item small{display:block;color:var(--content-secondary,var(--muted));margin-top:5px;line-height:1.5}
+    .price-row{display:flex;justify-content:space-between;align-items:baseline;padding-top:14px;border-top:1px solid var(--rule-subtle,var(--line))}
+    .price-row.total{margin-top:4px;border-top:2px solid var(--mcello-copper,var(--gold));font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--content-secondary,var(--muted))}
+    .price-row.total strong{font-size:22px;font-weight:800;line-height:1;letter-spacing:-.03em;color:var(--content-primary,var(--text));text-transform:none}
+    .snapshot-note{color:var(--muted);font-size:13px;padding:10px 14px;border:1px dashed var(--line);border-radius:14px;margin-bottom:28px}
+  </style>
+</head>
+<body>
+  <header class="site-header site-header-v2">
+    <div class="shell nav">
+      <a class="brand" href="/" aria-label="Mcello Start"><div class="brand-mark">M</div><div><strong>MCELLO</strong><span>Kebap · Pizza · Bistro</span></div></a>
+      <nav class="nav-links" aria-label="Konzept-Navigation">
+        <a href="/concept/">Konzept-Übersicht</a>
+        <a href="/#bestellen">Live-Speisekarte</a>
+      </nav>
+    </div>
+  </header>
+  <main class="status-wrap">
+    <p class="snapshot-note">Statischer Konzept-Snapshot — eingefroren im Status "In Zubereitung". Die echte Seite (status.html) treibt das live über einen Bestell-Token.</p>
+    <section class="status-card" aria-hidden="true">
+      <div class="status-identity">
+        <span class="tag">Deine Bestellung</span>
+        <div id="orderNumber">#A-214</div>
+      </div>
+      <h1>Deine Bestellung wird zubereitet</h1>
+      <p style="color:var(--muted)">Cello und sein Team sind gerade dabei — dauert nur noch kurz.</p>
+      <div class="progress-track">
+        <div class="step done">Eingegangen</div>
+        <div class="step active">In Zubereitung</div>
+        <div class="step">Abholbereit</div>
+      </div>
+      <p style="color:var(--muted);margin-top:18px">Voraussichtlich abholbereit um</p>
+      <div class="eta">18:45</div>
+      <div class="countdown">Noch ca. 9 Minuten</div>
+      <div class="order-summary">
+        <strong>Deine Bestellung</strong>
+        <div class="status-items">
+          <div class="status-item"><strong>2× Drehspieß im Fladenbrot</strong><strong>17,00&nbsp;€</strong></div>
+          <div class="status-item"><strong>1× Falafel Teller</strong><strong>11,50&nbsp;€</strong></div>
+          <div class="status-item"><strong>2× Apfelsaft</strong><strong>8,00&nbsp;€</strong></div>
+        </div>
+        <div class="price-row" style="margin-top:18px"><span>Zahlung</span><strong>Vor Ort · bar oder Karte</strong></div>
+        <div class="price-row total"><span>Gesamt</span><strong>36,50&nbsp;€</strong></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

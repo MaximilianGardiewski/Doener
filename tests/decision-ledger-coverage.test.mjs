@@ -42,12 +42,12 @@ const completedEvidenceRows = evidence.split("\n")
   .filter((line) => /^\| D\d{3}/.test(line) && /\| `(VERIFIED|PREPARED)` \|/.test(line))
   .join("\n");
 
-test("D062 ledger contains exactly the sequential D001-D074 decision set", () => {
-  assert.equal(decisions.length, 74, `expected 74 decision rows, got ${decisions.length}`);
-  assert.equal(new Set(decisions.map(({ id }) => id)).size, 74, "decision IDs must be unique");
+test("D062 ledger contains exactly the sequential D001-D076 decision set", () => {
+  assert.equal(decisions.length, 76, `expected 76 decision rows, got ${decisions.length}`);
+  assert.equal(new Set(decisions.map(({ id }) => id)).size, 76, "decision IDs must be unique");
   assert.deepEqual(
     decisions.map(({ id }) => id),
-    Array.from({ length: 74 }, (_, index) => `D${String(index + 1).padStart(3, "0")}`),
+    Array.from({ length: 76 }, (_, index) => `D${String(index + 1).padStart(3, "0")}`),
   );
 });
 

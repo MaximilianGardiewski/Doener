@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello Warenkorb &amp; Checkout — Konzept-Snapshot</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preload" href="/vendor/fonts/inter-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/brand-system.css" />
+  <link rel="stylesheet" href="/commerce-theke.css" />
+  <link rel="stylesheet" href="/public-theke.css" />
+  <style>
+    /*
+     * Frozen happy-path snapshot of the real cart/checkout drawer (index.html),
+     * laid out as a static two-column page instead of a slide-in aside, so a
+     * stakeholder sees the whole flow at once without opening the live app.
+     * Same classes/tokens as production — only the layout wrapper is new.
+     */
+    .snapshot-shell{width:min(calc(100% - 24px),1080px);margin:52px auto 120px;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:start}
+    @media(max-width:860px){.snapshot-shell{grid-template-columns:1fr}}
+    .snapshot-shell .cart-drawer{position:static;width:auto;height:auto;transform:none;box-shadow:var(--shadow-md);border-radius:var(--radius-lg)}
+    .snapshot-note{grid-column:1/-1;color:var(--muted);font-size:13px;padding:10px 14px;border:1px dashed var(--line);border-radius:14px;margin-bottom:-8px}
+    .field input:disabled,.field select:disabled{opacity:.85}
+  </style>
+</head>
+<body class="mcello-public-v2" data-experience-mode="public">
+  <header class="site-header site-header-v2">
+    <div class="shell nav">
+      <a class="brand" href="/" aria-label="Mcello Start"><div class="brand-mark">M</div><div><strong>MCELLO</strong><span>Kebap · Pizza · Bistro</span></div></a>
+      <nav class="nav-links" aria-label="Konzept-Navigation">
+        <a href="/concept/">Konzept-Übersicht</a>
+        <a href="/#bestellen">Live-Speisekarte</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="snapshot-shell">
+    <p class="snapshot-note">Statischer Konzept-Snapshot — zeigt den kompletten Bestellablauf (Warenkorb → Abholzeit → WhatsApp-Bestätigung) in einem Screen. Gleiche Bausteine wie die echte, laufende App.</p>
+
+    <section>
+      <h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.03em;margin-bottom:22px">Dein Warenkorb</h1>
+      <aside class="cart-drawer" id="cartDrawer">
+        <div class="cart-head"><h2>Warenkorb</h2></div>
+        <div class="cart-items">
+          <div class="cart-item">
+            <div><strong>2× Drehspieß im Fladenbrot</strong><small class="cart-line-detail">Kalb &amp; Pute</small></div>
+            <div><strong>17,00&nbsp;€</strong></div>
+          </div>
+          <div class="cart-item">
+            <div><strong>1× Falafel Teller</strong><small class="cart-line-detail">Mit Pommes und Salat</small></div>
+            <div><strong>11,50&nbsp;€</strong></div>
+          </div>
+          <div class="cart-item">
+            <div><strong>2× Apfelsaft</strong><small class="cart-line-detail">0,3l frisch gepresst</small></div>
+            <div><strong>8,00&nbsp;€</strong></div>
+          </div>
+        </div>
+        <div class="cart-total"><span>Gesamt</span><strong>36,50&nbsp;€</strong></div>
+      </aside>
+    </section>
+
+    <section>
+      <h1 style="font-size:clamp(28px,4vw,40px);letter-spacing:-.03em;margin-bottom:22px">Abholung &amp; Bestätigung</h1>
+      <div class="checkout-box" style="border-top:0;padding-top:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);padding:24px">
+        <div class="tag">Abholung</div>
+        <p style="color:var(--muted)">Preis und Verfügbarkeit werden beim Absenden serverseitig erneut geprüft.</p>
+        <div class="checkout-message"><strong>Zahlung:</strong> Vor Ort · bar oder Karte.</div>
+        <label class="field"><span>Vorname</span><input value="Lena" disabled /></label>
+        <label class="field"><span>Mobilnummer</span><input value="+49 176 55 xx xx xx" disabled /></label>
+        <label class="field"><span>Abholung</span><select disabled><option selected>Für später</option></select></label>
+        <label class="field"><span>Verfügbarer Abholslot</span><select disabled><option selected>Heute, 18:45 Uhr</option></select></label>
+        <p class="notice" style="margin-top:14px"><strong>WhatsApp-Bestätigung.</strong> Der einmalige Code wird ausschließlich über WhatsApp verschickt — kein Konto, keine App nötig.</p>
+        <label class="field"><span>WhatsApp-Bestätigungscode</span><input value="482 913" disabled /></label>
+        <div class="hero-actions" style="margin-top:18px">
+          <button class="primary" disabled>Bestellung bestätigt ✓</button>
+        </div>
+        <div class="checkout-message" style="margin-top:14px;color:var(--green)">Bestätigt für 18:45 Uhr · Bestellnummer #A-214</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

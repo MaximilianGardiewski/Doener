@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#171715" />
+  <title>Mcello — Konzept-Übersicht</title>
+  <meta name="description" content="Mcello Präsentations-Konzept: Übersicht aller Flows." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preload" href="/vendor/fonts/inter-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/vendor/fonts/fonts.css">
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/brand-system.css" />
+  <style>
+    .concept-shell{width:min(calc(100% - 24px),1080px);margin:0 auto;padding:64px 0 120px}
+    .concept-hero{max-width:760px}
+    .concept-hero h1{font-size:clamp(38px,6vw,58px);letter-spacing:-.03em;margin-bottom:18px}
+    .concept-hero p{color:var(--muted);font-size:17px;line-height:1.7;max-width:60ch}
+    .group{margin-top:56px}
+    .group h2{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-2);margin-bottom:6px}
+    .group .group-sub{color:var(--muted);font-size:14px;margin-bottom:22px;max-width:60ch;line-height:1.6}
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+    .card{display:block;padding:22px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--panel);transition:border-color .15s ease,transform .15s ease}
+    .card:hover{border-color:var(--line-strong);transform:translateY(-2px)}
+    .card .kicker{margin-bottom:10px}
+    .card h3{font-family:var(--font-display);font-size:21px;font-weight:500;margin:0 0 8px}
+    .card p{color:var(--muted);font-size:14px;line-height:1.6;margin:0}
+    .card .status{display:inline-block;margin-top:14px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
+    .status.real{background:rgba(141,184,93,.16);color:var(--green)}
+    .status.snapshot{background:rgba(241,202,117,.14);color:var(--gold-2)}
+    .status.explore{background:rgba(247,240,227,.08);color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header class="site-header site-header-v2">
+    <div class="shell nav">
+      <a class="brand" href="/" aria-label="Mcello Start"><div class="brand-mark">M</div><div><strong>MCELLO</strong><span>Kebap · Pizza · Bistro</span></div></a>
+      <nav class="nav-links" aria-label="Hauptnavigation"><a href="/">Live-App</a></nav>
+    </div>
+  </header>
+
+  <main class="concept-shell">
+    <div class="concept-hero">
+      <span class="kicker">Präsentations-Übersicht</span>
+      <h1>Ein Konzept, drei Ebenen.</h1>
+      <p>Der laufende Prototyp deckt bereits jeden Schritt vom Menü bis zur Küche ab. Diese Seite ordnet ihn für die Präsentation: was schon läuft, was als eingefrorener Snapshot gezeigt wird, und zwei alternative Bildsprachen, die wir zum Vergleich skizziert haben.</p>
+    </div>
+
+    <section class="group">
+      <h2>Live &amp; funktionsfähig</h2>
+      <p class="group-sub">Echter Code, echte Preise, direkt bedienbar — kein Mockup.</p>
+      <div class="card-grid">
+        <a class="card" href="/">
+          <h3>Startseite &amp; Speisekarte</h3>
+          <p>Hero, Markengeschichte, Kategorien, Bestell-Flow — alles in der laufenden App.</p>
+          <span class="status real">Live</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>Konzept-Snapshots</h2>
+      <p class="group-sub">Gleiche Bausteine wie die echte App, eingefroren in einem realistischen Zustand — zeigt Flows, die sonst einen Live-Backend/Token brauchen, ohne Interaktion.</p>
+      <div class="card-grid">
+        <a class="card" href="/concept/warenkorb-demo.html">
+          <h3>Warenkorb &amp; Checkout</h3>
+          <p>Gefüllter Warenkorb, Abholzeit gewählt, WhatsApp-Bestätigung abgeschlossen.</p>
+          <span class="status snapshot">Snapshot</span>
+        </a>
+        <a class="card" href="/concept/status-demo.html">
+          <h3>Bestellstatus</h3>
+          <p>Live-Tracking mittendrin in "Wird zubereitet", mit ETA und Bestellübersicht.</p>
+          <span class="status snapshot">Snapshot</span>
+        </a>
+        <a class="card" href="/concept/kds-demo.html">
+          <h3>Kitchen Display (KDS)</h3>
+          <p>Vier Lanes mit Beispiel-Bestellungen — zeigt die interne Werkzeug-Tiefe.</p>
+          <span class="status snapshot">Snapshot</span>
+        </a>
+        <a class="card" href="/concept/konfigurator-demo.html">
+          <h3>Döner/Yufka-Konfigurator</h3>
+          <p>Echter Builder-Code und echte Zutaten-Assets, live reaktiv — Menüdaten hier statisch statt vom Backend.</p>
+          <span class="status snapshot">Snapshot</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>Alternative Bildsprache (Exploration)</h2>
+      <p class="group-sub">Zusätzlich mit v0 skizziert, um eine zweite Optik zu vergleichen — unabhängig vom Repo, nicht Teil des Produkts.</p>
+      <div class="card-grid">
+        <a class="card" href="https://v0.app/maximiliangardiewskis-projects/chat/mcello-homepage-landing-eHRBqpScTLZ" target="_blank" rel="noopener">
+          <h3>Homepage — Alt-Optik</h3>
+          <p>v0-Konzept-Chat öffnen (v0-Login nötig).</p>
+          <span class="status explore">Exploration</span>
+        </a>
+        <a class="card" href="https://v0.dev/chat/hrTs3tWyjNN" target="_blank" rel="noopener">
+          <h3>Konfigurator — Alt-Optik</h3>
+          <p>v0-Konzept-Chat öffnen (v0-Login nötig).</p>
+          <span class="status explore">Exploration</span>
+        </a>
+        <a class="card" href="https://v0.dev/chat/qvRoxthMqQV" target="_blank" rel="noopener">
+          <h3>Checkout — Alt-Optik</h3>
+          <p>v0-Konzept-Chat öffnen (v0-Login nötig).</p>
+          <span class="status explore">Exploration</span>
+        </a>
+        <a class="card" href="https://v0.dev/chat/syoSSUDYz9N" target="_blank" rel="noopener">
+          <h3>Bestellstatus — Alt-Optik</h3>
+          <p>v0-Konzept-Chat öffnen (v0-Login nötig).</p>
+          <span class="status explore">Exploration</span>
+        </a>
+        <a class="card" href="https://v0.dev/chat/qbjomArVM1D" target="_blank" rel="noopener">
+          <h3>KDS — Alt-Optik</h3>
+          <p>v0-Konzept-Chat öffnen (v0-Login nötig).</p>
+          <span class="status explore">Exploration</span>
+        </a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -8,6 +8,7 @@ const state = {
   categories: [],
   items: [],
   crossSellRules: [],
+  builderProductForms: new Map(),
   categoryId: null,
   cart: loadCart(),
   activeProduct: null,
@@ -343,6 +344,7 @@ function openProduct(id) {
   const category = state.categories.find((entry) => entry.id === product.categoryId);
   modal.dataset.productId = product.id;
   modal.dataset.categorySlug = category?.slug || "";
+  publishBuilderProductForm(product.id);
   modal.dataset.defaultOptionCount = String((product.modifierGroups || [])
     .reduce((total, group) => total + group.options.filter((option) => option.defaultSelected && !option.soldOut).length, 0));
 
@@ -364,6 +366,7 @@ function closeProduct() {
   modal.setAttribute("aria-hidden", "true");
   delete modal.dataset.productId;
   delete modal.dataset.categorySlug;
+  delete modal.dataset.builderProductForm;
   delete modal.dataset.defaultOptionCount;
   delete modal.dataset.configurationValid;
 }
@@ -691,6 +694,7 @@ async function refreshMenuSnapshot(at = null) {
     state.categories = catalog.categories;
     state.items = catalog.items;
     state.crossSellRules = catalog.crossSellRules;
+    state.builderProductForms = catalog.builderProductForms;
     state.menuAt = at;
     state.categoryId = state.categories.some((category) => category.id === previousCategory)
       ? previousCategory
@@ -699,6 +703,9 @@ async function refreshMenuSnapshot(at = null) {
     renderRail();
     renderMenu();
     renderCart();
+    if (modal.classList.contains("open") && state.activeProduct) {
+      publishBuilderProductForm(state.activeProduct.id);
+    }
     return true;
   } catch (error) {
     setCheckoutMessage(error.message || "Speisekarte konnte für den Abholzeitpunkt nicht aktualisiert werden.", "error");
@@ -876,6 +883,7 @@ function normalizeDbMenu(raw) {
     categories,
     items,
     crossSellRules: Array.isArray(raw.crossSellRules) ? raw.crossSellRules : [],
+    builderProductForms: new Map(Object.entries(raw.builderPresentation?.productForms || {})),
     source: "database",
   };
 }
@@ -894,12 +902,24 @@ function normalizeFallback(raw) {
       })),
     }] : [],
   }));
-  return { locationId: "static-preview", categories, items, crossSellRules: [], source: "static" };
+  return {
+    locationId: "static-preview",
+    categories,
+    items,
+    crossSellRules: [],
+    builderProductForms: new Map(),
+    source: "static",
+  };
 }
 
 async function loadMenu(at = null, { allowFallback = true } = {}) {
   try {
-    const query = at ? `?at=${encodeURIComponent(at)}` : "";
+    const params = new URLSearchParams();
+    if (at) params.set("at", at);
+    if (new URLSearchParams(window.location.search).get("presentation") === "mcello") {
+      params.set("presentation", "mcello");
+    }
+    const query = params.size ? `?${params}` : "";
     const response = await fetch(`/api/menu${query}`, { cache: "no-store" });
     if (!response.ok) throw new Error("Speisekarte konnte nicht aus dem lokalen Backend geladen werden.");
     return normalizeDbMenu(await response.json());
@@ -940,6 +960,7 @@ async function init() {
   state.categories = catalog.categories;
   state.items = catalog.items;
   state.crossSellRules = catalog.crossSellRules;
+  state.builderProductForms = catalog.builderProductForms;
   state.backendReady = backendReady && catalog.source === "database";
   state.menuAt = null;
   setInitialCategory();
@@ -958,6 +979,12 @@ async function init() {
 
   await loadShopState();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
+
+function publishBuilderProductForm(productId) {
+  const productForm = state.builderProductForms.get(productId);
+  if (productForm) modal.dataset.builderProductForm = productForm;
+  else delete modal.dataset.builderProductForm;
 }
 
 document.querySelectorAll("[data-open-cart]").forEach((button) => { button.onclick = () => drawer.classList.add("open"); });

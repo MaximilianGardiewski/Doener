@@ -1,5 +1,6 @@
 import http from "node:http";
-import { readFile, stat } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -28,17 +29,28 @@ import { SupabaseOrderMaintenance } from "../../packages/supabase-adapter/src/ma
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../..");
 const publicDir = path.join(here, "public");
+const ingredientDataRoot = path.join(repoRoot, "data", "mcello", "ingredients");
 const port = Number(process.env.PORT || 4173);
 const DEFAULT_MCELLO_LOCATION_ID = "00000000-0000-4000-8000-000000000001";
 
 await loadLocalEnv(path.join(repoRoot, ".env.local"));
+const governedIngredientMedia = await loadGovernedIngredientMedia();
+const builderPresentationContract = JSON.parse(
+  await readFile(path.join(repoRoot, "data", "mcello", "builder-presentation.v1.json"), "utf8"),
+);
 
 const locationContext = new SingleLocationContext(
   optionalEnv("MCELLO_LOCATION_ID") || DEFAULT_MCELLO_LOCATION_ID,
 );
 const LOCATION_ID = locationContext.locationId;
+const menuSeedNamespace = String(
+  optionalEnv("MCELLO_MENU_SEED_NAMESPACE")
+    || (LOCATION_ID === DEFAULT_MCELLO_LOCATION_ID ? "mcello" : `mcello:${LOCATION_ID}`),
+).trim();
+const localBuilderPresentation = buildLocalBuilderPresentation(builderPresentationContract, menuSeedNamespace);
 
 const supabaseUrl = stripQuotes(process.env.SUPABASE_URL || "http://127.0.0.1:54321").replace(/\/$/, "");
+const localPresentationBackend = isLocalPresentationBackend(supabaseUrl);
 const anonKey = optionalEnv("SUPABASE_ANON_KEY");
 const serviceRoleKey = optionalEnv("SUPABASE_SERVICE_ROLE_KEY");
 const devStaffEmail = optionalEnv("MCELLO_DEV_STAFF_EMAIL");
@@ -455,7 +467,11 @@ async function handleApi(req, res, url) {
           _location_id: LOCATION_ID,
         }),
       ]);
-      sendJson(res, 200, { ...menu, ...crossSells });
+      const payload = { ...menu, ...crossSells };
+      if (localPresentationBackend && url.searchParams.get("presentation") === "mcello") {
+        payload.builderPresentation = localBuilderPresentation;
+      }
+      sendJson(res, 200, payload);
     } catch (error) {
       console.error(error);
       sendJson(res, 503, { error: "MENU_BACKEND_UNAVAILABLE" });
@@ -916,6 +932,19 @@ const server = http.createServer(async (req, res) => {
   try {
     if (url.pathname.startsWith("/api/") && await handleApi(req, res, url)) return;
 
+    const governedMedia = governedIngredientMedia.get(url.pathname);
+    if ((req.method === "GET" || req.method === "HEAD") && governedMedia) {
+      const body = await readFile(governedMedia.file);
+      res.writeHead(200, {
+        "content-type": governedMedia.contentType,
+        "content-length": String(body.length),
+        "cache-control": "public, max-age=3600",
+        "x-content-type-options": "nosniff",
+      });
+      res.end(req.method === "HEAD" ? undefined : body);
+      return;
+    }
+
     let pathname = decodeURIComponent(url.pathname);
     if (pathname === "/") pathname = "/index.html";
     let file = path.join(publicDir, pathname.replace(/^\/+/, ""));
@@ -984,4 +1013,83 @@ function optionalEnv(name) {
 
 function normalizeMobile(value) {
   return String(value).replace(/[\s()-]/g, "").trim();
+}
+
+function buildLocalBuilderPresentation(contract, namespace) {
+  const sourceIds = contract?.donerYufka?.productSourceIds;
+  const productForms = contract?.donerYufka?.productForms;
+  if (!namespace || !Array.isArray(sourceIds) || !productForms || typeof productForms !== "object") {
+    throw new Error("Invalid Mcello Builder presentation product-form contract");
+  }
+  const formSourceIds = Object.keys(productForms);
+  if (sourceIds.length !== formSourceIds.length || sourceIds.some((sourceId) => !formSourceIds.includes(sourceId))) {
+    throw new Error("Builder presentation product forms must cover every Döner/Yufka source product exactly once");
+  }
+
+  return {
+    version: contract.version,
+    productForms: Object.fromEntries(sourceIds.map((sourceId) => [
+      stableUuid(`${namespace}:product:${sourceId}`),
+      productForms[sourceId],
+    ])),
+  };
+}
+
+function stableUuid(input) {
+  const bytes = createHash("sha256").update(input).digest().subarray(0, 16);
+  bytes[6] = (bytes[6] & 0x0f) | 0x50;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = bytes.toString("hex");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+function isLocalPresentationBackend(value) {
+  try {
+    const target = new URL(value);
+    return target.protocol === "http:"
+      && new Set(["127.0.0.1", "localhost", "::1", "[::1]"]).has(target.hostname);
+  } catch {
+    return false;
+  }
+}
+
+async function loadGovernedIngredientMedia() {
+  const ingredients = await readdir(ingredientDataRoot, { withFileTypes: true }).catch((error) => {
+    if (error?.code === "ENOENT") return [];
+    throw error;
+  });
+  const media = new Map();
+
+  for (const ingredient of ingredients) {
+    if (!ingredient.isDirectory()) continue;
+    const ingredientDir = path.join(ingredientDataRoot, ingredient.name);
+    const manifestPath = path.join(ingredientDir, `${ingredient.name}.asset.json`);
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const publicPath = validateIngredientPublicPath(manifest.delivery?.publicPath, manifestPath);
+    const file = validateIngredientMasterPath(ingredientDir, manifest.files?.master?.path, manifestPath);
+
+    if (media.has(publicPath)) {
+      throw new Error(`Duplicate governed ingredient publicPath: ${publicPath}`);
+    }
+    media.set(publicPath, { file, contentType: "image/png" });
+  }
+  return media;
+}
+
+function validateIngredientPublicPath(value, manifestPath) {
+  if (typeof value !== "string" || !/^\/media\/ingredients\/[a-z0-9._-]+\.png$/.test(value)) {
+    throw new Error(`Invalid governed ingredient publicPath in ${manifestPath}`);
+  }
+  return value;
+}
+
+function validateIngredientMasterPath(ingredientDir, value, manifestPath) {
+  if (typeof value !== "string" || path.isAbsolute(value) || path.extname(value).toLowerCase() !== ".png") {
+    throw new Error(`Invalid governed ingredient master path in ${manifestPath}`);
+  }
+  const resolved = path.resolve(ingredientDir, value);
+  if (!resolved.startsWith(`${ingredientDir}${path.sep}`)) {
+    throw new Error(`Governed ingredient master escapes its data directory in ${manifestPath}`);
+  }
+  return resolved;
 }

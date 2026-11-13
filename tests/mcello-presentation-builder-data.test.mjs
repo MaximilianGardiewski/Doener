@@ -7,6 +7,7 @@ const contract = JSON.parse(await readFile(new URL("data/mcello/builder-presenta
 const seed = JSON.parse(await readFile(new URL("data/mcello/menu-seed.provisional.json", root), "utf8"));
 const importer = await readFile(new URL("scripts/import-mcello-presentation-builders.mjs", root), "utf8");
 const launcher = await readFile(new URL("scripts/demo-mcello.ps1", root), "utf8");
+const server = await readFile(new URL("apps/mcello/server.mjs", root), "utf8");
 
 const seedById = new Map(seed.items.map((item) => [item[0], item]));
 const groupByName = new Map(contract.donerYufka.groups.map((group) => [group.name, group]));
@@ -42,7 +43,29 @@ test("Döner/Yufka showcase separates presentation assumptions from confirmed sa
   assert.match(contract.donerYufka.provenance, /presentation-assumption:user-request:2026-08-18/);
   assert.match(contract.donerYufka.provenance, /sauces-owner-chat-confirmation:2026-08-18/);
   assert.deepEqual(contract.donerYufka.productSourceIds, ["warm-013", "warm-014", "warm-015", "warm-016", "warm-017", "warm-018"]);
+  assert.deepEqual(contract.donerYufka.productForms, {
+    "warm-013": "flatbread-pocket",
+    "warm-014": "flatbread-pocket",
+    "warm-015": "flatbread-pocket",
+    "warm-016": "yufka-wrap",
+    "warm-017": "yufka-wrap",
+    "warm-018": "yufka-wrap",
+  });
+  assert.deepEqual(
+    Object.keys(contract.donerYufka.productForms).sort(),
+    [...contract.donerYufka.productSourceIds].sort(),
+    "every Döner/Yufka presentation product needs exactly one explicit form",
+  );
   for (const id of contract.donerYufka.productSourceIds) assert.ok(seedById.has(id), `${id} must remain a real provisional menu product`);
+});
+
+test("local menu transport exposes product form only as a requested presentation sidecar", () => {
+  assert.match(server, /localPresentationBackend && url\.searchParams\.get\("presentation"\) === "mcello"/);
+  assert.match(server, /target\.protocol === "http:"[\s\S]*127\.0\.0\.1[\s\S]*localhost[\s\S]*::1/);
+  assert.match(server, /payload\.builderPresentation = localBuilderPresentation/);
+  assert.match(server, /stableUuid\(`\$\{namespace\}:product:\$\{sourceId\}`\)/);
+  assert.match(server, /MCELLO_MENU_SEED_NAMESPACE/);
+  assert.doesNotMatch(server, /product\.name.*flatbread|product\.name.*yufka|product\.slug.*flatbread|product\.slug.*yufka/i);
 });
 
 test("presentation data does not invent prices or pretend selection policy is production truth", () => {

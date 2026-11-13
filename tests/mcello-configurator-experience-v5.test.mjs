@@ -29,6 +29,17 @@ test("the application publishes structured presentation metadata on the real mod
   assert.match(app, /modal\.dataset\.categorySlug = category\?\.slug \|\| ""/);
 });
 
+test("product form stays a separate sidecar Map and follows the open modal across menu refreshes", () => {
+  assert.match(app, /builderProductForms: new Map\(\)/);
+  assert.match(app, /new Map\(Object\.entries\(raw\.builderPresentation\?\.productForms \|\| \{\}\)\)/);
+  assert.match(app, /publishBuilderProductForm\(product\.id\)/);
+  assert.match(app, /modal\.dataset\.builderProductForm = productForm/);
+  assert.match(app, /delete modal\.dataset\.builderProductForm/);
+  assert.match(app, /modal\.classList\.contains\("open"\).*state\.activeProduct/s);
+  assert.match(app, /params\.set\("presentation", "mcello"\)/);
+  assert.doesNotMatch(app, /product\.name.*flatbread|product\.name.*yufka|product\.slug.*flatbread|product\.slug.*yufka/i);
+});
+
 test("presentation adapters resolve visuals from that metadata instead of product identity", () => {
   assert.match(doner, /dataset\.optionName/);
   assert.match(doner, /dataset\.groupName/);
@@ -45,7 +56,7 @@ test("presentation adapters resolve visuals from that metadata instead of produc
 test("D066 offers a one-tap standard recipe that delegates to the authoritative add action", () => {
   assert.match(builder, /data-builder-accept-recipe/);
   assert.match(builder, /data-builder-customize/);
-  assert.match(builder, /if \(addButton\?\.disabled\) return;\n\s*addButton\?\.click\(\);/);
+  assert.match(builder, /if \(addButton\?\.disabled\) return;\r?\n\s*addButton\?\.click\(\);/);
   assert.match(builder, /dataset\.builderEntry = "custom"/);
   // The one-tap label mirrors the price the application already computed.
   assert.match(builder, /addButton\?\.textContent\?\.split\("·"\)/);

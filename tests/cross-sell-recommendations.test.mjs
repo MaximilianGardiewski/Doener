@@ -36,7 +36,8 @@ test("public recommendation contract exposes only deterministic configuration", 
   assert.match(migration, /grant execute on function public\.get_public_cross_sells\(uuid\) to anon, authenticated, service_role/);
   assert.doesNotMatch(migration, /insert into public\.cross_sell_rules[\s\S]{0,500}values\s*\(\s*'/i, "migration must not seed invented Mcello recommendations");
   assert.match(server, /rpc\.rpc\("get_public_cross_sells"/);
-  assert.match(server, /sendJson\(res, 200, \{ \.\.\.menu, \.\.\.crossSells \}\)/);
+  assert.match(server, /const payload = \{ \.\.\.menu, \.\.\.crossSells \};/);
+  assert.match(server, /sendJson\(res, 200, payload\)/);
 });
 
 test("public ordering UI resolves curated and category or ingredient rules", () => {

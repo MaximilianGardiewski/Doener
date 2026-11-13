@@ -1,0 +1,129 @@
+{
+  "formatVersion": 1,
+  "assetId": "ingredient.falafel.layer",
+  "ingredient": "falafel-layer",
+  "visual": {
+    "role": "stacked-configurator-layer",
+    "subject": "layer-falafel",
+    "layerName": "Falafel",
+    "view": "isometric-45",
+    "style": "photorealistic-premium-mcello-food-style",
+    "instancePolicy": {
+      "canonicalMasterCount": 1,
+      "frontendInstantiation": "single-layer-instance",
+      "extraSelection": "separate-extra-layer-master",
+      "separateExtraAssetAllowed": true
+    }
+  },
+  "status": {
+    "lifecycle": "provisional",
+    "decision": "D068",
+    "visualLanguageDecision": "D076",
+    "generated": true,
+    "documentaryMcelloReality": false,
+    "ownerConfirmed": false,
+    "rightsConfirmedForFinalRealMedia": false,
+    "allowedUse": "explicitly-generated-configurator-visual"
+  },
+  "files": {
+    "source": {
+      "path": "source/ingredient.falafel.layer.firefly-seed-76011.png",
+      "mediaType": "image/png",
+      "width": 2048,
+      "height": 2048,
+      "bitDepth": 8,
+      "pngColorType": "RGB",
+      "bytes": 2190091,
+      "sha256": "9bb3c966e321f8b5055b15bcd65aa2fc5ebe597d9db0a655fa4a82630e0c32e1"
+    },
+    "master": {
+      "path": "master/ingredient.falafel.layer.png",
+      "mediaType": "image/png",
+      "width": 1024,
+      "height": 1024,
+      "bitDepth": 8,
+      "pngColorType": "RGBA",
+      "transparent": true,
+      "canvas": "square",
+      "bytes": 349633,
+      "sha256": "63d4380a8f0faf476623d53cd194cf8e37de223499c29f36ec76be0593db3fb2"
+    },
+    "webDerivative": {
+      "status": "blocked-no-existing-repository-converter",
+      "path": null,
+      "reason": "The repository has no governed WebP conversion step. No derivative is fabricated and no browser conversion dependency is introduced."
+    }
+  },
+  "provenance": {
+    "provider": "Adobe Firefly",
+    "workflow": "Codex session generated the raw layer; Claude Code ran the Adobe cutout and tone alignment, then the deterministic local extract and normalization",
+    "reference": {
+      "localFound": false,
+      "adobeFound": false,
+      "used": false
+    },
+    "board": {
+      "id": "urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "url": "https://firefly.adobe.com/boards/id/urn:aaid:sc:EU:2f4c5352-565c-47f6-8519-3e78da00691d",
+      "name": "Mcello V1 - Ingredient System - Doener"
+    },
+    "selectedGeneration": {
+      "seed": 76011,
+      "requestId": null,
+      "requestIdCaptured": false,
+      "requestIdReason": "The generation ran in a separate Codex session; only the resulting Firefly asset URN is observable from here.",
+      "assetUrn": "urn:aaid:sc:EU:28a9d2b3-2f80-440d-a135-4b4da31c6b8f",
+      "width": 2048,
+      "height": 2048,
+      "promptSource": "docs/projects/mcello/CODEX_HANDOFF_LAYER_MASTERS.md",
+      "promptVerbatimCaptured": false,
+      "briefPrompt": "One row of five whole falafel balls, coarse crisp deep golden-brown fried crust, tiny green herb specks, natural cracks, none cut open, arranged side by side as one layer, photorealistic premium Mcello food photography, one single horizontal layer spanning most of the frame width, lying almost flat with visible thickness at the front edge, isometric view exactly 45 degree angle, studio lighting with direct warm top light and soft downward shadow, solid black background, centered, entire subject in frame, clean separation, no other objects.",
+      "briefNegativePrompt": "second copy of the subject, duplicate, extra layer behind, stack of two, plate, bowl, board, tray, packaging, other foods, assembled sandwich, kebab sandwich, hands, people, garnish, text, logo, watermark, cast shadow on a surface, tilted camera, vertical camera, flat top-down view, illustration, cartoon, 3D render, CGI"
+    },
+    "masterProcessing": {
+      "steps": [
+        {
+          "step": "adobe-remove-background",
+          "requestId": "da5e8dc2-a222-437f-911f-a8f02c17f6ea"
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "21f7b7a1-e124-492b-b654-4e97d07e4384",
+          "options": {
+            "gamma": 1.9,
+            "darks": 35,
+            "brightness": 20
+          }
+        },
+        {
+          "step": "adobe-apply-adjustments",
+          "requestId": "1bbf0793-2d87-4849-97b6-b3135c62baaa",
+          "options": {
+            "saturation": 36,
+            "contrast": 14,
+            "tempA": 12,
+            "tempB": 55,
+            "tempLuminance": 50
+          }
+        },
+        {
+          "step": "local-deterministic-alpha-bbox-extract-with-4-percent-margin",
+          "requestId": null
+        },
+        {
+          "step": "local-normalize-to-transparent-square-1024-master",
+          "requestId": null
+        }
+      ],
+      "toneTarget": "mean subject luminance aligned to the existing governed masters, 129 to 146"
+    }
+  },
+  "delivery": {
+    "publicPath": "/media/ingredients/ingredient.falafel.layer.png",
+    "canonicalInput": "files.master.path",
+    "development": "served-directly-from-governed-data-master",
+    "previewBuild": "copied-from-governed-data-master-to-dist",
+    "trackedPublicDuplicate": false,
+    "browserAdobeApiCalls": false
+  }
+}
