@@ -150,6 +150,10 @@
   .mc-food-stage-v4[data-view="assembled"] .mc-food-layer[data-active="true"] { top: calc(50% + var(--mobile-assembled-offset, 0px)); }
   .mc-food-stage-v4[data-view="exploded"] .mc-food-layer[data-active="true"] { top: calc(50% + var(--mobile-explode-offset, 0px)); }
   .mc-food-stage-v4__callout { top: calc(50% + var(--mobile-explode-offset, 0px)); width: 60px; font-size: 8px; }
+  .mc-food-stage-v4__caption { left: 10px; right: auto; top: 8px; bottom: auto; max-width: 112px; gap: 0; }
+  .mc-food-stage-v4__caption > span { font-size: 8px; }
+  .mc-food-stage-v4__caption > strong,
+  .mc-food-stage-v4__caption > small { display: none; }
   .mc-food-stage-v4[data-view="assembled"] .mc-food-stage-v4__callout[data-active="true"] { top: calc(50% + var(--mobile-assembled-offset, 0px)); }
 }
 @media (orientation: landscape) and (max-height: 520px) {
