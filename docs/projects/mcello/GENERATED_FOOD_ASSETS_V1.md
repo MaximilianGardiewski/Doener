@@ -116,3 +116,19 @@ Neither attempt is still processing. No video URL exists for either job. Do not 
 ### Asset inspection and QA result
 
 All nine V2 jobs resolve to completed PNGs with direct result URLs. The files were downloaded from those URLs and inspected as a contact sheet plus pixel metadata. Each is 2048×2048 RGB with no alpha. The outer 96-pixel border samples are RGB 0–2; no sampled edge pixel has a maximum channel value above 8, so the background is effectively black at the edges. The measured foreground-width estimates (RGB max-channel threshold >18) are: upper pide 86.5%, lower pide 81.8%, veal 83.1%, tomato 75.2%, cucumber 78.7%, onion 77.2%, lettuce 80.0%, garlic sauce 74.4%, spicy sauce 71.5%. This is enough for a black-stage prototype, but per-layer scale normalization remains necessary. The files are opaque, not transparent; no final production visual acceptance is claimed.
+
+
+## Seedance 2.0 — short exploded-view test
+
+- Job ID: `1a847724-0970-45e5-a272-8d25fca8afd6`
+- Model: `seedance_2_0` (regular Seedance 2.0, not Mini)
+- Mode: `std`
+- Aspect ratio: `9:16`
+- Duration: 5 seconds
+- Resolution: `720p`
+- Bitrate: `high`
+- Audio: disabled
+- Unlimited: `use_unlim: true`
+- References: all nine V2 image job IDs; the API confirmed all nine were mapped to `image_references`.
+- Shot scope: Sequence A only — fixed-camera, separated vertical ingredient stack; no assembly in this short test.
+- Last live status check: `in_progress` on 2026-11-13. No final result URL is available yet. Do not resubmit while this job remains active.
