@@ -144,6 +144,18 @@ Die generierte Richtung zeigt exakt den brauchbaren visuellen Mechanismus für `
 - warmes modulares Raster;
 - Charcoal/Creme/Kupfer/Olive ohne kalte Tech-Farben.
 
+### Döner/Yufka Cinematic FoodStage — owner direction 2026-11-13
+
+The Döner/Yufka builder is a product-specific visual exception to the general warm editorial/top-down FoodStage:
+
+- low side-profile camera with a target of approximately 12° downward elevation;
+- black studio stage with nine independently controlled ingredient layers;
+- cinematic exploded view, sequential assembly and reverse assembly;
+- photorealistic-looking AI concept renders, optimized as WebP/PNG and animated through the existing GSAP motion boundary;
+- no WebGL requirement and no new commerce state model.
+
+The visuals must carry a clear concept-visualization label. D068 remains in force: generated food imagery is not documentary Mcello product photography and cannot replace owner-confirmed first-party food media.
+
 ## Referenz-Bestätigung
 
 Die Owner-Referenzen bestätigen C sehr stark für:

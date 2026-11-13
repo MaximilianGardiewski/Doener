@@ -46,12 +46,13 @@ The existing `#modalImage` becomes the Builder Core `FoodStage` surface.
 
 Current phase:
 
-- existing placeholder/CMS product media remains the only image source;
-- no AI-generated ingredient is inserted as real Mcello food;
-- Motion System V2 may provide visual selection feedback;
-- no ingredient compositing is attempted yet.
+- existing placeholder/CMS product media remains the default for products without a dedicated visual adapter;
+- Döner/Yufka has a separate cinematic concept FoodStage using the nine optimized WebP layers under `/media/concept/doner-v2/`;
+- those layers are opaque black-background concept assets, not transparent cutouts and not documentary Mcello product media;
+- the active adapter may compose and animate these visual layers, but it must only mirror already-rendered modifier inputs;
+- Motion/GSAP remains a presentation-only boundary; price, modifier validity, order payload and KDS authority remain unchanged.
 
-Pizza and Döner/Yufka get their product-specific visual layer logic in later slices.
+Pizza retains its product-specific visual layer logic. Döner/Yufka uses the low side-profile cinematic layer stack defined by the 2026-11-13 owner brief.
 
 ## 5. Step model
 
@@ -99,6 +100,6 @@ Uses this core with a top-down FoodStage and deterministic ingredient layers. Th
 
 ### Döner/Yufka Builder
 
-Uses the same core with a stable 3/4 assembly FoodStage and visible layer zones. It does not reuse Pizza's flat top-down metaphor.
+Uses the same core with a low side-profile black FoodStage, nine independent concept-image layers and exploded/assembled states. It does not reuse Pizza's flat top-down metaphor. Generated imagery remains clearly labeled as concept-only under D068.
 
 No second configurator state model may be introduced by either product-specific slice.
