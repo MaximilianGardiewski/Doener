@@ -1,3 +1,9 @@
+const stylesheet = document.createElement("link");
+stylesheet.rel = "stylesheet";
+stylesheet.href = "/doner-yufka-cinematic-stage.css";
+stylesheet.dataset.mcelloDonerCinematicStage = "true";
+document.head.appendChild(stylesheet);
+
 const modal = document.querySelector("#productModal");
 const foodStageImage = document.querySelector("#modalImage");
 const groupsRoot = document.querySelector("#modifierGroups");
@@ -92,7 +98,7 @@ function stageMarkup() {
     <div class="mc-food-stage-v5__layers" aria-hidden="true">${images}</div>
     <button class="mc-food-stage-v5__toggle" type="button" data-food-stage-toggle aria-pressed="false">Zusammenbauen</button>
     <div class="mc-food-stage-v5__caption">
-      <span class="mc-food-stage-v5__eyebrow">MCELLO · FOODSTAGE</span>
+      <span class="mc-food-stage-v5__eyebrow">MCELLO · PIDE DÖNER</span>
       <strong data-food-stage-summary aria-live="polite">Dein Döner</strong>
       <small data-food-stage-missing></small>
       <small class="mc-food-stage-v5__disclaimer">KI-Konzeptvisualisierung · keine bestätigte Produktfotografie</small>
