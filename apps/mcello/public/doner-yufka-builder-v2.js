@@ -8,59 +8,34 @@ const modal = document.querySelector("#productModal");
 const foodStageImage = document.querySelector("#modalImage");
 const groupsRoot = document.querySelector("#modifierGroups");
 
-/*
- * Presentation adapter for assembled flatbread dishes (Döner, Yufka, …).
- *
- * It reads the structured metadata the application already publishes on the real
- * modifier markup (`data-group-name`, `data-option-name`) and resolves it into
- * visual roles and layers. It never matches on a product name and never decides
- * what is orderable, valid or priced — those stay in the application/domain path.
- */
-
-// Modifier-group name -> build role. Roles order the visual assembly; they carry no commerce meaning.
+const PRODUCT_IDS = new Set(["warm-013", "warm-014", "warm-015"]);
 const GROUP_ROLES = new Map([
-  ["basis", "basis"],
-  ["fleisch", "basis"],
-  ["herz", "basis"],
-  ["gemüse", "fresh"],
-  ["gemuese", "fresh"],
-  ["frisches", "fresh"],
-  ["salate", "fresh"],
-  ["soße", "sauce"],
-  ["sosse", "sauce"],
-  ["saucen", "sauce"],
-  ["soßen", "sauce"],
+  ["basis", "basis"], ["fleisch", "basis"], ["herz", "basis"],
+  ["gemüse", "fresh"], ["gemuese", "fresh"], ["frisches", "fresh"], ["salate", "fresh"],
+  ["soße", "sauce"], ["sosse", "sauce"], ["saucen", "sauce"], ["soßen", "sauce"],
 ]);
-
-// Ingredient token -> visual layer. Tokens come from the real option names, not from product identity.
 const LAYER_TOKENS = new Map([
-  ["fleisch", "Fleisch"],
-  ["kalb", "Fleisch"],
-  ["pute", "Fleisch"],
-  ["drehspieß", "Fleisch"],
-  ["falafel", "Falafel"],
-  ["salat", "Salat"],
-  ["tomate", "Tomate"],
-  ["tomaten", "Tomate"],
-  ["gurke", "Gurke"],
-  ["gurken", "Gurke"],
-  ["zwiebel", "Zwiebel"],
-  ["zwiebeln", "Zwiebel"],
-  ["curry", "Curry"],
-  ["knoblauch", "Knoblauch"],
-  ["scharf", "Scharf"],
+  ["fleisch", "veal"], ["kalb", "veal"], ["kalbsdöner", "veal"], ["drehspieß", "veal"],
+  ["falafel", "missing-falafel"],
+  ["salat", "iceberg-lettuce"], ["tomate", "tomato"], ["tomaten", "tomato"],
+  ["gurke", "cucumber"], ["gurken", "cucumber"], ["zwiebel", "red-onion"], ["zwiebeln", "red-onion"],
+  ["curry", "missing-curry"], ["knoblauch", "garlic-sauce"], ["scharf", "spicy-sauce"],
 ]);
-
-const visualLayerNames = ["Fleisch", "Falafel", "Salat", "Tomate", "Gurke", "Zwiebel", "Curry", "Knoblauch", "Scharf"];
-const ROLE_LAYERS = new Map([
-  ["basis", ["Fleisch", "Falafel"]],
-  ["fresh", ["Salat", "Tomate", "Gurke", "Zwiebel"]],
-  ["sauce", ["Curry", "Knoblauch", "Scharf"]],
-]);
-
-// Categories whose products are presented by a different stage metaphor (top-down).
+const STAGE_LAYERS = [
+  { id: "upper-pide", file: "upper-pide.webp", label: "Oberes Pide", fixed: true, z: 9, exploded: -245, assembled: -115, mobileExploded: -126, mobileAssembled: -60 },
+  { id: "red-onion", file: "red-onion.webp", label: "Rote Zwiebel", side: "right", z: 8, exploded: -184, assembled: -86, mobileExploded: -94, mobileAssembled: -45 },
+  { id: "tomato", file: "tomato.webp", label: "Tomate", side: "left", z: 7, exploded: -122, assembled: -57, mobileExploded: -63, mobileAssembled: -30 },
+  { id: "cucumber", file: "cucumber.webp", label: "Gurke", side: "right", z: 6, exploded: -61, assembled: -28, mobileExploded: -31, mobileAssembled: -15 },
+  { id: "iceberg-lettuce", file: "iceberg-lettuce.webp", label: "Eisbergsalat", side: "left", z: 5, exploded: 0, assembled: 0, mobileExploded: 0, mobileAssembled: 0 },
+  { id: "veal", file: "veal-doner.webp", label: "Drehspieß-Fleisch", side: "right", z: 4, exploded: 61, assembled: 28, mobileExploded: 31, mobileAssembled: 15 },
+  { id: "spicy-sauce", file: "spicy-sauce.webp", label: "Scharfe Sauce", side: "left", z: 3, exploded: 122, assembled: 57, mobileExploded: 63, mobileAssembled: 30 },
+  { id: "garlic-sauce", file: "garlic-sauce.webp", label: "Knoblauchsauce", side: "right", z: 2, exploded: 184, assembled: 86, mobileExploded: 94, mobileAssembled: 45 },
+  { id: "lower-pide", file: "lower-pide.webp", label: "Unteres Pide", fixed: true, z: 1, exploded: 245, assembled: 115, mobileExploded: 126, mobileAssembled: 60 },
+];
+const VISUAL_LAYER_IDS = STAGE_LAYERS.filter((layer) => !layer.fixed).map((layer) => layer.id);
+const LAYER_BY_ID = new Map(STAGE_LAYERS.map((layer) => [layer.id, layer]));
+const MISSING_LABELS = new Map([["missing-falafel", "Falafel"], ["missing-curry", "Curry"]]);
 const FOREIGN_STAGE_CATEGORIES = new Set(["pizza"]);
-
 let stageRoot = null;
 
 function normalize(value) {
@@ -81,30 +56,14 @@ function layerFor(label) {
   return LAYER_TOKENS.get(normalize(optionName(label))) || null;
 }
 
-/*
- * Resolves the visible modifier groups into build roles.
- * Returns null when this product has no assembly-shaped structure at all.
- */
 function presentationGroupMap() {
-  if (!groupsRoot) return null;
-  if (FOREIGN_STAGE_CATEGORIES.has(normalize(modal?.dataset.categorySlug))) return null;
-
+  if (!groupsRoot || FOREIGN_STAGE_CATEGORIES.has(normalize(modal?.dataset.categorySlug))) return null;
   const resolved = new Map();
   for (const group of groupsRoot.querySelectorAll(".modifier-group")) {
     const role = GROUP_ROLES.get(normalize(groupName(group)));
-    if (!role) continue;
+    if (!role || resolved.has(role)) continue;
     const layers = [...group.querySelectorAll(".modifier-option")].filter(layerFor);
-    if (!layers.length) continue;
-    /*
-     * Keep the first group that claims a role. A catalog splitting ingredients
-     * across two groups that normalise to the same role (say "Gemüse" and
-     * "Salate") used to overwrite the entry, so one group's layers silently
-     * stopped appearing on the stage. First-wins at least keeps the stage
-     * consistent with the group the guest sees first; the alternative -- drawing
-     * both -- would need a layer-merge the stage does not model.
-     */
-    if (resolved.has(role)) continue;
-    resolved.set(role, group);
+    if (layers.length) resolved.set(role, group);
   }
   return resolved.size ? resolved : null;
 }
@@ -122,66 +81,27 @@ function selectedNames(groupMap) {
 }
 
 function stageMarkup() {
-  return `
-    <div class="mc-food-stage-v4__halo" aria-hidden="true"></div>
-    <svg class="mc-food-stage-v4__art" viewBox="140 140 480 470" aria-hidden="true">
-      <defs>
-        <linearGradient id="mcBread" x1="0" y1="0" x2=".2" y2="1"><stop offset="0" stop-color="#f6d9a4"/><stop offset=".54" stop-color="#dea461"/><stop offset="1" stop-color="#b06f36"/></linearGradient>
-        <linearGradient id="mcBreadBack" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c185"/><stop offset="1" stop-color="#c08b4b"/></linearGradient>
-        <linearGradient id="mcBreadInner" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d442c"/><stop offset="1" stop-color="#3a2820"/></linearGradient>
-        <linearGradient id="mcMeat" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b4633c"/><stop offset=".5" stop-color="#87432c"/><stop offset="1" stop-color="#5a2d21"/></linearGradient>
-        <filter id="mcStageShadow"><feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#3a2418" flood-opacity=".26"/></filter>
-        <clipPath id="mcPocketClip"><path d="M204 452V318c0-72 79-122 176-122s176 50 176 122v134Z"/></clipPath>
-      </defs>
-
-      <ellipse cx="380" cy="562" rx="196" ry="24" fill="#2a1c14" opacity=".18"/>
-
-      <!-- Back half of the flatbread: the filling is tucked in front of it. -->
-      <g class="mc-food-vessel mc-food-vessel--back">
-        <path d="M204 452V318c0-72 79-122 176-122s176 50 176 122v134Z" fill="url(#mcBreadBack)" stroke="#9c5f2d" stroke-width="5" stroke-linejoin="round"/>
-        <path d="M240 320c8-48 68-80 140-80s132 32 140 80" fill="none" stroke="#f7e2b8" stroke-width="7" stroke-linecap="round" opacity=".4"/>
-      </g>
-
-      <!-- Filling: every layer maps to one real, checked modifier option. -->
-      <g clip-path="url(#mcPocketClip)" transform="translate(0 4)">
-        <path d="M150 268h460v230H150Z" fill="url(#mcBreadInner)" opacity=".82"/>
-
-        <g class="mc-food-layer mc-food-layer--salat" data-food-layer="Salat"><path d="M156 356c30-34 60-32 87-3 22-44 54-50 84-14 25-44 58-47 88-9 30-43 63-41 91 1 26-29 39-26 52 4v122H156Z" fill="#7fb04d" stroke="#4f7a34" stroke-width="5"/><path d="M206 372c48 14 90 32 125 56m48-52c-24 26-40 51-47 78m123-75c-24 19-41 44-51 73" fill="none" stroke="#b0d270" stroke-width="7" stroke-linecap="round" opacity=".7"/></g>
-
-        <g class="mc-food-layer mc-food-layer--protein mc-food-layer--fleisch" data-food-layer="Fleisch">
-          <path d="M186 262c40-30 76-24 104 8l-26 68-86-16Z" fill="url(#mcMeat)" stroke="#5c2f22" stroke-width="4"/><path d="M284 238c42-21 81-9 107 28l-30 68-91-23Z" fill="#9b5033" stroke="#5c2f22" stroke-width="4"/><path d="M388 259c36-21 72-9 105 34l-37 59-85-25Z" fill="#823c29" stroke="#5c2f22" stroke-width="4"/><path d="M498 250c36-18 70-4 96 36l-38 56-83-26Z" fill="#a15b38" stroke="#5c2f22" stroke-width="4"/><path d="M240 332c41-17 79-5 111 37l-40 56-92-29Z" fill="#ab5c38" stroke="#5c2f22" stroke-width="4"/><path d="M352 331c42-18 86-5 125 38l-44 57-103-33Z" fill="#8b452e" stroke="#5c2f22" stroke-width="4"/>
-          <path d="M206 282l50 18m52-39l55 21m44 5l53 22m-200 52l55 21m56-19l60 21" stroke="#dd8b5b" stroke-width="7" stroke-linecap="round" opacity=".6"/>
-        </g>
-
-        <g class="mc-food-layer mc-food-layer--protein mc-food-layer--falafel" data-food-layer="Falafel">
-          <circle cx="236" cy="306" r="45" fill="#a97838" stroke="#69502e" stroke-width="5"/><circle cx="338" cy="278" r="47" fill="#b78742" stroke="#69502e" stroke-width="5"/><circle cx="444" cy="292" r="44" fill="#9b7139" stroke="#69502e" stroke-width="5"/><circle cx="536" cy="318" r="42" fill="#a8793d" stroke="#69502e" stroke-width="5"/><circle cx="290" cy="382" r="44" fill="#ae8141" stroke="#69502e" stroke-width="5"/><circle cx="398" cy="388" r="45" fill="#a5763b" stroke="#69502e" stroke-width="5"/>
-          <g fill="#d5b56a" opacity=".7"><circle cx="223" cy="294" r="5"/><circle cx="248" cy="318" r="4"/><circle cx="326" cy="264" r="5"/><circle cx="352" cy="294" r="4"/><circle cx="431" cy="280" r="5"/><circle cx="297" cy="370" r="5"/><circle cx="387" cy="374" r="5"/></g>
-        </g>
-
-        <g class="mc-food-layer mc-food-layer--tomate" data-food-layer="Tomate"><g fill="#e9583f" stroke="#a9342d" stroke-width="4"><ellipse cx="222" cy="368" rx="60" ry="26" transform="rotate(-12 222 368)"/><ellipse cx="356" cy="352" rx="64" ry="27" transform="rotate(7 356 352)"/><ellipse cx="486" cy="374" rx="60" ry="26" transform="rotate(-8 486 374)"/></g><g fill="#ffc9a4" opacity=".7"><ellipse cx="222" cy="368" rx="30" ry="8" transform="rotate(-12 222 368)"/><ellipse cx="356" cy="352" rx="32" ry="8" transform="rotate(7 356 352)"/><ellipse cx="486" cy="374" rx="30" ry="8" transform="rotate(-8 486 374)"/></g></g>
-
-        <g class="mc-food-layer mc-food-layer--gurke" data-food-layer="Gurke"><g fill="#a7ce65" stroke="#477739" stroke-width="5"><ellipse cx="212" cy="418" rx="48" ry="23" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="49" ry="23" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="48" ry="23" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="44" ry="22" transform="rotate(-10 536 404)"/></g><g fill="#d7eca0" opacity=".9"><ellipse cx="212" cy="418" rx="29" ry="11" transform="rotate(11 212 418)"/><ellipse cx="322" cy="406" rx="29" ry="11" transform="rotate(-7 322 406)"/><ellipse cx="434" cy="420" rx="29" ry="11" transform="rotate(10 434 420)"/><ellipse cx="536" cy="404" rx="26" ry="10" transform="rotate(-10 536 404)"/></g></g>
-
-        <g class="mc-food-layer mc-food-layer--zwiebel" data-food-layer="Zwiebel"><g fill="none" stroke="#dcb0d6" stroke-width="8" stroke-linecap="round" opacity=".92"><path d="M232 330c26-24 56-21 74 6 12 20 4 39-17 48-22 10-45 2-53-16-7-17 3-34 22-40"/><path d="M356 310c25-22 55-17 70 11 11 22 0 40-23 47-23 6-44-4-49-23-5-18 6-33 27-37"/><path d="M470 340c23-20 49-16 62 9 9 19 0 35-21 42-21 7-40-2-46-19-5-17 5-31 24-36"/></g></g>
-
-        <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--curry" data-food-layer="Curry"><path d="M172 322c66-46 136-49 206-11 58 32 109 29 158-9" fill="none" stroke="#efbd43" stroke-width="19" stroke-linecap="round"/><path d="M192 352c60-33 119-33 177-4 50 24 96 21 136-5" fill="none" stroke="#f6d56d" stroke-width="9" stroke-linecap="round"/></g>
-        <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--knoblauch" data-food-layer="Knoblauch"><path d="M168 362c63-40 129-42 196-7 63 32 118 28 168-9" fill="none" stroke="#f6efd8" stroke-width="19" stroke-linecap="round"/><path d="M190 392c54-30 112-31 172-2 52 25 97 20 138-5" fill="none" stroke="#fff9e8" stroke-width="9" stroke-linecap="round"/></g>
-        <g class="mc-food-layer mc-food-layer--sauce mc-food-layer--scharf" data-food-layer="Scharf"><path d="M174 402c62-38 129-39 196-4 59 30 113 25 162-10" fill="none" stroke="#d64736" stroke-width="19" stroke-linecap="round"/><path d="M200 430c53-27 108-27 164-1 48 22 90 18 128-5" fill="none" stroke="#ed7051" stroke-width="9" stroke-linecap="round"/></g>
-      </g>
-
-      <!-- Front half of the flatbread wraps the filling. -->
-      <g class="mc-food-vessel mc-food-vessel--front" filter="url(#mcStageShadow)">
-        <path d="M166 434c0-9 7-16 16-16h396c9 0 16 7 16 16v8c0 64-97 116-214 116S166 506 166 442Z" fill="url(#mcBread)" stroke="#9c5f2d" stroke-width="5" stroke-linejoin="round"/>
-        <path d="M186 446h388" fill="none" stroke="#8a4f27" stroke-width="3" opacity=".3"/>
-        <path d="M262 492c-2 22 6 40 24 54" fill="none" stroke="#ffeec6" stroke-width="8" stroke-linecap="round" opacity=".3"/>
-        <path d="M448 546c26-10 46-25 60-45" fill="none" stroke="#8a4f27" stroke-width="4" stroke-linecap="round" opacity=".22"/>
-      </g>
-    </svg>
-    <div class="mc-food-stage-v4__caption">
-      <span>DEIN MCELLO</span>
-      <strong data-food-stage-summary>Auswahl wird aufgebaut …</strong>
-      <small>Stilisierte Präsentationsillustration · keine Produktfotografie</small>
-    </div>`;
+  const images = STAGE_LAYERS.map((layer) => {
+    const fixed = layer.fixed ? "true" : "false";
+    return '<img class="mc-food-stage-v4__layer mc-food-layer" data-food-layer="' + layer.id
+      + '" data-fixed="' + fixed + '" data-active="' + fixed
+      + '" aria-hidden="true" alt="" draggable="false" loading="eager" decoding="async" src="/media/concept/doner-v2/' + layer.file
+      + '" style="--layer-z:' + layer.z + ';--explode-offset:' + layer.exploded + 'px;--assembled-offset:' + layer.assembled
+      + 'px;--mobile-explode-offset:' + layer.mobileExploded + 'px;--mobile-assembled-offset:' + layer.mobileAssembled + 'px" />';
+  }).join("");
+  const callouts = STAGE_LAYERS.filter((layer) => !layer.fixed).map((layer) => {
+    return '<span class="mc-food-stage-v4__callout" data-food-callout-for="' + layer.id
+      + '" data-active="false" data-side="' + layer.side + '" aria-hidden="true" style="--explode-offset:' + layer.exploded
+      + 'px;--assembled-offset:' + layer.assembled + 'px;--mobile-explode-offset:' + layer.mobileExploded
+      + 'px;--mobile-assembled-offset:' + layer.mobileAssembled + 'px">' + layer.label + '</span>';
+  }).join("");
+  return '<div class="mc-food-stage-v4__layers" aria-hidden="true">' + images + '</div>'
+    + '<div class="mc-food-stage-v4__callouts" aria-hidden="true">' + callouts + '</div>'
+    + '<button class="mc-food-stage-v4__toggle" type="button" data-food-stage-toggle aria-pressed="false">Zusammenbauen</button>'
+    + '<div class="mc-food-stage-v4__caption"><span>MCELLO · PIDE DÖNER</span>'
+    + '<strong data-food-stage-summary aria-live="polite">Wähle deine Zutaten</strong>'
+    + '<small data-food-stage-missing></small>'
+    + '<small class="mc-food-stage-v4__disclaimer">KI-Konzeptvisualisierung · keine bestätigte Produktfotografie</small></div>';
 }
 
 function ensureStage() {
@@ -190,18 +110,23 @@ function ensureStage() {
   stageRoot = document.createElement("section");
   stageRoot.className = "mc-food-stage-v4";
   stageRoot.dataset.foodStageV4 = "true";
-  stageRoot.setAttribute("role", "img");
-  stageRoot.setAttribute("aria-label", "Stilisierte interaktive Döner- und Yufka-Vorschau");
+  stageRoot.dataset.view = "exploded";
+  stageRoot.setAttribute("role", "region");
+  stageRoot.setAttribute("aria-label", "Interaktive Pide-Döner-Konzeptvorschau");
   stageRoot.innerHTML = stageMarkup();
   foodStageImage.before(stageRoot);
+  const toggle = stageRoot.querySelector("[data-food-stage-toggle]");
+  const setView = (view) => {
+    stageRoot.dataset.view = view;
+    if (modal) modal.dataset.foodStageView = view;
+    toggle.textContent = view === "exploded" ? "Zusammenbauen" : "Explodieren";
+    toggle.setAttribute("aria-pressed", String(view === "exploded"));
+  };
+  setView(stageRoot.dataset.view);
+  toggle.addEventListener("click", () => setView(stageRoot.dataset.view === "exploded" ? "assembled" : "exploded"));
   return stageRoot;
 }
 
-/*
- * The Builder shell marks one element as its FoodStage. When this adapter takes the
- * stage over, the marker moves with it so the Builder still has exactly one visible
- * FoodStage instead of a marked-but-hidden product image.
- */
 function setImageVisibility(active) {
   if (!foodStageImage) return;
   foodStageImage.hidden = active;
@@ -215,32 +140,24 @@ function setImageVisibility(active) {
   }
 }
 
-function roleSummary(selected, role, fallback) {
-  const names = (ROLE_LAYERS.get(role) || []).filter((name) => selected.has(name));
-  return names.length ? names.join(" · ") : fallback;
-}
-
 function updateStage(groupMap) {
   const root = ensureStage();
   if (!root) return false;
   const selected = selectedNames(groupMap);
-  for (const name of visualLayerNames) {
-    const layer = root.querySelector(`[data-food-layer="${name}"]`);
-    if (!layer) continue;
-    const active = selected.has(name);
-    layer.dataset.active = active ? "true" : "false";
-    layer.setAttribute("aria-hidden", active ? "false" : "true");
+  for (const layer of STAGE_LAYERS) {
+    const node = root.querySelector('[data-food-layer="' + layer.id + '"]');
+    const active = Boolean(layer.fixed || selected.has(layer.id));
+    if (node) node.dataset.active = String(active);
+    const callout = root.querySelector('[data-food-callout-for="' + layer.id + '"]');
+    if (callout) callout.dataset.active = String(active && !layer.fixed);
   }
-
-  const summary = [
-    roleSummary(selected, "basis", "Basis wählen"),
-    roleSummary(selected, "fresh", "ohne Gemüse"),
-    roleSummary(selected, "sauce", "ohne Soße"),
-  ].join(" — ");
+  const visible = [...selected].filter((id) => LAYER_BY_ID.has(id)).map((id) => LAYER_BY_ID.get(id).label);
+  const missing = [...selected].filter((id) => MISSING_LABELS.has(id)).map((id) => MISSING_LABELS.get(id));
+  const summary = visible.length ? visible.join(" · ") : "Wähle deine Zutaten";
   root.querySelector("[data-food-stage-summary]").textContent = summary;
-  root.setAttribute("aria-label", `Stilisierte Döner/Yufka-Vorschau. ${summary}.`);
-
-  modal.dataset.assemblyVisualLayers = String([...selected].filter((name) => visualLayerNames.includes(name)).length);
+  root.querySelector("[data-food-stage-missing]").textContent = missing.length ? "Visual folgt für: " + missing.join(" · ") : "";
+  root.setAttribute("aria-label", "Pide-Döner-Konzeptvorschau. " + summary + ".");
+  modal.dataset.assemblyVisualLayers = String(visible.length);
   modal.dataset.assemblyPresentation = "true";
   return true;
 }
@@ -248,6 +165,7 @@ function updateStage(groupMap) {
 function clearStage() {
   if (!modal) return;
   if (modal.dataset.productBuilder === "doner-yufka") delete modal.dataset.productBuilder;
+  delete modal.dataset.foodStageView;
   delete modal.dataset.assemblyVisualLayers;
   delete modal.dataset.assemblyPresentation;
   setImageVisibility(false);
@@ -256,7 +174,8 @@ function clearStage() {
 }
 
 function applyStage() {
-  const groupMap = modal?.classList.contains("open") ? presentationGroupMap() : null;
+  const isPideProduct = PRODUCT_IDS.has(modal?.dataset.productId);
+  const groupMap = modal?.classList.contains("open") && isPideProduct ? presentationGroupMap() : null;
   if (!groupMap) return false;
   modal.dataset.productBuilder = "doner-yufka";
   ensureStage();
@@ -282,7 +201,7 @@ groupsRoot?.addEventListener("change", () => {
 
 if (groupsRoot) {
   new MutationObserver(() => {
-    if (modal?.classList.contains("open") && presentationGroupMap()) applyStage();
+    if (modal?.classList.contains("open") && PRODUCT_IDS.has(modal.dataset.productId) && presentationGroupMap()) applyStage();
   }).observe(groupsRoot, { childList: true, subtree: true });
 }
 

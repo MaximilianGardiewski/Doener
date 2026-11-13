@@ -11,8 +11,9 @@ The repository contains `vercel.json` with:
 - build command: `npm run build:preview`
 - output directory: `dist`
 - framework preset: none / static
+- `api/menu.js` is deployed as a Vercel Node.js Function alongside the static output.
 
-`scripts/build-preview.mjs` copies only `apps/mcello/public/` into `dist/`. No production backend or Supabase credentials are required for the current showcase preview.
+`scripts/build-preview.mjs` copies `apps/mcello/public/` into `dist/`; Vercel discovers the root-level `api/` function separately. The static showcase still renders without backend credentials, while the live menu endpoint returns a controlled 503 until its public Supabase configuration is present.
 
 ## Branch behavior
 
@@ -29,8 +30,9 @@ Current static preview needs no secrets.
 When the real backend slice is connected, set environment variables in Vercel rather than Git:
 
 - `SUPABASE_URL`
-- browser-safe `SUPABASE_PUBLISHABLE_KEY`
-- server-only `SUPABASE_SERVICE_ROLE_KEY`
+- browser-safe `SUPABASE_PUBLISHABLE_KEY` (or legacy `SUPABASE_ANON_KEY`) for `GET /api/menu`
+- server-only `SUPABASE_SERVICE_ROLE_KEY` only for server operations that require privileged access
+- `MCELLO_LOCATION_ID` (optional; defaults to the existing single-location UUID)
 - WhatsApp/SMS provider secrets
 
 Server-only secrets must never use a public/client-exposed prefix.
@@ -38,3 +40,8 @@ Server-only secrets must never use a public/client-exposed prefix.
 ## Exit safety
 
 The build remains ordinary Node + static files. Vercel is not required to run the application locally or on another host.
+
+
+## Public menu function
+
+`GET /api/menu` calls the public Supabase RPCs `get_public_menu` and `get_public_cross_sells` using the browser-safe publishable/anon key. It validates the optional `at` timestamp, returns `Cache-Control: no-store`, and fails closed with HTTP 503 when Supabase is not configured or either RPC fails. It never uses or exposes the service-role key.
