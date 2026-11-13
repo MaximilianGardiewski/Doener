@@ -162,5 +162,5 @@
   #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"] .mc-food-stage-v4__caption { left: 8px; right: 8px; bottom: 7px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mc-food-layer, .mc-food-stage-v4__toggle { transition: none !important; }
+  .mc-food-layer, .mc-food-stage-v4__callout, .mc-food-stage-v4__toggle { transition: none !important; }
 }
