@@ -17,7 +17,7 @@ const GROUP_ROLES = new Map([
 const LAYER_TOKENS = new Map([
   ["fleisch", "veal"], ["kalb", "veal"], ["kalbsdöner", "veal"], ["drehspieß", "veal"],
   ["falafel", "missing-falafel"],
-  ["salat", "lettuce"], ["tomate", "tomato"], ["tomaten", "tomato"],
+  ["salat", "iceberg-lettuce"], ["tomate", "tomato"], ["tomaten", "tomato"],
   ["gurke", "cucumber"], ["gurken", "cucumber"], ["zwiebel", "red-onion"], ["zwiebeln", "red-onion"],
   ["curry", "missing-curry"], ["knoblauch", "garlic-sauce"], ["scharf", "spicy-sauce"],
 ]);
@@ -26,7 +26,7 @@ const STAGE_LAYERS = [
   { id: "red-onion", file: "red-onion.webp", label: "Rote Zwiebel", z: 8, exploded: -184, assembled: -86, mobileExploded: -94, mobileAssembled: -45 },
   { id: "tomato", file: "tomato.webp", label: "Tomate", z: 7, exploded: -122, assembled: -57, mobileExploded: -63, mobileAssembled: -30 },
   { id: "cucumber", file: "cucumber.webp", label: "Gurke", z: 6, exploded: -61, assembled: -28, mobileExploded: -31, mobileAssembled: -15 },
-  { id: "lettuce", file: "iceberg-lettuce.webp", label: "Eisbergsalat", z: 5, exploded: 0, assembled: 0, mobileExploded: 0, mobileAssembled: 0 },
+  { id: "iceberg-lettuce", file: "iceberg-lettuce.webp", label: "Eisbergsalat", z: 5, exploded: 0, assembled: 0, mobileExploded: 0, mobileAssembled: 0 },
   { id: "veal", file: "veal-doner.webp", label: "Drehspieß-Fleisch", z: 4, exploded: 61, assembled: 28, mobileExploded: 31, mobileAssembled: 15 },
   { id: "spicy-sauce", file: "spicy-sauce.webp", label: "Scharfe Sauce", z: 3, exploded: 122, assembled: 57, mobileExploded: 63, mobileAssembled: 30 },
   { id: "garlic-sauce", file: "garlic-sauce.webp", label: "Knoblauchsauce", z: 2, exploded: 184, assembled: 86, mobileExploded: 94, mobileAssembled: 45 },
@@ -83,7 +83,7 @@ function selectedNames(groupMap) {
 function stageMarkup() {
   const images = STAGE_LAYERS.map((layer) => {
     const fixed = layer.fixed ? "true" : "false";
-    return '<img class="mc-food-stage-v4__layer" data-food-layer="' + layer.id
+    return '<img class="mc-food-stage-v4__layer mc-food-layer" data-food-layer="' + layer.id
       + '" data-fixed="' + fixed + '" data-active="' + fixed
       + '" aria-hidden="true" alt="" draggable="false" loading="eager" decoding="async" src="/media/concept/doner-v2/' + layer.file
       + '" style="--layer-z:' + layer.z + ';--explode-offset:' + layer.exploded + 'px;--assembled-offset:' + layer.assembled
