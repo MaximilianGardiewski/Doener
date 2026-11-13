@@ -42,7 +42,7 @@ test("FoodStage mirrors checked modifier inputs and never owns commerce state", 
 });
 
 test("cinematic layer stack uses all nine local WebP assets and reduced-motion support", () => {
-  for (const layer of imageLayers) assert.match(js, new RegExp('data-food-layer="' + layer + '"'));
+  for (const layer of imageLayers) assert.match(js, new RegExp('id: "' + layer + '"'));
   assert.match(css, /mix-blend-mode:\s*screen/);
   assert.match(css, /data-builder-orientation="portrait"/);
   assert.match(css, /visibility:\s*visible\s*!important/);
