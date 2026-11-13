@@ -53,7 +53,12 @@ Generated sequentially on 2026-11-13 with GPT Image 2.5 Sunburst. Each request u
 - Background: Opaque (the prompt requests RGB #000000; this is not alpha transparency)
 - Billing: Unlimited trial (`use_unlim: true`); no credits used
 - All nine image jobs completed successfully.
-- Prompt/settings compliance is recorded; exact pixel-level black, camera angle, silhouette width and visual consistency still require visual inspection before production approval.
+- All nine PNGs were downloaded and reviewed together on 2026-11-13.
+- Each file is 2048×2048 RGB with no alpha channel.
+- The outer 96-pixel border is effectively black: sampled edge RGB values are 0–2, with no sampled edge pixels above a maximum channel value of 8.
+- Foreground-width estimates vary from 71.5% to 86.5% of canvas width (threshold: maximum RGB channel >18), so per-layer scale normalization is still required.
+- The overview shows isolated ingredient layers and no obvious table/floor. The exact requested 12-degree camera angle cannot be proven from the static images alone.
+- Current verdict: suitable for a black-stage prototype, not yet production-approved and not transparent cutouts.
 - The two reference inputs were the latest uploaded image IDs `e270c012-ea12-4ad3-8a7d-24f20cbf3124` and `6cd73bb5-f75e-45ac-a42c-917205e84b7c`.
 
 ## V2 exploded-assembly animation
@@ -70,11 +75,11 @@ Generated sequentially on 2026-11-13 with GPT Image 2.5 Sunburst. Each request u
 
 ## Production follow-up
 
-1. Visually inspect the nine V2 images and the finished animation in Higgsfield.
-2. Confirm the background is truly RGB #000000 and consistent; remove any unwanted surface shadows if present.
-3. Normalize canvas bounds, ingredient scale and layer alignment. The current opaque black outputs are not alpha cutouts.
-4. Only after visual approval, prepare production-ready cutouts and integrate them into the configurator.
-5. Keep pricing and modifier logic in the menu engine; these files are presentation assets only.
+1. Normalize the nine foreground bounds and per-layer scale while preserving the original 2048×2048 canvases.
+2. Prototype the stack on a pure-black FoodStage; the existing near-black edge pixels can composite directly without a cutout pass.
+3. Only create alpha cutouts if a non-black stage is approved; protect dark bread/meat edges during background removal.
+4. Resume modular short-video tests after the Higgsfield rate limit clears. Do not repeat a single 30-second generation.
+5. Integrate the accepted visual layer into the active FoodStage path without moving price, modifier, order or KDS authority.
 
 
 ## Live verification update — 2026-11-13
@@ -95,7 +100,8 @@ Neither attempt is still processing. No video URL exists for either job. Do not 
 - `gpt_image_2_5` is available; variant `sunburst`, quality `medium`, resolution `2k`, and background `opaque` are valid catalog values. The model advertises `supports_unlim: true`.
 - `seedance_2_5` is available and advertises `supports_unlim: true`. It supports `omni_reference`, 4–30 seconds, 480p/720p/1080p/4k, and standard/high bitrate.
 - `seedance_2_0` (regular model, not only Mini) is also available and advertises `supports_unlim: true`. It supports 4–15 seconds, 480p/720p/1080p/4k, `std`/`fast` mode, and standard/high bitrate.
-- Unlimited capability is confirmed by the model catalog. No new generation was submitted during this verification.
+- Higgsfield returned an unmetered Seedance 2.0 unlimited allowance valid through `2026-11-16T06:11:44Z`.
+- A 5-second, 9:16, 720p Seedance 2.0 reference probe with all nine images and `use_unlim: true` was attempted. The backend returned `429 rate_limit_reached` before returning a job ID; no generation result exists.
 
 ### Repository integration baseline
 
@@ -103,10 +109,10 @@ Neither attempt is still processing. No video URL exists for either job. Do not 
 - Device preview: `apps/mcello/public/configurator-preview.html` and `configurator-preview.js`.
 - Existing döner/yufka presentation adapter: `apps/mcello/public/doner-yufka-builder-v2.js` with `doner-yufka-builder-v2.css`.
 - The current adapter is a stylized inline SVG FoodStage with CSS layer transitions. It maps visible modifier metadata to presentation layers and does not own price/order logic.
-- The inspected page import chain is `index.html → public-content.js → builder-core-v2.js`; `public-content.js` imports the generic builder core, while the inspected generic builder core imports the pizza adapter. The döner/yufka adapter is not imported by this visible entry chain, so its activation must be verified/fixed before replacing its visuals.
+- The inspected page import chain is `index.html → public-content.js → builder-core-v2.js`; `public-content.js` imports the generic builder core, while the generic builder core imports the pizza adapter. The `doner-yufka-builder-v2.js` adapter is not imported by this entry chain and a repository-wide search found no runtime import reference. Its tests and service-worker cache entry do not activate it. It must be explicitly integrated or replaced in the active FoodStage path.
 - Mcello's runtime is plain HTML/JavaScript, with `gsap@3.15.0` as an app dependency and a separate motion system. The inspected Mcello app is not a React TSX shell.
 - The existing `packages/menu-engine` package remains the domain boundary. Keep visual assets and animations outside price, modifier validity, order payload and KDS authority.
 
-### Asset inspection limitation
+### Asset inspection and QA result
 
-All nine V2 job records resolve to completed 2048×2048 PNG outputs with direct result URLs. The generation gallery was opened for the nine exact job IDs. Automated pixel inspection/download was not available in this execution environment, so exact RGB background uniformity, silhouette bounds, scale matching and alpha content remain unverified. The opaque/no-remove-bg parameters are verified; no claim of transparent cutouts or final visual approval is made.
+All nine V2 jobs resolve to completed PNGs with direct result URLs. The files were downloaded from those URLs and inspected as a contact sheet plus pixel metadata. Each is 2048×2048 RGB with no alpha. The outer 96-pixel border samples are RGB 0–2; no sampled edge pixel has a maximum channel value above 8, so the background is effectively black at the edges. The measured foreground-width estimates (RGB max-channel threshold >18) are: upper pide 86.5%, lower pide 81.8%, veal 83.1%, tomato 75.2%, cucumber 78.7%, onion 77.2%, lettuce 80.0%, garlic sauce 74.4%, spicy sauce 71.5%. This is enough for a black-stage prototype, but per-layer scale normalization remains necessary. The files are opaque, not transparent; no final production visual acceptance is claimed.
