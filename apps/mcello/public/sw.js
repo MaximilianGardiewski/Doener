@@ -1,4 +1,4 @@
-const CACHE = "mcello-public-shell-v36";
+const CACHE = "mcello-public-shell-v37";
 const APP_SHELL = [
   "/vendor/fonts/fonts.css",
   "/vendor/fonts/inter-latin-variable.woff2",

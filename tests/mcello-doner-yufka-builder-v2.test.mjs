@@ -52,7 +52,7 @@ test("cinematic layer stack uses all nine local WebP assets and reduced-motion s
   assert.match(css, /visibility:\s*visible\s*!important/);
   assert.match(css, /pointer-events:\s*auto\s*!important/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.match(sw, /mcello-public-shell-v36/);
+  assert.match(sw, /mcello-public-shell-v37/);
   for (const file of ["upper-pide.webp","lower-pide.webp","veal-doner.webp","tomato.webp","cucumber.webp","red-onion.webp","iceberg-lettuce.webp","garlic-sauce.webp","spicy-sauce.webp"]) {
     assert.ok(sw.includes("/media/concept/doner-v2/" + file));
   }
