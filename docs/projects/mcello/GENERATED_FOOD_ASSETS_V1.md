@@ -78,7 +78,7 @@ Generated sequentially on 2026-11-13 with GPT Image 2.5 Sunburst. Each request u
 1. Normalize the nine foreground bounds and per-layer scale while preserving the original 2048×2048 canvases.
 2. Prototype the stack on a pure-black FoodStage; the existing near-black edge pixels can composite directly without a cutout pass.
 3. Only create alpha cutouts if a non-black stage is approved; protect dark bread/meat edges during background removal.
-4. Keep the completed Seedance 2.0 clip as Sequence A. Generate separate short tests for Assembly, Hero Shot and Reverse Assembly; do not repeat a single 30-second generation.
+4. Keep the completed Seedance 2.0 clips as modular A/B/D segments. Complete Sequence C, then concatenate A+B+C+D into a master clip and inspect all transitions; do not repeat a single 30-second generation.
 5. Integrate the accepted visual layer into the active FoodStage path without moving price, modifier, order or KDS authority.
 
 
@@ -159,3 +159,27 @@ See `apps/mcello/public/media/concept/doner-v2/manifest.json` for per-asset sour
 - Output: H.264, 720×1280, 24 fps, 121 frames, 5.042 seconds, 3,041,995 bytes.
 - [Open generated MP4](https://d8j0ntlcm91z4.cloudfront.net/user_3JRwc3yt99NOndRPayVoeVEs4kF/hf_20261113_090952_1a847724-0970-45e5-a272-8d25fca8afd6.mp4).
 - Visual verdict: useful as the first Exploded View test. The components remain visibly separated in a vertical stack, with subtle movement and a stable low side-profile. The clip does not assemble the layers; separate Assembly, Hero and Reverse clips remain outstanding.
+
+
+### Seedance 2.0 — Sequence B: Assembly
+
+- Job ID: `b616a7d1-3917-4cff-8348-6c7e3e84c7cf`
+- Status: `completed`; 6 seconds; 9:16; 720p; H.264; 720×1280; 24 fps; 145 frames; 6.042 seconds; 8,374,449 bytes.
+- Start image: the completed Sequence A exploded view. End image: a manually composed assembled Pide Döner reference frame. Both were uploaded and confirmed in Higgsfield before generation.
+- [Open generated Assembly MP4](https://d8j0ntlcm91z4.cloudfront.net/user_3JRwc3yt99NOndRPayVoeVEs4kF/hf_20261113_092051_b616a7d1-3917-4cff-8348-6c7e3e84c7cf.mp4).
+- Visual verdict: the layers move from separated positions into a compact sandwich; the ending is visibly assembled. Use as Sequence B.
+
+### Seedance 2.0 — Sequence C: Hero Shot
+
+- Job ID: `d846ee2e-8202-47ca-8b31-64368082ba79`
+- Status at this update: `waiting`; 5 seconds; 9:16; 720p; start-image reference; Unlimited requested.
+- The start image is the final frame of Sequence B. Prompt requests a restrained camera push-in while preserving the assembled food silhouette.
+- Do not treat this as completed until the job returns a terminal status and its output has been inspected.
+
+### Sequence D: Reverse Assembly
+
+- Derived directly from Sequence B with FFmpeg `reverse`; no additional video-generation job was used.
+- H.264, 720×1280, 24 fps, 145 frames, 6.042 seconds, 2,687,814 bytes.
+- Uploaded and confirmed in Higgsfield media library: `236bb6fe-096b-48b6-a03d-0c0960180e4e`.
+- [Open Reverse Assembly MP4](https://d2ol7oe51mr4n9.cloudfront.net/user_3JRwc3yt99NOndRPayVoeVEs4kF/236bb6fe-096b-48b6-a03d-0c0960180e4e.mp4).
+- This is the exact reverse of Sequence B, so the ingredient order and motion are deterministic.
