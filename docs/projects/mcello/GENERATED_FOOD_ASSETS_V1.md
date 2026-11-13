@@ -79,7 +79,7 @@ Generated sequentially on 2026-11-13 with GPT Image 2.5 Sunburst. Each request u
 1. Normalize the nine foreground bounds and per-layer scale while preserving the original 2048×2048 canvases.
 2. Prototype the stack on a pure-black FoodStage; the existing near-black edge pixels can composite directly without a cutout pass.
 3. Only create alpha cutouts if a non-black stage is approved; protect dark bread/meat edges during background removal.
-4. Keep the completed Seedance 2.0 clips as modular A/B/D segments. Complete Sequence C, then concatenate A+B+C+D into a master clip and inspect all transitions; do not repeat a single 30-second generation.
+4. A/B/C/D are now complete and Master v1 is uploaded. Review the hero-shot drift and master pacing; sound design and any refinements remain creative follow-up.
 5. Integrate the accepted visual layer into the active FoodStage path without moving price, modifier, order or KDS authority.
 
 
@@ -134,7 +134,7 @@ All nine V2 jobs resolve to completed PNGs with direct result URLs. The files we
 - Unlimited: `use_unlim: true`
 - References: all nine V2 image job IDs; the API confirmed all nine were mapped to `image_references`.
 - Shot scope: Sequence A only — fixed-camera, separated vertical ingredient stack; no assembly in this short test.
-- Last live status check: `in_progress` on 2026-11-13. No final result URL is available yet. Do not resubmit while this job remains active.
+- Status: `completed`; output is the Sequence A Exploded View documented below. No resubmission was needed.
 
 
 ### Optimized WebP derivatives — 2026-11-13
@@ -159,7 +159,7 @@ See `apps/mcello/public/media/concept/doner-v2/manifest.json` for per-asset sour
 - Model: `seedance_2_0`; 5 seconds; 9:16; 720p; `std`; high bitrate; silent; nine image references; Unlimited requested.
 - Output: H.264, 720×1280, 24 fps, 121 frames, 5.042 seconds, 3,041,995 bytes.
 - [Open generated MP4](https://d8j0ntlcm91z4.cloudfront.net/user_3JRwc3yt99NOndRPayVoeVEs4kF/hf_20261113_090952_1a847724-0970-45e5-a272-8d25fca8afd6.mp4).
-- Visual verdict: useful as the first Exploded View test. The components remain visibly separated in a vertical stack, with subtle movement and a stable low side-profile. The clip does not assemble the layers; separate Assembly, Hero and Reverse clips remain outstanding.
+- Visual verdict: useful as the opening Exploded View. The components remain visibly separated in a vertical stack with a stable low side-profile. Assembly, Hero and Reverse are now complete and included in Master v1.
 
 
 ### Seedance 2.0 — Sequence B: Assembly
@@ -173,9 +173,9 @@ See `apps/mcello/public/media/concept/doner-v2/manifest.json` for per-asset sour
 ### Seedance 2.0 — Sequence C: Hero Shot
 
 - Job ID: `d846ee2e-8202-47ca-8b31-64368082ba79`
-- Status at this update: `waiting`; 5 seconds; 9:16; 720p; start-image reference; Unlimited requested.
-- The start image is the final frame of Sequence B. Prompt requests a restrained camera push-in while preserving the assembled food silhouette.
-- Do not treat this as completed until the job returns a terminal status and its output has been inspected.
+- Status: `completed`; 5.042 seconds; 9:16; 720p; H.264; 720×1280; 24 fps; 121 frames; 8,734,072 bytes. Unlimited requested.
+- The start image is the final frame of Sequence B. [Open Hero Shot MP4](https://d8j0ntlcm91z4.cloudfront.net/user_3JRwc3yt99NOndRPayVoeVEs4kF/hf_20261113_092919_d846ee2e-8202-47ca-8b31-64368082ba79.mp4).
+- Visual verdict: premium black-stage hero composition with a restrained push-in. Minor top-bread/ingredient drift remains visible during the shot; treat it as concept footage, not a pixel-locked product render.
 
 ### Sequence D: Reverse Assembly
 
@@ -184,3 +184,23 @@ See `apps/mcello/public/media/concept/doner-v2/manifest.json` for per-asset sour
 - Uploaded and confirmed in Higgsfield media library: `236bb6fe-096b-48b6-a03d-0c0960180e4e`.
 - [Open Reverse Assembly MP4](https://d2ol7oe51mr4n9.cloudfront.net/user_3JRwc3yt99NOndRPayVoeVEs4kF/236bb6fe-096b-48b6-a03d-0c0960180e4e.mp4).
 - This is the exact reverse of Sequence B, so the ingredient order and motion are deterministic.
+
+
+### Master clip — v1
+
+- Built locally with FFmpeg concat from Sequence A + B + C + D, in that order. No additional generative job was required.
+- H.264, silent, 720×1280 (9:16), 24 fps, 532 frames, 22.167 seconds, 10,558,570 bytes.
+- Uploaded and confirmed in Higgsfield media library: `afda4125-07ee-4388-9d7b-0818150c2a03`.
+- [Open Mcello Pide Döner Master v1](https://d2ol7oe51mr4n9.cloudfront.net/user_3JRwc3yt99NOndRPayVoeVEs4kF/afda4125-07ee-4388-9d7b-0818150c2a03.mp4).
+- Sequence boundaries are direct cuts between matching states: exploded → assembly → assembled hero → reverse assembly. No audio or sound design has been added.
+
+### Active Pide FoodStage integration — 2026-11-13
+
+- The single active adapter is `apps/mcello/public/doner-yufka-builder-v2.js` with `doner-yufka-builder-v2.css`; it is loaded through `pizza-builder-v2.js` from the existing Builder Core import chain. No parallel stage module remains.
+- The adapter renders the nine local WebP layers inside the existing `.mc-food-stage-v4` root and preserves the `.mc-food-layer` class used by the GSAP motion system.
+- Only provisional Fladenbrot products `warm-013`–`warm-015` are enabled. Yufka `warm-016`–`warm-018` is intentionally excluded pending a dedicated rolled-wrap asset set.
+- Desktop browser smoke test (1440×900): one stage root; 9/9 images loaded; 9 active layers; controls in the adjacent column; toggle changed exploded → assembled; no JavaScript errors.
+- Mobile touch/portrait smoke test (390×844): modal visible; orientation gate hidden; stage 388×354 px; controls 388×438 px below it; 9/9 images loaded; toggle changed assembled → exploded; no JavaScript errors.
+- Test fixture note: the Vercel preview's `/api/menu` endpoint returned HTTP 404. For the browser smoke test only, modifier groups were injected as a fixture. This verifies layout, image loading and toggle behavior, but does not verify the live menu/API data path.
+- Full Node test suite: 382/382 passed. Price calculation, modifier validation and KDS logic were not changed.
+- Preview: https://doener-git-assets-mcello-food-v1-maximiliangardiewskis-projects.vercel.app
