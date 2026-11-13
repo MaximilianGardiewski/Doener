@@ -209,6 +209,6 @@ See `apps/mcello/public/media/concept/doner-v2/manifest.json` for per-asset sour
 ### Quellenordner- und Screenshot-Abgleich — 2026-11-13
 
 - `Quellen/Screenshot_20261113_082130_Google.jpg` zeigt die gewünschte mobile Richtung: vertikaler Exploded Stack, seitliche Ingredient-Callouts und untere Auswahl-/Steuerungsfläche. Der aktuelle Adapter bildet das jetzt mit sieben dynamischen Side-Callouts, Exploded/Assembly-Toggle und den vorhandenen Modifier-Controls ab; der Exploded-Zustand ist auf Desktop und Mobile der Standard.
-- `Quellen/Screenshot_20261113_082136_Google.jpg` ist eine Google-Bildrecherche mit Food-/Ingredient-Referenzen, keine Freigabe echter Mcello-Produktfotos.
+- `Quellen/Screenshot_20261113_082136_Google.jpg` zeigt denselben mobilen Konfigurator im zusammengesetzten Hero-Zustand. Beide Screenshots definieren zusammen die Exploded- und Assembled-Zielzustände; sie sind UI-Referenzen, keine Freigabe echter Mcello-Produktfotos.
 - Die `Gemini_Generated_Image_*.jpeg`- und Firefly/Gemini-Dateien im Quellenordner sind nützliche Konzept-/Kompositionsreferenzen, aber keine First-Party-Produktwahrheit.
 - `Quellen/README.md` definiert den Ordner ausdrücklich als abgeleiteten Arbeitskompass; Entscheidungen, Code, Tests und Acceptance-Dokumente bleiben vorrangige Wahrheit. `PROJEKTKONTEXT.md` und `V1-GO-LIVE-INPUTS.md` verlangen owner-bestätigte Rezeptdaten und echte, rechtegeklärte Medien. D068 bleibt unverändert.
