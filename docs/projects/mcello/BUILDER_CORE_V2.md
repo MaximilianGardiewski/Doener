@@ -47,7 +47,7 @@ The existing `#modalImage` becomes the Builder Core `FoodStage` surface.
 Current phase:
 
 - existing placeholder/CMS product media remains the default for products without a dedicated visual adapter;
-- Döner/Yufka has a separate cinematic concept FoodStage using the nine optimized WebP layers under `/media/concept/doner-v2/`;
+- Döner Fladenbrot variants have a separate cinematic concept FoodStage using the nine optimized WebP layers under `/media/concept/doner-v2/`; current support is limited to provisional products `warm-013`–`warm-015`;
 - those layers are opaque black-background concept assets, not transparent cutouts and not documentary Mcello product media;
 - the active adapter may compose and animate these visual layers, but it must only mirror already-rendered modifier inputs;
 - Motion/GSAP remains a presentation-only boundary; price, modifier validity, order payload and KDS authority remain unchanged.

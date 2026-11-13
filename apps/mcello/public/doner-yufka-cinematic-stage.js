@@ -2,7 +2,8 @@ const modal = document.querySelector("#productModal");
 const foodStageImage = document.querySelector("#modalImage");
 const groupsRoot = document.querySelector("#modifierGroups");
 
-const PRODUCT_IDS = new Set(["warm-013", "warm-014", "warm-015", "warm-016", "warm-017", "warm-018"]);
+// The current Pide assets are valid only for Fladenbrot variants. Yufka has a different wrap geometry and is deliberately excluded until its own assets exist.
+const PRODUCT_IDS = new Set(["warm-013", "warm-014", "warm-015"]);
 const GROUP_ROLES = new Map([
   ["basis", "basis"], ["fleisch", "basis"], ["herz", "basis"],
   ["gemüse", "fresh"], ["gemuese", "fresh"], ["frisches", "fresh"], ["salate", "fresh"],
@@ -184,6 +185,7 @@ function applyStage() {
 // Mark the intended presentation before app.js opens the modal. This also lets the
 // Döner stage opt into portrait layout without changing the commerce controller.
 document.addEventListener("click", (event) => {
+  if (!modal) return;
   const target = event.target instanceof Element ? event.target : null;
   const trigger = target?.closest("[data-product], [data-recommended-product]");
   if (!trigger || trigger.matches(":disabled")) return;

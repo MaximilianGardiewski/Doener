@@ -13,8 +13,10 @@ const assets = ["upper-pide.webp","lower-pide.webp","veal-doner.webp","tomato.we
 
 test("cinematic Döner stage is activated after the existing Builder Core", () => {
   assert.match(publicContent, /import "\.\/builder-core-v2\.js";\s*import "\.\/doner-yufka-cinematic-stage\.js";/);
-  assert.match(js, /data-product-builder = "doner-yufka"/);
+  assert.match(js, /modal\.dataset\.productBuilder = "doner-yufka"/);
   assert.match(js, /PRODUCT_IDS/);
+  assert.match(js, /warm-013.*warm-014.*warm-015/);
+  assert.doesNotMatch(js, /warm-016|warm-017|warm-018/);
 });
 
 test("stage mirrors checked modifier inputs and keeps unsupported visuals explicit", () => {
