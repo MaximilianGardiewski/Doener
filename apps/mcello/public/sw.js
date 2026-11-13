@@ -1,4 +1,4 @@
-const CACHE = "mcello-public-shell-v34";
+const CACHE = "mcello-public-shell-v35";
 const APP_SHELL = [
   "/vendor/fonts/fonts.css",
   "/vendor/fonts/inter-latin-variable.woff2",
@@ -7,11 +7,11 @@ const APP_SHELL = [
   "/public-content.js", "/presentation-mode.js", "/presentation-mode.css", "/public-copy.js", "/placeholder-media.js", "/homepage-composition.js",
   "/motion.js", "/motion.css", "/motion/engine.js", "/motion/accessibility.js", "/motion/homepage.js", "/motion/commerce.js", "/store-v2.js", "/store-v2.css",
   "/builder-core-v2.js", "/builder-core-v2.css", "/commerce-theke.js", "/commerce-theke.css", "/public-theke.js", "/pizza-builder-v2.js", "/pizza-builder-v2.css",
-  "/doner-yufka-builder-v2.js", "/doner-yufka-builder-v2.css",
+  "/doner-yufka-builder-v2.js", "/doner-yufka-builder-v2.css", "/doner-yufka-cinematic-stage.js", "/doner-yufka-cinematic-stage.css",
   "/vendor/gsap/gsap.min.js", "/vendor/gsap/ScrollTrigger.min.js", "/vendor/gsap/Flip.min.js",
   "/operations-shell.js", "/operations-shell.css", "/operations-theke.css",
   "/handbook.html", "/handbook.js", "/handbook.css", "/handbook/shared.md", "/handbook/staff.md", "/handbook/admin.md",
-  "/manifest.webmanifest", "/media/placeholder.svg", "/icons/pwa-192.png", "/icons/pwa-512.png",
+  "/manifest.webmanifest", "/media/placeholder.svg", "/media/concept/doner-v2/spicy-sauce.webp", "/media/concept/doner-v2/garlic-sauce.webp", "/media/concept/doner-v2/iceberg-lettuce.webp", "/media/concept/doner-v2/red-onion.webp", "/media/concept/doner-v2/cucumber.webp", "/media/concept/doner-v2/tomato.webp", "/media/concept/doner-v2/veal-doner.webp", "/media/concept/doner-v2/lower-pide.webp", "/media/concept/doner-v2/upper-pide.webp", "/icons/pwa-192.png", "/icons/pwa-512.png",
 ];
 
 self.addEventListener("install", (event) => {

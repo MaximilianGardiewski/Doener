@@ -4,6 +4,7 @@ import "./public-copy.js";
 import "./motion.js";
 import "./store-v2.js";
 import "./builder-core-v2.js";
+import "./doner-yufka-cinematic-stage.js";
 import "./commerce-theke.js";
 import "./public-theke.js";
 import "./homepage-composition.js";
