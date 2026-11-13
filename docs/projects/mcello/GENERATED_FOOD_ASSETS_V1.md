@@ -199,8 +199,8 @@ See `apps/mcello/public/media/concept/doner-v2/manifest.json` for per-asset sour
 - The single active adapter is `apps/mcello/public/doner-yufka-builder-v2.js` with `doner-yufka-builder-v2.css`; it is loaded through `pizza-builder-v2.js` from the existing Builder Core import chain. No parallel stage module remains.
 - The adapter renders the nine local WebP layers inside the existing `.mc-food-stage-v4` root and preserves the `.mc-food-layer` class used by the GSAP motion system.
 - Only provisional Fladenbrot products `warm-013`–`warm-015` are enabled. Yufka `warm-016`–`warm-018` is intentionally excluded pending a dedicated rolled-wrap asset set.
-- Desktop browser smoke test (1440×900): one stage root; 9/9 images loaded; 9 active layers; controls in the adjacent column; toggle changed exploded → assembled; no JavaScript errors.
-- Mobile touch/portrait smoke test (390×844): modal visible; orientation gate hidden; stage 388×354 px; controls 388×438 px below it; 9/9 images loaded; toggle changed assembled → exploded; no JavaScript errors.
+- Desktop browser smoke test (1440×900): one stage root; 9/9 images loaded; 9 active layers; 7/7 ingredient callouts visible; controls in the adjacent column; toggle changed exploded → assembled; no JavaScript errors.
+- Mobile touch/portrait smoke test (390×844): modal visible; orientation gate hidden; stage 388×354 px; controls 388×438 px below it; 9/9 images loaded; 7/7 ingredient callouts visible; exploded is the default view; toggle changed to assembled; no JavaScript errors.
 - Test fixture note: the Vercel preview's `/api/menu` endpoint returned HTTP 404. For the browser smoke test only, modifier groups were injected as a fixture. This verifies layout, image loading and toggle behavior, but does not verify the live menu/API data path.
 - Full Node test suite: 382/382 passed. Price calculation, modifier validation and KDS logic were not changed.
 - Preview: https://doener-git-assets-mcello-food-v1-maximiliangardiewskis-projects.vercel.app
@@ -208,7 +208,7 @@ See `apps/mcello/public/media/concept/doner-v2/manifest.json` for per-asset sour
 
 ### Quellenordner- und Screenshot-Abgleich — 2026-11-13
 
-- `Quellen/Screenshot_20261113_082130_Google.jpg` zeigt die gewünschte mobile Richtung: vertikaler Exploded Stack, seitliche Ingredient-Callouts und untere Auswahl-/Steuerungsfläche. Der aktuelle Adapter hat Stack, Exploded/Assembly-Toggle und die vorhandenen Modifier-Controls; die seitlichen Einzel-Callouts sind noch ein bewusst offener Visual-Polish-Punkt.
+- `Quellen/Screenshot_20261113_082130_Google.jpg` zeigt die gewünschte mobile Richtung: vertikaler Exploded Stack, seitliche Ingredient-Callouts und untere Auswahl-/Steuerungsfläche. Der aktuelle Adapter bildet das jetzt mit sieben dynamischen Side-Callouts, Exploded/Assembly-Toggle und den vorhandenen Modifier-Controls ab; der Exploded-Zustand ist auf Desktop und Mobile der Standard.
 - `Quellen/Screenshot_20261113_082136_Google.jpg` ist eine Google-Bildrecherche mit Food-/Ingredient-Referenzen, keine Freigabe echter Mcello-Produktfotos.
 - Die `Gemini_Generated_Image_*.jpeg`- und Firefly/Gemini-Dateien im Quellenordner sind nützliche Konzept-/Kompositionsreferenzen, aber keine First-Party-Produktwahrheit.
 - `Quellen/README.md` definiert den Ordner ausdrücklich als abgeleiteten Arbeitskompass; Entscheidungen, Code, Tests und Acceptance-Dokumente bleiben vorrangige Wahrheit. `PROJEKTKONTEXT.md` und `V1-GO-LIVE-INPUTS.md` verlangen owner-bestätigte Rezeptdaten und echte, rechtegeklärte Medien. D068 bleibt unverändert.

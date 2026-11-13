@@ -142,7 +142,7 @@ Kanonische Detail-Evidenz: `docs/projects/mcello/V1_EVIDENCE.md`
 
 #### Aktueller Implementierungsstand — 2026-11-13 (PR #104, Draft)
 
-- Pide-only cinematic FoodStage ist als Implementierungskandidat im bestehenden Döner-Adapter umgesetzt; neun lokale WebP-Layer, Exploded/Assembly-Toggle und mobile Portrait-Unterstützung.
+- Pide-only cinematic FoodStage ist als Implementierungskandidat im bestehenden Döner-Adapter umgesetzt; neun lokale WebP-Layer, sieben seitliche Ingredient-Callouts, Exploded/Assembly-Toggle und mobile Portrait-Unterstützung. Exploded ist der Standardzustand.
 - Seedance 2.0 A/B/C sowie Reverse D und Master v1 sind erstellt und in `docs/projects/mcello/GENERATED_FOOD_ASSETS_V1.md` dokumentiert.
 - **Nicht acceptance-complete:** PR #104 ist Draft; die Vercel-Preview liefert für `/api/menu` HTTP 404, daher wurde die Browser-Smoke-Prüfung mit Fixture-Modifiern durchgeführt. Reale Menü-/API-Daten, Owner Visual Gate E und Yufka-spezifische Assets bleiben offen.
 - Die Checklisten oben bleiben bewusst unchecked, bis echte Runtime-/Browser-Evidenz und Owner-Freigabe vorliegen.
