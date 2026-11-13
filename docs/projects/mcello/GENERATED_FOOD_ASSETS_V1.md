@@ -59,6 +59,7 @@ Generated sequentially on 2026-11-13 with GPT Image 2.5 Sunburst. Each request u
 - Foreground-width estimates vary from 71.5% to 86.5% of canvas width (threshold: maximum RGB channel >18), so per-layer scale normalization is still required.
 - The overview shows isolated ingredient layers and no obvious table/floor. The exact requested 12-degree camera angle cannot be proven from the static images alone.
 - Current verdict: suitable for a black-stage prototype, not yet production-approved and not transparent cutouts.
+- Content caveat: the generated meat layer depicts veal döner. The provisional menu seed for `warm-013` currently describes a Kalb/Pute mix, so the image is not an exact recipe representation and remains concept-only.
 - The two reference inputs were the latest uploaded image IDs `e270c012-ea12-4ad3-8a7d-24f20cbf3124` and `6cd73bb5-f75e-45ac-a42c-917205e84b7c`.
 
 ## V2 exploded-assembly animation

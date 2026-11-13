@@ -146,7 +146,7 @@ Die generierte Richtung zeigt exakt den brauchbaren visuellen Mechanismus für `
 
 ### Döner/Yufka Cinematic FoodStage — owner direction 2026-11-13
 
-The Döner/Yufka builder is a product-specific visual exception to the general warm editorial/top-down FoodStage:
+The Döner Fladenbrot variants are a product-specific visual exception to the general warm editorial/top-down FoodStage. Yufka remains excluded until a dedicated rolled-wrap asset set exists:
 
 - low side-profile camera with a target of approximately 12° downward elevation;
 - black studio stage with nine independently controlled ingredient layers;

@@ -48,6 +48,7 @@ Current phase:
 
 - existing placeholder/CMS product media remains the default for products without a dedicated visual adapter;
 - Döner Fladenbrot variants have a separate cinematic concept FoodStage using the nine optimized WebP layers under `/media/concept/doner-v2/`; current support is limited to provisional products `warm-013`–`warm-015`;
+- Active adapter: `doner-yufka-cinematic-stage.js`, imported after `builder-core-v2.js` from `public-content.js`.
 - those layers are opaque black-background concept assets, not transparent cutouts and not documentary Mcello product media;
 - the active adapter may compose and animate these visual layers, but it must only mirror already-rendered modifier inputs;
 - Motion/GSAP remains a presentation-only boundary; price, modifier validity, order payload and KDS authority remain unchanged.

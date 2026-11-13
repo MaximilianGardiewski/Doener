@@ -22,7 +22,7 @@ const LAYERS = [
   { id: "tomato", file: "tomato.webp", label: "Tomate", z: 7, exploded: -125, assembled: -60, mobileExploded: -63, mobileAssembled: -31 },
   { id: "cucumber", file: "cucumber.webp", label: "Gurke", z: 6, exploded: -63, assembled: -30, mobileExploded: -31, mobileAssembled: -15 },
   { id: "lettuce", file: "iceberg-lettuce.webp", label: "Eisbergsalat", z: 5, exploded: 0, assembled: 0, mobileExploded: 0, mobileAssembled: 0 },
-  { id: "veal", file: "veal-doner.webp", label: "Kalbsdöner", z: 4, exploded: 63, assembled: 30, mobileExploded: 31, mobileAssembled: 15 },
+  { id: "veal", file: "veal-doner.webp", label: "Drehspieß-Fleisch", z: 4, exploded: 63, assembled: 30, mobileExploded: 31, mobileAssembled: 15 },
   { id: "spicy-sauce", file: "spicy-sauce.webp", label: "Scharfe Sauce", z: 3, exploded: 125, assembled: 60, mobileExploded: 63, mobileAssembled: 31 },
   { id: "garlic-sauce", file: "garlic-sauce.webp", label: "Knoblauchsauce", z: 2, exploded: 188, assembled: 90, mobileExploded: 94, mobileAssembled: 47 },
   { id: "lower-pide", file: "lower-pide.webp", label: "Unteres Pide", fixed: true, z: 1, exploded: 250, assembled: 120, mobileExploded: 125, mobileAssembled: 62 },
