@@ -204,3 +204,11 @@ See `apps/mcello/public/media/concept/doner-v2/manifest.json` for per-asset sour
 - Test fixture note: the Vercel preview's `/api/menu` endpoint returned HTTP 404. For the browser smoke test only, modifier groups were injected as a fixture. This verifies layout, image loading and toggle behavior, but does not verify the live menu/API data path.
 - Full Node test suite: 382/382 passed. Price calculation, modifier validation and KDS logic were not changed.
 - Preview: https://doener-git-assets-mcello-food-v1-maximiliangardiewskis-projects.vercel.app
+
+
+### Quellenordner- und Screenshot-Abgleich — 2026-11-13
+
+- `Quellen/Screenshot_20261113_082130_Google.jpg` zeigt die gewünschte mobile Richtung: vertikaler Exploded Stack, seitliche Ingredient-Callouts und untere Auswahl-/Steuerungsfläche. Der aktuelle Adapter hat Stack, Exploded/Assembly-Toggle und die vorhandenen Modifier-Controls; die seitlichen Einzel-Callouts sind noch ein bewusst offener Visual-Polish-Punkt.
+- `Quellen/Screenshot_20261113_082136_Google.jpg` ist eine Google-Bildrecherche mit Food-/Ingredient-Referenzen, keine Freigabe echter Mcello-Produktfotos.
+- Die `Gemini_Generated_Image_*.jpeg`- und Firefly/Gemini-Dateien im Quellenordner sind nützliche Konzept-/Kompositionsreferenzen, aber keine First-Party-Produktwahrheit.
+- `Quellen/README.md` definiert den Ordner ausdrücklich als abgeleiteten Arbeitskompass; Entscheidungen, Code, Tests und Acceptance-Dokumente bleiben vorrangige Wahrheit. `PROJEKTKONTEXT.md` und `V1-GO-LIVE-INPUTS.md` verlangen owner-bestätigte Rezeptdaten und echte, rechtegeklärte Medien. D068 bleibt unverändert.
