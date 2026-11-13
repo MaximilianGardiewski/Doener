@@ -110,7 +110,7 @@ function ensureStage() {
   stageRoot = document.createElement("section");
   stageRoot.className = "mc-food-stage-v4";
   stageRoot.dataset.foodStageV4 = "true";
-  stageRoot.dataset.view = window.matchMedia?.("(max-width: 820px)")?.matches ? "assembled" : "exploded";
+  stageRoot.dataset.view = "exploded";
   stageRoot.setAttribute("role", "region");
   stageRoot.setAttribute("aria-label", "Interaktive Pide-Döner-Konzeptvorschau");
   stageRoot.innerHTML = stageMarkup();
