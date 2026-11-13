@@ -23,7 +23,7 @@
   top: calc(50% + var(--explode-offset, 0px));
   z-index: var(--layer-z, 1);
   display: block;
-  width: min(82%, 420px);
+  width: min(72%, 400px);
   height: auto;
   aspect-ratio: 1;
   object-fit: contain;
@@ -41,6 +41,42 @@
 }
 .mc-food-stage-v4[data-view="exploded"] .mc-food-layer[data-active="true"] { top: calc(50% + var(--explode-offset, 0px)); }
 .mc-food-stage-v4[data-view="assembled"] .mc-food-layer[data-active="true"] { top: calc(50% + var(--assembled-offset, 0px)); }
+
+.mc-food-stage-v4__callouts { position: absolute; inset: 0; z-index: 14; pointer-events: none; }
+.mc-food-stage-v4__callout {
+  position: absolute;
+  top: calc(50% + var(--explode-offset, 0px));
+  width: 70px;
+  color: rgba(246,234,213,.78);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: .01em;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: top 560ms cubic-bezier(.2,.75,.25,1), opacity 180ms ease, transform 180ms ease;
+}
+.mc-food-stage-v4__callout[data-side="left"] { left: 10px; text-align: left; }
+.mc-food-stage-v4__callout[data-side="right"] { right: 10px; text-align: right; }
+.mc-food-stage-v4__callout::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  border-top: 1px solid rgba(217,183,126,.72);
+}
+.mc-food-stage-v4__callout[data-side="left"]::after { right: -20px; }
+.mc-food-stage-v4__callout[data-side="right"]::after { left: -20px; }
+.mc-food-stage-v4[data-view="exploded"] .mc-food-stage-v4__callout[data-active="true"] {
+  top: calc(50% + var(--explode-offset, 0px));
+  opacity: 1;
+  transform: translateY(0);
+}
+.mc-food-stage-v4[data-view="assembled"] .mc-food-stage-v4__callout[data-active="true"] {
+  top: calc(50% + var(--assembled-offset, 0px));
+  opacity: 0;
+  transform: translateY(4px);
+}
 
 .mc-food-stage-v4__toggle {
   position: absolute;
@@ -113,6 +149,8 @@
   }
   .mc-food-stage-v4[data-view="assembled"] .mc-food-layer[data-active="true"] { top: calc(50% + var(--mobile-assembled-offset, 0px)); }
   .mc-food-stage-v4[data-view="exploded"] .mc-food-layer[data-active="true"] { top: calc(50% + var(--mobile-explode-offset, 0px)); }
+  .mc-food-stage-v4__callout { top: calc(50% + var(--mobile-explode-offset, 0px)); width: 60px; font-size: 8px; }
+  .mc-food-stage-v4[data-view="assembled"] .mc-food-stage-v4__callout[data-active="true"] { top: calc(50% + var(--mobile-assembled-offset, 0px)); }
 }
 @media (orientation: landscape) and (max-height: 520px) {
   #productModal[data-product-builder="doner-yufka"][data-builder-device="touch"] .mc-food-stage-v4 {

@@ -23,13 +23,13 @@ const LAYER_TOKENS = new Map([
 ]);
 const STAGE_LAYERS = [
   { id: "upper-pide", file: "upper-pide.webp", label: "Oberes Pide", fixed: true, z: 9, exploded: -245, assembled: -115, mobileExploded: -126, mobileAssembled: -60 },
-  { id: "red-onion", file: "red-onion.webp", label: "Rote Zwiebel", z: 8, exploded: -184, assembled: -86, mobileExploded: -94, mobileAssembled: -45 },
-  { id: "tomato", file: "tomato.webp", label: "Tomate", z: 7, exploded: -122, assembled: -57, mobileExploded: -63, mobileAssembled: -30 },
-  { id: "cucumber", file: "cucumber.webp", label: "Gurke", z: 6, exploded: -61, assembled: -28, mobileExploded: -31, mobileAssembled: -15 },
-  { id: "iceberg-lettuce", file: "iceberg-lettuce.webp", label: "Eisbergsalat", z: 5, exploded: 0, assembled: 0, mobileExploded: 0, mobileAssembled: 0 },
-  { id: "veal", file: "veal-doner.webp", label: "Drehspieß-Fleisch", z: 4, exploded: 61, assembled: 28, mobileExploded: 31, mobileAssembled: 15 },
-  { id: "spicy-sauce", file: "spicy-sauce.webp", label: "Scharfe Sauce", z: 3, exploded: 122, assembled: 57, mobileExploded: 63, mobileAssembled: 30 },
-  { id: "garlic-sauce", file: "garlic-sauce.webp", label: "Knoblauchsauce", z: 2, exploded: 184, assembled: 86, mobileExploded: 94, mobileAssembled: 45 },
+  { id: "red-onion", file: "red-onion.webp", label: "Rote Zwiebel", side: "right", z: 8, exploded: -184, assembled: -86, mobileExploded: -94, mobileAssembled: -45 },
+  { id: "tomato", file: "tomato.webp", label: "Tomate", side: "left", z: 7, exploded: -122, assembled: -57, mobileExploded: -63, mobileAssembled: -30 },
+  { id: "cucumber", file: "cucumber.webp", label: "Gurke", side: "right", z: 6, exploded: -61, assembled: -28, mobileExploded: -31, mobileAssembled: -15 },
+  { id: "iceberg-lettuce", file: "iceberg-lettuce.webp", label: "Eisbergsalat", side: "left", z: 5, exploded: 0, assembled: 0, mobileExploded: 0, mobileAssembled: 0 },
+  { id: "veal", file: "veal-doner.webp", label: "Drehspieß-Fleisch", side: "right", z: 4, exploded: 61, assembled: 28, mobileExploded: 31, mobileAssembled: 15 },
+  { id: "spicy-sauce", file: "spicy-sauce.webp", label: "Scharfe Sauce", side: "left", z: 3, exploded: 122, assembled: 57, mobileExploded: 63, mobileAssembled: 30 },
+  { id: "garlic-sauce", file: "garlic-sauce.webp", label: "Knoblauchsauce", side: "right", z: 2, exploded: 184, assembled: 86, mobileExploded: 94, mobileAssembled: 45 },
   { id: "lower-pide", file: "lower-pide.webp", label: "Unteres Pide", fixed: true, z: 1, exploded: 245, assembled: 115, mobileExploded: 126, mobileAssembled: 60 },
 ];
 const VISUAL_LAYER_IDS = STAGE_LAYERS.filter((layer) => !layer.fixed).map((layer) => layer.id);
@@ -89,7 +89,14 @@ function stageMarkup() {
       + '" style="--layer-z:' + layer.z + ';--explode-offset:' + layer.exploded + 'px;--assembled-offset:' + layer.assembled
       + 'px;--mobile-explode-offset:' + layer.mobileExploded + 'px;--mobile-assembled-offset:' + layer.mobileAssembled + 'px" />';
   }).join("");
+  const callouts = STAGE_LAYERS.filter((layer) => !layer.fixed).map((layer) => {
+    return '<span class="mc-food-stage-v4__callout" data-food-callout-for="' + layer.id
+      + '" data-active="false" data-side="' + layer.side + '" aria-hidden="true" style="--explode-offset:' + layer.exploded
+      + 'px;--assembled-offset:' + layer.assembled + 'px;--mobile-explode-offset:' + layer.mobileExploded
+      + 'px;--mobile-assembled-offset:' + layer.mobileAssembled + 'px">' + layer.label + '</span>';
+  }).join("");
   return '<div class="mc-food-stage-v4__layers" aria-hidden="true">' + images + '</div>'
+    + '<div class="mc-food-stage-v4__callouts" aria-hidden="true">' + callouts + '</div>'
     + '<button class="mc-food-stage-v4__toggle" type="button" data-food-stage-toggle aria-pressed="false">Zusammenbauen</button>'
     + '<div class="mc-food-stage-v4__caption"><span>MCELLO · PIDE DÖNER</span>'
     + '<strong data-food-stage-summary aria-live="polite">Wähle deine Zutaten</strong>'
@@ -141,6 +148,8 @@ function updateStage(groupMap) {
     const node = root.querySelector('[data-food-layer="' + layer.id + '"]');
     const active = Boolean(layer.fixed || selected.has(layer.id));
     if (node) node.dataset.active = String(active);
+    const callout = root.querySelector('[data-food-callout-for="' + layer.id + '"]');
+    if (callout) callout.dataset.active = String(active && !layer.fixed);
   }
   const visible = [...selected].filter((id) => LAYER_BY_ID.has(id)).map((id) => LAYER_BY_ID.get(id).label);
   const missing = [...selected].filter((id) => MISSING_LABELS.has(id)).map((id) => MISSING_LABELS.get(id));

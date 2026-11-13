@@ -36,6 +36,8 @@ test("FoodStage mirrors checked modifier inputs and never owns commerce state", 
   assert.match(js, /querySelector\("input"\)/);
   assert.match(js, /input\?\.checked/);
   assert.match(js, /data-food-layer/);
+  assert.match(js, /data-food-callout-for/);
+  assert.match(css, /mc-food-stage-v4__callout/);
   assert.match(js, /dataset\.assemblyVisualLayers/);
   assert.match(js, /KI-Konzeptvisualisierung/);
   assert.doesNotMatch(js, /\.checked\s*=|localStorage|sessionStorage|fetch\s*\(|cart\s*=|configuredPrice|configurationValid/);
